@@ -186,7 +186,7 @@ export function EventsInboxHome() {
         id: event.id,
         subject: event.name,
         preview: event.event_local?.trim() || 'Sem local informado',
-        meta: formatEventDateTimeLabel(event.event_date),
+        meta: formatEventDateTimeLabel(event.event_date, event.event_end_date),
         event,
       })),
     [events]

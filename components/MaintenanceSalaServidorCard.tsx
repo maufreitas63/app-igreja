@@ -110,7 +110,9 @@ export const MaintenanceSalaServidorCard = ({
     }, [refetchActiveEvents, refetchGroupedRegistrations, refetchRoomServidores])
   );
 
-  const selectedEventTime = selectedEvent ? formatEventDateTimeLabel(selectedEvent.event_date) : null;
+  const selectedEventTime = selectedEvent
+    ? formatEventDateTimeLabel(selectedEvent.event_date, selectedEvent.event_end_date)
+    : null;
 
   const capacityRatio =
     selectedEvent?.max_capacity && selectedEvent.max_capacity > 0

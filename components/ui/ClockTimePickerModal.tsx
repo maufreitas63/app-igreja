@@ -46,6 +46,15 @@ export function parseTimeHm(value: string): { hour: number; minute: number } | n
   return { hour, minute };
 }
 
+export function addOneHourHm(value: string) {
+  const parsed = parseTimeHm(value);
+  if (!parsed) {
+    return null;
+  }
+
+  return `${pad2((parsed.hour + 1) % 24)}:${pad2(parsed.minute)}`;
+}
+
 const formatTimeHm = (hour: number, minute: number) => `${pad2(hour)}:${pad2(minute)}`;
 
 const clockPoint = (index: number, count: number, radius: number) => {

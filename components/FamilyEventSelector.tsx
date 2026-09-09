@@ -107,7 +107,7 @@ export const FamilyEventSelector = ({
       >
         {events.map((event) => {
           const isSelected = event.id === selectedEventId;
-          const eventTime = formatEventDateTimeLabel(event.event_date);
+          const eventTime = formatEventDateTimeLabel(event.event_date, event.event_end_date);
 
           return (
             <TouchableOpacity

@@ -2,11 +2,13 @@ import {
   ensureEventsOptionalColumns,
   getMaintenanceEventSelect,
   isMissingEnabledRoomKeysColumnError,
+  isMissingEventEndDateColumnError,
   isMissingGeofenceAtivoColumnError,
   isMissingRequerQuorumColumnError,
   isMissingSomenteMembrosColumnError,
   isMissingTotemColumnError,
   setEnabledRoomKeysColumnAvailable,
+  setEventEndDateColumnAvailable,
   setGeofenceAtivoColumnAvailable,
   setRequerQuorumColumnAvailable,
   setSomenteMembrosColumnAvailable,
@@ -21,6 +23,7 @@ export type MaintenanceEvent = {
   id: string;
   name: string;
   event_date: string | null;
+  event_end_date?: string | null;
   event_local: string | null;
   max_capacity: number | null;
   parm_ofertas: boolean | null;
@@ -110,6 +113,18 @@ export const useMaintenanceEvents = () => {
         fetchError = retry.error;
       } else if (!fetchError) {
         setEnabledRoomKeysColumnAvailable(true);
+      }
+
+      if (fetchError && isMissingEventEndDateColumnError(fetchError)) {
+        setEventEndDateColumnAvailable(false);
+        const retry = await supabase
+          .from('events')
+          .select(getMaintenanceEventSelect())
+          .order('event_date', { ascending: true, nullsFirst: false });
+        data = retry.data;
+        fetchError = retry.error;
+      } else if (!fetchError) {
+        setEventEndDateColumnAvailable(true);
       }
 
       if (fetchError) {

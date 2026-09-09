@@ -40,6 +40,7 @@ type TotemEvent = {
   id: string;
   name: string;
   event_date: string | null;
+  event_end_date?: string | null;
   totem_ativo: boolean | null;
 };
 
@@ -158,6 +159,7 @@ export default function TotemCheckinScreen() {
         id: String(event.id ?? ''),
         name: String(event.name ?? ''),
         event_date: typeof event.event_date === 'string' ? event.event_date : null,
+        event_end_date: typeof event.event_end_date === 'string' ? event.event_end_date : null,
         totem_ativo: event.totem_ativo === true,
       });
       const published = rows.filter((event) =>
@@ -529,9 +531,9 @@ export default function TotemCheckinScreen() {
               <View style={styles.eventInfoBox}>
                 <Text style={styles.eventInfoLabel}>Evento de hoje</Text>
                 <Text style={styles.eventInfoName}>{selectedEvent.name}</Text>
-                {formatEventDateTimeLabel(selectedEvent.event_date) ? (
+                {formatEventDateTimeLabel(selectedEvent.event_date, selectedEvent.event_end_date) ? (
                   <Text style={styles.eventInfoWhen}>
-                    {formatEventDateTimeLabel(selectedEvent.event_date)}
+                    {formatEventDateTimeLabel(selectedEvent.event_date, selectedEvent.event_end_date)}
                   </Text>
                 ) : null}
               </View>

@@ -12,11 +12,13 @@ import {
   isMissingSomenteMembrosColumnError,
   isMissingTotemColumnError,
   isMissingEnabledRoomKeysColumnError,
+  isMissingEventEndDateColumnError,
   isGeofenceAtivoColumnAvailable,
   isRequerQuorumColumnAvailable,
   isSomenteMembrosColumnAvailable,
   isTotemAtivoColumnAvailable,
   isEnabledRoomKeysColumnAvailable,
+  isEventEndDateColumnAvailable,
   stripOptionalFieldsFromEventPayload,
   TOTEM_COLUMN_SQL_HINT,
   GEOFENCE_ATIVO_COLUMN_SQL_HINT,
@@ -145,6 +147,7 @@ const persistEvent = async (
     ...(payload.enabled_room_keys !== undefined
       ? { enabled_room_keys: payload.enabled_room_keys }
       : {}),
+    ...(payload.event_end_date !== undefined ? { event_end_date: payload.event_end_date } : {}),
   };
 
   if (mode === 'insert') {
@@ -175,6 +178,7 @@ const saveEventWithOptionalColumnFallback = async (
     somenteMembros: !isSomenteMembrosColumnAvailable(),
     geofenceAtivo: !isGeofenceAtivoColumnAvailable(),
     enabledRoomKeys: !isEnabledRoomKeysColumnAvailable(),
+    eventEndDate: !isEventEndDateColumnAvailable(),
   }) as MaintenanceEventPayload;
 
   const geofencePersistError = assertGeofenceAtivoCanPersist(payload);
@@ -191,7 +195,8 @@ const saveEventWithOptionalColumnFallback = async (
       isMissingRequerQuorumColumnError(result.error) ||
       isMissingSomenteMembrosColumnError(result.error) ||
       isMissingGeofenceAtivoColumnError(result.error) ||
-      isMissingEnabledRoomKeysColumnError(result.error))
+      isMissingEnabledRoomKeysColumnError(result.error) ||
+      isMissingEventEndDateColumnError(result.error))
   ) {
     if (payload.geofence_ativo === true && isMissingGeofenceAtivoColumnError(result.error)) {
       return { data: null, error: geofenceColumnMissingError() };
@@ -217,6 +222,7 @@ const saveEventWithOptionalColumnFallback = async (
       somenteMembros: true,
       geofenceAtivo: true,
       enabledRoomKeys: true,
+      eventEndDate: true,
     }) as MaintenanceEventPayload;
     result = await persistEvent(mode, selectedEventId, withoutOptionals);
   }

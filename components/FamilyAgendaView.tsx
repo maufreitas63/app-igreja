@@ -27,7 +27,9 @@ export function FamilyAgendaView({
   registrationSection,
   loginRequiredMessage = null,
 }: FamilyAgendaViewProps) {
-  const selectedEventTime = selectedEvent ? formatEventDateTimeLabel(selectedEvent.event_date) : null;
+  const selectedEventTime = selectedEvent
+    ? formatEventDateTimeLabel(selectedEvent.event_date, selectedEvent.event_end_date)
+    : null;
 
   if (loading) {
     return (

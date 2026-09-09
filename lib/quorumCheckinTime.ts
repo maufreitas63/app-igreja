@@ -54,11 +54,21 @@ export function formatEventDateDocumentLabel(value: string | null | undefined) {
   return `${parts.day} de ${month} de ${parts.year}`;
 }
 
-export function formatEventTimeRangeLabel(value: string | null | undefined) {
+export function formatEventTimeRangeLabel(
+  value: string | null | undefined,
+  endValue?: string | null
+) {
   const parts = parseEventDateParts(value);
   if (!parts) {
     return '[Horário]';
   }
 
-  return `${parts.hour}:${parts.minute}`;
+  const start = `${parts.hour}:${parts.minute}`;
+  const endParts = parseEventDateParts(endValue);
+  if (endParts) {
+    return `${start}–${endParts.hour}:${endParts.minute}`;
+  }
+
+  const nextHour = (Number.parseInt(parts.hour, 10) + 1) % 24;
+  return `${start}–${String(nextHour).padStart(2, '0')}:${parts.minute}`;
 }

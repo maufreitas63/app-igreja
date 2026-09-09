@@ -3,11 +3,13 @@ import {
   asEventRows,
   getActiveEventSelect,
   isMissingEnabledRoomKeysColumnError,
+  isMissingEventEndDateColumnError,
   isMissingGeofenceAtivoColumnError,
   isMissingRequerQuorumColumnError,
   isMissingSomenteMembrosColumnError,
   isMissingTotemColumnError,
   setEnabledRoomKeysColumnAvailable,
+  setEventEndDateColumnAvailable,
   setGeofenceAtivoColumnAvailable,
   setRequerQuorumColumnAvailable,
   setSomenteMembrosColumnAvailable,
@@ -28,6 +30,7 @@ export type ActiveEventListItem = {
   id: string;
   name: string;
   event_date: string | null;
+  event_end_date?: string | null;
   event_local: string | null;
   max_capacity: number | null;
   parm_ofertas: boolean | null;
@@ -56,6 +59,7 @@ function toActiveEventListItem(
     id: String(event.id ?? ''),
     name: String(event.name ?? ''),
     event_date: typeof event.event_date === 'string' ? event.event_date : null,
+    event_end_date: typeof event.event_end_date === 'string' ? event.event_end_date : null,
     event_local: typeof event.event_local === 'string' ? event.event_local : null,
     max_capacity: typeof event.max_capacity === 'number' ? event.max_capacity : null,
     parm_ofertas: boolOrNull(event.parm_ofertas),
@@ -91,6 +95,7 @@ const serializeEvents = (items: ActiveEventListItem[]) =>
       id: event.id,
       name: event.name,
       event_date: event.event_date,
+      event_end_date: event.event_end_date ?? null,
       event_local: event.event_local,
       max_capacity: event.max_capacity,
       parm_ofertas: event.parm_ofertas,
@@ -245,6 +250,19 @@ export const useActiveEvents = (options?: UseActiveEventsOptions) => {
           fetchError = retry.error;
         } else if (!fetchError) {
           setEnabledRoomKeysColumnAvailable(true);
+        }
+
+        if (fetchError && isMissingEventEndDateColumnError(fetchError)) {
+          setEventEndDateColumnAvailable(false);
+          const retry = await supabase
+            .from('events')
+            .select(getActiveEventSelect())
+            .or('is_locked.eq.false,is_locked.is.null')
+            .order('event_date', { ascending: true });
+          data = retry.data;
+          fetchError = retry.error;
+        } else if (!fetchError) {
+          setEventEndDateColumnAvailable(true);
         }
 
         if (fetchError) {

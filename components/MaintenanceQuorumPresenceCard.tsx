@@ -180,7 +180,10 @@ export function MaintenanceQuorumPresenceCard({
             </Text>
             <Text style={styles.metaLine}>
               <Text style={styles.metaLabel}>Horário: </Text>
-              {formatEventTimeRangeLabel(selectedEvent?.event_date ?? null)}
+              {formatEventTimeRangeLabel(
+                selectedEvent?.event_date ?? null,
+                selectedEvent?.event_end_date ?? null
+              )}
             </Text>
             <Text style={styles.metaLine}>
               <Text style={styles.metaLabel}>Local: </Text>

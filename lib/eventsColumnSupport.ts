@@ -10,6 +10,7 @@ let requerQuorumColumnAvailable: boolean | null = null;
 let somenteMembrosColumnAvailable: boolean | null = null;
 let geofenceAtivoColumnAvailable: boolean | null = null;
 let enabledRoomKeysColumnAvailable: boolean | null = null;
+let eventEndDateColumnAvailable: boolean | null = null;
 
 const buildEventSelect = () => {
   const fields = [EVENT_SELECT_BASE];
@@ -32,6 +33,10 @@ const buildEventSelect = () => {
 
   if (enabledRoomKeysColumnAvailable !== false) {
     fields.push('enabled_room_keys');
+  }
+
+  if (eventEndDateColumnAvailable !== false) {
+    fields.push('event_end_date');
   }
 
   return fields.join(', ');
@@ -61,12 +66,17 @@ export const setEnabledRoomKeysColumnAvailable = (available: boolean) => {
   enabledRoomKeysColumnAvailable = available;
 };
 
+export const setEventEndDateColumnAvailable = (available: boolean) => {
+  eventEndDateColumnAvailable = available;
+};
+
 export const resetTotemColumnAvailabilityCache = () => {
   totemAtivoColumnAvailable = null;
   requerQuorumColumnAvailable = null;
   somenteMembrosColumnAvailable = null;
   geofenceAtivoColumnAvailable = null;
   enabledRoomKeysColumnAvailable = null;
+  eventEndDateColumnAvailable = null;
 };
 
 export const isTotemAtivoColumnAvailable = () => totemAtivoColumnAvailable === true;
@@ -78,6 +88,8 @@ export const isSomenteMembrosColumnAvailable = () => somenteMembrosColumnAvailab
 export const isGeofenceAtivoColumnAvailable = () => geofenceAtivoColumnAvailable === true;
 
 export const isEnabledRoomKeysColumnAvailable = () => enabledRoomKeysColumnAvailable === true;
+
+export const isEventEndDateColumnAvailable = () => eventEndDateColumnAvailable === true;
 
 const isMissingColumnError = (
   error: Pick<PostgrestError, 'code' | 'message'> | null,
@@ -115,6 +127,10 @@ export const isMissingGeofenceAtivoColumnError = (
 export const isMissingEnabledRoomKeysColumnError = (
   error: Pick<PostgrestError, 'code' | 'message'> | null
 ) => isMissingColumnError(error, 'enabled_room_keys');
+
+export const isMissingEventEndDateColumnError = (
+  error: Pick<PostgrestError, 'code' | 'message'> | null
+) => isMissingColumnError(error, 'event_end_date');
 
 export const probeTotemAtivoColumn = async () => {
   const { error } = await supabase.from('events').select('totem_ativo').limit(1);
@@ -196,12 +212,29 @@ export const probeEnabledRoomKeysColumn = async () => {
   return true;
 };
 
+export const probeEventEndDateColumn = async () => {
+  const { error } = await supabase.from('events').select('event_end_date').limit(1);
+
+  if (isMissingEventEndDateColumnError(error)) {
+    setEventEndDateColumnAvailable(false);
+    return false;
+  }
+
+  if (error) {
+    throw error;
+  }
+
+  setEventEndDateColumnAvailable(true);
+  return true;
+};
+
 export type EventRowWithOptionals = {
   totem_ativo?: boolean | null;
   requer_quorum?: boolean | null;
   somente_membros?: boolean | null;
   geofence_ativo?: boolean | null;
   enabled_room_keys?: string[] | null;
+  event_end_date?: string | null;
   [key: string]: unknown;
 };
 
@@ -235,6 +268,7 @@ export const stripOptionalFieldsFromEventPayload = <T extends Record<string, unk
     somenteMembros?: boolean;
     geofenceAtivo?: boolean;
     enabledRoomKeys?: boolean;
+    eventEndDate?: boolean;
   }
 ) => {
   const next = { ...payload };
@@ -259,6 +293,10 @@ export const stripOptionalFieldsFromEventPayload = <T extends Record<string, unk
     delete next.enabled_room_keys;
   }
 
+  if (options.eventEndDate) {
+    delete next.event_end_date;
+  }
+
   return next;
 };
 
@@ -281,6 +319,9 @@ export const GEOFENCE_ATIVO_COLUMN_SQL_HINT =
 
 export const ENABLED_ROOM_KEYS_COLUMN_SQL_HINT =
   'Execute no Supabase: scripts/events-enabled-room-keys.sql (libera salas customizadas no evento).';
+
+export const EVENT_END_DATE_COLUMN_SQL_HINT =
+  'Execute no Supabase: scripts/events-event-end-date.sql (grava o término do evento).';
 
 /** Trigger sync_event_room_booleans_from_keys com array_agg(DISTINCT … ORDER BY 1) inválido. */
 export const ENABLED_ROOM_KEYS_DISTINCT_ORDER_SQL_HINT =
@@ -395,15 +436,42 @@ export async function ensureEventsEnabledRoomKeysColumn(): Promise<boolean> {
   return true;
 }
 
+export async function ensureEventsEventEndDateColumn(): Promise<boolean> {
+  if (await probeEventEndDateColumn().catch(() => false)) {
+    return true;
+  }
+
+  const { error } = await supabase.rpc('ensure_events_event_end_date_column');
+
+  if (error) {
+    if (!isSupabaseRpcMissingError(error, 'ensure_events_event_end_date_column')) {
+      console.warn('ensure_events_event_end_date_column:', error.message);
+    }
+    setEventEndDateColumnAvailable(false);
+    return false;
+  }
+
+  eventEndDateColumnAvailable = null;
+  const probed = await probeEventEndDateColumn().catch(() => false);
+  if (probed) {
+    return true;
+  }
+
+  setEventEndDateColumnAvailable(true);
+  return true;
+}
+
 /** Garante colunas opcionais de eventos. */
 export async function ensureEventsOptionalColumns() {
-  const [totem, quorum, somenteMembros, geofenceAtivo, enabledRoomKeys] = await Promise.all([
-    ensureEventsTotemAtivoColumn(),
-    ensureEventsRequerQuorumColumn(),
-    ensureEventsSomenteMembrosColumn(),
-    ensureEventsGeofenceAtivoColumn(),
-    ensureEventsEnabledRoomKeysColumn(),
-  ]);
+  const [totem, quorum, somenteMembros, geofenceAtivo, enabledRoomKeys, eventEndDate] =
+    await Promise.all([
+      ensureEventsTotemAtivoColumn(),
+      ensureEventsRequerQuorumColumn(),
+      ensureEventsSomenteMembrosColumn(),
+      ensureEventsGeofenceAtivoColumn(),
+      ensureEventsEnabledRoomKeysColumn(),
+      ensureEventsEventEndDateColumn(),
+    ]);
 
-  return { totem, quorum, somenteMembros, geofenceAtivo, enabledRoomKeys };
+  return { totem, quorum, somenteMembros, geofenceAtivo, enabledRoomKeys, eventEndDate };
 }

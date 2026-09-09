@@ -1,4 +1,5 @@
 import {
+  addOneHourToEventWallClock,
   formatEventDateTimeLabel,
   formatEventWallClockIso,
   getEventWallClockParts,
@@ -12,6 +13,7 @@ export type MaintenanceEventFormState = {
   name: string;
   eventDateInput: string;
   eventTimeInput: string;
+  eventEndTimeInput: string;
   eventLocal: string;
   eventLocalAddress: string;
   maxCapacity: string;
@@ -31,6 +33,7 @@ export const emptyMaintenanceEventForm = (): MaintenanceEventFormState => ({
   name: '',
   eventDateInput: '',
   eventTimeInput: '',
+  eventEndTimeInput: '',
   eventLocal: '',
   eventLocalAddress: '',
   maxCapacity: '',
@@ -242,6 +245,7 @@ export const formFromMaintenanceEvent = (event: {
   id?: string | null;
   name: string;
   event_date: string | null;
+  event_end_date?: string | null;
   event_local: string | null;
   max_capacity: number | null;
   parm_ofertas: boolean | null;
@@ -268,6 +272,9 @@ export const formFromMaintenanceEvent = (event: {
     name: event.name ?? '',
     eventDateInput: formatEventDateOnlyForInput(event.event_date),
     eventTimeInput: formatEventTimeForInput(event.event_date),
+    eventEndTimeInput:
+      formatEventTimeForInput(event.event_end_date)
+      || formatEventTimeForInput(addOneHourToEventWallClock(event.event_date)),
     eventLocal: event.event_local ?? '',
     eventLocalAddress: '',
     maxCapacity:
@@ -329,14 +336,31 @@ export const validateMaintenanceEventForm = (
       return { ok: false, message: 'Informe a data completa (DD/MM/AAAA).' };
     }
 
-    if (timeDigits.length > 0 && timeDigits.length < 4) {
-      return { ok: false, message: 'Informe o horário completo (HH:MM).' };
+    if (timeDigits.length < 4) {
+      return { ok: false, message: 'Informe o horário de início (HH:MM).' };
     }
 
     return {
       ok: false,
-      message: 'Data ou horário inválidos. Ex.: data 27/05/26 e horário 10:00.',
+      message: 'Data ou horário de início inválidos. Ex.: data 27/05/26 e início 10:00.',
     };
+  }
+
+  if (!payload.event_end_date) {
+    return {
+      ok: false,
+      message: 'Informe o horário de término. O padrão é 1 hora após o início.',
+    };
+  }
+
+  const startInstant = getEventWallClockParts(payload.event_date);
+  const endInstant = getEventWallClockParts(payload.event_end_date);
+  if (
+    startInstant
+    && endInstant
+    && formatEventWallClockIso(endInstant) <= formatEventWallClockIso(startInstant)
+  ) {
+    return { ok: false, message: 'O término deve ser depois do início.' };
   }
 
   if (payload.max_capacity === null) {
@@ -371,13 +395,20 @@ export const buildMaintenanceEventReplicationPayload = (
       return { ok: false, message: 'Informe a data completa (DD/MM/AAAA).' };
     }
 
-    if (timeDigits.length > 0 && timeDigits.length < 4) {
-      return { ok: false, message: 'Informe o horário completo (HH:MM).' };
+    if (timeDigits.length < 4) {
+      return { ok: false, message: 'Informe o horário de início (HH:MM).' };
     }
 
     return {
       ok: false,
-      message: 'Data ou horário inválidos. Ex.: data 27/05/2026 e horário 10:00.',
+      message: 'Data ou horário de início inválidos. Ex.: data 27/05/2026 e início 10:00.',
+    };
+  }
+
+  if (!payload.event_end_date) {
+    return {
+      ok: false,
+      message: 'Informe o horário de término. O padrão é 1 hora após o início.',
     };
   }
 
@@ -397,6 +428,9 @@ export const buildMaintenanceEventReplicationPayload = (
   }
 
   const shiftedDate = shiftMaintenanceEventDateIso(payload.event_date, dayOffset);
+  const shiftedEnd = payload.event_end_date
+    ? shiftMaintenanceEventDateIso(payload.event_end_date, dayOffset)
+    : null;
 
   if (!shiftedDate) {
     return {
@@ -405,11 +439,19 @@ export const buildMaintenanceEventReplicationPayload = (
     };
   }
 
+  if (payload.event_end_date && !shiftedEnd) {
+    return {
+      ok: false,
+      message: `Não foi possível calcular o término +${dayOffset} dia(s).`,
+    };
+  }
+
   return {
     ok: true,
     payload: {
       name: payload.name,
       event_date: shiftedDate,
+      event_end_date: shiftedEnd,
       event_local: payload.event_local,
       max_capacity: payload.max_capacity,
       kids_room: payload.kids_room,
@@ -450,6 +492,50 @@ export const shiftMaintenanceEventDateIso = (
   });
 };
 
+export const resolveEventEndIso = (
+  dateInput: string,
+  startTimeInput: string,
+  endTimeInput: string
+) => {
+  if (!startTimeInput.trim()) {
+    return null;
+  }
+
+  const startIso = parseMaintenanceEventDateTimeToIso(dateInput, startTimeInput);
+  if (!startIso) {
+    return null;
+  }
+
+  const endHm = endTimeInput.trim();
+  if (!endHm) {
+    return addOneHourToEventWallClock(startIso);
+  }
+
+  const sameDay = parseMaintenanceEventDateTimeToIso(dateInput, endHm);
+  if (!sameDay) {
+    return null;
+  }
+
+  const startParts = getEventWallClockParts(startIso);
+  const endParts = getEventWallClockParts(sameDay);
+  if (!startParts || !endParts) {
+    return null;
+  }
+
+  const startMin = startParts.hour * 60 + startParts.minute;
+  const endMin = endParts.hour * 60 + endParts.minute;
+
+  if (endMin === startMin) {
+    return null;
+  }
+
+  if (endMin < startMin) {
+    return shiftMaintenanceEventDateIso(sameDay, 1);
+  }
+
+  return sameDay;
+};
+
 export const buildMaintenanceEventPayload = (
   form: MaintenanceEventFormState,
   options?: MaintenanceEventValidationOptions
@@ -458,7 +544,12 @@ export const buildMaintenanceEventPayload = (
   const eventLocal = form.eventLocal.trim();
   const maxCapacityDigits = form.maxCapacity.replace(/\D/g, '');
   const maxCapacity = maxCapacityDigits ? Number.parseInt(maxCapacityDigits, 10) : null;
-  const eventDate = parseMaintenanceEventDateTimeToIso(form.eventDateInput, form.eventTimeInput);
+  const eventDate = form.eventTimeInput.trim()
+    ? parseMaintenanceEventDateTimeToIso(form.eventDateInput, form.eventTimeInput)
+    : null;
+  const eventEndDate = eventDate
+    ? resolveEventEndIso(form.eventDateInput, form.eventTimeInput, form.eventEndTimeInput)
+    : null;
   const isLocked = !form.isPublished;
   const retroactivePublish = Boolean(
     options?.bypassPastDateRestriction
@@ -472,6 +563,7 @@ export const buildMaintenanceEventPayload = (
   return {
     name,
     event_date: eventDate,
+    event_end_date: eventEndDate,
     event_local: eventLocal || null,
     max_capacity: maxCapacity,
     kids_room: syncedRooms.kidsRoom,
@@ -490,6 +582,7 @@ export const buildMaintenanceEventPayload = (
 export const summarizeMaintenanceEvent = (event: {
   name: string;
   event_date: string | null;
+  event_end_date?: string | null;
   event_local: string | null;
   max_capacity: number | null;
   parm_ofertas: boolean | null;
@@ -524,7 +617,7 @@ export const summarizeMaintenanceEvent = (event: {
     event.requer_quorum ? 'Quórum' : null,
   ].filter(Boolean);
 
-  const dateLabel = formatEventDateTimeLabel(event.event_date) || 'Sem data';
+  const dateLabel = formatEventDateTimeLabel(event.event_date, event.event_end_date) || 'Sem data';
   const localLabel = event.event_local?.trim() || 'Sem local';
   const capacityLabel = formatEventCapacityLabel(event.max_capacity);
 

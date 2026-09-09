@@ -1,7 +1,6 @@
 import {
   emptyMaintenanceEventForm,
   formFromMaintenanceEvent,
-  formatEventTimeInputMask,
   summarizeMaintenanceEvent,
   isMaintenanceEventFormDateInPast,
   toggleEnabledRoomKey,
@@ -11,6 +10,7 @@ import {
 import { AppSwitch } from '@/components/ui/AppSwitch';
 import { EventFavoriteLocationPickerModal } from '@/components/EventFavoriteLocationPickerModal';
 import { MonthlyDatePickerModal } from '@/components/ui/MonthlyDatePickerModal';
+import { ClockTimePickerModal, addOneHourHm } from '@/components/ui/ClockTimePickerModal';
 import { EventsGanttChart } from '@/components/EventsGanttChart';
 import { MaintenanceQuorumPresenceCard } from '@/components/MaintenanceQuorumPresenceCard';
 import { MaintenanceScaleTypesCard } from '@/components/MaintenanceScaleTypesCard';
@@ -435,6 +435,8 @@ export default function MaintenanceDashboard() {
   const [deleteTargetName, setDeleteTargetName] = useState('');
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [eventDatePickerVisible, setEventDatePickerVisible] = useState(false);
+  const [eventTimePickerVisible, setEventTimePickerVisible] = useState(false);
+  const [eventEndTimePickerVisible, setEventEndTimePickerVisible] = useState(false);
   const [favoritePickerVisible, setFavoritePickerVisible] = useState(false);
   const [headerUserName, setHeaderUserName] = useState('Usuário');
   const [accessState, setAccessState] = useState<'checking' | 'allowed' | 'denied'>('checking');
@@ -1794,36 +1796,65 @@ export default function MaintenanceDashboard() {
 
                 <Text style={styles.fieldLabel}>Data e horário</Text>
                 <View style={styles.dateTimeRow}>
-                  <Pressable
-                    style={styles.dateTimeField}
-                    onPress={() => setEventDatePickerVisible(true)}
-                    accessibilityRole="button"
-                    accessibilityLabel="Selecionar data do evento"
-                  >
-                    <View style={[styles.input, styles.dateInputTrigger]}>
-                      <Text
-                        style={[
-                          styles.dateInputText,
-                          !form.eventDateInput.trim() && styles.dateInputPlaceholder,
-                        ]}
-                      >
-                        {form.eventDateInput.trim() || 'DD/MM/AAAA'}
-                      </Text>
-                      <MaterialIcons name="calendar-today" size={18} color="#94A3B8" />
-                    </View>
-                  </Pressable>
                   <View style={styles.dateTimeField}>
-                    <TextInput
-                      style={styles.input}
-                      placeholder="HH:MM"
-                      placeholderTextColor="#64748B"
-                      value={form.eventTimeInput}
-                      keyboardType="numeric"
-                      onChangeText={(text) => {
-                        setStatusMessage(null);
-                        patchForm({ eventTimeInput: formatEventTimeInputMask(text) });
-                      }}
-                    />
+                    <Text style={styles.dateTimeFieldLabel}>Data</Text>
+                    <Pressable
+                      onPress={() => setEventDatePickerVisible(true)}
+                      accessibilityRole="button"
+                      accessibilityLabel="Selecionar data do evento"
+                    >
+                      <View style={[styles.input, styles.dateInputTrigger]}>
+                        <Text
+                          style={[
+                            styles.dateInputText,
+                            !form.eventDateInput.trim() && styles.dateInputPlaceholder,
+                          ]}
+                        >
+                          {form.eventDateInput.trim() || 'DD/MM/AAAA'}
+                        </Text>
+                        <MaterialIcons name="calendar-today" size={18} color="#94A3B8" />
+                      </View>
+                    </Pressable>
+                  </View>
+                  <View style={styles.dateTimeField}>
+                    <Text style={styles.dateTimeFieldLabel}>Início</Text>
+                    <Pressable
+                      onPress={() => setEventTimePickerVisible(true)}
+                      accessibilityRole="button"
+                      accessibilityLabel="Selecionar horário de início"
+                    >
+                      <View style={[styles.input, styles.dateInputTrigger]}>
+                        <Text
+                          style={[
+                            styles.dateInputText,
+                            !form.eventTimeInput.trim() && styles.dateInputPlaceholder,
+                          ]}
+                        >
+                          {form.eventTimeInput.trim() || 'HH:MM'}
+                        </Text>
+                        <MaterialIcons name="schedule" size={18} color="#94A3B8" />
+                      </View>
+                    </Pressable>
+                  </View>
+                  <View style={styles.dateTimeField}>
+                    <Text style={styles.dateTimeFieldLabel}>Término</Text>
+                    <Pressable
+                      onPress={() => setEventEndTimePickerVisible(true)}
+                      accessibilityRole="button"
+                      accessibilityLabel="Selecionar horário de término"
+                    >
+                      <View style={[styles.input, styles.dateInputTrigger]}>
+                        <Text
+                          style={[
+                            styles.dateInputText,
+                            !form.eventEndTimeInput.trim() && styles.dateInputPlaceholder,
+                          ]}
+                        >
+                          {form.eventEndTimeInput.trim() || 'HH:MM'}
+                        </Text>
+                        <MaterialIcons name="schedule" size={18} color="#94A3B8" />
+                      </View>
+                    </Pressable>
                   </View>
                 </View>
 
@@ -2204,6 +2235,30 @@ export default function MaintenanceDashboard() {
           onConfirm={(dateInput) => {
             setStatusMessage(null);
             patchForm({ eventDateInput: dateInput });
+          }}
+        />
+        <ClockTimePickerModal
+          visible={eventTimePickerVisible}
+          value={form.eventTimeInput}
+          title="Início do evento"
+          onClose={() => setEventTimePickerVisible(false)}
+          onConfirm={(timeHm) => {
+            setStatusMessage(null);
+            const nextEnd = addOneHourHm(timeHm);
+            patchForm({
+              eventTimeInput: timeHm,
+              eventEndTimeInput: nextEnd ?? form.eventEndTimeInput,
+            });
+          }}
+        />
+        <ClockTimePickerModal
+          visible={eventEndTimePickerVisible}
+          value={form.eventEndTimeInput || form.eventTimeInput}
+          title="Término do evento"
+          onClose={() => setEventEndTimePickerVisible(false)}
+          onConfirm={(timeHm) => {
+            setStatusMessage(null);
+            patchForm({ eventEndTimeInput: timeHm });
           }}
         />
 
@@ -3036,6 +3091,12 @@ const styles = StyleSheet.create({
     flexBasis: 140,
     minWidth: 120,
     maxWidth: '100%',
+  },
+  dateTimeFieldLabel: {
+    color: '#64748B',
+    fontSize: 12,
+    fontWeight: '600',
+    marginBottom: 4,
   },
   dateInputTrigger: {
     flexDirection: 'row',

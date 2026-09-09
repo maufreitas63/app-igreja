@@ -18,7 +18,7 @@ export function MinimalExpandedEventBar({ menuButton }: Props) {
   }
 
   const local = expandedEvent.event_local?.trim() || 'Sem local informado';
-  const meta = formatEventDateTimeLabel(expandedEvent.event_date);
+  const meta = formatEventDateTimeLabel(expandedEvent.event_date, expandedEvent.event_end_date);
 
   return (
     <View style={styles.row}>

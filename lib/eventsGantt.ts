@@ -10,6 +10,7 @@ export type GanttSourceEvent = {
   id: string;
   name: string;
   event_date: string | null;
+  event_end_date?: string | null;
   event_local: string | null;
   is_locked: boolean | null;
 };
@@ -139,7 +140,8 @@ export const buildEventsGanttModel = (
         calendarDate,
         calendarMonth: toCalendarMonth(calendarDate),
         eventDate: event.event_date,
-        timeLabel: formatEventDateTimeLabel(event.event_date).split(' às ').pop() ?? '',
+        timeLabel:
+          formatEventDateTimeLabel(event.event_date, event.event_end_date).split(' às ').pop() ?? '',
         localLabel: event.event_local?.trim() ?? '',
         isPublished: isEventPublished(event.is_locked),
       };

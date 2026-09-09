@@ -43,6 +43,8 @@ type Props = {
   eventName?: string | null;
   /** `events.event_date` — horário de parede da igreja, para o .ics. */
   eventDate?: string | null;
+  /** `events.event_end_date` — término do compromisso no .ics. */
+  eventEndDate?: string | null;
   /** `events.event_local` — local do compromisso no .ics. */
   eventLocal?: string | null;
   title?: string;
@@ -94,6 +96,7 @@ export const FamilyRegistrationList = ({
   eventId,
   eventName = null,
   eventDate = null,
+  eventEndDate = null,
   eventLocal = null,
   title,
   onRegistrationChange,
@@ -132,8 +135,9 @@ export const FamilyRegistrationList = ({
       titulo: resolvedEventName?.trim() || 'Evento',
       local: eventLocal,
       eventDate,
+      eventEndDate,
     });
-  }, [eventDate, eventId, eventLocal, resolvedEventName]);
+  }, [eventDate, eventEndDate, eventId, eventLocal, resolvedEventName]);
 
   const hasFamilyId = Boolean(familyId?.trim());
   const { members, loading, error } = useFamilyAudienceMembers(

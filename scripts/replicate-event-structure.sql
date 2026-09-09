@@ -32,6 +32,7 @@ begin
   insert into public.events (
     name,
     event_date,
+    event_end_date,
     event_local,
     max_capacity,
     kids_room,
@@ -46,6 +47,8 @@ begin
   values (
     v_source.name,
     v_source.event_date + make_interval(days => v_offset),
+    coalesce(v_source.event_end_date, v_source.event_date + interval '1 hour')
+      + make_interval(days => v_offset),
     v_source.event_local,
     v_source.max_capacity,
     v_source.kids_room,

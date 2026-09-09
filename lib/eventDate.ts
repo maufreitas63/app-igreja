@@ -89,6 +89,28 @@ export function getEventWallClockParts(
 export const formatEventWallClockIso = (parts: EventWallClockParts) =>
   `${parts.year}-${pad2(parts.month)}-${pad2(parts.day)}T${pad2(parts.hour)}:${pad2(parts.minute)}:00${EVENT_LOCAL_OFFSET}`;
 
+/** Soma 1 hora no relógio de parede (23:00 → 00:00 do dia seguinte). */
+export const addOneHourToEventWallClock = (value: string | null | undefined) => {
+  const parts = getEventWallClockParts(value);
+  if (!parts) {
+    return null;
+  }
+
+  let { year, month, day, hour, minute } = parts;
+  hour += 1;
+
+  if (hour >= 24) {
+    hour -= 24;
+    const next = new Date(year, month - 1, day);
+    next.setDate(next.getDate() + 1);
+    year = next.getFullYear();
+    month = next.getMonth() + 1;
+    day = next.getDate();
+  }
+
+  return formatEventWallClockIso({ year, month, day, hour, minute });
+};
+
 export const parseEventDateParts = (value: string | null | undefined): ParsedEventDateParts | null => {
   const wall = getEventWallClockParts(value);
   if (!wall) {
@@ -177,7 +199,10 @@ export const isEventTodayOrFuture = (value: string | null | undefined) => {
   return eventDay >= getTodayCalendarDateInAppTimezone();
 };
 
-export const formatEventDateTimeLabel = (value: string | null | undefined) => {
+export const formatEventDateTimeLabel = (
+  value: string | null | undefined,
+  endValue?: string | null
+) => {
   const eventDate = parseEventDateParts(value);
   if (!eventDate) {
     return '';
@@ -185,7 +210,9 @@ export const formatEventDateTimeLabel = (value: string | null | undefined) => {
 
   const today = getTodayCalendarDateInAppTimezone();
   const eventDay = getEventCalendarDate(value);
-  const time = `${eventDate.hour}:${eventDate.minute}`;
+  const startTime = `${eventDate.hour}:${eventDate.minute}`;
+  const endParts = parseEventDateParts(endValue ?? addOneHourToEventWallClock(value));
+  const time = endParts ? `${startTime}–${endParts.hour}:${endParts.minute}` : startTime;
 
   if (eventDay && eventDay === today) {
     return `Hoje às ${time}`;

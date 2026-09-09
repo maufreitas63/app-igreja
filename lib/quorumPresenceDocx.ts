@@ -23,6 +23,7 @@ import {
 export type QuorumPresenceDocxInput = {
   eventName: string;
   eventDate: string | null;
+  eventEndDate?: string | null;
   eventLocal: string | null;
   rows: QuorumRegistryRow[];
 };
@@ -108,7 +109,7 @@ export const buildQuorumPresenceDocx = (input: QuorumPresenceDocxInput) => {
           paragraph(QUORUM_PRESENCE_DOCUMENT_TITLE, { bold: true }),
           paragraph(eventName, { bold: true }),
           labelLine('Data', formatEventDateDocumentLabel(input.eventDate)),
-          labelLine('Horário', formatEventTimeRangeLabel(input.eventDate)),
+          labelLine('Horário', formatEventTimeRangeLabel(input.eventDate, input.eventEndDate)),
           labelLine('Local', local),
           paragraph(''),
           paragraph(QUORUM_PRESENCE_INTRO_TEXT, { italics: true }),

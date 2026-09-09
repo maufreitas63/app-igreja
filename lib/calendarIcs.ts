@@ -10,7 +10,7 @@ import * as Sharing from 'expo-sharing';
 import { Platform } from 'react-native';
 
 /** Duração padrão quando o evento no Supabase não tem horário de término. */
-export const DEFAULT_ICS_DURATION_MINUTES = 120;
+export const DEFAULT_ICS_DURATION_MINUTES = 60;
 
 export interface EventoAgenda {
   titulo: string;
@@ -193,6 +193,7 @@ export function eventoAgendaFromChurchEvent(input: {
   descricao?: string;
   local?: string | null;
   eventDate: string | Date | null | undefined;
+  eventEndDate?: string | Date | null;
   dataFim?: Date;
   durationMinutes?: number;
 }): EventoAgenda | null {
@@ -213,6 +214,13 @@ export function eventoAgendaFromChurchEvent(input: {
     return null;
   }
 
+  let parsedEnd: Date | null = null;
+  if (input.eventEndDate instanceof Date && !Number.isNaN(input.eventEndDate.getTime())) {
+    parsedEnd = input.eventEndDate;
+  } else if (typeof input.eventEndDate === 'string') {
+    parsedEnd = parseEventDateParts(input.eventEndDate)?.date ?? null;
+  }
+
   const durationMs =
     (input.durationMinutes && input.durationMinutes > 0
       ? input.durationMinutes
@@ -221,7 +229,9 @@ export function eventoAgendaFromChurchEvent(input: {
   const dataFim =
     input.dataFim && !Number.isNaN(input.dataFim.getTime())
       ? input.dataFim
-      : new Date(dataInicio.getTime() + durationMs);
+      : parsedEnd && !Number.isNaN(parsedEnd.getTime())
+        ? parsedEnd
+        : new Date(dataInicio.getTime() + durationMs);
 
   return {
     titulo,
@@ -342,6 +352,7 @@ export async function offerConfirmedEventToCalendar(input: {
   titulo: string;
   local?: string | null;
   eventDate: string | Date | null | undefined;
+  eventEndDate?: string | Date | null;
 }): Promise<void> {
   const titulo = input.titulo.trim() || 'Evento';
   const evento = eventoAgendaFromChurchEvent({
@@ -349,6 +360,7 @@ export async function offerConfirmedEventToCalendar(input: {
     titulo,
     local: input.local,
     eventDate: input.eventDate,
+    eventEndDate: input.eventEndDate,
     descricao: `Compromisso confirmado no Conecta: ${titulo}.`,
   });
 

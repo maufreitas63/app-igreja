@@ -187,6 +187,7 @@ export function FamilyAgendaModal({ visible, initialEventId, onClose, onNeedsAud
         eventId={selectedEvent.id}
         eventName={selectedEvent.name}
         eventDate={selectedEvent.event_date}
+        eventEndDate={selectedEvent.event_end_date}
         eventLocal={selectedEvent.event_local}
         title={`Audiência para ${selectedEvent.name}`}
         onRegistrationChange={handleAudienceChange}
