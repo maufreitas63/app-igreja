@@ -318,6 +318,15 @@ export async function checkinPastoralSlot(slotId: string) {
   };
 }
 
+export async function deletePastoralSlot(slotId: string) {
+  const payload = await rpcJson('delete_pastoral_slot', { p_slot_id: slotId });
+
+  return {
+    success: payload.success === true,
+    message: String(payload.message ?? 'Falha ao excluir.'),
+  };
+}
+
 export async function fetchMyPastoralSlotNotices(): Promise<PastoralSlotNotice[]> {
   try {
     const payload = await rpcJson('list_my_pastoral_slot_notices');

@@ -13,7 +13,6 @@ import {
   type PastoralAttendant,
 } from '@/lib/pastoralSlotsApi';
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
-import { VIGILANCE_SCALES_UI } from '@/lib/dashboardCardThemes';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
@@ -77,18 +76,25 @@ export function PastoralSchedulePanel({ profileId, vigilance = false }: Props) {
     [slots, tipo]
   );
 
-  const slotsByDay = useMemo(() => {
-    const groups = new Map<string, AvailablePastoralSlot[]>();
+  const slotOptions = useMemo(
+    () =>
+      filteredSlots.map((slot) => ({
+        value: slot.id,
+        label: `${formatPastoralSlotTimeRange(slot.data_hora_inicio, slot.data_hora_fim)} · ${slot.pastor_name} · ${PASTORAL_ATTENDANCE_TYPE_LABEL[slot.tipo_atendimento]}`,
+      })),
+    [filteredSlots]
+  );
 
-    for (const slot of filteredSlots) {
-      const key = slot.data_hora_inicio.slice(0, 10);
-      const list = groups.get(key) ?? [];
-      list.push(slot);
-      groups.set(key, list);
+  const selectedSlot = useMemo(
+    () => filteredSlots.find((slot) => slot.id === slotId) ?? null,
+    [filteredSlots, slotId]
+  );
+
+  useEffect(() => {
+    if (slotId && !filteredSlots.some((slot) => slot.id === slotId)) {
+      setSlotId('');
     }
-
-    return [...groups.entries()].sort(([left], [right]) => left.localeCompare(right));
-  }, [filteredSlots]);
+  }, [filteredSlots, slotId]);
 
   const handleBook = async () => {
     if (!slotId) {
@@ -117,7 +123,7 @@ export function PastoralSchedulePanel({ profileId, vigilance = false }: Props) {
     <View style={styles.wrap}>
       <Text style={[styles.title, vigilance && styles.titleVigilance]}>Agendar atendimento</Text>
       <Text style={[styles.hint, vigilance && styles.hintVigilance]}>
-        Escolha o atendente. Os horários só aparecem se ele já os tiver publicado na agenda.
+        Escolha o atendente, selecione um horário publicado e confirme o agendamento.
       </Text>
 
       {loading ? (
@@ -157,41 +163,44 @@ export function PastoralSchedulePanel({ profileId, vigilance = false }: Props) {
               </Text>
               <Text style={[styles.emptyBody, vigilance && styles.hintVigilance]}>
                 Não é um calendário livre. O atendente abre os horários na manutenção
-                (Coração Aberto → agenda). Quando houver vaga, os dias e os horários
-                aparecem aqui para você tocar e confirmar.
+                (Coração Aberto → agenda). Quando houver vaga, eles aparecem nesta tela
+                para você escolher e confirmar.
               </Text>
             </View>
           ) : (
-            slotsByDay.map(([day, daySlots]) => (
-              <View key={day} style={styles.dayBlock}>
-                <Text style={[styles.dayTitle, vigilance && styles.slotTitleVigilance]}>
-                  {new Date(`${day}T12:00:00`).toLocaleDateString('pt-BR', {
-                    weekday: 'long',
-                    day: '2-digit',
-                    month: '2-digit',
-                  })}
-                </Text>
-                {daySlots.map((slot) => {
-                  const selected = slot.id === slotId;
+            <>
+              <DropdownSelect
+                options={slotOptions}
+                selectedValue={slotId}
+                onValueChange={setSlotId}
+                modalTitle="Horário disponível"
+                placeholder="Selecione um horário disponível"
+                searchable={slotOptions.length > 8}
+                variant={vigilance ? 'minimal' : 'vigilance'}
+              />
 
-                  return (
-                    <TouchableOpacity
-                      key={slot.id}
-                      style={[styles.slot, selected && styles.slotSelected, vigilance && styles.slotVigilance]}
-                      onPress={() => setSlotId(slot.id)}
-                      activeOpacity={0.85}
-                    >
-                      <Text style={[styles.slotTitle, vigilance && styles.slotTitleVigilance]}>
-                        {formatPastoralSlotTimeRange(slot.data_hora_inicio, slot.data_hora_fim)}
-                      </Text>
-                      <Text style={[styles.slotMeta, vigilance && styles.hintVigilance]}>
-                        {slot.pastor_name} · {PASTORAL_ATTENDANCE_TYPE_LABEL[slot.tipo_atendimento]}
-                      </Text>
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
-            ))
+              {selectedSlot ? (
+                <View style={[styles.selectedBox, vigilance && styles.selectedBoxVigilance]}>
+                  <Text style={[styles.selectedLabel, vigilance && styles.hintVigilance]}>
+                    Horário selecionado
+                  </Text>
+                  <Text style={[styles.slotTitle, vigilance && styles.slotTitleVigilance]}>
+                    {formatPastoralSlotTimeRange(
+                      selectedSlot.data_hora_inicio,
+                      selectedSlot.data_hora_fim
+                    )}
+                  </Text>
+                  <Text style={[styles.slotMeta, vigilance && styles.hintVigilance]}>
+                    {selectedSlot.pastor_name} ·{' '}
+                    {PASTORAL_ATTENDANCE_TYPE_LABEL[selectedSlot.tipo_atendimento]}
+                  </Text>
+                </View>
+              ) : (
+                <Text style={[styles.hint, vigilance && styles.hintVigilance]}>
+                  Abra a caixa, escolha data e horário, depois confirme.
+                </Text>
+              )}
+            </>
           )}
 
           <DropdownSelect
@@ -274,30 +283,23 @@ const styles = StyleSheet.create({
     color: '#FCA5A5',
     textAlign: 'center',
   },
-  dayBlock: {
-    gap: 8,
-  },
-  dayTitle: {
-    color: '#C4B5FD',
-    fontWeight: '800',
-    fontSize: 12,
-    textTransform: 'capitalize',
-    textAlign: 'center',
-  },
-  slot: {
+  selectedBox: {
     borderWidth: 1,
-    borderColor: 'rgba(196, 181, 253, 0.35)',
+    borderColor: 'rgba(196, 181, 253, 0.45)',
     borderRadius: 10,
-    padding: 10,
-    gap: 2,
+    padding: 12,
+    gap: 4,
+    backgroundColor: 'rgba(124, 58, 237, 0.12)',
   },
-  slotVigilance: {
-    borderColor: VIGILANCE_SCALES_UI.border,
-    backgroundColor: '#FFFFFF',
-  },
-  slotSelected: {
+  selectedBoxVigilance: {
     borderColor: '#3A96DD',
-    backgroundColor: 'rgba(58, 150, 221, 0.12)',
+    backgroundColor: '#F0F7FF',
+  },
+  selectedLabel: {
+    color: '#94A3B8',
+    fontSize: 11,
+    fontWeight: '700',
+    textTransform: 'uppercase',
   },
   slotTitle: {
     color: '#F8FAFC',

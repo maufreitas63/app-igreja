@@ -1,9 +1,16 @@
 import { SegmentChipRow } from '@/components/ui/SegmentChipRow';
+import { MonthlyDatePickerModal } from '@/components/ui/MonthlyDatePickerModal';
 import { maintenancePanelStyles } from '@/lib/maintenanceCardStyles';
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
+import { requestConfirmDialog } from '@/lib/confirmDialogHost';
+import {
+  calendarDateInputToBr,
+  calendarDateInputToIso,
+} from '@/lib/monthlyDatePicker';
 import {
   addDaysIso,
   checkinPastoralSlot,
+  deletePastoralSlot,
   fetchMyPastoralAgenda,
   formatPastoralSlotTimeRange,
   PASTORAL_ATTENDANCE_TYPE_LABEL,
@@ -13,9 +20,11 @@ import {
   type PastoralAgendaSlot,
   type PastoralAttendanceType,
 } from '@/lib/pastoralSlotsApi';
+import { MaterialIcons } from '@expo/vector-icons';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
+  Pressable,
   StyleSheet,
   Switch,
   Text,
@@ -46,6 +55,7 @@ export function MaintenancePastoralAgendaPanel({ isActive = true, minimal = fals
   const [endTime, setEndTime] = useState('15:00');
   const [tipo, setTipo] = useState<PastoralAttendanceType>('presencial');
   const [published, setPublished] = useState(true);
+  const [calendarOpen, setCalendarOpen] = useState(false);
 
   const weekEnd = useMemo(() => addDaysIso(weekStart, 7), [weekStart]);
 
@@ -129,6 +139,31 @@ export function MaintenancePastoralAgendaPanel({ isActive = true, minimal = fals
     }
   };
 
+  const handleDelete = async (slot: PastoralAgendaSlot) => {
+    const confirmed = await requestConfirmDialog({
+      title: 'Excluir horário',
+      message: `Excluir ${formatPastoralSlotTimeRange(slot.data_hora_inicio, slot.data_hora_fim)}? Quem ainda não reservou deixa de ver esta vaga.`,
+      confirmLabel: 'Excluir',
+      cancelLabel: 'Cancelar',
+      destructive: true,
+    });
+
+    if (!confirmed) {
+      return;
+    }
+
+    const result = await deletePastoralSlot(slot.id);
+    Toast.show({
+      type: result.success ? 'success' : 'error',
+      text1: 'Agenda',
+      text2: result.message,
+    });
+
+    if (result.success) {
+      await load();
+    }
+  };
+
   return (
     <View style={styles.wrap}>
       <Text style={minimal ? styles.weekTitleMinimal : styles.weekTitle}>
@@ -151,13 +186,15 @@ export function MaintenancePastoralAgendaPanel({ isActive = true, minimal = fals
       </View>
 
       <View style={styles.form}>
-        <TextInput
-          style={maintenancePanelStyles.input}
-          value={date}
-          onChangeText={setDate}
-          placeholder="Data (AAAA-MM-DD)"
-          placeholderTextColor="#94A3B8"
-        />
+        <Pressable
+          style={styles.dateTrigger}
+          onPress={() => setCalendarOpen(true)}
+          accessibilityRole="button"
+          accessibilityLabel="Abrir calendário da data do horário"
+        >
+          <Text style={styles.dateTriggerText}>{calendarDateInputToBr(date)}</Text>
+          <MaterialIcons name="calendar-today" size={18} color="#94A3B8" />
+        </Pressable>
         <View style={styles.timeRow}>
           <TextInput
             style={[maintenancePanelStyles.input, styles.timeInput]}
@@ -230,6 +267,16 @@ export function MaintenancePastoralAgendaPanel({ isActive = true, minimal = fals
                 >
                   <Text style={styles.sealText}>{slot.is_published ? 'Publicado' : 'Rascunho'}</Text>
                 </View>
+                {slot.status === 'disponivel' ? (
+                  <TouchableOpacity
+                    style={styles.deleteBtn}
+                    onPress={() => void handleDelete(slot)}
+                    accessibilityRole="button"
+                    accessibilityLabel="Excluir horário"
+                  >
+                    <Text style={styles.deleteBtnText}>Excluir</Text>
+                  </TouchableOpacity>
+                ) : null}
                 {slot.can_checkin ? (
                   <TouchableOpacity style={styles.checkin} onPress={() => void handleCheckin(slot.id)}>
                     <Text style={styles.checkinText}>Check-in de Atendimento</Text>
@@ -240,6 +287,22 @@ export function MaintenancePastoralAgendaPanel({ isActive = true, minimal = fals
           </View>
         ))
       )}
+
+      <MonthlyDatePickerModal
+        visible={calendarOpen}
+        value={date}
+        title="Data do horário"
+        variant={minimal ? 'minimal' : 'default'}
+        onClose={() => setCalendarOpen(false)}
+        onConfirm={(dateInput) => {
+          const iso = calendarDateInputToIso(dateInput);
+          if (!iso) {
+            return;
+          }
+          setDate(iso);
+          setWeekStart(startOfWeekIso(new Date(`${iso}T12:00:00`)));
+        }}
+      />
     </View>
   );
 }
@@ -279,6 +342,22 @@ const styles = StyleSheet.create({
     borderColor: '#E2E8F0',
     borderRadius: 10,
     padding: 10,
+  },
+  dateTrigger: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderWidth: 1,
+    borderColor: '#CBD5E1',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    backgroundColor: '#FFFFFF',
+  },
+  dateTriggerText: {
+    color: '#1E3A5F',
+    fontSize: 14,
+    flex: 1,
   },
   timeRow: {
     flexDirection: 'row',
@@ -360,6 +439,18 @@ const styles = StyleSheet.create({
   },
   checkinText: {
     color: '#FFFFFF',
+    fontSize: 11,
+    fontWeight: '800',
+  },
+  deleteBtn: {
+    borderWidth: 1,
+    borderColor: '#B91C1C',
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+  },
+  deleteBtnText: {
+    color: '#B91C1C',
     fontSize: 11,
     fontWeight: '800',
   },
