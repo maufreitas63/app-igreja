@@ -16,6 +16,7 @@ import {
 import { formatEventCapacityLabel, isUnlimitedEventCapacity, UNLIMITED_EVENT_CAPACITY_LABEL } from '@/lib/eventCapacity';
 import { formatBrazilCepInput } from '@/lib/inputMasks';
 import { MINIMAL_TYPO, MINIMAL_UI } from '@/lib/minimalUiTheme';
+import { AppSwitch } from '@/components/ui/AppSwitch';
 import { MaterialIcons } from '@expo/vector-icons';
 import React, { useEffect, useMemo, useState } from 'react';
 import {
@@ -24,7 +25,6 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
-  Switch,
   Text,
   TextInput,
   View,
@@ -559,11 +559,9 @@ export function EventFavoriteLocationPickerModal({
 
               <View style={styles.switchRow}>
                 <Text style={styles.switchLabel}>Ativo</Text>
-                <Switch
+                <AppSwitch
                   value={form.isActive}
                   onValueChange={(isActive) => patchForm({ isActive })}
-                  trackColor={{ false: MINIMAL_UI.divider, true: MINIMAL_UI.accent }}
-                  thumbColor={MINIMAL_UI.background}
                 />
               </View>
 

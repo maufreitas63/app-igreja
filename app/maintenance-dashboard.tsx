@@ -8,7 +8,7 @@ import {
   validateMaintenanceEventForm,
   type MaintenanceEventFormState,
 } from '@/lib/maintenanceEventForm';
-import { ActiveScreenBadge } from '@/components/ui/ActiveScreenBadge';
+import { AppSwitch } from '@/components/ui/AppSwitch';
 import { EventFavoriteLocationPickerModal } from '@/components/EventFavoriteLocationPickerModal';
 import { MonthlyDatePickerModal } from '@/components/ui/MonthlyDatePickerModal';
 import { EventsGanttChart } from '@/components/EventsGanttChart';
@@ -117,7 +117,6 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
-  Switch,
   Text,
   TextInput,
   TouchableOpacity,
@@ -136,8 +135,6 @@ const ROOM_CHIP_CUSTOM_ACTIVE: ViewStyle = {
 
 /** Fundo claro no padrão vigilance. */
 const MAINTENANCE_SCREEN_GRADIENT = ['#FFFFFF', '#F0F9FF'] as const;
-
-const MINIMAL_SWITCH_TRACK = { false: MINIMAL_UI.divider, true: MINIMAL_UI.accent } as const;
 
 const STATIC_MAINTENANCE_PANEL_INSETS = computeMaintenancePanelInsets(390);
 /** Padding horizontal de `MinimalScreenLayout` (`flexContent`). */
@@ -2041,11 +2038,9 @@ export default function MaintenanceDashboard() {
                         : 'Rascunho — oculto para membros; no cronograma aparece em laranja'}
                     </Text>
                   </View>
-                  <Switch
+                  <AppSwitch
                     value={form.isPublished}
                     onValueChange={(isPublished) => patchForm({ isPublished })}
-                    trackColor={isMinimalPresentation ? MINIMAL_SWITCH_TRACK : { false: '#475569', true: '#22C55E' }}
-                    thumbColor={isMinimalPresentation ? MINIMAL_UI.background : '#F8FAFC'}
                   />
                 </View>
                 {isEventDateInPast && form.isPublished && !canBypassEventPastDateLock ? (

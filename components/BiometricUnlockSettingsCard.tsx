@@ -5,6 +5,7 @@ import {
   isBiometricUnlockEnabled,
 } from '@/lib/biometricAuth';
 import { getStoredProfileId, getStoredUserPhone } from '@/lib/userSession';
+import { AppSwitch } from '@/components/ui/AppSwitch';
 import { MaterialIcons } from '@expo/vector-icons';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
@@ -12,7 +13,6 @@ import {
   Alert,
   Platform,
   StyleSheet,
-  Switch,
   Text,
   View,
 } from 'react-native';
@@ -135,12 +135,10 @@ export function BiometricUnlockSettingsCard({
         {loading || saving ? (
           <ActivityIndicator color={accentColor} />
         ) : (
-          <Switch
+          <AppSwitch
             accessibilityLabel={`Ativar entrada com ${label}`}
             value={enabled}
             onValueChange={handleToggle}
-            trackColor={{ false: '#CBD5E1', true: accentColor }}
-            thumbColor="#FFFFFF"
           />
         )}
       </View>

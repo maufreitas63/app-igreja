@@ -18,6 +18,9 @@ export const MINIMAL_UI = {
   onDark: '#FFFFFF',
 } as const;
 
+export const MINIMAL_SWITCH_TRACK = { false: MINIMAL_UI.divider, true: MINIMAL_UI.accent } as const;
+export const MINIMAL_SWITCH_THUMB = MINIMAL_UI.background;
+
 export const MINIMAL_ICON = {
   logo: 180,
   menu: 26,

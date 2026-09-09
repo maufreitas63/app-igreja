@@ -1,4 +1,5 @@
 import { CardLoadingState } from '@/components/ui/CardLoadingState';
+import { AppSwitch } from '@/components/ui/AppSwitch';
 import { DropdownSelect } from '@/components/ui/DropdownSelect';
 import { SectionLabel } from '@/components/ui/SectionLabel';
 import { formatShortName } from '@/lib/formatShortName';
@@ -43,7 +44,6 @@ import {
   ActivityIndicator,
   ScrollView,
   StyleSheet,
-  Switch,
   Text,
   TextInput,
   TouchableOpacity,
@@ -1148,16 +1148,10 @@ export function MaintenanceAccessControlCard({
                               {role.roleCode}
                             </Text>
                           </View>
-                          <Switch
+                          <AppSwitch
                             value={role.assigned}
                             onValueChange={(next) => void handleToggleRole(role.roleCode, next)}
                             disabled={busy || rpcMissing || isSaving}
-                            trackColor={
-                              minimal
-                                ? { false: MINIMAL_UI.divider, true: MINIMAL_UI.blueDark }
-                                : { false: '#334155', true: '#4F46E5' }
-                            }
-                            thumbColor={minimal ? '#FFFFFF' : '#F8FAFC'}
                           />
                         </View>
                       );
@@ -1208,18 +1202,13 @@ export function MaintenanceAccessControlCard({
                                 {entry.scaleTypeCode}
                               </Text>
                             </View>
-                            <Switch
+                            <AppSwitch
                               value={entry.assigned}
                               onValueChange={(next) =>
                                 void handleToggleScaleLeadership(entry.scaleTypeId, next)
                               }
                               disabled={busy || rpcMissing || isSaving}
-                              trackColor={
-                                minimal
-                                  ? { false: MINIMAL_UI.divider, true: MINIMAL_UI.blueDark }
-                                  : { false: '#334155', true: '#4F46E5' }
-                              }
-                              thumbColor={minimal ? '#FFFFFF' : '#F8FAFC'}
+
                             />
                           </View>
                         );
@@ -1443,36 +1432,25 @@ export function MaintenanceAccessControlCard({
                             <Text style={[styles.toggleLabel, minimal && styles.toggleLabelMinimal]}>
                               Ver
                             </Text>
-                            <Switch
+                            <AppSwitch
                               value={entry.canView}
                               onValueChange={(next) =>
                                 void handleToggleResourceRoleGrant(entry, 'canView', next)
                               }
                               disabled={busy || rpcMissing || isSaving}
-                              trackColor={
-                                minimal
-                                  ? { false: MINIMAL_UI.divider, true: MINIMAL_UI.blueDark }
-                                  : { false: '#334155', true: '#4F46E5' }
-                              }
-                              thumbColor={minimal ? '#FFFFFF' : '#F8FAFC'}
+
                             />
                           </View>
                           <View style={styles.toggleCell}>
                             <Text style={[styles.toggleLabel, minimal && styles.toggleLabelMinimal]}>
                               Editar
                             </Text>
-                            <Switch
+                            <AppSwitch
                               value={entry.canUpdate}
                               onValueChange={(next) =>
                                 void handleToggleResourceRoleGrant(entry, 'canUpdate', next)
                               }
                               disabled={busy || rpcMissing || isSaving || !entry.canView}
-                              trackColor={
-                                minimal
-                                  ? { false: MINIMAL_UI.divider, true: MINIMAL_UI.blueDark }
-                                  : { false: '#334155', true: '#4F46E5' }
-                              }
-                              thumbColor={minimal ? '#FFFFFF' : '#F8FAFC'}
                             />
                           </View>
                         </View>
@@ -1692,32 +1670,20 @@ export function MaintenanceAccessControlCard({
                         <Text style={[styles.toggleLabel, minimal && styles.toggleLabelMinimal]}>
                           Ver
                         </Text>
-                        <Switch
+                        <AppSwitch
                           value={grant.canView}
                           onValueChange={(next) => void handleToggleGrant(grant, 'canView', next)}
                           disabled={busy || rpcMissing || isSaving}
-                          trackColor={
-                            minimal
-                              ? { false: MINIMAL_UI.divider, true: MINIMAL_UI.blueDark }
-                              : { false: '#334155', true: '#4F46E5' }
-                          }
-                          thumbColor={minimal ? '#FFFFFF' : '#F8FAFC'}
                         />
                       </View>
                       <View style={styles.toggleCell}>
                         <Text style={[styles.toggleLabel, minimal && styles.toggleLabelMinimal]}>
                           Editar
                         </Text>
-                        <Switch
+                        <AppSwitch
                           value={grant.canUpdate}
                           onValueChange={(next) => void handleToggleGrant(grant, 'canUpdate', next)}
                           disabled={busy || rpcMissing || isSaving || !grant.canView}
-                          trackColor={
-                            minimal
-                              ? { false: MINIMAL_UI.divider, true: MINIMAL_UI.blueDark }
-                              : { false: '#334155', true: '#4F46E5' }
-                          }
-                          thumbColor={minimal ? '#FFFFFF' : '#F8FAFC'}
                         />
                       </View>
                     </View>

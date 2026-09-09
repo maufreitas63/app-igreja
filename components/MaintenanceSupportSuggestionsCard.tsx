@@ -1,4 +1,5 @@
 import { DropdownSelect } from '@/components/ui/DropdownSelect';
+import { AppSwitch } from '@/components/ui/AppSwitch';
 import { MaintenanceHelpInfoTitle } from '@/components/ui/MaintenanceHelpInfoTitle';
 import { VIGILANCE_SCALES_UI } from '@/lib/dashboardCardThemes';
 import { formatPhoneDisplay } from '@/lib/familyRegistration';
@@ -38,7 +39,6 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
-  Switch,
   Text,
   TextInput,
   TouchableOpacity,
@@ -923,11 +923,9 @@ export function MaintenanceSupportSuggestionsCard({
           <Text style={themedStyles.switchTitle}>Notificações no aplicativo</Text>
           <Text style={themedStyles.switchHint}>Registrar atualizações para acompanhamento no histórico.</Text>
         </View>
-        <Switch
+        <AppSwitch
           value={newNotifyInApp}
           onValueChange={setNewNotifyInApp}
-          trackColor={{ false: '#475569', true: '#0EA5E9' }}
-          thumbColor="#F8FAFC"
         />
       </View>
 
@@ -936,11 +934,9 @@ export function MaintenanceSupportSuggestionsCard({
           <Text style={themedStyles.switchTitle}>Autorizar WhatsApp</Text>
           <Text style={themedStyles.switchHint}>Permite receber atualizações da ocorrência por WhatsApp.</Text>
         </View>
-        <Switch
+        <AppSwitch
           value={newWhatsappAuthorized}
           onValueChange={setNewWhatsappAuthorized}
-          trackColor={{ false: '#475569', true: '#22C55E' }}
-          thumbColor="#F8FAFC"
         />
       </View>
 

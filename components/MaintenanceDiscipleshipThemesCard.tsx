@@ -5,6 +5,7 @@ import {
   type DiscipleshipAdminLesson,
   type DiscipleshipAdminModule,
 } from '@/lib/discipleshipTrailAdmin';
+import { AppSwitch } from '@/components/ui/AppSwitch';
 import { isMinisterialGiftsLesson } from '@/lib/discipleshipMinisterialLesson';
 import {
   computeMaintenanceContentHeight,
@@ -17,7 +18,6 @@ import {
   ActivityIndicator,
   ScrollView,
   StyleSheet,
-  Switch,
   Text,
   TextInput,
   TouchableOpacity,
@@ -367,7 +367,7 @@ export function MaintenanceDiscipleshipThemesCard({
                               />
                               <View style={styles.switchRow}>
                                 <Text style={styles.fieldLabelInline}>Lição ativa</Text>
-                                <Switch
+                                <AppSwitch
                                   value={draft.is_active}
                                   onValueChange={(is_active) => setDraft({ ...draft, is_active })}
                                 />

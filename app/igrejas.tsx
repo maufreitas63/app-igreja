@@ -23,6 +23,7 @@ import {
   type SessionIgreja,
 } from '@/lib/tenantSession';
 import { setIgrejaMaeTenantAdmin } from '@/lib/alianca/aliancaApi';
+import { AppSwitch } from '@/components/ui/AppSwitch';
 import { DropdownSelect } from '@/components/ui/DropdownSelect';
 import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -30,7 +31,6 @@ import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   StyleSheet,
-  Switch,
   Text,
   TextInput,
   TouchableOpacity,
@@ -593,7 +593,7 @@ function IgrejasAdminPanel() {
                       <Text style={styles.activeSwitchLabel}>
                         {church.is_active ? 'Ativa' : 'Inativa'}
                       </Text>
-                      <Switch
+                      <AppSwitch
                         value={church.is_active}
                         onValueChange={(nextActive) => {
                           void handleToggleActive(church, nextActive);
@@ -609,8 +609,6 @@ function IgrejasAdminPanel() {
                             ? `Instância ${church.name} ativa`
                             : `Instância ${church.name} inativa`
                         }
-                        trackColor={{ false: '#D0D5DD', true: MINIMAL_UI.blue }}
-                        thumbColor="#FFFFFF"
                       />
                     </View>
                   </View>

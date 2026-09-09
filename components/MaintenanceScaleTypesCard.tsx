@@ -1,4 +1,5 @@
 import { CardLoadingState } from '@/components/ui/CardLoadingState';
+import { AppSwitch } from '@/components/ui/AppSwitch';
 import { useMaintenanceScaleTypes , MAINTENANCE_SCALE_TYPES_SQL_HINT } from '@/hooks/useMaintenanceScaleTypes';
 import {
   computeMaintenanceContentHeight,
@@ -14,7 +15,6 @@ import {
   ActivityIndicator,
   ScrollView,
   StyleSheet,
-  Switch,
   Text,
   TextInput,
   TouchableOpacity,
@@ -327,7 +327,7 @@ export function MaintenanceScaleTypesCard({
             O servo escalado pode pedir substituto do mesmo tipo nesta escala.
           </Text>
         </View>
-        <Switch
+        <AppSwitch
           value={allowSwap}
           onValueChange={setAllowSwap}
           disabled={formBusy || mode === 'create'}

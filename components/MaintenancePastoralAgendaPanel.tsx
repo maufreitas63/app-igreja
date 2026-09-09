@@ -1,5 +1,7 @@
 import { SegmentChipRow } from '@/components/ui/SegmentChipRow';
 import { MonthlyDatePickerModal } from '@/components/ui/MonthlyDatePickerModal';
+import { ClockTimePickerModal } from '@/components/ui/ClockTimePickerModal';
+import { AppSwitch } from '@/components/ui/AppSwitch';
 import { maintenancePanelStyles } from '@/lib/maintenanceCardStyles';
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { requestConfirmDialog } from '@/lib/confirmDialogHost';
@@ -26,7 +28,6 @@ import {
   ActivityIndicator,
   Pressable,
   StyleSheet,
-  Switch,
   Text,
   TextInput,
   TouchableOpacity,
@@ -72,6 +73,7 @@ export function MaintenancePastoralAgendaPanel({ isActive = true, minimal = fals
   const [tipo, setTipo] = useState<PastoralAttendanceType>('presencial');
   const [published, setPublished] = useState(true);
   const [calendarOpen, setCalendarOpen] = useState(false);
+  const [startTimeOpen, setStartTimeOpen] = useState(false);
 
   const weekEnd = useMemo(() => addDaysIso(weekStart, 7), [weekStart]);
 
@@ -213,19 +215,15 @@ export function MaintenancePastoralAgendaPanel({ isActive = true, minimal = fals
         </Pressable>
         <View style={styles.timeRow}>
           <View style={styles.timeSlot}>
-            <TextInput
-              style={[maintenancePanelStyles.input, styles.timeInput]}
-              value={startTime}
-              onChangeText={(value) => {
-                setStartTime(value);
-                const nextEnd = addOneHourHm(value);
-                if (nextEnd) {
-                  setEndTime(nextEnd);
-                }
-              }}
-              placeholder="Início HH:MM"
-              placeholderTextColor="#94A3B8"
-            />
+            <Pressable
+              style={styles.timeTrigger}
+              onPress={() => setStartTimeOpen(true)}
+              accessibilityRole="button"
+              accessibilityLabel="Abrir relógio do horário de início"
+            >
+              <Text style={styles.dateTriggerText}>{startTime}</Text>
+              <MaterialIcons name="schedule" size={18} color="#94A3B8" />
+            </Pressable>
           </View>
           <View style={styles.timeSlot}>
             <TextInput
@@ -249,7 +247,7 @@ export function MaintenancePastoralAgendaPanel({ isActive = true, minimal = fals
         />
         <View style={styles.publishRow}>
           <Text style={styles.hint}>{published ? 'Publicado' : 'Rascunho'}</Text>
-          <Switch value={published} onValueChange={setPublished} />
+          <AppSwitch value={published} onValueChange={setPublished} />
         </View>
         <TouchableOpacity style={styles.primary} onPress={() => void handleSave()} disabled={saving}>
           <Text style={styles.primaryText}>Salvar horário</Text>
@@ -329,6 +327,19 @@ export function MaintenancePastoralAgendaPanel({ isActive = true, minimal = fals
           setWeekStart(startOfWeekIso(new Date(`${iso}T12:00:00`)));
         }}
       />
+      <ClockTimePickerModal
+        visible={startTimeOpen}
+        value={startTime}
+        title="Selecionar horário"
+        onClose={() => setStartTimeOpen(false)}
+        onConfirm={(timeHm) => {
+          setStartTime(timeHm);
+          const nextEnd = addOneHourHm(timeHm);
+          if (nextEnd) {
+            setEndTime(nextEnd);
+          }
+        }}
+      />
     </View>
   );
 }
@@ -388,6 +399,19 @@ const styles = StyleSheet.create({
     color: '#1E3A5F',
     fontSize: 14,
     flex: 1,
+  },
+  timeTrigger: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderWidth: 1,
+    borderColor: '#CBD5E1',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    backgroundColor: '#FFFFFF',
+    width: '100%',
+    minWidth: 0,
   },
   timeRow: {
     flexDirection: 'row',

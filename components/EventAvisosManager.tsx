@@ -8,6 +8,7 @@ import {
 } from '@/lib/eventAvisosApi';
 import { fetchVolunteerOpportunitiesAdmin } from '@/lib/volunteerOpportunitiesApi';
 import { DropdownSelect } from '@/components/ui/DropdownSelect';
+import { AppSwitch } from '@/components/ui/AppSwitch';
 import { showAppToast } from '@/lib/appToast';
 import { confirmDialog } from '@/lib/confirmDialog';
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
@@ -17,7 +18,6 @@ import {
   Platform,
   Pressable,
   StyleSheet,
-  Switch,
   Text,
   TextInput,
   View,
@@ -29,8 +29,6 @@ type Props = {
   /** Abre o formulário já expandido (útil quando é o único conteúdo do painel). */
   defaultExpanded?: boolean;
 };
-
-const MINIMAL_SWITCH_TRACK = { false: MINIMAL_UI.divider, true: MINIMAL_UI.accent } as const;
 
 const emptyDraft = () => ({
   id: null as string | null,
@@ -296,21 +294,19 @@ export function EventAvisosManager({
 
               <View style={styles.publishRow}>
                 <Text style={[styles.fieldLabel, minimal && styles.fieldLabelMinimal]}>Publicado</Text>
-                <Switch
+                <AppSwitch
                   value={draft.isPublished}
                   onValueChange={(isPublished) =>
                     setDraft((current) => ({ ...current, isPublished }))
                   }
                   disabled={saving}
-                  trackColor={minimal ? MINIMAL_SWITCH_TRACK : undefined}
-                  thumbColor={minimal ? MINIMAL_UI.onDark : undefined}
                 />
               </View>
               <View style={styles.publishRow}>
                 <Text style={[styles.fieldLabel, minimal && styles.fieldLabelMinimal]}>
                   Só líderes de células
                 </Text>
-                <Switch
+                <AppSwitch
                   value={draft.audience === 'small_group_leaders'}
                   onValueChange={(onlyLeaders) =>
                     setDraft((current) => ({
@@ -320,15 +316,13 @@ export function EventAvisosManager({
                     }))
                   }
                   disabled={saving}
-                  trackColor={minimal ? MINIMAL_SWITCH_TRACK : undefined}
-                  thumbColor={minimal ? MINIMAL_UI.onDark : undefined}
                 />
               </View>
               <View style={styles.publishRow}>
                 <Text style={[styles.fieldLabel, minimal && styles.fieldLabelMinimal]}>
                   Só perfil ministerial compatível
                 </Text>
-                <Switch
+                <AppSwitch
                   value={draft.audience === 'opportunity_match'}
                   onValueChange={(onlyMatch) =>
                     setDraft((current) => ({
@@ -337,8 +331,6 @@ export function EventAvisosManager({
                     }))
                   }
                   disabled={saving}
-                  trackColor={minimal ? MINIMAL_SWITCH_TRACK : undefined}
-                  thumbColor={minimal ? MINIMAL_UI.onDark : undefined}
                 />
               </View>
               {draft.audience === 'opportunity_match' ? (
