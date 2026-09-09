@@ -69,7 +69,36 @@ export default function RedesSociaisScreen() {
   const websiteUrl = church?.website_url?.trim() || null;
   const instagramUrl = church?.instagram_url?.trim() || null;
   const youtubeUrl = church?.youtube_url?.trim() || null;
-  const hasAny = Boolean(websiteUrl || instagramUrl || youtubeUrl);
+
+  const socialLinks = [
+    websiteUrl
+      ? {
+          key: 'website',
+          label: 'Site',
+          url: websiteUrl,
+          openLabel: 'site oficial',
+          accessibilityLabel: 'Abrir site oficial',
+        }
+      : null,
+    instagramUrl
+      ? {
+          key: 'instagram',
+          label: 'Instagram',
+          url: instagramUrl,
+          openLabel: 'Instagram',
+          accessibilityLabel: 'Abrir Instagram',
+        }
+      : null,
+    youtubeUrl
+      ? {
+          key: 'youtube',
+          label: 'YouTube',
+          url: youtubeUrl,
+          openLabel: 'YouTube',
+          accessibilityLabel: 'Abrir YouTube',
+        }
+      : null,
+  ].filter((item): item is NonNullable<typeof item> => item !== null);
 
   return (
     <MinimalScreenLayout footer={<CloseFooterBar onPress={returnToCaller} />}>
@@ -84,40 +113,26 @@ export default function RedesSociaisScreen() {
         <ActivityIndicator color={MINIMAL_UI.accent} style={styles.loader} />
       ) : (
         <View style={styles.content}>
-          {hasAny ? (
-            <View style={styles.row}>
-              {websiteUrl ? (
+          {socialLinks.length > 0 ? (
+            <View style={styles.list}>
+              {socialLinks.map((item) => (
                 <TouchableOpacity
-                  accessibilityLabel="Abrir site oficial"
+                  key={item.key}
+                  accessibilityLabel={item.accessibilityLabel}
                   accessibilityRole="button"
-                  onPress={() => void openExternalUrl(websiteUrl, 'site oficial')}
-                  style={styles.socialButton}
+                  onPress={() => void openExternalUrl(item.url, item.openLabel)}
+                  style={styles.socialItem}
                 >
-                  <View style={styles.websiteIcon}>
-                    <FontAwesome name="globe" size={MINIMAL_ICON.action} color={MINIMAL_UI.onDark} />
-                  </View>
+                  {item.key === 'website' ? (
+                    <View style={styles.websiteIcon}>
+                      <FontAwesome name="globe" size={MINIMAL_ICON.action} color={MINIMAL_UI.onDark} />
+                    </View>
+                  ) : (
+                    <SocialBrandIcon network={item.key} />
+                  )}
+                  <Text style={styles.socialLabel}>{item.label}</Text>
                 </TouchableOpacity>
-              ) : null}
-              {instagramUrl ? (
-                <TouchableOpacity
-                  accessibilityLabel="Abrir Instagram"
-                  accessibilityRole="button"
-                  onPress={() => void openExternalUrl(instagramUrl, 'Instagram')}
-                  style={styles.socialButton}
-                >
-                  <SocialBrandIcon network="instagram" />
-                </TouchableOpacity>
-              ) : null}
-              {youtubeUrl ? (
-                <TouchableOpacity
-                  accessibilityLabel="Abrir YouTube"
-                  accessibilityRole="button"
-                  onPress={() => void openExternalUrl(youtubeUrl, 'YouTube')}
-                  style={styles.socialButton}
-                >
-                  <SocialBrandIcon network="youtube" />
-                </TouchableOpacity>
-              ) : null}
+              ))}
             </View>
           ) : (
             <Text style={styles.empty}>
@@ -155,19 +170,25 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     paddingHorizontal: 24,
   },
-  row: {
-    flexDirection: 'row',
+  list: {
+    width: '100%',
+    maxWidth: 280,
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: 16,
-    paddingVertical: 12,
+    gap: 28,
+    paddingTop: 12,
+    paddingBottom: 24,
   },
-  socialButton: {
-    width: 44,
-    height: 44,
+  socialItem: {
+    width: '100%',
     alignItems: 'center',
-    justifyContent: 'center',
+    gap: 8,
     ...(Platform.OS === 'web' ? { cursor: 'pointer' as const } : {}),
+  },
+  socialLabel: {
+    color: MINIMAL_UI.blueDark,
+    fontSize: 14,
+    fontWeight: '700',
+    textAlign: 'center',
   },
   websiteIcon: {
     width: 44,
