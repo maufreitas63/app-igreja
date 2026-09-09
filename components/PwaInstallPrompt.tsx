@@ -5,6 +5,7 @@ import { FontAwesome, MaterialIcons } from '@expo/vector-icons';
 import { usePathname } from 'expo-router';
 import React, { useMemo } from 'react';
 import {
+  Modal,
   Platform,
   Pressable,
   StyleSheet,
@@ -32,6 +33,7 @@ export function PwaInstallPrompt() {
     isVisible,
     instructions,
     dismissInstructions,
+    dismissForSession,
     dismissBanner,
     variant,
   } = usePwaInstall();
@@ -49,17 +51,21 @@ export function PwaInstallPrompt() {
   const bottomPad = Math.max(insets.bottom, 12);
 
   return (
-    <View pointerEvents="box-none" style={styles.host}>
-      <Pressable
-        accessibilityLabel="Fechar aviso de instalação"
-        accessibilityRole="button"
-        onPress={() => {
-          dismissInstructions();
-          dismissBanner();
-        }}
-        style={styles.backdrop}
-      />
-      <View style={[styles.card, { marginBottom: bottomPad }]}>
+    <Modal
+      transparent
+      visible
+      animationType="fade"
+      statusBarTranslucent
+      onRequestClose={dismissForSession}
+    >
+      <View style={styles.host}>
+        <Pressable
+          accessibilityLabel="Continuar sem instalar agora"
+          accessibilityRole="button"
+          onPress={dismissForSession}
+          style={styles.backdrop}
+        />
+        <View style={[styles.card, { marginBottom: bottomPad }]}>
         <Pressable
           accessibilityLabel="Fechar aviso de instalação"
           accessibilityRole="button"
@@ -148,22 +154,17 @@ export function PwaInstallPrompt() {
           <Text style={styles.laterButtonText}>Agora não</Text>
         </Pressable>
       </View>
-    </View>
+      </View>
+    </Modal>
   );
 }
 
 const styles = StyleSheet.create({
   host: {
-    position: Platform.OS === 'web' ? ('fixed' as const) : 'absolute',
-    left: 0,
-    right: 0,
-    top: 0,
-    bottom: 0,
-    zIndex: 240,
+    flex: 1,
     paddingHorizontal: 16,
     justifyContent: 'flex-end',
     alignItems: 'center',
-    pointerEvents: 'box-none',
   },
   backdrop: {
     ...StyleSheet.absoluteFillObject,

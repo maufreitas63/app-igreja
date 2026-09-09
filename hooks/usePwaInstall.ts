@@ -20,7 +20,7 @@ export type PwaInstallInstructions = {
   message: string;
 };
 
-const SHOW_DELAY_MS = 900;
+const SHOW_DELAY_MS = 400;
 
 export function usePwaInstall() {
   const deferredPromptRef = useRef<BeforeInstallPromptEvent | null>(getDeferredInstallPrompt());
@@ -81,6 +81,11 @@ export function usePwaInstall() {
     setInstructions(null);
   }, []);
 
+  const dismissForSession = useCallback(() => {
+    setInstructions(null);
+    setIsVisible(false);
+  }, []);
+
   const dismissBanner = useCallback(() => {
     dismissPwaInstallBanner();
     setInstructions(null);
@@ -120,6 +125,7 @@ export function usePwaInstall() {
     isVisible,
     instructions,
     dismissInstructions,
+    dismissForSession,
     dismissBanner,
     variant,
     hasNativePrompt,

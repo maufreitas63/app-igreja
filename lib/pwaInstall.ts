@@ -8,7 +8,7 @@ export type BeforeInstallPromptEvent = Event & {
 
 export type PwaInstallVariant = 'android' | 'ios' | 'ios-other-browser';
 
-export const PWA_INSTALL_DISMISS_KEY = 'pwaInstallBannerDismissedAt.v1';
+export const PWA_INSTALL_DISMISS_KEY = 'pwaInstallBannerDismissedAt.v2';
 export const PWA_INSTALL_DISMISS_TTL_MS = 14 * 24 * 60 * 60 * 1000;
 
 type PromptListener = (prompt: BeforeInstallPromptEvent | null) => void;
