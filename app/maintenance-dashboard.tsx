@@ -1795,8 +1795,8 @@ export default function MaintenanceDashboard() {
                 </View>
 
                 <Text style={styles.fieldLabel}>Data e horário</Text>
-                <View style={styles.dateTimeRow}>
-                  <View style={styles.dateTimeField}>
+                <View style={styles.dateTimeStack}>
+                  <View style={styles.dateTimeFieldFull}>
                     <Text style={styles.dateTimeFieldLabel}>Data</Text>
                     <Pressable
                       onPress={() => setEventDatePickerVisible(true)}
@@ -1816,45 +1816,47 @@ export default function MaintenanceDashboard() {
                       </View>
                     </Pressable>
                   </View>
-                  <View style={styles.dateTimeField}>
-                    <Text style={styles.dateTimeFieldLabel}>Início</Text>
-                    <Pressable
-                      onPress={() => setEventTimePickerVisible(true)}
-                      accessibilityRole="button"
-                      accessibilityLabel="Selecionar horário de início"
-                    >
-                      <View style={[styles.input, styles.dateInputTrigger]}>
-                        <Text
-                          style={[
-                            styles.dateInputText,
-                            !form.eventTimeInput.trim() && styles.dateInputPlaceholder,
-                          ]}
-                        >
-                          {form.eventTimeInput.trim() || 'HH:MM'}
-                        </Text>
-                        <MaterialIcons name="schedule" size={18} color="#94A3B8" />
-                      </View>
-                    </Pressable>
-                  </View>
-                  <View style={styles.dateTimeField}>
-                    <Text style={styles.dateTimeFieldLabel}>Término</Text>
-                    <Pressable
-                      onPress={() => setEventEndTimePickerVisible(true)}
-                      accessibilityRole="button"
-                      accessibilityLabel="Selecionar horário de término"
-                    >
-                      <View style={[styles.input, styles.dateInputTrigger]}>
-                        <Text
-                          style={[
-                            styles.dateInputText,
-                            !form.eventEndTimeInput.trim() && styles.dateInputPlaceholder,
-                          ]}
-                        >
-                          {form.eventEndTimeInput.trim() || 'HH:MM'}
-                        </Text>
-                        <MaterialIcons name="schedule" size={18} color="#94A3B8" />
-                      </View>
-                    </Pressable>
+                  <View style={styles.dateTimeRow}>
+                    <View style={styles.dateTimeField}>
+                      <Text style={styles.dateTimeFieldLabel}>Início</Text>
+                      <Pressable
+                        onPress={() => setEventTimePickerVisible(true)}
+                        accessibilityRole="button"
+                        accessibilityLabel="Selecionar horário de início"
+                      >
+                        <View style={[styles.input, styles.dateInputTrigger]}>
+                          <Text
+                            style={[
+                              styles.dateInputText,
+                              !form.eventTimeInput.trim() && styles.dateInputPlaceholder,
+                            ]}
+                          >
+                            {form.eventTimeInput.trim() || 'HH:MM'}
+                          </Text>
+                          <MaterialIcons name="schedule" size={18} color="#94A3B8" />
+                        </View>
+                      </Pressable>
+                    </View>
+                    <View style={styles.dateTimeField}>
+                      <Text style={styles.dateTimeFieldLabel}>Término</Text>
+                      <Pressable
+                        onPress={() => setEventEndTimePickerVisible(true)}
+                        accessibilityRole="button"
+                        accessibilityLabel="Selecionar horário de término"
+                      >
+                        <View style={[styles.input, styles.dateInputTrigger]}>
+                          <Text
+                            style={[
+                              styles.dateInputText,
+                              !form.eventEndTimeInput.trim() && styles.dateInputPlaceholder,
+                            ]}
+                          >
+                            {form.eventEndTimeInput.trim() || 'HH:MM'}
+                          </Text>
+                          <MaterialIcons name="schedule" size={18} color="#94A3B8" />
+                        </View>
+                      </Pressable>
+                    </View>
                   </View>
                 </View>
 
@@ -3077,10 +3079,21 @@ const styles = StyleSheet.create({
   capacityUnlimitedHintMinimal: {
     color: MINIMAL_UI.textMuted,
   },
+  dateTimeStack: {
+    gap: 10,
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
+  },
   dateTimeRow: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
+    flexWrap: 'nowrap',
     gap: 10,
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
+  },
+  dateTimeFieldFull: {
     width: '100%',
     maxWidth: '100%',
     minWidth: 0,
@@ -3088,8 +3101,8 @@ const styles = StyleSheet.create({
   dateTimeField: {
     flexGrow: 1,
     flexShrink: 1,
-    flexBasis: 140,
-    minWidth: 120,
+    flexBasis: 0,
+    minWidth: 0,
     maxWidth: '100%',
   },
   dateTimeFieldLabel: {

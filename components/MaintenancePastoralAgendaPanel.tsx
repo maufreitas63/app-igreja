@@ -2,7 +2,6 @@ import { SegmentChipRow } from '@/components/ui/SegmentChipRow';
 import { MonthlyDatePickerModal } from '@/components/ui/MonthlyDatePickerModal';
 import { ClockTimePickerModal } from '@/components/ui/ClockTimePickerModal';
 import { AppSwitch } from '@/components/ui/AppSwitch';
-import { maintenancePanelStyles } from '@/lib/maintenanceCardStyles';
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { requestConfirmDialog } from '@/lib/confirmDialogHost';
 import {
@@ -29,7 +28,6 @@ import {
   Pressable,
   StyleSheet,
   Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -74,6 +72,7 @@ export function MaintenancePastoralAgendaPanel({ isActive = true, minimal = fals
   const [published, setPublished] = useState(true);
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [startTimeOpen, setStartTimeOpen] = useState(false);
+  const [endTimeOpen, setEndTimeOpen] = useState(false);
 
   const weekEnd = useMemo(() => addDaysIso(weekStart, 7), [weekStart]);
 
@@ -226,13 +225,15 @@ export function MaintenancePastoralAgendaPanel({ isActive = true, minimal = fals
             </Pressable>
           </View>
           <View style={styles.timeSlot}>
-            <TextInput
-              style={[maintenancePanelStyles.input, styles.timeInput]}
-              value={endTime}
-              onChangeText={setEndTime}
-              placeholder="Fim HH:MM"
-              placeholderTextColor="#94A3B8"
-            />
+            <Pressable
+              style={styles.timeTrigger}
+              onPress={() => setEndTimeOpen(true)}
+              accessibilityRole="button"
+              accessibilityLabel="Abrir relógio do horário de fim"
+            >
+              <Text style={styles.dateTriggerText}>{endTime}</Text>
+              <MaterialIcons name="schedule" size={18} color="#94A3B8" />
+            </Pressable>
           </View>
         </View>
         <SegmentChipRow
@@ -330,7 +331,7 @@ export function MaintenancePastoralAgendaPanel({ isActive = true, minimal = fals
       <ClockTimePickerModal
         visible={startTimeOpen}
         value={startTime}
-        title="Selecionar horário"
+        title="Horário de início"
         onClose={() => setStartTimeOpen(false)}
         onConfirm={(timeHm) => {
           setStartTime(timeHm);
@@ -339,6 +340,13 @@ export function MaintenancePastoralAgendaPanel({ isActive = true, minimal = fals
             setEndTime(nextEnd);
           }
         }}
+      />
+      <ClockTimePickerModal
+        visible={endTimeOpen}
+        value={endTime}
+        title="Horário de fim"
+        onClose={() => setEndTimeOpen(false)}
+        onConfirm={setEndTime}
       />
     </View>
   );
@@ -415,7 +423,7 @@ const styles = StyleSheet.create({
   },
   timeRow: {
     flexDirection: 'row',
-    gap: 8,
+    gap: 6,
     width: '100%',
     minWidth: 0,
     alignSelf: 'stretch',
@@ -424,11 +432,6 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     flexShrink: 1,
     flexBasis: 0,
-    minWidth: 0,
-  },
-  timeInput: {
-    width: '100%',
-    maxWidth: '100%',
     minWidth: 0,
   },
   publishRow: {
