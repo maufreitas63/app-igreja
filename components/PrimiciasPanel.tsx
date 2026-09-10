@@ -1,5 +1,6 @@
 import { PrimiciasCollapsibleSection } from '@/components/PrimiciasCollapsibleSection';
 import { CardLoadingState } from '@/components/ui/CardLoadingState';
+import { offerConfirmedEventToCalendar } from '@/lib/calendarIcs';
 import { formatShortName } from '@/lib/formatShortName';
 import {
   formatPrimiciasIsoDate,
@@ -13,7 +14,15 @@ import {
 } from '@/lib/primiciasApi';
 import { MINIMAL_SECTION_TITLE, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { FontAwesome } from '@expo/vector-icons';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, {
+  forwardRef,
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import Toast from 'react-native-toast-message';
 import {
   ActivityIndicator,
@@ -72,12 +81,22 @@ function ItemRow({ item, donorName, isMine, isAvailableSlot, busy, onPress }: It
   );
 }
 
-export function PrimiciasPanel() {
+export type PrimiciasPanelHandle = {
+  closeWithCalendarOffer: () => Promise<void>;
+};
+
+export const PrimiciasPanel = forwardRef<PrimiciasPanelHandle>(function PrimiciasPanel(_props, ref) {
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [items, setItems] = useState<PrimiciasItem[]>([]);
   const [occurrence, setOccurrence] = useState<PrimiciasOccurrence | null>(null);
+  const itemsRef = useRef(items);
+  const occurrenceRef = useRef(occurrence);
+  const pledgedThisVisitRef = useRef(false);
+
+  itemsRef.current = items;
+  occurrenceRef.current = occurrence;
 
   const load = useCallback(async () => {
     const result = await listPrimiciasItems();
@@ -117,6 +136,28 @@ export function PrimiciasPanel() {
     })).filter((group) => group.items.length > 0);
   }, [items]);
 
+  useImperativeHandle(ref, () => ({
+    closeWithCalendarOffer: async () => {
+      const occ = occurrenceRef.current;
+      const mineItems = itemsRef.current.filter((item) =>
+        item.pledges.some((pledge) => pledge.isMine)
+      );
+
+      if (!pledgedThisVisitRef.current || mineItems.length === 0 || !occ) {
+        return;
+      }
+
+      await offerConfirmedEventToCalendar({
+        id: occ.eventId,
+        titulo: occ.title,
+        local: occ.eventLocal,
+        eventDate: occ.startsAt,
+        eventEndDate: occ.eventEndDate,
+        descricao: `Itens: ${mineItems.map((item) => formatPrimiciasItemLine(item)).join('; ')}`,
+      });
+    },
+  }));
+
   const handleToggle = async (item: PrimiciasItem) => {
     if (busyId) {
       return;
@@ -126,6 +167,9 @@ export function PrimiciasPanel() {
 
     try {
       const result = await togglePrimiciasPledge(item.id);
+      if (result.pledged) {
+        pledgedThisVisitRef.current = true;
+      }
       await load();
       Toast.show({
         type: 'success',
@@ -229,7 +273,7 @@ export function PrimiciasPanel() {
       })}
     </ScrollView>
   );
-}
+});
 
 const styles = StyleSheet.create({
   scroll: {

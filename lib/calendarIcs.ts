@@ -353,6 +353,7 @@ export async function offerConfirmedEventToCalendar(input: {
   local?: string | null;
   eventDate: string | Date | null | undefined;
   eventEndDate?: string | Date | null;
+  descricao?: string | null;
 }): Promise<void> {
   const titulo = input.titulo.trim() || 'Evento';
   const evento = eventoAgendaFromChurchEvent({
@@ -361,7 +362,8 @@ export async function offerConfirmedEventToCalendar(input: {
     local: input.local,
     eventDate: input.eventDate,
     eventEndDate: input.eventEndDate,
-    descricao: `Compromisso confirmado no Conecta: ${titulo}.`,
+    descricao:
+      input.descricao?.trim() || `Compromisso confirmado no Conecta: ${titulo}.`,
   });
 
   if (!evento) {

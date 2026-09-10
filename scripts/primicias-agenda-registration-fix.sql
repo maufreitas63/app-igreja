@@ -326,6 +326,44 @@ begin
 end
 $$;
 
+create or replace function public.primicias_occurrence_json(p_tenant uuid)
+returns jsonb
+language plpgsql
+stable
+security definer
+set search_path = public
+set row_security = off
+as $$
+declare
+  v_occ public.primicias_occurrences%rowtype;
+  v_event public.events%rowtype;
+begin
+  select * into v_occ
+    from public.primicias_occurrences o
+   where o.tenant_id = p_tenant
+     and o.closed_at is null
+   order by o.event_date desc, o.created_at desc
+   limit 1;
+
+  if not found then
+    return null;
+  end if;
+
+  select * into v_event from public.events e where e.id = v_occ.event_id;
+
+  return jsonb_build_object(
+    'id', v_occ.id,
+    'event_id', v_occ.event_id,
+    'event_date', v_occ.event_date,
+    'starts_at', v_event.event_date,
+    'event_end_date', v_event.event_end_date,
+    'event_local', coalesce(nullif(trim(v_event.event_local), ''), 'Campanha Prímicias'),
+    'reset_on', (v_occ.event_date + 10),
+    'title', public.primicias_event_title()
+  );
+end;
+$$;
+
 drop function if exists public.debug_primicias_agenda_state();
 drop function if exists public.debug_primicias_try_insert();
 

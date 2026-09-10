@@ -83,15 +83,25 @@ export function InboxList({
 const styles = StyleSheet.create({
   list: {
     width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
+    alignSelf: 'stretch',
     backgroundColor: MINIMAL_UI.background,
     flexGrow: 0,
+    overflow: 'hidden',
+    ...(Platform.OS === 'web' ? ({ boxSizing: 'border-box' } as object) : null),
   },
   listContent: {
     flexGrow: 0,
+    width: '100%',
+    maxWidth: '100%',
     gap: INBOX_EVENT_ROW_GAP,
   },
   eventButton: {
     width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
+    alignSelf: 'stretch',
     height: INBOX_EVENT_ROW_HEIGHT,
     backgroundColor: MINIMAL_UI.background,
     borderWidth: 1,
@@ -100,11 +110,13 @@ const styles = StyleSheet.create({
     ...NO_BOX_SHADOW,
     paddingVertical: 0,
     paddingHorizontal: 0,
+    overflow: 'hidden',
     ...(Platform.OS === 'web'
       ? {
           cursor: 'pointer',
           appearance: 'none',
           WebkitAppearance: 'none',
+          boxSizing: 'border-box',
         }
       : null),
   },
@@ -113,12 +125,16 @@ const styles = StyleSheet.create({
   },
   row: {
     flex: 1,
+    minWidth: 0,
+    maxWidth: '100%',
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 8,
     paddingHorizontal: 12,
     gap: 6,
     backgroundColor: 'transparent',
+    overflow: 'hidden',
+    ...(Platform.OS === 'web' ? ({ boxSizing: 'border-box' } as object) : null),
   },
   textBlock: {
     flex: 1,

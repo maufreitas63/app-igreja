@@ -303,7 +303,9 @@ export function EventsInboxHome() {
                 maxVisibleRows={EVENTS_VISIBLE_ROWS}
               />
             </View>
-            <HomeInboxPagerNav variant="toAvisos" onPress={() => scrollToPage(1)} />
+            <View style={styles.pagerNavDock}>
+              <HomeInboxPagerNav variant="toAvisos" onPress={() => scrollToPage(1)} />
+            </View>
           </View>
 
           <View style={[styles.page, pageSizeStyle]}>
@@ -391,7 +393,9 @@ export function EventsInboxHome() {
                 </ScrollView>
               )}
             </View>
-            <HomeInboxPagerNav variant="toEventos" onPress={() => scrollToPage(0)} />
+            <View style={styles.pagerNavDock}>
+              <HomeInboxPagerNav variant="toEventos" onPress={() => scrollToPage(0)} />
+            </View>
           </View>
         </ScrollView>
       ) : null}
@@ -421,24 +425,29 @@ const styles = StyleSheet.create({
   pagerContent: {
     alignItems: 'stretch',
     flexGrow: 1,
+    minHeight: '100%',
   },
   page: {
     maxWidth: '100%',
     minWidth: 0,
     flexDirection: 'column',
-    justifyContent: 'space-between',
     backgroundColor: MINIMAL_UI.background,
+    overflow: 'hidden',
   },
   inboxSection: {
-    flexGrow: 0,
-    flexShrink: 1,
+    flex: 1,
+    minHeight: 0,
     width: '100%',
+    maxWidth: '100%',
+    overflow: 'hidden',
     backgroundColor: MINIMAL_UI.background,
   },
   avisosSection: {
     flex: 1,
     minHeight: 0,
     width: '100%',
+    maxWidth: '100%',
+    overflow: 'hidden',
   },
   avisosList: {
     flex: 1,
@@ -474,6 +483,12 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     paddingVertical: 24,
     fontSize: 14,
+  },
+  pagerNavDock: {
+    width: '100%',
+    maxWidth: '100%',
+    flexShrink: 0,
+    marginTop: 'auto',
   },
   sectionTitle: MINIMAL_SECTION_TITLE,
   loader: {

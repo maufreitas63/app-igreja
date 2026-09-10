@@ -46,6 +46,9 @@ export type PrimiciasOccurrence = {
   id: string;
   eventId: string;
   eventDate: string;
+  startsAt: string;
+  eventEndDate: string | null;
+  eventLocal: string;
   resetOn: string;
   title: string;
 };
@@ -198,6 +201,7 @@ const parseOccurrence = (value: unknown): PrimiciasOccurrence | null => {
   const id = String(row.id ?? '').trim();
   const eventId = String(row.event_id ?? '').trim();
   const eventDate = String(row.event_date ?? '').trim();
+  const startsAt = String(row.starts_at ?? '').trim();
 
   if (!id || !eventId || !eventDate) {
     return null;
@@ -207,6 +211,9 @@ const parseOccurrence = (value: unknown): PrimiciasOccurrence | null => {
     id,
     eventId,
     eventDate: eventDate.slice(0, 10),
+    startsAt: startsAt || `${eventDate.slice(0, 10)}T09:00:00-03:00`,
+    eventEndDate: String(row.event_end_date ?? '').trim() || null,
+    eventLocal: String(row.event_local ?? '').trim() || 'Campanha Prímicias',
     resetOn: String(row.reset_on ?? '').slice(0, 10),
     title: String(row.title ?? PRIMICIAS_EVENT_TITLE).trim() || PRIMICIAS_EVENT_TITLE,
   };
