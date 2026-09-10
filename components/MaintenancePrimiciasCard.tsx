@@ -9,6 +9,7 @@ import {
   deletePrimiciasItem,
   formatPrimiciasIsoDate,
   formatPrimiciasItemLine,
+  formatPrimiciasPendingCount,
   listPrimiciasHistory,
   listPrimiciasItems,
   PRIMICIAS_CATEGORIES,
@@ -321,21 +322,21 @@ export function MaintenancePrimiciasCard({ isActive = true, panelHeight, minimal
             <PrimiciasCollapsibleSection
               key={group.category}
               title={PRIMICIAS_CATEGORY_LABEL[group.category]}
-              subtitle={`${group.items.length} ${group.items.length === 1 ? 'item' : 'itens'}`}
+              subtitle={formatPrimiciasPendingCount(group.items)}
             >
               {group.items.map((item) => {
-                const pledgeCount = item.pledges.length;
+                const pledged = item.pledges.length > 0;
 
                 return (
                   <View key={item.id} style={styles.itemRow}>
                     <View style={styles.itemText}>
-                      <Text style={styles.itemLine}>{formatPrimiciasItemLine(item)}</Text>
+                      <Text style={[styles.itemLine, pledged && styles.itemLinePledged]}>
+                        {formatPrimiciasItemLine(item)}
+                      </Text>
                       <Text style={styles.pledgeMeta}>
-                        {pledgeCount === 0
-                          ? 'Nenhum compromisso'
-                          : `${pledgeCount} ${pledgeCount === 1 ? 'doador' : 'doadores'}: ${item.pledges
-                              .map((pledge) => pledge.name)
-                              .join(', ')}`}
+                        {pledged
+                          ? item.pledges.map((pledge) => pledge.name).join(', ')
+                          : 'Pendente'}
                       </Text>
                     </View>
                     <TouchableOpacity
@@ -455,6 +456,10 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '600',
     color: MINIMAL_UI.text,
+  },
+  itemLinePledged: {
+    textDecorationLine: 'line-through',
+    color: MINIMAL_UI.textMuted,
   },
   pledgeMeta: {
     fontSize: 12,

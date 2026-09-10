@@ -5,6 +5,7 @@ import { formatShortName } from '@/lib/formatShortName';
 import {
   formatPrimiciasIsoDate,
   formatPrimiciasItemLine,
+  formatPrimiciasPendingCount,
   listPrimiciasItems,
   PRIMICIAS_CATEGORIES,
   PRIMICIAS_CATEGORY_LABEL,
@@ -35,46 +36,45 @@ import {
 
 type ItemRowProps = {
   item: PrimiciasItem;
-  donorName?: string;
-  isMine: boolean;
-  isAvailableSlot: boolean;
   busy: boolean;
   onPress: () => void;
 };
 
-function ItemRow({ item, donorName, isMine, isAvailableSlot, busy, onPress }: ItemRowProps) {
+function ItemRow({ item, busy, onPress }: ItemRowProps) {
   const line = formatPrimiciasItemLine(item);
-  const label = isAvailableSlot
-    ? `${line}. Toque para doar`
-    : `${line}. ${donorName ?? 'Membro'}`;
+  const mine = item.pledges.some((pledge) => pledge.isMine);
+  const pledged = item.pledges.length > 0;
+  const donorNames = item.pledges
+    .map((pledge) => `${formatShortName(pledge.name)}${pledge.isMine ? ' (você)' : ''}`)
+    .join(', ');
+  const label = pledged
+    ? `${line}. Já doado${donorNames ? `. ${donorNames}` : ''}`
+    : `${line}. Toque para doar`;
 
   return (
     <TouchableOpacity
-      style={[styles.row, isMine && styles.rowMine, isAvailableSlot && styles.rowAvailable]}
+      style={[styles.row, mine && styles.rowMine, pledged && styles.rowPledged]}
       onPress={onPress}
-      disabled={busy}
+      disabled={busy || (pledged && !mine)}
       activeOpacity={0.85}
       accessibilityRole="button"
       accessibilityLabel={label}
     >
       <View style={styles.rowText}>
-        <Text style={styles.itemLine}>{line}</Text>
-        {isAvailableSlot ? (
-          <Text style={styles.slotHint}>Toque para se comprometer com este item</Text>
+        <Text style={[styles.itemLine, pledged && styles.itemLinePledged]}>{line}</Text>
+        {pledged ? (
+          <Text style={[styles.donorName, mine && styles.donorNameMine]}>{donorNames}</Text>
         ) : (
-          <Text style={[styles.donorName, isMine && styles.donorNameMine]}>
-            {donorName ?? 'Membro'}
-            {isMine ? ' (você)' : ''}
-          </Text>
+          <Text style={styles.slotHint}>Toque para se comprometer com este item</Text>
         )}
       </View>
       {busy ? (
         <ActivityIndicator size="small" color={MINIMAL_UI.blueDark} />
       ) : (
         <FontAwesome
-          name={isAvailableSlot ? 'plus' : isMine ? 'check' : 'user'}
+          name={pledged ? 'check' : 'plus'}
           size={16}
-          color={isMine ? MINIMAL_UI.accent : MINIMAL_UI.textMuted}
+          color={mine ? MINIMAL_UI.accent : MINIMAL_UI.textMuted}
         />
       )}
     </TouchableOpacity>
@@ -159,7 +159,8 @@ export const PrimiciasPanel = forwardRef<PrimiciasPanelHandle>(function Primicia
   }));
 
   const handleToggle = async (item: PrimiciasItem) => {
-    if (busyId) {
+    const mine = item.pledges.some((pledge) => pledge.isMine);
+    if (busyId || (item.pledges.length > 0 && !mine)) {
       return;
     }
 
@@ -216,9 +217,9 @@ export const PrimiciasPanel = forwardRef<PrimiciasPanelHandle>(function Primicia
       <Text style={styles.title}>Prímicias</Text>
       {occurrence ? (
         <Text style={styles.lead}>
-          Campanha em {formatPrimiciasIsoDate(occurrence.eventDate)}. Toque no item para vincular seu
-          nome e criar o compromisso na agenda. Os itens voltam a ficar livres {formatPrimiciasIsoDate(occurrence.resetOn)},
-          10 dias após a data.
+          Campanha em {formatPrimiciasIsoDate(occurrence.eventDate)}. Toque no item para doar: o texto
+          fica riscado e sai da quantidade pendente. Os itens voltam a ficar livres{' '}
+          {formatPrimiciasIsoDate(occurrence.resetOn)}, 10 dias após a data.
         </Text>
       ) : (
         <Text style={styles.lead}>
@@ -228,46 +229,25 @@ export const PrimiciasPanel = forwardRef<PrimiciasPanelHandle>(function Primicia
       )}
 
       {grouped.map((group) => {
-        const mineCount = group.items.reduce(
-          (total, item) => total + item.pledges.filter((pledge) => pledge.isMine).length,
-          0
-        );
+        const mineCount = group.items.filter((item) =>
+          item.pledges.some((pledge) => pledge.isMine)
+        ).length;
 
         return (
           <PrimiciasCollapsibleSection
             key={group.category}
             title={PRIMICIAS_CATEGORY_LABEL[group.category]}
-            subtitle={`${group.items.length} ${group.items.length === 1 ? 'item' : 'itens'}${
-              mineCount > 0 ? ` · ${mineCount} seu${mineCount === 1 ? '' : 's'}` : ''
-            }`}
+            subtitle={formatPrimiciasPendingCount(group.items)}
             defaultOpen={mineCount > 0}
           >
-            {group.items.map((item) => {
-              const mine = item.pledges.some((pledge) => pledge.isMine);
-
-              return (
-                <View key={item.id} style={styles.itemBlock}>
-                  {item.pledges.map((pledge) => (
-                    <ItemRow
-                      key={`${item.id}-${pledge.profileId}`}
-                      item={item}
-                      donorName={formatShortName(pledge.name)}
-                      isMine={pledge.isMine}
-                      isAvailableSlot={false}
-                      busy={busyId === item.id}
-                      onPress={() => void handleToggle(item)}
-                    />
-                  ))}
-                  <ItemRow
-                    item={item}
-                    isMine={mine}
-                    isAvailableSlot
-                    busy={busyId === item.id}
-                    onPress={() => void handleToggle(item)}
-                  />
-                </View>
-              );
-            })}
+            {group.items.map((item) => (
+              <ItemRow
+                key={item.id}
+                item={item}
+                busy={busyId === item.id}
+                onPress={() => void handleToggle(item)}
+              />
+            ))}
           </PrimiciasCollapsibleSection>
         );
       })}
@@ -303,10 +283,6 @@ const styles = StyleSheet.create({
     color: MINIMAL_UI.blueDark,
     marginBottom: 2,
   },
-  itemBlock: {
-    gap: 6,
-    marginBottom: 4,
-  },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -322,8 +298,9 @@ const styles = StyleSheet.create({
     borderColor: MINIMAL_UI.accent,
     backgroundColor: MINIMAL_UI.rowHover,
   },
-  rowAvailable: {
-    borderStyle: 'dashed',
+  rowPledged: {
+    borderStyle: 'solid',
+    opacity: 0.85,
   },
   rowText: {
     flex: 1,
@@ -334,6 +311,10 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: MINIMAL_UI.text,
+  },
+  itemLinePledged: {
+    textDecorationLine: 'line-through',
+    color: MINIMAL_UI.textMuted,
   },
   donorName: {
     fontSize: 13,

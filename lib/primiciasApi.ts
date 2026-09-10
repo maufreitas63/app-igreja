@@ -100,6 +100,16 @@ export function formatPrimiciasItemLine(item: Pick<PrimiciasItem, 'quantity' | '
   return `${item.quantity} / ${item.unit} / ${item.productName} / ${item.weight}`;
 }
 
+/** Itens ainda livres — cada compromisso risca um item e reduz este total. */
+export function countPendingPrimiciasItems(items: PrimiciasItem[]) {
+  return items.filter((item) => item.pledges.length === 0).length;
+}
+
+export function formatPrimiciasPendingCount(items: PrimiciasItem[]) {
+  const pending = countPendingPrimiciasItems(items);
+  return `${pending} ${pending === 1 ? 'item' : 'itens'}`;
+}
+
 export function formatPrimiciasIsoDate(value: string | null | undefined) {
   const match = String(value ?? '').trim().match(/^(\d{4})-(\d{2})-(\d{2})/);
   return match ? `${match[3]}/${match[2]}/${match[1]}` : String(value ?? '').trim();
