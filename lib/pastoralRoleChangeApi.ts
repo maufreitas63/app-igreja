@@ -3,7 +3,18 @@ import { supabase } from '@/lib/supabase';
 import { isSupabaseRpcMissingError } from '@/lib/supabaseRpc';
 
 export const PASTORAL_ROLE_CHANGE_SQL_HINT =
-  'Execute no Supabase: scripts/access-control-pastoral-role-change-fix-protected-list.sql';
+  'Execute no Supabase: scripts/access-control-pastoral-role-change-list-fast.sql';
+
+function rpcErrorMessage(error: unknown): string {
+  if (!error) return '';
+  if (typeof error === 'string') return error.trim();
+  if (typeof error === 'object' && error !== null && 'message' in error) {
+    const message = (error as { message?: unknown }).message;
+    if (typeof message === 'string' && message.trim()) return message.trim();
+  }
+  if (error instanceof Error && error.message.trim()) return error.message.trim();
+  return '';
+}
 
 export const PASTORAL_BASIC_ROLE_OPTIONS = [
   { code: 'visitante', label: 'Visitante' },
@@ -147,7 +158,9 @@ export async function listProfilesForPastoralRoleChange(limit = 5000) {
       throw new Error(PASTORAL_ROLE_CHANGE_SQL_HINT);
     }
 
-    throw error;
+    throw new Error(
+      rpcErrorMessage(error) || 'Não foi possível carregar a lista de perfis.'
+    );
   }
 
   return parseProfileRows(data);

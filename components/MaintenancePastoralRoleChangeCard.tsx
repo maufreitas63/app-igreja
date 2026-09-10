@@ -260,10 +260,9 @@ export function MaintenancePastoralRoleChangeCard({
         </Text>
       ) : null}
 
-      {!loading && allProfiles.length === 0 ? (
+      {!loading && !error && allProfiles.length === 0 ? (
         <Text style={[styles.hintText, minimal && styles.hintTextMinimal]}>
-          Nenhum perfil elegível encontrado. Se o card deveria listar membros, execute no Supabase o
-          script access-control-pastoral-role-change-fix-protected-list.sql e toque em Recarregar.
+          Nenhum perfil elegível encontrado nesta instância. Toque em Recarregar.
         </Text>
       ) : null}
 
