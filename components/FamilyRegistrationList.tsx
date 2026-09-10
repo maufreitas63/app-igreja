@@ -607,7 +607,7 @@ export const FamilyRegistrationList = ({
     return (
       <View style={styles.wrapper}>
         <View style={styles.headerRow}>
-          <Text style={styles.headerTitle}>
+          <Text style={[styles.headerTitle, minimal && styles.headerTitleMinimal]}>
             {title ?? 'Inscrição individual'}
           </Text>
         </View>
@@ -617,9 +617,10 @@ export const FamilyRegistrationList = ({
             individualmente neste evento.
           </Text>
         ) : null}
-        <View style={styles.listFrame}>
+        <View style={[styles.listFrame, minimal && styles.listFrameMinimal]}>
           <MemberCheckboxItem
             member={soloParticipant}
+            minimal={minimal}
             disabled={!hasEventOpen || isBusy}
             isChecked={soloRegistered}
             isLoading={soloToggleLoading || soloStatusLoading}
@@ -647,7 +648,7 @@ export const FamilyRegistrationList = ({
   if (hasFamilyId && loading) {
     return (
       <View style={styles.centered}>
-        <ActivityIndicator size="large" color="#10b981" />
+        <ActivityIndicator size="large" color={MINIMAL_UI.accent} />
       </View>
     );
   }
@@ -720,7 +721,7 @@ export const FamilyRegistrationList = ({
           <FontAwesome
             name={quorumTotemCheckinConfirmed ? 'lock' : 'unlock-alt'}
             size={14}
-            color={quorumTotemCheckinConfirmed ? '#94A3B8' : '#FBBF24'}
+            color={quorumTotemCheckinConfirmed ? MINIMAL_UI.textMuted : MINIMAL_UI.accent}
             accessibilityLabel={
               quorumTotemCheckinConfirmed
                 ? 'Check-in no totem concluído — não é possível desmarcar a audiência'
@@ -760,7 +761,7 @@ export const FamilyRegistrationList = ({
                 ]}
               >
                 {isBusy || allPending ? (
-                  <ActivityIndicator size="small" color={minimal ? MINIMAL_UI.icon : '#020617'} />
+                  <ActivityIndicator size="small" color={MINIMAL_UI.icon} />
                 ) : allRegistered ? (
                   <Text style={[styles.bulkCheckboxMark, minimal && styles.bulkCheckboxMarkMinimal]}>
                     ✓
@@ -848,9 +849,9 @@ const styles = StyleSheet.create({
     flex: 1,
     minHeight: 0,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: MINIMAL_UI.border,
     borderRadius: 16,
-    backgroundColor: 'rgba(15, 23, 42, 0.22)',
+    backgroundColor: MINIMAL_UI.background,
     paddingHorizontal: 4,
     width: '100%',
     maxWidth: '100%',
@@ -888,10 +889,9 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   headerTitle: {
-    color: '#10b981',
+    color: MINIMAL_UI.textMuted,
     fontSize: 13,
     fontWeight: '700',
-    textTransform: 'uppercase',
     letterSpacing: 1,
     flexGrow: 0,
     flexShrink: 1,
@@ -959,7 +959,7 @@ const styles = StyleSheet.create({
     width: 22,
     borderRadius: 6,
     borderWidth: 2,
-    borderColor: '#10b981',
+    borderColor: MINIMAL_UI.icon,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: 'transparent',
@@ -968,7 +968,7 @@ const styles = StyleSheet.create({
     borderColor: MINIMAL_UI.icon,
   },
   bulkCheckboxChecked: {
-    backgroundColor: '#10b981',
+    backgroundColor: MINIMAL_UI.icon,
   },
   bulkCheckboxCheckedMinimal: {
     backgroundColor: MINIMAL_UI.icon,
@@ -977,7 +977,7 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
   bulkCheckboxMark: {
-    color: '#020617',
+    color: MINIMAL_UI.background,
     fontSize: 13,
     fontWeight: '900',
   },
@@ -991,7 +991,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   soloHint: {
-    color: '#94A3B8',
+    color: MINIMAL_UI.textMuted,
     fontSize: 13,
     lineHeight: 18,
     marginBottom: 8,

@@ -82,7 +82,7 @@ export const MemberCheckboxItem = ({
         activeOpacity={0.8}
       >
         {isLoading ? (
-          <ActivityIndicator size="small" color={minimal ? MINIMAL_UI.icon : '#020617'} />
+          <ActivityIndicator size="small" color={MINIMAL_UI.icon} />
         ) : isChecked ? (
           <Text style={[styles.checkmark, minimal && styles.checkmarkMinimal]}>✓</Text>
         ) : null}
@@ -114,7 +114,7 @@ export const MemberCheckboxItem = ({
           <FontAwesome
             name="sign-in"
             size={11}
-            color={minimal ? MINIMAL_UI.onDark : '#B45309'}
+            color={MINIMAL_UI.onDark}
           />
           <Text
             style={[styles.roomCheckInBadgeText, minimal && styles.roomCheckInBadgeTextMinimal]}
@@ -141,7 +141,7 @@ const styles = StyleSheet.create({
     height: 24,
     borderRadius: 7,
     borderWidth: 2,
-    borderColor: '#10b981',
+    borderColor: MINIMAL_UI.icon,
     marginRight: 12,
     alignItems: 'center',
     justifyContent: 'center',
@@ -151,7 +151,7 @@ const styles = StyleSheet.create({
     borderColor: MINIMAL_UI.icon,
   },
   checkboxChecked: {
-    backgroundColor: '#10b981',
+    backgroundColor: MINIMAL_UI.icon,
   },
   checkboxCheckedMinimal: {
     backgroundColor: MINIMAL_UI.icon,
@@ -160,15 +160,15 @@ const styles = StyleSheet.create({
     opacity: 0.45,
   },
   checkboxRegistered: {
-    borderColor: '#34d399',
-    backgroundColor: '#34d399',
+    borderColor: MINIMAL_UI.textMuted,
+    backgroundColor: MINIMAL_UI.textMuted,
   },
   checkboxRegisteredMinimal: {
     borderColor: MINIMAL_UI.textMuted,
     backgroundColor: MINIMAL_UI.textMuted,
   },
   checkmark: {
-    color: '#020617',
+    color: MINIMAL_UI.background,
     fontSize: 14,
     fontWeight: '900',
   },
@@ -187,7 +187,7 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   name: {
-    color: '#FFF',
+    color: MINIMAL_UI.text,
     fontSize: 16,
     flex: 1,
     minWidth: 0,
@@ -197,7 +197,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   registeredText: {
-    color: '#34d399',
+    color: MINIMAL_UI.textMuted,
     fontSize: 12,
     marginTop: 4,
     fontWeight: '600',
@@ -206,7 +206,7 @@ const styles = StyleSheet.create({
     color: MINIMAL_UI.textMuted,
   },
   noRegistrationText: {
-    color: 'rgba(148, 163, 184, 0.9)',
+    color: MINIMAL_UI.textMuted,
     fontWeight: '500',
   },
   noRegistrationTextMinimal: {
@@ -221,9 +221,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 5,
     borderRadius: 999,
-    backgroundColor: '#FEF3C7',
+    backgroundColor: MINIMAL_UI.border,
     borderWidth: 1,
-    borderColor: '#F59E0B',
+    borderColor: MINIMAL_UI.accent,
     flexShrink: 0,
   },
   roomCheckInBadgeMinimal: {
@@ -231,7 +231,7 @@ const styles = StyleSheet.create({
     borderColor: MINIMAL_UI.blueDark,
   },
   roomCheckInBadgeText: {
-    color: '#B45309',
+    color: MINIMAL_UI.blueDark,
     fontSize: 11,
     fontWeight: '800',
     letterSpacing: 0.2,

@@ -10,7 +10,6 @@ import { resolveFamilyIdForPhone, normalizeFamilyCode } from '@/lib/family';
 import { loadEffectiveSessionProfile } from '@/lib/loadSessionProfile';
 import { writeDashboardSelectedEventId } from '@/lib/dashboardSelectedEvent';
 import { NO_BOX_SHADOW } from '@/lib/boxShadow';
-import { VIGILANCE_SCALES_UI } from '@/lib/dashboardCardThemes';
 import { MINIMAL_SECTION_TITLE, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -142,7 +141,11 @@ export function FamilyAgendaModal({ visible, initialEventId, onClose, onNeedsAud
       : 0;
 
   const capacityFillColor =
-    capacityRatio >= 0.85 ? '#0284c7' : capacityRatio >= 0.6 ? '#06b6d4' : '#67e8f9';
+    capacityRatio >= 0.85
+      ? MINIMAL_UI.blueDark
+      : capacityRatio >= 0.6
+        ? MINIMAL_UI.accent
+        : MINIMAL_UI.textMuted;
 
   const familyRegistrationSessionProfile = useMemo(
     () =>
@@ -299,7 +302,7 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: '100%',
     alignSelf: 'stretch',
-    backgroundColor: VIGILANCE_SCALES_UI.surface,
+    backgroundColor: MINIMAL_UI.background,
     borderWidth: 0,
     ...NO_BOX_SHADOW,
     overflow: 'hidden',
@@ -312,13 +315,13 @@ const styles = StyleSheet.create({
   scroll: {
     flex: 1,
     width: '100%',
-    backgroundColor: VIGILANCE_SCALES_UI.surface,
+    backgroundColor: MINIMAL_UI.background,
   },
   scrollContent: {
     paddingBottom: 12,
     width: '100%',
     maxWidth: '100%',
-    backgroundColor: VIGILANCE_SCALES_UI.surface,
+    backgroundColor: MINIMAL_UI.background,
   },
   homeBannerWrap: {
     width: '100%',
@@ -326,13 +329,13 @@ const styles = StyleSheet.create({
     paddingBottom: 8,
   },
   geoHint: {
-    color: VIGILANCE_SCALES_UI.accent,
+    color: MINIMAL_UI.textMuted,
     fontSize: 12,
     opacity: 0.88,
     marginBottom: 8,
   },
   geoHintError: {
-    color: '#FCA5A5',
+    color: MINIMAL_UI.accent,
     fontSize: 12,
     fontWeight: '600',
     marginBottom: 8,

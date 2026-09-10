@@ -1,13 +1,13 @@
-import { VIGILANCE_SCALES_UI } from '@/lib/dashboardCardThemes';
 import {
   MINIMAL_SCREEN_PADDING_LEFT,
   MINIMAL_SCREEN_PADDING_RIGHT,
+  MINIMAL_UI,
 } from '@/lib/minimalUiTheme';
 import React from 'react';
 import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 
-const CLOSE_BUTTON_FILL = '#3A96DD';
-const CLOSE_BUTTON_BORDER = '#1B4F8A';
+const CLOSE_BUTTON_FILL = MINIMAL_UI.accent;
+const CLOSE_BUTTON_BORDER = MINIMAL_UI.blueDark;
 
 /** Altura do botão canónico (Agenda da Família). */
 export const CLOSE_FOOTER_BUTTON_HEIGHT = 51;
@@ -179,7 +179,7 @@ const styles = StyleSheet.create({
       : null),
   },
   dockMinimal: {
-    borderTopColor: VIGILANCE_SCALES_UI.border,
+    borderTopColor: MINIMAL_UI.divider,
     backgroundColor: '#FFFFFF',
   },
   dockDark: {

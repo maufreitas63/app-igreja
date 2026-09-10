@@ -1,7 +1,6 @@
 import type { ActiveEventListItem } from '@/hooks/useActiveEvents';
 import { formatEventDateTimeLabel } from '@/lib/eventDate';
-import { DASHBOARD_CARD_TYPO } from '@/lib/dashboardCardStyles';
-import { VIGILANCE_SCALES_UI } from '@/lib/dashboardCardThemes';
+import { MINIMAL_TYPO, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import React, { type ReactNode } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 
@@ -16,7 +15,7 @@ export type FamilyAgendaViewProps = {
   loginRequiredMessage?: string | null;
 };
 
-/** Visualização pura da Agenda da Família (Card 1) — identidade vigilance_scales. */
+/** Visualização pura da Agenda da Família (Card 1) — identidade MINIMAL_UI. */
 export function FamilyAgendaView({
   loading = false,
   events,
@@ -34,7 +33,7 @@ export function FamilyAgendaView({
   if (loading) {
     return (
       <View style={styles.loadingState}>
-        <ActivityIndicator color={VIGILANCE_SCALES_UI.accent} size="large" />
+        <ActivityIndicator color={MINIMAL_UI.accent} size="large" />
       </View>
     );
   }
@@ -121,7 +120,7 @@ const styles = StyleSheet.create({
     minWidth: 0,
     alignSelf: 'stretch',
     gap: 8,
-    backgroundColor: VIGILANCE_SCALES_UI.surface,
+    backgroundColor: MINIMAL_UI.background,
     overflow: 'hidden',
   },
   loadingState: {
@@ -129,23 +128,23 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     minHeight: 180,
     paddingVertical: 24,
-    backgroundColor: VIGILANCE_SCALES_UI.surface,
+    backgroundColor: MINIMAL_UI.background,
   },
   emptyState: {
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 24,
     paddingVertical: 32,
-    backgroundColor: VIGILANCE_SCALES_UI.surface,
+    backgroundColor: MINIMAL_UI.background,
   },
   section: {
     width: '100%',
     maxWidth: '100%',
     minWidth: 0,
     alignSelf: 'stretch',
-    backgroundColor: VIGILANCE_SCALES_UI.surfaceHighlight,
+    backgroundColor: MINIMAL_UI.background,
     borderWidth: 1,
-    borderColor: VIGILANCE_SCALES_UI.border,
+    borderColor: MINIMAL_UI.border,
     borderRadius: 16,
     padding: 14,
     overflow: 'hidden',
@@ -167,36 +166,37 @@ const styles = StyleSheet.create({
     maxWidth: '100%',
   },
   sectionLabel: {
-    ...DASHBOARD_CARD_TYPO.sectionLabel,
-    color: VIGILANCE_SCALES_UI.accent,
+    ...MINIMAL_TYPO.sectionLabel,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
   },
   eventName: {
-    color: VIGILANCE_SCALES_UI.accent,
+    color: MINIMAL_UI.text,
     fontSize: 18,
     fontWeight: '800',
     lineHeight: 22,
     marginTop: 4,
   },
   eventMeta: {
-    color: VIGILANCE_SCALES_UI.accent,
+    color: MINIMAL_UI.text,
     fontSize: 12,
     fontWeight: '600',
     marginTop: 3,
   },
   eventLocation: {
-    color: VIGILANCE_SCALES_UI.accent,
+    color: MINIMAL_UI.text,
     fontSize: 12,
     marginTop: 2,
     opacity: 0.88,
   },
   placeholderText: {
-    color: VIGILANCE_SCALES_UI.accent,
+    color: MINIMAL_UI.text,
     fontSize: 13,
     opacity: 0.85,
     marginTop: 4,
   },
   sectionHint: {
-    color: VIGILANCE_SCALES_UI.accent,
+    color: MINIMAL_UI.text,
     fontSize: 12,
     opacity: 0.88,
     marginBottom: 8,
@@ -206,8 +206,8 @@ const styles = StyleSheet.create({
     flexShrink: 0,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: VIGILANCE_SCALES_UI.border,
-    backgroundColor: VIGILANCE_SCALES_UI.surface,
+    borderColor: MINIMAL_UI.border,
+    backgroundColor: MINIMAL_UI.background,
     paddingVertical: 8,
     paddingHorizontal: 6,
     alignItems: 'center',
@@ -224,8 +224,8 @@ const styles = StyleSheet.create({
     height: 84,
     borderRadius: 16,
     borderWidth: 2,
-    borderColor: VIGILANCE_SCALES_UI.border,
-    backgroundColor: VIGILANCE_SCALES_UI.surfaceHighlight,
+    borderColor: MINIMAL_UI.border,
+    backgroundColor: MINIMAL_UI.rowHover,
     overflow: 'hidden',
     justifyContent: 'flex-end',
   },
@@ -245,13 +245,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
   },
   capacityValue: {
-    color: VIGILANCE_SCALES_UI.accent,
+    color: MINIMAL_UI.text,
     fontSize: 20,
     fontWeight: '900',
     textAlign: 'center',
   },
   capacityMeta: {
-    color: VIGILANCE_SCALES_UI.accent,
+    color: MINIMAL_UI.text,
     fontSize: 10,
     fontWeight: '700',
     marginTop: 3,
@@ -259,7 +259,7 @@ const styles = StyleSheet.create({
     opacity: 0.88,
   },
   capacityPlaceholder: {
-    color: VIGILANCE_SCALES_UI.accent,
+    color: MINIMAL_UI.text,
     fontSize: 18,
     fontWeight: '800',
     marginTop: 12,
