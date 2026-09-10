@@ -77,6 +77,8 @@ export type SessionIgreja = {
   mae_code: string | null;
   mae_name: string | null;
   super_admin_geolocalizacao: boolean;
+  cel_totem: string | null;
+  senha_totem: string | null;
 };
 
 export type ActiveIgrejaBranding = {
@@ -123,6 +125,8 @@ function mapSessionIgreja(row: Record<string, unknown> | null | undefined): Sess
     mae_code: asText(row?.mae_code) || null,
     mae_name: asText(row?.mae_name) || null,
     super_admin_geolocalizacao: row?.super_admin_geolocalizacao === false ? false : true,
+    cel_totem: asText(row?.cel_totem) || null,
+    senha_totem: asText(row?.senha_totem) || null,
   };
 }
 
@@ -758,6 +762,38 @@ export async function setIgrejaOfferingsAdmin(
     pix_key?: string | null;
     pix_key_secundaria?: string | null;
     pix_institution_secundaria?: string | null;
+  };
+}
+
+export async function setIgrejaTotemCredentialsAdmin(
+  tenantId: string,
+  phone: string,
+  password: string
+) {
+  const { data, error } = await supabase.rpc('set_igreja_totem_credentials_admin', {
+    p_tenant_id: tenantId.trim(),
+    p_phone: phone.trim(),
+    p_password: password.trim(),
+  });
+
+  if (error) {
+    if (isSupabaseRpcMissingError(error, 'set_igreja_totem_credentials_admin')) {
+      return {
+        success: false as const,
+        message: 'RPC ausente. Execute scripts/igreja-totem-credentials.sql no Supabase.',
+      };
+    }
+    return {
+      success: false as const,
+      message: error.message?.trim() || 'Não foi possível salvar o totem.',
+    };
+  }
+
+  return data as {
+    success?: boolean;
+    message?: string;
+    cel_totem?: string | null;
+    senha_totem?: string | null;
   };
 }
 

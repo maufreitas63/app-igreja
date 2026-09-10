@@ -9,13 +9,16 @@ import { supabase } from '@/lib/supabase';
 import { isSupabaseRpcMissingError } from '@/lib/supabaseRpc';
 
 /**
- * Celular em `app_parameters.cel_totem` é exclusivo do dispositivo totem.
- * Não usa cadastro, perfil, LGPD nem PIN de membro — apenas senha fixa 9999.
+ * Celular e senha do totem são por instância (`igrejas.cel_totem` / `senha_totem`).
+ * Não usa cadastro, perfil, LGPD nem PIN de membro.
  */
 export { canonicalPhoneDigits, normalizePhoneDigits } from '@/lib/phoneDigits';
 
 export const CEL_TOTEM_PARAMETER = 'cel_totem';
+/** Padrão só quando a instância ainda não cadastrou senha própria. */
 export const TOTEM_ACCESS_PIN = '9999';
+export const TOTEM_CREDENTIALS_SQL_HINT =
+  'Execute no Supabase: scripts/igreja-totem-credentials.sql';
 
 const TOTEM_PHONE_CACHE_TTL_MS = 5 * 60 * 1000;
 
@@ -150,8 +153,113 @@ export async function isTotemDeviceSession() {
   return isTotemDevicePhone(storedPhone);
 }
 
-export const isValidTotemAccessPin = (pin: string) =>
-  pin.trim() === TOTEM_ACCESS_PIN;
+export const isValidTotemAccessPin = (pin: string) => /^\d{4}$/.test(pin.trim());
+
+export function clearTotemPhoneCache() {
+  cachedTotemPhones = null;
+  inflightTotemPhones = null;
+}
+
+function parseTotemRpcPayload(data: unknown): Record<string, unknown> {
+  if (typeof data === 'string') {
+    try {
+      const parsed = JSON.parse(data) as unknown;
+      return typeof parsed === 'object' && parsed !== null
+        ? (parsed as Record<string, unknown>)
+        : {};
+    } catch {
+      return {};
+    }
+  }
+
+  return typeof data === 'object' && data !== null ? (data as Record<string, unknown>) : {};
+}
+
+export type TotemLoginResult = {
+  ok: boolean;
+  phone: string | null;
+  message: string;
+};
+
+/** Confere celular + senha na instância ativa (código informado no login). */
+export async function verifyTotemLogin(
+  phone: string | null | undefined,
+  password: string
+): Promise<TotemLoginResult> {
+  const { data, error } = await supabase.rpc('verify_totem_login', {
+    p_phone: canonicalPhoneDigits(phone) || String(phone ?? ''),
+    p_password: password.trim(),
+  });
+
+  if (error) {
+    if (isSupabaseRpcMissingError(error, 'verify_totem_login')) {
+      return {
+        ok: false,
+        phone: null,
+        message: TOTEM_CREDENTIALS_SQL_HINT,
+      };
+    }
+
+    return {
+      ok: false,
+      phone: null,
+      message: error.message?.trim() || 'Não foi possível validar o totem.',
+    };
+  }
+
+  const payload = parseTotemRpcPayload(data);
+  const matched = canonicalPhoneDigits(
+    typeof payload.phone === 'string' ? payload.phone : null
+  );
+
+  return {
+    ok: payload.ok === true,
+    phone: matched || null,
+    message:
+      typeof payload.message === 'string' && payload.message.trim()
+        ? payload.message.trim()
+        : payload.ok === true
+          ? 'Totem autenticado.'
+          : 'Senha do totem incorreta.',
+  };
+}
+
+/** Kiosk: o celular da sessão precisa ser o totem da instância ativa. */
+export async function verifyTotemSessionPhone(
+  phone: string | null | undefined
+): Promise<TotemLoginResult> {
+  const { data, error } = await supabase.rpc('verify_totem_session_phone', {
+    p_phone: canonicalPhoneDigits(phone) || String(phone ?? ''),
+  });
+
+  if (error) {
+    if (isSupabaseRpcMissingError(error, 'verify_totem_session_phone')) {
+      return { ok: false, phone: null, message: TOTEM_CREDENTIALS_SQL_HINT };
+    }
+
+    return {
+      ok: false,
+      phone: null,
+      message: error.message?.trim() || 'Não foi possível validar o totem.',
+    };
+  }
+
+  const payload = parseTotemRpcPayload(data);
+  const matched = canonicalPhoneDigits(
+    typeof payload.phone === 'string' ? payload.phone : null
+  );
+
+  return {
+    ok: payload.ok === true,
+    phone: matched || null,
+    message:
+      typeof payload.message === 'string' && payload.message.trim()
+        ? payload.message.trim()
+        : payload.ok === true
+          ? 'Totem autenticado.'
+          : 'O totem desta instância não está vinculado a este aparelho.',
+  };
+}
 
 /** Impede fluxos de membro (cadastro, LGPD, painel) para o celular reservado ao totem. */
 export async function isTotemExclusivePhone(phone: string | null | undefined) {
@@ -160,9 +268,7 @@ export async function isTotemExclusivePhone(phone: string | null | undefined) {
 
 /** Sessão mínima do totem (sem profile_id / sem fluxo de cadastro). */
 export async function persistTotemDeviceSession(phone?: string | null) {
-  const phones = await listCelTotemPhones();
-  const matched =
-    phones.find((totem) => phoneDigitsMatch(phone, totem)) ?? phones[0] ?? null;
+  const matched = canonicalPhoneDigits(phone);
 
   if (!matched) {
     return false;

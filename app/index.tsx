@@ -55,6 +55,7 @@ import {
   normalizePhoneDigits,
   persistTotemDeviceSession,
   phoneDigitsMatch,
+  verifyTotemLogin,
 } from '@/lib/totemDevice';
 import {
   getBiometricAvailability,
@@ -992,16 +993,32 @@ export default function IndexScreen() {
         if (isTotemLoginMode || (await isTotemDevicePhone(phone))) {
           if (!isValidTotemAccessPin(pin)) {
             setAccessPin('');
-            Alert.alert('Senha incorreta', 'Senha do totem: 9999.');
+            Alert.alert('Senha incorreta', 'A senha do totem tem 4 dígitos.');
             return;
           }
 
-          const entered = await persistTotemDeviceSession(phone);
+          const instanceOk = isInstanceValid || (await validateInstance(instanceCode));
+          if (!instanceOk) {
+            Alert.alert(
+              'Código da instância',
+              'Informe o código da instância da sua igreja para usar o totem.'
+            );
+            return;
+          }
+
+          const totemAuth = await verifyTotemLogin(phone, pin);
+          if (!totemAuth.ok) {
+            setAccessPin('');
+            Alert.alert('Totem', totemAuth.message);
+            return;
+          }
+
+          const entered = await persistTotemDeviceSession(totemAuth.phone ?? phone);
 
           if (!entered) {
             Alert.alert(
               'Totem não configurado',
-              'Defina o parâmetro cel_totem no Supabase (scripts/app-parameter-cel-totem.sql).'
+              'Cadastre o celular e a senha do totem em Instâncias (Igrejas).'
             );
             return;
           }
@@ -1145,7 +1162,7 @@ export default function IndexScreen() {
     }
 
     if (isTotemLoginMode) {
-      return 'Aparelho do totem. Digite a senha 9999.';
+      return 'Aparelho do totem. Digite a senha cadastrada nesta instância.';
     }
 
     if (isCheckingStoredPin) {

@@ -3,7 +3,8 @@ import { FAIL_CLOSED_REDIRECT_PATH } from '@/lib/failClosedNavigation';
 import { checkSessionIsSuperAdmin } from '@/lib/maintenanceAccessControlApi';
 import { loadMaintenanceDashboardAccess } from '@/lib/maintenanceDashboardAccess';
 import { denyScreenAccessAndRedirect } from '@/lib/screenAccessDenyRedirect';
-import { isTotemDeviceSession } from '@/lib/totemDevice';
+import { isTotemDeviceSession, verifyTotemSessionPhone } from '@/lib/totemDevice';
+import { getStoredUserPhone, signOutAndNavigateToLogin } from '@/lib/userSession';
 import type { ScreenAccessStatus } from '@/hooks/useScreenAccessGuard';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
@@ -41,8 +42,15 @@ export function useLeadershipRouteGuard({
 
         try {
           if (allowTotemDevice && (await isTotemDeviceSession())) {
+            const bound = await verifyTotemSessionPhone(await getStoredUserPhone());
             if (!active) return;
-            setStatus('allowed');
+            if (bound.ok) {
+              setStatus('allowed');
+              return;
+            }
+            setStatus('denied');
+            await signOutAndNavigateToLogin();
+            denyScreenAccessAndRedirect(router, '/', 'Totem', bound.message);
             return;
           }
 

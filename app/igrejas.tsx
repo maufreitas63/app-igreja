@@ -10,6 +10,7 @@ import {
 } from '@/lib/dashboardReturnNavigation';
 import { pickChurchLogoFromGallery, saveChurchLogoForTenant } from '@/lib/churchLogo';
 import { confirmDialog } from '@/lib/confirmDialog';
+import { formatBrazilPhoneInput } from '@/lib/inputMasks';
 import { MINIMAL_SECTION_TITLE, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import {
   activateSessionTenant,
@@ -21,9 +22,11 @@ import {
   setIgrejaOfferingsAdmin,
   setIgrejaSocialLinksAdmin,
   setIgrejaSuperAdminGeolocalizacaoAdmin,
+  setIgrejaTotemCredentialsAdmin,
   type SessionIgreja,
 } from '@/lib/tenantSession';
 import { setIgrejaMaeTenantAdmin } from '@/lib/alianca/aliancaApi';
+import { clearTotemPhoneCache, formatPhoneForDisplay } from '@/lib/totemDevice';
 import { AppSwitch } from '@/components/ui/AppSwitch';
 import { DropdownSelect } from '@/components/ui/DropdownSelect';
 import { Image } from 'expo-image';
@@ -47,6 +50,7 @@ type OfferingsDraft = {
   pixInstitutionSecundaria: string;
   pixKeySecundaria: string;
 };
+type TotemDraft = { phone: string; password: string };
 
 function isProtectedDefaultChurch(church: SessionIgreja) {
   return church.code.trim().toUpperCase() === 'IBN';
@@ -75,13 +79,17 @@ function IgrejasAdminPanel() {
   const [offeringsDrafts, setOfferingsDrafts] = useState<Record<string, OfferingsDraft>>({});
   const [editLogoPreview, setEditLogoPreview] = useState<string | null>(null);
   const [createMaeTenantId, setCreateMaeTenantId] = useState('');
+  const [createTotemPhone, setCreateTotemPhone] = useState('');
+  const [createTotemPassword, setCreateTotemPassword] = useState('');
   const [maeDrafts, setMaeDrafts] = useState<Record<string, string>>({});
+  const [totemDrafts, setTotemDrafts] = useState<Record<string, TotemDraft>>({});
   const [deleteConfirmById, setDeleteConfirmById] = useState<Record<string, string>>({});
 
   const syncSocialDrafts = useCallback((rows: SessionIgreja[]) => {
     const nextSocial: Record<string, SocialDraft> = {};
     const nextOfferings: Record<string, OfferingsDraft> = {};
     const nextMae: Record<string, string> = {};
+    const nextTotem: Record<string, TotemDraft> = {};
     for (const church of rows) {
       nextSocial[church.id] = {
         website: church.website_url ?? '',
@@ -96,10 +104,15 @@ function IgrejasAdminPanel() {
         pixKeySecundaria: church.pix_key_secundaria ?? '',
       };
       nextMae[church.id] = church.mae_tenant_id ?? '';
+      nextTotem[church.id] = {
+        phone: church.cel_totem ? formatPhoneForDisplay(church.cel_totem) : '',
+        password: church.senha_totem ?? '',
+      };
     }
     setSocialDrafts(nextSocial);
     setOfferingsDrafts(nextOfferings);
     setMaeDrafts(nextMae);
+    setTotemDrafts(nextTotem);
   }, []);
 
   const load = useCallback(async () => {
@@ -154,6 +167,13 @@ function IgrejasAdminPanel() {
         website: church.website_url ?? '',
         instagram: church.instagram_url ?? '',
         youtube: church.youtube_url ?? '',
+      },
+    }));
+    setTotemDrafts((prev) => ({
+      ...prev,
+      [church.id]: {
+        phone: church.cel_totem ? formatPhoneForDisplay(church.cel_totem) : '',
+        password: church.senha_totem ?? '',
       },
     }));
   };
@@ -249,10 +269,27 @@ function IgrejasAdminPanel() {
         }
       }
 
+      const totem = totemDrafts[church.id] ?? { phone: '', password: '' };
+      const totemResult = await setIgrejaTotemCredentialsAdmin(
+        church.id,
+        totem.phone,
+        totem.password
+      );
+      if (!totemResult?.success) {
+        Toast.show({
+          type: 'error',
+          text1: 'Editar instância',
+          text2: totemResult?.message || 'Celular e senha do totem não foram salvos.',
+        });
+        await load();
+        return;
+      }
+      clearTotemPhoneCache();
+
       Toast.show({
         type: 'success',
         text1: 'Instância atualizada',
-        text2: `${church.name}: logo, redes, ofertas e indicação salvos.`,
+        text2: `${church.name}: logo, redes, ofertas, totem e indicação salvos.`,
       });
       closeEdit();
       await load();
@@ -352,6 +389,23 @@ function IgrejasAdminPanel() {
         }
       }
 
+      if (tenantId && (createTotemPhone.trim() || createTotemPassword.trim())) {
+        const totem = await setIgrejaTotemCredentialsAdmin(
+          tenantId,
+          createTotemPhone,
+          createTotemPassword
+        );
+        if (!totem?.success) {
+          Toast.show({
+            type: 'error',
+            text1: 'Instância criada',
+            text2: totem?.message || 'Totem não foi salvo. Use Editar na lista.',
+          });
+        } else {
+          clearTotemPhoneCache();
+        }
+      }
+
       Toast.show({
         type: 'success',
         text1: 'Instância criada',
@@ -368,6 +422,8 @@ function IgrejasAdminPanel() {
       setCreatePixKey('');
       setCreatePixKeySecundaria('');
       setCreateMaeTenantId('');
+      setCreateTotemPhone('');
+      setCreateTotemPassword('');
       await load();
     } catch (error) {
       console.error(error);
@@ -599,6 +655,7 @@ function IgrejasAdminPanel() {
                 pixInstitutionSecundaria: '',
                 pixKeySecundaria: '',
               };
+            const totemDraft = totemDrafts[church.id] ?? { phone: '', password: '' };
             const previewUri = editLogoPreview || church.logo_url;
             const isSessionChurch = activeTenantId
               ? church.id === activeTenantId
@@ -765,6 +822,48 @@ function IgrejasAdminPanel() {
                         }
                       />
                     </View>
+
+                    <Text style={styles.socialFieldLabel}>Totem de check-in</Text>
+                    <Text style={styles.logoHint}>
+                      Celular e senha do tablet no hall. O login e a leitura de QR desta instância
+                      usam exatamente estes dados.
+                    </Text>
+                    <Text style={styles.socialFieldLabel}>Celular vinculado ao totem</Text>
+                    <TextInput
+                      style={styles.input}
+                      value={totemDraft.phone}
+                      onChangeText={(value) =>
+                        setTotemDrafts((prev) => ({
+                          ...prev,
+                          [church.id]: { ...totemDraft, phone: formatBrazilPhoneInput(value) },
+                        }))
+                      }
+                      placeholder="(11) 99999-9999"
+                      placeholderTextColor={MINIMAL_UI.textMuted}
+                      keyboardType="phone-pad"
+                      autoComplete="tel"
+                      editable={!editBusy}
+                    />
+                    <Text style={styles.socialFieldLabel}>Senha do totem (4 dígitos)</Text>
+                    <TextInput
+                      style={styles.input}
+                      value={totemDraft.password}
+                      onChangeText={(value) =>
+                        setTotemDrafts((prev) => ({
+                          ...prev,
+                          [church.id]: {
+                            ...totemDraft,
+                            password: value.replace(/\D/g, '').slice(0, 4),
+                          },
+                        }))
+                      }
+                      placeholder="9999"
+                      placeholderTextColor={MINIMAL_UI.textMuted}
+                      keyboardType="number-pad"
+                      maxLength={4}
+                      secureTextEntry
+                      editable={!editBusy}
+                    />
 
                     <Text style={styles.socialFieldLabel}>Site oficial (URL)</Text>
                     <TextInput
@@ -1129,6 +1228,32 @@ function IgrejasAdminPanel() {
         <Text style={styles.logoHint}>
           Opcional. A igreja selecionada recebe 40% da assinatura trimestral desta instância
           (até 4 ciclos / 12 meses).
+        </Text>
+
+        <Text style={styles.label}>Totem de check-in — celular</Text>
+        <TextInput
+          style={styles.input}
+          value={createTotemPhone}
+          onChangeText={(value) => setCreateTotemPhone(formatBrazilPhoneInput(value))}
+          placeholder="(11) 99999-9999"
+          placeholderTextColor={MINIMAL_UI.textMuted}
+          keyboardType="phone-pad"
+          autoComplete="tel"
+        />
+        <Text style={styles.label}>Totem de check-in — senha (4 dígitos)</Text>
+        <TextInput
+          style={styles.input}
+          value={createTotemPassword}
+          onChangeText={(value) => setCreateTotemPassword(value.replace(/\D/g, '').slice(0, 4))}
+          placeholder="9999"
+          placeholderTextColor={MINIMAL_UI.textMuted}
+          keyboardType="number-pad"
+          maxLength={4}
+          secureTextEntry
+        />
+        <Text style={styles.logoHint}>
+          O tablet no hall entra com este celular e esta senha. Sem estes dados, o totem da
+          instância não autentica.
         </Text>
 
         <TouchableOpacity
