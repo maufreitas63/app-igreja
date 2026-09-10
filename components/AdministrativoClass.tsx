@@ -58,20 +58,16 @@ const formatDateTime = (value: string | null | undefined) => {
 export type AdministrativoClassProps = {
   title?: string;
   description?: string;
-  rdButtonLabel?: string;
   /** Mantido por compatibilidade de rotas; ignorado até existir aba Outros. */
   initialTab?: TabId;
-  onPressRd?: () => void;
   onClose?: () => void;
 };
 
-/** Visualização do módulo Administrativo — Atos Constitutivos (+ RD). */
+/** Visualização do módulo Administrativo — Atos Constitutivos. */
 export function AdministrativoClass({
   title = 'Administrativo',
   description = 'Documentos administrativos e atos constitutivos.',
-  rdButtonLabel = 'Criar Relatório de Despesas (RD)',
   initialTab: _initialTab = 'atas',
-  onPressRd,
   onClose,
 }: AdministrativoClassProps) {
   void _initialTab;
@@ -162,18 +158,7 @@ export function AdministrativoClass({
         </View>
       </View>
 
-      <View style={styles.footerActionsColumn}>
-        <TouchableOpacity
-          style={styles.rdButton}
-          onPress={onPressRd}
-          activeOpacity={0.85}
-          accessibilityRole="button"
-          accessibilityLabel={rdButtonLabel}
-        >
-          <Text style={styles.rdButtonText}>{rdButtonLabel}</Text>
-        </TouchableOpacity>
-        {onClose ? <CloseFooterBar onPress={onClose} /> : null}
-      </View>
+      {onClose ? <CloseFooterBar onPress={onClose} /> : null}
 
       <Modal
         visible={minutesModalOpen}
@@ -346,31 +331,6 @@ const styles = StyleSheet.create({
     color: VIGILANCE_SCALES_UI.accent,
     fontSize: 12,
     fontWeight: '800',
-  },
-  footerActionsColumn: {
-    gap: 10,
-    flexShrink: 0,
-  },
-  rdButton: {
-    flex: 1,
-    minWidth: 0,
-    flexShrink: 1,
-    minHeight: 48,
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: VIGILANCE_SCALES_UI.accent,
-    backgroundColor: ADMINISTRATIVO_CLASS_SURFACE,
-    ...(Platform.OS === 'web' ? { cursor: 'pointer' as const } : null),
-  },
-  rdButtonText: {
-    color: VIGILANCE_SCALES_UI.accent,
-    fontSize: 15,
-    fontWeight: '700',
-    textAlign: 'center',
   },
   closeScreenButton: {
     flexShrink: 0,

@@ -3,17 +3,14 @@ import {
   pickRouteParam,
   resolveReturnDashboardCardParam,
   resolveReturnRouteParam,
-  withMinimalPresentation,
-  withReturnRoute,
 } from '@/lib/dashboardReturnNavigation';
 import { useReturnToCallerOnLeave } from '@/hooks/useReturnToCallerOnLeave';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import React, { useCallback, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-/** Container com navegação — compõe o AdministrativoClass com abas e RD. */
+/** Container com navegação — compõe o AdministrativoClass com atos constitutivos. */
 export function AdministrativoClassPanel() {
-  const router = useRouter();
   const params = useLocalSearchParams<{ administrativoTab?: string }>();
   const returnToCaller = useReturnToCallerOnLeave({
     returnRoute: resolveReturnRouteParam(params),
@@ -27,13 +24,6 @@ export function AdministrativoClassPanel() {
     return 'atas' as const;
   }, [params.administrativoTab]);
 
-  const handleOpenExpenseReport = useCallback(() => {
-    router.push({
-      pathname: '/expense-report',
-      params: withReturnRoute('/administrativo', withMinimalPresentation()),
-    });
-  }, [router]);
-
   const handleClose = useCallback(() => {
     returnToCaller();
   }, [returnToCaller]);
@@ -42,7 +32,6 @@ export function AdministrativoClassPanel() {
     <View style={styles.root}>
       <AdministrativoClass
         initialTab={initialTab}
-        onPressRd={handleOpenExpenseReport}
         onClose={handleClose}
       />
     </View>
