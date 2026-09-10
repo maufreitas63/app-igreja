@@ -22,8 +22,8 @@ export default function DashboardIndexScreen() {
 
 const styles = StyleSheet.create({
   homeMain: {
-    width: '90%',
-    maxWidth: '90%',
+    width: '95%',
+    maxWidth: '95%',
     alignSelf: 'flex-start',
   },
 });
