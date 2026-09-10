@@ -150,7 +150,6 @@ export function MeusLivrosRetiradosPanel({ onBack }: Props) {
   return (
     <View style={styles.root}>
       <Text style={styles.title}>Cantinho da Leitura</Text>
-      <View style={styles.body}>
       <Pressable
         onPress={onBack}
         style={styles.backButton}
@@ -160,7 +159,11 @@ export function MeusLivrosRetiradosPanel({ onBack }: Props) {
         <FontAwesome name="chevron-left" size={14} color={MINIMAL_UI.blueDark} />
         <Text style={styles.backButtonText}>Perfil</Text>
       </Pressable>
-      <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.scroll}
+        keyboardShouldPersistTaps="handled"
+      >
         <Text style={styles.sectionLabel}>Reservar no acervo</Text>
         <TextInput
           value={livroQuery}
@@ -317,7 +320,6 @@ export function MeusLivrosRetiradosPanel({ onBack }: Props) {
           ))
         )}
       </ScrollView>
-      </View>
     </View>
   );
 }
@@ -325,11 +327,10 @@ export function MeusLivrosRetiradosPanel({ onBack }: Props) {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-  },
-  body: {
-    flex: 1,
-    paddingHorizontal: 12,
     minHeight: 0,
+    width: '95%',
+    maxWidth: '95%',
+    alignSelf: 'flex-start',
   },
   backButton: {
     flexDirection: 'row',
@@ -344,9 +345,17 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   title: MINIMAL_SECTION_TITLE,
+  scrollView: {
+    flex: 1,
+    minHeight: 0,
+    width: '100%',
+    maxWidth: '100%',
+  },
   scroll: {
     gap: 10,
     paddingBottom: 32,
+    width: '100%',
+    maxWidth: '100%',
   },
   sectionLabel: {
     color: MINIMAL_UI.text,
@@ -358,6 +367,8 @@ const styles = StyleSheet.create({
     marginTop: 16,
   },
   input: {
+    width: '100%',
+    maxWidth: '100%',
     borderWidth: 1,
     borderColor: MINIMAL_UI.border,
     borderRadius: 10,
@@ -366,13 +377,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 10,
     backgroundColor: MINIMAL_UI.background,
+    ...(Platform.OS === 'web' ? ({ boxSizing: 'border-box' } as object) : null),
   },
   bookList: {
+    width: '100%',
+    maxWidth: '100%',
     gap: 0,
     borderWidth: 1,
     borderColor: MINIMAL_UI.border,
     borderRadius: 12,
     overflow: 'hidden',
+    ...(Platform.OS === 'web' ? ({ boxSizing: 'border-box' } as object) : null),
   },
   bookRow: {
     flexDirection: 'row',
@@ -412,6 +427,8 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   detailCard: {
+    width: '100%',
+    maxWidth: '100%',
     flexDirection: 'row',
     gap: 12,
     borderWidth: 1,
@@ -419,6 +436,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 12,
     backgroundColor: MINIMAL_UI.rowHover,
+    ...(Platform.OS === 'web' ? ({ boxSizing: 'border-box' } as object) : null),
   },
   detailCover: {
     width: 72,
@@ -471,6 +489,8 @@ const styles = StyleSheet.create({
     fontSize: 13,
   },
   primaryButton: {
+    width: '100%',
+    maxWidth: '100%',
     backgroundColor: MINIMAL_UI.blueDark,
     borderRadius: 10,
     paddingVertical: 12,
@@ -495,11 +515,14 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   card: {
+    width: '100%',
+    maxWidth: '100%',
     borderWidth: 1,
     borderColor: MINIMAL_UI.border,
     borderRadius: 12,
     padding: 12,
     gap: 4,
+    ...(Platform.OS === 'web' ? ({ boxSizing: 'border-box' } as object) : null),
   },
   cardTop: {
     flexDirection: 'row',
