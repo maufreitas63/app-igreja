@@ -195,18 +195,37 @@ export const FamilyRegistrationList = ({
         return;
       }
 
+      const captionFor = (items: typeof result.commitments[number]['items']) =>
+        `${result.title} — ${items.map((item) => formatPrimiciasItemLine(item)).join('; ')}`;
+
       const byName = new Map(
         result.commitments.map((commitment) => [
           normalizeFullNameKey(commitment.name),
-          `${result.title} — ${commitment.items.map((item) => formatPrimiciasItemLine(item)).join('; ')}`,
+          captionFor(commitment.items),
         ])
+      );
+      const byProfileId = new Map(
+        result.commitments.map((commitment) => [commitment.profileId, captionFor(commitment.items)])
       );
       const next: Record<string, string> = {};
 
       for (const member of members) {
-        const caption = byName.get(normalizeFullNameKey(member.full_name));
+        const caption =
+          byProfileId.get(member.id) || byName.get(normalizeFullNameKey(member.full_name));
         if (caption) {
           next[member.id] = caption;
+        }
+      }
+
+      const sessionCaption = sessionProfile?.id ? byProfileId.get(sessionProfile.id) : undefined;
+      if (sessionCaption && sessionProfile?.id) {
+        next[sessionProfile.id] = sessionCaption;
+        const sessionMember = resolveActiveSessionMember(members, {
+          sessionPhone,
+          sessionProfileName,
+        });
+        if (sessionMember) {
+          next[sessionMember.id] = sessionCaption;
         }
       }
 
@@ -216,7 +235,7 @@ export const FamilyRegistrationList = ({
     return () => {
       cancelled = true;
     };
-  }, [eventId, members, registeredMemberIds]);
+  }, [eventId, members, registeredMemberIds, sessionPhone, sessionProfile?.id, sessionProfileName]);
 
   const hasEventOpen = Boolean(eventId);
 
@@ -311,12 +330,18 @@ export const FamilyRegistrationList = ({
     setSoloStatusLoading(true);
 
     try {
-      const status = await fetchProfileEventRegistrationStatus(
-        eventId,
-        sessionProfile.id,
-        sessionProfile.birth_date
-      );
-      setSoloRegistered(status.isRegistered);
+      const [status, primicias] = await Promise.all([
+        fetchProfileEventRegistrationStatus(
+          eventId,
+          sessionProfile.id,
+          sessionProfile.birth_date
+        ),
+        listPrimiciasEventCommitments(eventId),
+      ]);
+      const pledgedOnPrimicias =
+        primicias.isPrimicias
+        && primicias.commitments.some((commitment) => commitment.profileId === sessionProfile.id);
+      setSoloRegistered(status.isRegistered || pledgedOnPrimicias);
       setSoloRegistrationStatus(status.registrationStatus);
     } catch (err) {
       console.error('Erro ao carregar inscrição individual:', err);
@@ -600,6 +625,7 @@ export const FamilyRegistrationList = ({
             isLoading={soloToggleLoading || soloStatusLoading}
             isRegistered={soloRegistered}
             registeredEventName={resolvedEventName}
+            commitmentCaption={primiciasCaptionByMemberId[soloParticipant.id] ?? null}
             registrationStatus={soloRegistrationStatus}
             showKidsIndicator={showKidsIndicator}
             showTeensIndicator={showTeensIndicator}
@@ -748,8 +774,10 @@ export const FamilyRegistrationList = ({
           data={visibleMembers}
           keyExtractor={(item) => String(item.id)}
           renderItem={({ item }) => {
+            const primiciasCommitted = Boolean(primiciasCaptionByMemberId[item.id]);
             const isItemRegistered =
-              registeredMemberIds.includes(item.id) && !pendingUnregisterIds.includes(item.id);
+              (registeredMemberIds.includes(item.id) || primiciasCommitted)
+              && !pendingUnregisterIds.includes(item.id);
             const quorumUnregisterLocked =
               quorumMode && quorumTotemCheckinConfirmed && isItemRegistered;
             const quorumOtherMemberLocked =
@@ -766,7 +794,7 @@ export const FamilyRegistrationList = ({
                 disabled={rowDisabled}
                 isChecked={
                   pendingRegisterIds.includes(item.id) ||
-                  (registeredMemberIds.includes(item.id) && !pendingUnregisterIds.includes(item.id))
+                  ((registeredMemberIds.includes(item.id) || primiciasCommitted) && !pendingUnregisterIds.includes(item.id))
                 }
                 isLoading={
                   pendingRegisterIds.includes(item.id) || pendingUnregisterIds.includes(item.id)

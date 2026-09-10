@@ -1,3 +1,4 @@
+import { PrimiciasCollapsibleSection } from '@/components/PrimiciasCollapsibleSection';
 import { DropdownSelect } from '@/components/ui/DropdownSelect';
 import { MaintenanceHelpInfoTitle } from '@/components/ui/MaintenanceHelpInfoTitle';
 import { MonthlyDatePickerModal } from '@/components/ui/MonthlyDatePickerModal';
@@ -261,7 +262,7 @@ export function MaintenancePrimiciasCard({ isActive = true, panelHeight, minimal
             )}
           </TouchableOpacity>
 
-          <Text style={styles.formLabel}>Novo item</Text>
+          <PrimiciasCollapsibleSection title="Novo item">
           <DropdownSelect
             options={CATEGORY_OPTIONS}
             selectedValue={category}
@@ -314,10 +315,14 @@ export function MaintenancePrimiciasCard({ isActive = true, panelHeight, minimal
               <Text style={styles.saveButtonText}>Cadastrar item</Text>
             )}
           </TouchableOpacity>
+          </PrimiciasCollapsibleSection>
 
           {grouped.map((group) => (
-            <View key={group.category} style={styles.section}>
-              <Text style={styles.sectionTitle}>{PRIMICIAS_CATEGORY_LABEL[group.category]}</Text>
+            <PrimiciasCollapsibleSection
+              key={group.category}
+              title={PRIMICIAS_CATEGORY_LABEL[group.category]}
+              subtitle={`${group.items.length} ${group.items.length === 1 ? 'item' : 'itens'}`}
+            >
               {group.items.map((item) => {
                 const pledgeCount = item.pledges.length;
 
@@ -349,12 +354,14 @@ export function MaintenancePrimiciasCard({ isActive = true, panelHeight, minimal
                   </View>
                 );
               })}
-            </View>
+            </PrimiciasCollapsibleSection>
           ))}
 
           {history.length > 0 ? (
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Histórico por data</Text>
+            <PrimiciasCollapsibleSection
+              title="Histórico por data"
+              subtitle={`${history.length} ${history.length === 1 ? 'campanha' : 'campanhas'}`}
+            >
               {history.map((day) => (
                 <View key={day.occurrenceId} style={styles.historyDay}>
                   <Text style={styles.itemLine}>{formatPrimiciasIsoDate(day.eventDate)}</Text>
@@ -365,7 +372,7 @@ export function MaintenancePrimiciasCard({ isActive = true, panelHeight, minimal
                   ))}
                 </View>
               ))}
-            </View>
+            </PrimiciasCollapsibleSection>
           ) : null}
         </ScrollView>
       )}

@@ -1,3 +1,4 @@
+import { PrimiciasCollapsibleSection } from '@/components/PrimiciasCollapsibleSection';
 import { CardLoadingState } from '@/components/ui/CardLoadingState';
 import { formatShortName } from '@/lib/formatShortName';
 import {
@@ -182,37 +183,50 @@ export function PrimiciasPanel() {
         </Text>
       )}
 
-      {grouped.map((group) => (
-        <View key={group.category} style={styles.section}>
-          <Text style={styles.sectionTitle}>{PRIMICIAS_CATEGORY_LABEL[group.category]}</Text>
-          {group.items.map((item) => {
-            const mine = item.pledges.some((pledge) => pledge.isMine);
+      {grouped.map((group) => {
+        const mineCount = group.items.reduce(
+          (total, item) => total + item.pledges.filter((pledge) => pledge.isMine).length,
+          0
+        );
 
-            return (
-              <View key={item.id} style={styles.itemBlock}>
-                {item.pledges.map((pledge) => (
+        return (
+          <PrimiciasCollapsibleSection
+            key={group.category}
+            title={PRIMICIAS_CATEGORY_LABEL[group.category]}
+            subtitle={`${group.items.length} ${group.items.length === 1 ? 'item' : 'itens'}${
+              mineCount > 0 ? ` · ${mineCount} seu${mineCount === 1 ? '' : 's'}` : ''
+            }`}
+            defaultOpen={mineCount > 0}
+          >
+            {group.items.map((item) => {
+              const mine = item.pledges.some((pledge) => pledge.isMine);
+
+              return (
+                <View key={item.id} style={styles.itemBlock}>
+                  {item.pledges.map((pledge) => (
+                    <ItemRow
+                      key={`${item.id}-${pledge.profileId}`}
+                      item={item}
+                      donorName={formatShortName(pledge.name)}
+                      isMine={pledge.isMine}
+                      isAvailableSlot={false}
+                      busy={busyId === item.id}
+                      onPress={() => void handleToggle(item)}
+                    />
+                  ))}
                   <ItemRow
-                    key={`${item.id}-${pledge.profileId}`}
                     item={item}
-                    donorName={formatShortName(pledge.name)}
-                    isMine={pledge.isMine}
-                    isAvailableSlot={false}
+                    isMine={mine}
+                    isAvailableSlot
                     busy={busyId === item.id}
                     onPress={() => void handleToggle(item)}
                   />
-                ))}
-                <ItemRow
-                  item={item}
-                  isMine={mine}
-                  isAvailableSlot
-                  busy={busyId === item.id}
-                  onPress={() => void handleToggle(item)}
-                />
-              </View>
-            );
-          })}
-        </View>
-      ))}
+                </View>
+              );
+            })}
+          </PrimiciasCollapsibleSection>
+        );
+      })}
     </ScrollView>
   );
 }
