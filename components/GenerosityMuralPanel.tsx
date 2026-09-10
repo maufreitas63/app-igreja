@@ -8,15 +8,18 @@ import {
   expressGenerosityInterest,
   GENEROSITY_CATEGORIA_LABEL,
   GENEROSITY_CATEGORIAS,
+  GENEROSITY_OFFER_KIND_LABEL,
   GENEROSITY_STATUS_LABEL,
   GENEROSITY_TIPO_LABEL,
   listGenerosityPosts,
   listMyGenerosityPosts,
   pickGenerosityImage,
   type GenerosityCategoria,
+  type GenerosityOfferKind,
   type GenerosityPost,
   type GenerosityTipo,
 } from '@/lib/generosityMuralApi';
+import { formatShortName } from '@/lib/formatShortName';
 import { CONTAIN_WIDTH } from '@/lib/minimalPresentation';
 import { MINIMAL_SECTION_TITLE, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { FontAwesome } from '@expo/vector-icons';
@@ -35,6 +38,97 @@ import {
 
 type FeedFilter = 'doacao' | 'pedido';
 
+function PedidoOfferBlock({
+  post,
+  busyId,
+  expanded,
+  onToggle,
+  onOffer,
+}: {
+  post: GenerosityPost;
+  busyId: string | null;
+  expanded: boolean;
+  onToggle: () => void;
+  onOffer: (kind: GenerosityOfferKind) => void;
+}) {
+  const offers = post.offers ?? [];
+  const count = offers.length;
+
+  return (
+    <View style={styles.offerBlock}>
+      {post.isMine ? null : (
+        <>
+          <Text style={styles.offerPrompt}>Eu tenho para</Text>
+          <View style={styles.offerButtons}>
+            {(['doar', 'emprestar'] as const).map((kind) => {
+              const selected = post.myInterestKind === kind;
+              const busy = busyId === `${post.id}:${kind}`;
+
+              return (
+                <TouchableOpacity
+                  key={kind}
+                  style={[styles.offerButton, selected && styles.offerButtonSelected]}
+                  onPress={() => onOffer(kind)}
+                  disabled={Boolean(busyId)}
+                  activeOpacity={0.85}
+                  accessibilityRole="button"
+                  accessibilityLabel={kind === 'doar' ? 'Doar' : 'Emprestar'}
+                >
+                  {busy ? (
+                    <ActivityIndicator size="small" color={MINIMAL_UI.blueDark} />
+                  ) : (
+                    <Text
+                      style={[
+                        styles.offerButtonText,
+                        selected && styles.offerButtonTextSelected,
+                      ]}
+                    >
+                      {kind === 'doar' ? 'Doar' : 'Emprestar'}
+                    </Text>
+                  )}
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </>
+      )}
+      {count > 0 ? (
+        <>
+          <TouchableOpacity
+            style={styles.offerToggle}
+            onPress={onToggle}
+            accessibilityRole="button"
+            accessibilityLabel={
+              expanded ? 'Recolher lista de pessoas' : 'Expandir lista de pessoas'
+            }
+          >
+            <FontAwesome
+              name={expanded ? 'chevron-up' : 'chevron-down'}
+              size={11}
+              color={MINIMAL_UI.blueDark}
+            />
+            <Text style={styles.offerToggleText}>
+              {count === 1 ? '1 pessoa nesta lista' : `${count} pessoas nesta lista`}
+            </Text>
+          </TouchableOpacity>
+          {expanded
+            ? offers.map((offer) => (
+                <Text
+                  key={`${offer.profileId}-${offer.kind}`}
+                  style={styles.offerName}
+                >
+                  {formatShortName(offer.name)} · {GENEROSITY_OFFER_KIND_LABEL[offer.kind]}
+                </Text>
+              ))
+            : null}
+        </>
+      ) : post.isMine ? (
+        <Text style={styles.ownHint}>Ainda ninguém se ofereceu.</Text>
+      ) : null}
+    </View>
+  );
+}
+
 export function GenerosityMuralPanel() {
   const [filter, setFilter] = useState<FeedFilter>('doacao');
   const [posts, setPosts] = useState<GenerosityPost[]>([]);
@@ -42,6 +136,7 @@ export function GenerosityMuralPanel() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [expandedOffers, setExpandedOffers] = useState<Record<string, boolean>>({});
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
   const [tipo, setTipo] = useState<GenerosityTipo>('doacao');
@@ -120,6 +215,24 @@ export function GenerosityMuralPanel() {
       });
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handlePedidoOffer = async (post: GenerosityPost, kind: GenerosityOfferKind) => {
+    setBusyId(`${post.id}:${kind}`);
+    try {
+      const result = await expressGenerosityInterest(post.id, kind);
+      Toast.show({
+        type: result.success ? 'success' : 'error',
+        text1: 'Mural de Generosidade',
+        text2: result.message,
+      });
+      if (result.success) {
+        setExpandedOffers((current) => ({ ...current, [post.id]: true }));
+        await load();
+      }
+    } finally {
+      setBusyId(null);
     }
   };
 
@@ -333,24 +446,38 @@ export function GenerosityMuralPanel() {
                       <Text style={styles.secondaryButtonText}>Marcar resolvido</Text>
                     </TouchableOpacity>
                   </>
-                ) : post.myInterest ? (
-                  <Text style={styles.ownHint}>Interesse enviado à liderança</Text>
-                ) : (
-                  <TouchableOpacity
-                    style={styles.interestButton}
-                    onPress={() => void handleInterest(post)}
-                    disabled={busyId === post.id}
-                    activeOpacity={0.85}
-                  >
-                    {busyId === post.id ? (
-                      <ActivityIndicator size="small" color={MINIMAL_UI.blueDark} />
-                    ) : (
-                      <Text style={styles.interestButtonText}>
-                        {post.tipo === 'doacao' ? 'Tenho interesse' : 'Posso ajudar'}
-                      </Text>
-                    )}
-                  </TouchableOpacity>
-                )}
+                ) : post.tipo !== 'pedido' ? (
+                  post.myInterest ? (
+                    <Text style={styles.ownHint}>Interesse enviado à liderança</Text>
+                  ) : (
+                    <TouchableOpacity
+                      style={styles.interestButton}
+                      onPress={() => void handleInterest(post)}
+                      disabled={busyId === post.id}
+                      activeOpacity={0.85}
+                    >
+                      {busyId === post.id ? (
+                        <ActivityIndicator size="small" color={MINIMAL_UI.blueDark} />
+                      ) : (
+                        <Text style={styles.interestButtonText}>Tenho interesse</Text>
+                      )}
+                    </TouchableOpacity>
+                  )
+                ) : null}
+                {post.tipo === 'pedido' ? (
+                  <PedidoOfferBlock
+                    post={post}
+                    busyId={busyId}
+                    expanded={expandedOffers[post.id] === true}
+                    onToggle={() =>
+                      setExpandedOffers((current) => ({
+                        ...current,
+                        [post.id]: !current[post.id],
+                      }))
+                    }
+                    onOffer={(kind) => void handlePedidoOffer(post, kind)}
+                  />
+                ) : null}
               </View>
             ))
           )}
@@ -520,5 +647,55 @@ const styles = StyleSheet.create({
     color: MINIMAL_UI.accent,
     fontSize: 12,
     fontWeight: '700',
+  },
+  offerBlock: {
+    marginTop: 8,
+    gap: 8,
+  },
+  offerPrompt: {
+    color: MINIMAL_UI.blueDark,
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  offerButtons: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  offerButton: {
+    borderWidth: 1,
+    borderColor: MINIMAL_UI.blueDark,
+    borderRadius: 999,
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    minWidth: 110,
+    alignItems: 'center',
+  },
+  offerButtonSelected: {
+    backgroundColor: MINIMAL_UI.blueDark,
+  },
+  offerButtonText: {
+    color: MINIMAL_UI.blueDark,
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  offerButtonTextSelected: {
+    color: MINIMAL_UI.onDark,
+  },
+  offerToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    alignSelf: 'flex-start',
+  },
+  offerToggleText: {
+    color: MINIMAL_UI.blueDark,
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  offerName: {
+    color: MINIMAL_UI.text,
+    fontSize: 13,
+    paddingLeft: 2,
   },
 });

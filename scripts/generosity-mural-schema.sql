@@ -54,6 +54,8 @@ create table if not exists public.generosity_interests (
     check (status in ('pendente', 'aceito')),
   created_at timestamptz not null default now(),
   accepted_at timestamptz null,
+  kind text null
+    check (kind is null or kind in ('doar', 'emprestar')),
   constraint generosity_interests_unique unique (post_id, user_id)
 );
 
@@ -62,6 +64,8 @@ create index if not exists generosity_interests_post_idx
 
 comment on table public.generosity_interests is
   'Interesse em doar/atender. Sem telefone no feed; ponte pela liderança.';
+comment on column public.generosity_interests.kind is
+  'doar | emprestar em pedidos. Nulo nas doações (interesse simples).';
 
 create table if not exists public.generosity_notices (
   id uuid primary key default gen_random_uuid(),
@@ -352,7 +356,34 @@ begin
               'status', p.status,
               'created_at', p.created_at,
               'is_mine', (p.user_id = v_me),
-              'my_interest', i.status
+              'my_interest', i.status,
+              'my_interest_kind', i.kind,
+              'offers',
+              case
+                when p.tipo = 'pedido' then coalesce(
+                  (
+                    select jsonb_agg(o.offer order by o.created_at)
+                    from (
+                      select
+                        jsonb_build_object(
+                          'profile_id', i2.user_id,
+                          'name', coalesce(nullif(trim(pr.full_name), ''), 'Membro'),
+                          'kind', i2.kind,
+                          'at', i2.created_at
+                        ) as offer,
+                        i2.created_at
+                      from public.generosity_interests i2
+                      join public.profiles pr
+                        on pr.id = i2.user_id
+                     where i2.post_id = p.id
+                       and i2.tenant_id = v_tenant
+                       and i2.kind in ('doar', 'emprestar')
+                    ) o
+                  ),
+                  '[]'::jsonb
+                )
+                else '[]'::jsonb
+              end
             ) as item,
             p.created_at
           from public.generosity_posts p
@@ -468,7 +499,10 @@ begin
 end;
 $$;
 
-create or replace function public.express_generosity_interest(p_post_id uuid)
+create or replace function public.express_generosity_interest(
+  p_post_id uuid,
+  p_kind text default null
+)
 returns jsonb
 language plpgsql
 security definer
@@ -479,7 +513,9 @@ declare
   v_tenant uuid := public.require_session_tenant_id();
   v_me uuid := public.current_session_profile_id();
   v_post public.generosity_posts%rowtype;
+  v_kind text := nullif(lower(trim(coalesce(p_kind, ''))), '');
   v_label text;
+  v_existed boolean := false;
 begin
   if v_me is null or not public.session_can_view_generosity_mural() then
     return jsonb_build_object('success', false, 'message', 'Sem permissão.');
@@ -497,21 +533,51 @@ begin
     return jsonb_build_object('success', false, 'message', 'Este anúncio é seu.');
   end if;
 
-  if exists (
+  if v_post.tipo = 'pedido' then
+    if v_kind not in ('doar', 'emprestar') then
+      return jsonb_build_object(
+        'success', false,
+        'message', 'Informe se você pode doar ou emprestar.'
+      );
+    end if;
+  else
+    v_kind := null;
+  end if;
+
+  select exists (
     select 1
       from public.generosity_interests i
      where i.post_id = v_post.id
        and i.user_id = v_me
        and i.tenant_id = v_tenant
-  ) then
+  ) into v_existed;
+
+  if v_existed then
+    update public.generosity_interests
+       set kind = v_kind
+     where post_id = v_post.id
+       and user_id = v_me
+       and tenant_id = v_tenant;
+
+    if v_post.tipo = 'pedido' then
+      return jsonb_build_object(
+        'success', true,
+        'message',
+        case
+          when v_kind = 'emprestar' then 'Seu nome entrou na lista para emprestar.'
+          else 'Seu nome entrou na lista para doar.'
+        end
+      );
+    end if;
+
     return jsonb_build_object(
       'success', true,
       'message', 'Seu interesse já estava registrado. A liderança fará a ponte.'
     );
   end if;
 
-  insert into public.generosity_interests (tenant_id, post_id, user_id, status)
-  values (v_tenant, v_post.id, v_me, 'pendente');
+  insert into public.generosity_interests (tenant_id, post_id, user_id, status, kind)
+  values (v_tenant, v_post.id, v_me, 'pendente', v_kind);
 
   v_label := case when v_post.tipo = 'doacao' then 'doação' else 'pedido' end;
 
@@ -521,14 +587,28 @@ begin
     v_post.user_id,
     v_post.id,
     'Interesse no mural',
-    'Alguém da comunidade demonstrou interesse no seu anúncio de '
-      || v_label || ': "' || v_post.titulo
-      || '". A liderança fará a ponte sem expor telefones no mural.'
+    case
+      when v_kind = 'emprestar' then
+        'Alguém da comunidade pode emprestar o item do seu pedido "'
+        || v_post.titulo || '". Veja a lista no anúncio.'
+      when v_kind = 'doar' then
+        'Alguém da comunidade pode doar o item do seu pedido "'
+        || v_post.titulo || '". Veja a lista no anúncio.'
+      else
+        'Alguém da comunidade demonstrou interesse no seu anúncio de '
+        || v_label || ': "' || v_post.titulo
+        || '". A liderança fará a ponte sem expor telefones no mural.'
+    end
   );
 
   return jsonb_build_object(
     'success', true,
-    'message', 'Interesse registrado. A liderança faz o contato com segurança, sem expor seu telefone.'
+    'message',
+    case
+      when v_kind = 'emprestar' then 'Seu nome entrou na lista para emprestar.'
+      when v_kind = 'doar' then 'Seu nome entrou na lista para doar.'
+      else 'Interesse registrado. A liderança faz o contato com segurança, sem expor seu telefone.'
+    end
   );
 end;
 $$;
@@ -849,6 +929,7 @@ begin
               'post_id', i.post_id,
               'post_titulo', p.titulo,
               'post_tipo', p.tipo,
+              'kind', i.kind,
               'status', i.status,
               'created_at', i.created_at,
               'author_name', coalesce(nullif(trim(a.full_name), ''), 'Autor'),
@@ -935,7 +1016,7 @@ grant execute on function public.session_can_moderate_generosity() to anon, auth
 grant execute on function public.list_generosity_posts(text) to anon, authenticated;
 grant execute on function public.create_generosity_post(text, text, text, text) to anon, authenticated;
 grant execute on function public.set_generosity_post_photo(uuid, text) to anon, authenticated;
-grant execute on function public.express_generosity_interest(uuid) to anon, authenticated;
+grant execute on function public.express_generosity_interest(uuid, text) to anon, authenticated;
 grant execute on function public.list_my_generosity_posts() to anon, authenticated;
 grant execute on function public.complete_generosity_post(uuid) to anon, authenticated;
 grant execute on function public.list_unread_generosity_notices() to anon, authenticated;

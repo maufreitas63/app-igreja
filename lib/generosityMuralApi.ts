@@ -51,6 +51,21 @@ export const GENEROSITY_STATUS_LABEL: Record<GenerosityStatus, string> = {
   rejeitado: 'Não publicado',
 };
 
+export const GENEROSITY_OFFER_KINDS = ['doar', 'emprestar'] as const;
+export type GenerosityOfferKind = (typeof GENEROSITY_OFFER_KINDS)[number];
+
+export const GENEROSITY_OFFER_KIND_LABEL: Record<GenerosityOfferKind, string> = {
+  doar: 'doar',
+  emprestar: 'emprestar',
+};
+
+export type GenerosityOffer = {
+  profileId: string;
+  name: string;
+  kind: GenerosityOfferKind;
+  at: string;
+};
+
 export type GenerosityPost = {
   id: string;
   tipo: GenerosityTipo;
@@ -63,6 +78,8 @@ export type GenerosityPost = {
   createdAt: string;
   isMine: boolean;
   myInterest: string | null;
+  myInterestKind: GenerosityOfferKind | null;
+  offers: GenerosityOffer[];
   interestsCount?: number;
   authorName?: string | null;
   authorPhone?: string | null;
@@ -73,6 +90,7 @@ export type GenerosityInterestAdmin = {
   postId: string;
   postTitulo: string;
   postTipo: GenerosityTipo;
+  kind?: GenerosityOfferKind | null;
   status: string;
   createdAt: string;
   authorName: string;
@@ -136,6 +154,39 @@ async function signPhoto(path: string | null): Promise<string | null> {
   return data.signedUrl;
 }
 
+const parseOfferKind = (value: unknown): GenerosityOfferKind | null => {
+  const kind = String(value ?? '').trim();
+  return GENEROSITY_OFFER_KINDS.includes(kind as GenerosityOfferKind)
+    ? (kind as GenerosityOfferKind)
+    : null;
+};
+
+const parseOffers = (value: unknown): GenerosityOffer[] => {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value
+    .map((entry) => {
+      const row = asRecord(entry);
+      const profileId = String(row.profile_id ?? '').trim();
+      const kind = parseOfferKind(row.kind);
+      const name = String(row.name ?? '').trim();
+
+      if (!profileId || !kind) {
+        return null;
+      }
+
+      return {
+        profileId,
+        name: name || 'Membro',
+        kind,
+        at: String(row.at ?? ''),
+      } satisfies GenerosityOffer;
+    })
+    .filter((entry): entry is GenerosityOffer => entry !== null);
+};
+
 const parsePost = async (row: Record<string, unknown>): Promise<GenerosityPost | null> => {
   const id = String(row.id ?? '').trim();
   const tipo = parseTipo(row.tipo);
@@ -161,6 +212,8 @@ const parsePost = async (row: Record<string, unknown>): Promise<GenerosityPost |
     createdAt: String(row.created_at ?? ''),
     isMine: row.is_mine === true,
     myInterest: row.my_interest ? String(row.my_interest) : null,
+    myInterestKind: parseOfferKind(row.my_interest_kind),
+    offers: parseOffers(row.offers),
     interestsCount:
       row.interests_count != null && Number.isFinite(Number(row.interests_count))
         ? Number(row.interests_count)
@@ -246,9 +299,13 @@ export async function createGenerosityPost(input: {
   };
 }
 
-export async function expressGenerosityInterest(postId: string) {
+export async function expressGenerosityInterest(
+  postId: string,
+  kind?: GenerosityOfferKind | null
+) {
   const payload = await rpcPayload('express_generosity_interest', {
     p_post_id: postId,
+    ...(kind ? { p_kind: kind } : {}),
   });
 
   return {
@@ -325,6 +382,7 @@ export async function listGenerosityInterestsAdmin() {
         postId,
         postTitulo: String(row.post_titulo ?? ''),
         postTipo: tipo,
+        kind: parseOfferKind(row.kind),
         status: String(row.status ?? ''),
         createdAt: String(row.created_at ?? ''),
         authorName: String(row.author_name ?? 'Autor'),
