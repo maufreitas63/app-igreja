@@ -549,6 +549,8 @@ export default function PastoralHistoryScreen() {
                 ? formatShortName(item.handler_name)
                 : null;
             const appointment = appointmentByRequestId.get(item.id);
+            const statusLabel = formatPastoralStatusLabel(item.status);
+            const showStatusBadge = statusLabel !== 'Novo';
 
             return (
               <View
@@ -562,6 +564,23 @@ export default function PastoralHistoryScreen() {
                     {formatPastoralRequestDate(item.created_at)}
                   </Text>
                   <View style={styles.cardHeaderActions}>
+                    {showStatusBadge ? (
+                      <View
+                        style={[
+                          styles.statusBadge,
+                          useVigilanceTheme && styles.statusBadgeVigilance,
+                        ]}
+                      >
+                        <Text
+                          style={[
+                            styles.statusBadgeText,
+                            useVigilanceTheme && styles.statusBadgeTextVigilance,
+                          ]}
+                        >
+                          {statusLabel}
+                        </Text>
+                      </View>
+                    ) : null}
                     {canDelete ? (
                       <TouchableOpacity
                         accessibilityLabel="Excluir pedido pastoral"
@@ -591,21 +610,6 @@ export default function PastoralHistoryScreen() {
                         )}
                       </TouchableOpacity>
                     ) : null}
-                    <View
-                      style={[
-                        styles.statusBadge,
-                        useVigilanceTheme && styles.statusBadgeVigilance,
-                      ]}
-                    >
-                      <Text
-                        style={[
-                          styles.statusBadgeText,
-                          useVigilanceTheme && styles.statusBadgeTextVigilance,
-                        ]}
-                      >
-                        {formatPastoralStatusLabel(item.status)}
-                      </Text>
-                    </View>
                   </View>
                 </View>
 
