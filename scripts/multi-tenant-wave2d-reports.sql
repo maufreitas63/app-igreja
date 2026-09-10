@@ -139,6 +139,8 @@ begin
       public.resolve_basic_role_code_for_profile(er.profile_id) as papel_code,
       coalesce(nullif(trim(er.full_name), ''), '(sem nome)') as nome
     from public.event_registrations er
+    join public.events e_reg on e_reg.id = er.event_id and e_reg.tenant_id = v_tenant
+    where er.tenant_id = v_tenant
   ),
   registrants_enriched as (
     select
@@ -184,8 +186,11 @@ begin
       count(er.id)::int as inscritos,
       coalesce(rb.participantes, '[]'::jsonb) as participantes
     from public.events e
-    join public.event_registrations er on er.event_id = e.id
+    join public.event_registrations er
+      on er.event_id = e.id
+     and er.tenant_id = v_tenant
     left join registrants_by_event rb on rb.event_id = e.id
+    where e.tenant_id = v_tenant
     group by e.id, e.name, e.event_date, rb.participantes
   )
   select
@@ -270,7 +275,7 @@ begin
     jsonb_build_object(
       'mes_referencia', to_char(v_month, 'YYYY-MM'),
       'budget_version', v_budget,
-      'total_lancamentos', (select count(*) from public.financials f cross join bounds b where f.transaction_date between b.month_start and b.month_end and upper(coalesce(f.budget_version, '')) = v_budget),
+      'total_lancamentos', (select count(*) from public.financials f cross join bounds b where f.tenant_id = v_tenant and f.transaction_date between b.month_start and b.month_end and upper(coalesce(f.budget_version, '')) = v_budget),
       'rds_conciliados', (
         select count(*)
           from public.expense_reports er
@@ -345,13 +350,15 @@ begin
             exists (
               select 1
                 from public.profile_app_access_events e
-               where e.profile_id = p.id
+               where e.tenant_id = v_tenant
+                 and e.profile_id = p.id
                  and e.accessed_at >= v_cutoff
             )
             or exists (
               select 1
                 from public.checkins c
-               where c.profile_id = p.id
+               where c.tenant_id = v_tenant
+                 and c.profile_id = p.id
                  and coalesce(c.timestamp_confirmacao, c.created_at) >= v_cutoff
             )
           )
@@ -438,10 +445,11 @@ begin
       pr.status,
       extract(epoch from (coalesce(pr.updated_at, pr.created_at) - pr.created_at)) / 3600.0 as horas_fluxo
     from public.pastoral_requests pr
-    left join public.pastoral_reason_categories cat on cat.id = pr.category_id
+    left join public.pastoral_reason_categories cat
+      on cat.id = pr.category_id
+     and cat.tenant_id = v_tenant
     where pr.tenant_id = v_tenant
-    and  cat.tenant_id = v_tenant
-    and  pr.created_at >= v_cutoff
+      and pr.created_at >= v_cutoff
   )
   select
     coalesce(jsonb_agg(
@@ -507,12 +515,14 @@ begin
       count(c.id) filter (where c.status = 'confirmado')::int as confirmados,
       greatest(count(er.id) - count(c.id) filter (where c.status = 'confirmado'), 0)::int as ausentes
     from public.events e
-    join public.event_registrations er on er.event_id = e.id
-    left join public.checkins c on c.event_registration_id = er.id
+    join public.event_registrations er
+      on er.event_id = e.id
+     and er.tenant_id = v_tenant
+    left join public.checkins c
+      on c.event_registration_id = er.id
+     and c.tenant_id = v_tenant
     where e.tenant_id = v_tenant
-    and  c.tenant_id = v_tenant
-    and  er.tenant_id = v_tenant
-    and  e.event_date >= v_cutoff
+      and e.event_date >= v_cutoff
     group by e.id, e.name, e.event_date
   ),
   retention as (
@@ -521,7 +531,8 @@ begin
       coalesce(nullif(trim(p.full_name), ''), '(sem nome)') as nome,
       count(c.id) filter (where coalesce(c.timestamp_confirmacao, c.created_at)::date >= v_cutoff)::int as checkins_recentes
     from public.profiles p
-    left join public.checkins c on c.profile_id = p.id
+    left join public.checkins c on c.profile_id = p.id and c.tenant_id = v_tenant
+    where p.tenant_id = v_tenant
     group by p.id, p.full_name
   )
   select
@@ -551,8 +562,7 @@ begin
         order by r.checkins_recentes asc, r.nome
       )
       from retention r
-      where p.tenant_id = v_tenant
-    and  r.checkins_recentes <= 1
+      where r.checkins_recentes <= 1
     ), '[]'::jsonb),
     jsonb_build_object(
       'meses_analisados', v_months,
@@ -890,10 +900,10 @@ begin
       coalesce(nullif(trim(p.medical_food_alerts), ''), 'Sem alerta') as alertas,
       e.name as evento
     from public.event_registrations er
-    join public.profiles p on p.id = er.profile_id
-    join public.events e on e.id = er.event_id
-    where p.tenant_id = v_tenant
-    and  er.event_id = v_event_id
+    join public.profiles p on p.id = er.profile_id and p.tenant_id = v_tenant
+    join public.events e on e.id = er.event_id and e.tenant_id = v_tenant
+    where er.tenant_id = v_tenant
+      and er.event_id = v_event_id
       and nullif(trim(coalesce(p.medical_food_alerts, '')), '') is not null
   )
   select
@@ -915,6 +925,8 @@ begin
           end
         from public.events e
         where e.id = v_event_id
+          and e.tenant_id = v_tenant
+          and e.tenant_id = v_tenant
       ),
       'criancas_com_alerta', (select count(*) from base)
     )
@@ -974,9 +986,12 @@ begin
       f.inscritos,
       count(distinct pv.placa)::int as veiculos_cadastrados
     from families f
-    left join public.profiles p on upper(trim(coalesce(p.family_id, ''))) = f.family_id
+    left join public.profiles p
+      on p.tenant_id = v_tenant
+     and upper(trim(coalesce(p.family_id, ''))) = f.family_id
     left join public.profile_vehicles pv
-      on public.format_phone_like_profiles(pv.phone) = public.format_phone_like_profiles(p.phone)
+      on pv.tenant_id = v_tenant
+     and public.format_phone_like_profiles(pv.phone) = public.format_phone_like_profiles(p.phone)
     group by f.family_id, f.inscritos
   ),
   estimated as (
@@ -1007,10 +1022,7 @@ begin
           end
         from public.events e
         where e.tenant_id = v_tenant
-    and  p.tenant_id = v_tenant
-    and  f.tenant_id = v_tenant
-    and  pv.tenant_id = v_tenant
-    and  e.id = v_event_id
+          and e.id = v_event_id
       ),
       'familias_inscritas', (select count(*) from families),
       'estimativa_total_veiculos', (select coalesce(sum(estimativa_veiculos), 0) from estimated)
@@ -1142,7 +1154,10 @@ begin
       r.responded_at,
       coalesce(nullif(trim(t.titulo), ''), '') as tema
     from public.maintenance_support_requests r
-    left join public.maintenance_support_themes t on t.id = r.tema_id
+    left join public.maintenance_support_themes t
+      on t.id = r.tema_id
+     and t.tenant_id = v_tenant
+    where r.tenant_id = v_tenant
   ),
   attachment_summary as (
     select
@@ -1156,10 +1171,11 @@ begin
         '[]'::jsonb
       ) as anexos_nomes
     from public.maintenance_support_attachments a
-    where t.tenant_id = v_tenant
-    and  r.tenant_id = v_tenant
-    and  a.tenant_id = v_tenant
-    and  a.is_active = true
+    join public.maintenance_support_requests r
+      on r.id = a.request_id
+     and r.tenant_id = v_tenant
+    where a.tenant_id = v_tenant
+      and a.is_active = true
     group by a.request_id
   ),
   all_events as (
@@ -1538,7 +1554,8 @@ begin
       'tipos_com_poucos_voluntarios', (
         select count(*)
           from public.tipos_escala te
-         where (select count(*) from public.voluntarios_escala ve where ve.tipo_escala_id = te.id) < 3
+         where te.tenant_id = v_tenant
+           and (select count(*) from public.voluntarios_escala ve where ve.tipo_escala_id = te.id and ve.tenant_id = v_tenant) < 3
       )
     )
   into v_rows, v_summary

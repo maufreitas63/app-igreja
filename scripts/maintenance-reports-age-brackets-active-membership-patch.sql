@@ -21,7 +21,8 @@ as $$
     public.resolve_basic_role_code_for_profile(p.id) as role_code
   from public.profiles p
   cross join lateral public.resolve_effective_membership_dates_for_profile(p.id) eff
-  where coalesce(
+  where p.tenant_id = public.require_session_tenant_id()
+    and coalesce(
       nullif(trim(p.full_name), ''),
       nullif(trim(p.phone), ''),
       nullif(trim(p.codigo_membro), '')
