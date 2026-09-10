@@ -262,25 +262,13 @@ export function EventsInboxHome() {
 
   const pageSizeStyle = {
     width: resolvedPageWidth,
-    ...(pageHeight > 0 ? { height: pageHeight } : null),
+    ...(pageHeight > 0 ? { height: pageHeight } : { flex: 1 }),
   };
 
   return (
-    <View
-      style={styles.root}
-      onLayout={(event) => {
-        const { width: nextWidth, height: nextHeight } = event.nativeEvent.layout;
-        const roundedWidth = Math.round(nextWidth);
-        const roundedHeight = Math.round(nextHeight);
-        if (roundedWidth > 0 && roundedWidth !== pageWidth) {
-          setPageWidth(roundedWidth);
-        }
-        if (roundedHeight > 0 && roundedHeight !== pageHeight) {
-          setPageHeight(roundedHeight);
-        }
-      }}
-    >
+    <View style={styles.root}>
       {!agendaOpen ? (
+        <>
         <ScrollView
           ref={pagerRef}
           horizontal
@@ -289,6 +277,17 @@ export function EventsInboxHome() {
           showsHorizontalScrollIndicator={false}
           style={styles.pager}
           contentContainerStyle={styles.pagerContent}
+          onLayout={(event) => {
+            const { width: nextWidth, height: nextHeight } = event.nativeEvent.layout;
+            const roundedWidth = Math.round(nextWidth);
+            const roundedHeight = Math.round(nextHeight);
+            if (roundedWidth > 0 && roundedWidth !== pageWidth) {
+              setPageWidth(roundedWidth);
+            }
+            if (roundedHeight > 0 && roundedHeight !== pageHeight) {
+              setPageHeight(roundedHeight);
+            }
+          }}
           onMomentumScrollEnd={handlePagerScrollEnd}
           onScrollEndDrag={handlePagerScrollEnd}
           keyboardShouldPersistTaps="handled"
@@ -302,9 +301,6 @@ export function EventsInboxHome() {
                 onItemPress={handleItemPress}
                 maxVisibleRows={EVENTS_VISIBLE_ROWS}
               />
-            </View>
-            <View style={styles.pagerNavDock}>
-              <HomeInboxPagerNav variant="toAvisos" onPress={() => scrollToPage(1)} />
             </View>
           </View>
 
@@ -393,11 +389,15 @@ export function EventsInboxHome() {
                 </ScrollView>
               )}
             </View>
-            <View style={styles.pagerNavDock}>
-              <HomeInboxPagerNav variant="toEventos" onPress={() => scrollToPage(0)} />
-            </View>
           </View>
         </ScrollView>
+        <View style={styles.pagerNavDock}>
+          <HomeInboxPagerNav
+            variant={pagerIndex === 0 ? 'toAvisos' : 'toEventos'}
+            onPress={() => scrollToPage(pagerIndex === 0 ? 1 : 0)}
+          />
+        </View>
+        </>
       ) : null}
 
       {geoRuntime}
@@ -421,6 +421,7 @@ const styles = StyleSheet.create({
     minHeight: 0,
     width: '100%',
     maxWidth: '100%',
+    overflow: 'hidden',
   },
   pagerContent: {
     alignItems: 'stretch',
@@ -488,7 +489,6 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: '100%',
     flexShrink: 0,
-    marginTop: 'auto',
   },
   sectionTitle: MINIMAL_SECTION_TITLE,
   loader: {
