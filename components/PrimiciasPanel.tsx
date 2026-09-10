@@ -1,12 +1,14 @@
 import { CardLoadingState } from '@/components/ui/CardLoadingState';
 import { formatShortName } from '@/lib/formatShortName';
 import {
+  formatPrimiciasIsoDate,
   formatPrimiciasItemLine,
   listPrimiciasItems,
   PRIMICIAS_CATEGORIES,
   PRIMICIAS_CATEGORY_LABEL,
   togglePrimiciasPledge,
   type PrimiciasItem,
+  type PrimiciasOccurrence,
 } from '@/lib/primiciasApi';
 import { MINIMAL_SECTION_TITLE, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { FontAwesome } from '@expo/vector-icons';
@@ -74,10 +76,12 @@ export function PrimiciasPanel() {
   const [busyId, setBusyId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [items, setItems] = useState<PrimiciasItem[]>([]);
+  const [occurrence, setOccurrence] = useState<PrimiciasOccurrence | null>(null);
 
   const load = useCallback(async () => {
     const result = await listPrimiciasItems();
     setItems(result.items);
+    setOccurrence(result.occurrence);
   }, []);
 
   useEffect(() => {
@@ -165,10 +169,18 @@ export function PrimiciasPanel() {
       showsVerticalScrollIndicator={false}
     >
       <Text style={styles.title}>Prímicias</Text>
-      <Text style={styles.lead}>
-        Toque no item para vincular seu nome. Se mais de uma pessoa doar o mesmo produto, a linha se
-        repete com cada responsável.
-      </Text>
+      {occurrence ? (
+        <Text style={styles.lead}>
+          Campanha em {formatPrimiciasIsoDate(occurrence.eventDate)}. Toque no item para vincular seu
+          nome e criar o compromisso na agenda. Os itens voltam a ficar livres {formatPrimiciasIsoDate(occurrence.resetOn)},
+          10 dias após a data.
+        </Text>
+      ) : (
+        <Text style={styles.lead}>
+          A liderança ainda não definiu a data da campanha. Quando a data estiver marcada, o toque no
+          item cria o compromisso na agenda da família.
+        </Text>
+      )}
 
       {grouped.map((group) => (
         <View key={group.category} style={styles.section}>

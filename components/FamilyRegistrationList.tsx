@@ -7,7 +7,8 @@ import {
   unregisterProfileFromEvent,
 } from '@/lib/profileEventRegistration';
 import { resolveActiveSessionMember } from '@/lib/resolveActiveSessionMember';
-import { formatFullName } from '@/lib/fullName';
+import { formatFullName, normalizeFullNameKey } from '@/lib/fullName';
+import { formatPrimiciasItemLine, listPrimiciasEventCommitments } from '@/lib/primiciasApi';
 import { offerConfirmedEventToCalendar } from '@/lib/calendarIcs';
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
 import type { GeoCoordinates } from '@/lib/checkinGeofence';
@@ -145,6 +146,7 @@ export const FamilyRegistrationList = ({
     sessionProfile,
     sessionProfileName
   );
+  const [primiciasCaptionByMemberId, setPrimiciasCaptionByMemberId] = useState<Record<string, string>>({});
   const { syncFamilyRegistrations, confirmGeoCheckin, loading: syncingRegistrations } =
     useSyncFamilyEventRegistrations();
   const {
@@ -172,6 +174,49 @@ export const FamilyRegistrationList = ({
     setPendingRegisterIds([]);
     setPendingUnregisterIds([]);
   }, [familyId, eventId, sessionProfile?.id]);
+
+  useEffect(() => {
+    if (!eventId) {
+      setPrimiciasCaptionByMemberId({});
+      return;
+    }
+
+    let cancelled = false;
+
+    void (async () => {
+      const result = await listPrimiciasEventCommitments(eventId);
+
+      if (cancelled) {
+        return;
+      }
+
+      if (!result.isPrimicias) {
+        setPrimiciasCaptionByMemberId({});
+        return;
+      }
+
+      const byName = new Map(
+        result.commitments.map((commitment) => [
+          normalizeFullNameKey(commitment.name),
+          `${result.title} — ${commitment.items.map((item) => formatPrimiciasItemLine(item)).join('; ')}`,
+        ])
+      );
+      const next: Record<string, string> = {};
+
+      for (const member of members) {
+        const caption = byName.get(normalizeFullNameKey(member.full_name));
+        if (caption) {
+          next[member.id] = caption;
+        }
+      }
+
+      setPrimiciasCaptionByMemberId(next);
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [eventId, members, registeredMemberIds]);
 
   const hasEventOpen = Boolean(eventId);
 
@@ -728,6 +773,7 @@ export const FamilyRegistrationList = ({
                 }
                 isRegistered={isItemRegistered}
                 registeredEventName={resolvedEventName}
+                commitmentCaption={primiciasCaptionByMemberId[item.id] ?? null}
                 registrationStatus={registeredMemberStatusById[item.id]}
                 showKidsIndicator={showKidsIndicator}
                 showTeensIndicator={showTeensIndicator}

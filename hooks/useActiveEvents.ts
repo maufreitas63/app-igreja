@@ -16,7 +16,8 @@ import {
   setTotemAtivoColumnAvailable,
   withDefaultEventOptionals,
 } from '@/lib/eventsColumnSupport';
-import { isEventVisibleInEventPanel, toEventVisibilityFields } from '@/lib/eventVisibility';
+import { isEventVisibleForSessionMember, isEventVisibleInEventPanel, toEventVisibilityFields } from '@/lib/eventVisibility';
+import { isPrimiciasEventVisibleOnAgenda } from '@/lib/primiciasApi';
 import { lockPastEvents } from '@/lib/lockPastEvents';
 import { sessionIsActiveAppMember } from '@/lib/sessionMemberVisibility';
 import { supabase } from '@/lib/supabase';
@@ -278,7 +279,26 @@ export const useActiveEvents = (options?: UseActiveEventsOptions) => {
 
         const visibleEvents = asEventRows(data)
           .map(withDefaultEventOptionals)
-          .filter((event) => isEventVisibleInEventPanel(toEventVisibilityFields(event), isSessionMember));
+          .filter((event) => {
+            const fields = toEventVisibilityFields(event);
+
+            if (isEventVisibleInEventPanel(fields, isSessionMember)) {
+              return true;
+            }
+
+            if (fields.is_locked === true) {
+              return false;
+            }
+
+            if (!isEventVisibleForSessionMember(fields, isSessionMember)) {
+              return false;
+            }
+
+            return isPrimiciasEventVisibleOnAgenda(
+              typeof event.name === 'string' ? event.name : null,
+              typeof event.event_date === 'string' ? event.event_date : null
+            );
+          });
 
         if (!visibleEvents.length) {
           previousCountsByEventIdRef.current.clear();

@@ -14,6 +14,8 @@ type Props = {
   isRegistered?: boolean;
   /** Nome do evento padrão (culto) em que o membro está inscrito. */
   registeredEventName?: string | null;
+  /** Texto extra (ex.: produtos de Prímicias) na linha «Inscrito em:». */
+  commitmentCaption?: string | null;
   registrationStatus?: RegistrationStatus;
   showKidsIndicator?: boolean;
   showTeensIndicator?: boolean;
@@ -34,6 +36,7 @@ export const MemberCheckboxItem = ({
   isLoading = false,
   isRegistered = false,
   registeredEventName = null,
+  commitmentCaption = null,
   assignedRoomLabel = null,
   assignedRoomIsOverlay: _assignedRoomIsOverlay = false,
   roomCheckInComplete = false,
@@ -43,9 +46,12 @@ export const MemberCheckboxItem = ({
   const displayName = formatShortName(member.full_name);
   const roomLabel = assignedRoomLabel?.trim() || '';
   const eventLabel = registeredEventName?.trim() || '';
-  // Sala alocada (padrão/especial) tem prioridade na linha de status.
-  // Sem sala: inscrição no evento padrão, senão «Sem Inscrições».
+  const caption = commitmentCaption?.trim() || '';
+  // Prímicias descreve os produtos na própria inscrição; senão sala, depois o evento.
   const statusLine = (() => {
+    if (caption) {
+      return `Inscrito em: ${caption}`;
+    }
     if (roomLabel) {
       return `Inscrito em: ${roomLabel}`;
     }
@@ -57,7 +63,7 @@ export const MemberCheckboxItem = ({
     }
     return 'Sem Inscrições';
   })();
-  const hasStatusHighlight = Boolean(roomLabel) || isRegistered;
+  const hasStatusHighlight = Boolean(caption) || Boolean(roomLabel) || isRegistered;
 
   return (
     <View style={styles.row}>
@@ -94,7 +100,7 @@ export const MemberCheckboxItem = ({
             !hasStatusHighlight && styles.noRegistrationText,
             !hasStatusHighlight && minimal && styles.noRegistrationTextMinimal,
           ]}
-          numberOfLines={2}
+          numberOfLines={caption ? 4 : 2}
         >
           {statusLine}
         </Text>

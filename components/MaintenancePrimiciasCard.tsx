@@ -1,15 +1,22 @@
 import { DropdownSelect } from '@/components/ui/DropdownSelect';
 import { MaintenanceHelpInfoTitle } from '@/components/ui/MaintenanceHelpInfoTitle';
+import { MonthlyDatePickerModal } from '@/components/ui/MonthlyDatePickerModal';
 import { confirmDialog } from '@/lib/confirmDialog';
+import { calendarDateInputToBr, calendarDateInputToIso } from '@/lib/monthlyDatePicker';
 import {
   createPrimiciasItem,
   deletePrimiciasItem,
+  formatPrimiciasIsoDate,
   formatPrimiciasItemLine,
+  listPrimiciasHistory,
   listPrimiciasItems,
   PRIMICIAS_CATEGORIES,
   PRIMICIAS_CATEGORY_LABEL,
+  savePrimiciasEventDate,
   type PrimiciasCategory,
+  type PrimiciasHistoryDay,
   type PrimiciasItem,
+  type PrimiciasOccurrence,
 } from '@/lib/primiciasApi';
 import {
   computeMaintenanceContentHeight,
@@ -48,6 +55,11 @@ export function MaintenancePrimiciasCard({ isActive = true, panelHeight, minimal
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [items, setItems] = useState<PrimiciasItem[]>([]);
+  const [occurrence, setOccurrence] = useState<PrimiciasOccurrence | null>(null);
+  const [history, setHistory] = useState<PrimiciasHistoryDay[]>([]);
+  const [eventDateInput, setEventDateInput] = useState('');
+  const [datePickerOpen, setDatePickerOpen] = useState(false);
+  const [savingDate, setSavingDate] = useState(false);
   const [category, setCategory] = useState<PrimiciasCategory>('alimenticios');
   const [quantity, setQuantity] = useState('1');
   const [unit, setUnit] = useState('');
@@ -55,8 +67,17 @@ export function MaintenancePrimiciasCard({ isActive = true, panelHeight, minimal
   const [weight, setWeight] = useState('');
 
   const load = useCallback(async () => {
-    const result = await listPrimiciasItems();
+    const [result, historyRows] = await Promise.all([
+      listPrimiciasItems(),
+      listPrimiciasHistory().catch(() => [] as PrimiciasHistoryDay[]),
+    ]);
     setItems(result.items);
+    setOccurrence(result.occurrence);
+    setHistory(historyRows);
+
+    if (result.occurrence?.eventDate) {
+      setEventDateInput(formatPrimiciasIsoDate(result.occurrence.eventDate));
+    }
   }, []);
 
   useEffect(() => {
@@ -100,6 +121,31 @@ export function MaintenancePrimiciasCard({ isActive = true, panelHeight, minimal
     setUnit('');
     setProductName('');
     setWeight('');
+  };
+
+  const handleSaveDate = async () => {
+    const iso = calendarDateInputToIso(eventDateInput);
+
+    if (!iso) {
+      Toast.show({ type: 'error', text1: 'Prímicias', text2: 'Informe a data da campanha.' });
+      return;
+    }
+
+    setSavingDate(true);
+
+    try {
+      const message = await savePrimiciasEventDate(iso);
+      await load();
+      Toast.show({ type: 'success', text1: 'Prímicias', text2: message });
+    } catch (err) {
+      Toast.show({
+        type: 'error',
+        text1: 'Prímicias',
+        text2: err instanceof Error ? err.message : 'Não foi possível gravar a data.',
+      });
+    } finally {
+      setSavingDate(false);
+    }
   };
 
   const handleCreate = async () => {
@@ -168,7 +214,7 @@ export function MaintenancePrimiciasCard({ isActive = true, panelHeight, minimal
     <View style={[maintenancePanelStyles.panel, { height: contentHeight }]}>
       <MaintenanceHelpInfoTitle
         title="Gestão de Prímicias"
-        helpText="Cadastre ou exclua itens da campanha. Cada item precisa de quantidade, unidade de medida, nome do produto e peso. Itens padrão excluídos não voltam sozinhos."
+        helpText="Trate a campanha como um evento: defina a data, cadastre ou exclua itens (quantidade, unidade, nome e peso). Ao doar, o membro entra na agenda. Dez dias após a data, os compromissos são arquivados no histórico e os itens ficam livres para a próxima data."
         minimal={minimal}
       />
 
@@ -180,6 +226,41 @@ export function MaintenancePrimiciasCard({ isActive = true, panelHeight, minimal
         <Text style={maintenancePanelStyles.panelHint}>{error}</Text>
       ) : (
         <ScrollView style={styles.scroll} contentContainerStyle={styles.content} {...MAINTENANCE_SCROLL_PROPS}>
+          <Text style={styles.formLabel}>Data da campanha</Text>
+          <TouchableOpacity
+            style={styles.dateButton}
+            onPress={() => setDatePickerOpen(true)}
+            accessibilityRole="button"
+            accessibilityLabel="Escolher data da campanha"
+          >
+            <Text style={styles.dateButtonText}>
+              {eventDateInput.trim() || 'Toque para escolher a data'}
+            </Text>
+          </TouchableOpacity>
+          {occurrence ? (
+            <Text style={styles.pledgeMeta}>
+              Evento na agenda em {formatPrimiciasIsoDate(occurrence.eventDate)}. Itens liberam de
+              novo em {formatPrimiciasIsoDate(occurrence.resetOn)}.
+            </Text>
+          ) : (
+            <Text style={styles.pledgeMeta}>
+              Sem data, o membro ainda não consegue se comprometer nem gerar inscrição na agenda.
+            </Text>
+          )}
+          <TouchableOpacity
+            style={styles.saveButton}
+            onPress={() => void handleSaveDate()}
+            disabled={savingDate}
+            accessibilityRole="button"
+            accessibilityLabel="Gravar data da campanha"
+          >
+            {savingDate ? (
+              <ActivityIndicator size="small" color="#FFFFFF" />
+            ) : (
+              <Text style={styles.saveButtonText}>Gravar data do evento</Text>
+            )}
+          </TouchableOpacity>
+
           <Text style={styles.formLabel}>Novo item</Text>
           <DropdownSelect
             options={CATEGORY_OPTIONS}
@@ -270,8 +351,35 @@ export function MaintenancePrimiciasCard({ isActive = true, panelHeight, minimal
               })}
             </View>
           ))}
+
+          {history.length > 0 ? (
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Histórico por data</Text>
+              {history.map((day) => (
+                <View key={day.occurrenceId} style={styles.historyDay}>
+                  <Text style={styles.itemLine}>{formatPrimiciasIsoDate(day.eventDate)}</Text>
+                  {day.donors.map((donor) => (
+                    <Text key={`${day.occurrenceId}-${donor.profileId ?? donor.name}`} style={styles.pledgeMeta}>
+                      {donor.name}: {donor.items.map((item) => formatPrimiciasItemLine(item)).join('; ')}
+                    </Text>
+                  ))}
+                </View>
+              ))}
+            </View>
+          ) : null}
         </ScrollView>
       )}
+      <MonthlyDatePickerModal
+        visible={datePickerOpen}
+        value={eventDateInput}
+        title="Data da campanha"
+        variant={minimal ? 'minimal' : 'default'}
+        onClose={() => setDatePickerOpen(false)}
+        onConfirm={(dateInput) => {
+          setEventDateInput(calendarDateInputToBr(dateInput));
+          setDatePickerOpen(false);
+        }}
+      />
     </View>
   );
 }
@@ -350,5 +458,26 @@ const styles = StyleSheet.create({
     height: 36,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  dateButton: {
+    borderWidth: 1,
+    borderColor: MINIMAL_UI.border,
+    borderRadius: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    backgroundColor: MINIMAL_UI.background,
+  },
+  dateButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: MINIMAL_UI.text,
+  },
+  historyDay: {
+    gap: 4,
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    borderWidth: 1,
+    borderColor: MINIMAL_UI.border,
+    borderRadius: 10,
   },
 });
