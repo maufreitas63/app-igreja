@@ -43,7 +43,7 @@ export const MemberCheckboxItem = ({
   minimal = false,
   onToggle,
 }: Props) => {
-  const displayName = formatShortName(member.full_name);
+  const displayName = formatShortName(member.full_name, { profileId: member.id });
   const roomLabel = assignedRoomLabel?.trim() || '';
   const eventLabel = registeredEventName?.trim() || '';
   const caption = commitmentCaption?.trim() || '';

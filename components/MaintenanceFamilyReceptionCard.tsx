@@ -19,6 +19,7 @@ import { normalizePhoneForWhatsApp, openWhatsAppLikeBirthdaysWithText } from '@/
 import { computeMaintenanceContentHeight, maintenancePanelStyles } from '@/lib/maintenanceCardStyles';
 import { confirmDialog } from '@/lib/confirmDialog';
 import { formatShortName } from '@/lib/formatShortName';
+import { formatIbsManualUiPhone } from '@/lib/ibsManualDisplayMask';
 import { CONTAIN_WIDTH } from '@/lib/minimalPresentation';
 import { MINIMAL_SECTION_TITLE, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { resolveInstancePublicUrl } from '@/lib/instancePublicUrl';
@@ -557,11 +558,13 @@ export function MaintenanceFamilyReceptionCard({
                     >
                       <Text style={[styles.memberName, minimal && styles.memberNameMinimal]}>
                         {member.isInformant ? '★ ' : '• '}
-                        {formatShortName(member.fullName)} — {member.relationship}
+                        {formatShortName(member.fullName, { profileId: member.matchedProfileId })} — {member.relationship}
                       </Text>
                       <Text style={[styles.memberHint, minimal && styles.memberHintMinimal]}>
                         {`nasc. ${formatBirthDateDisplay(member.birthDate)}`}
-                        {member.phone ? ` · ${member.phone}` : ''}
+                        {member.phone
+                          ? ` · ${formatIbsManualUiPhone(member.phone, member.matchedProfileId)}`
+                          : ''}
                       </Text>
                       {placeholderBirth ? (
                         <View style={styles.birthEditor}>
@@ -657,9 +660,9 @@ export function MaintenanceFamilyReceptionCard({
                           key={person.profileId}
                           style={[styles.existingMember, minimal && styles.existingMemberMinimal]}
                         >
-                          • {formatShortName(person.fullName)}
+                          • {formatShortName(person.fullName, { profileId: person.profileId })}
                           {person.birthDate ? ` · nasc. ${formatBirthDateDisplay(person.birthDate)}` : ''}
-                          {person.phone ? ` · ${person.phone}` : ''}
+                          {person.phone ? ` · ${formatIbsManualUiPhone(person.phone, person.profileId)}` : ''}
                         </Text>
                       ))
                     )}
@@ -672,7 +675,7 @@ export function MaintenanceFamilyReceptionCard({
                         {incomingWithMatches.map((person) => (
                           <View key={person.id} style={styles.matchPerson}>
                             <Text style={[styles.matchPersonName, minimal && styles.matchPersonNameMinimal]}>
-                              {formatShortName(person.fullName)}
+                              {formatShortName(person.fullName, { profileId: person.matchedProfileId })}
                             </Text>
                             {person.matches.map((match) => (
                               <Text
@@ -682,7 +685,7 @@ export function MaintenanceFamilyReceptionCard({
                                 {match.sameFamily
                                   ? `Já consta nesta família (${match.familyId ?? inspect.detectedFamilyId}).`
                                   : `Possivelmente de outra família (${match.familyId ?? 'sem código'}).`}
-                                {` Conferência por ${formatMatchReasons(match)}: ${formatShortName(match.fullName)}.`}
+                                {` Conferência por ${formatMatchReasons(match)}: ${formatShortName(match.fullName, { profileId: match.profileId })}.`}
                               </Text>
                             ))}
                             <TouchableOpacity

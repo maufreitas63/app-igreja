@@ -51,8 +51,8 @@ export const personNamesMatch = (
     return true;
   }
 
-  const leftShort = normalizePersonName(formatShortName(profileOrVolunteerName));
-  const rightShort = normalizePersonName(formatShortName(volunteerName));
+  const leftShort = normalizePersonName(formatShortName(profileOrVolunteerName, { unmasked: true }));
+  const rightShort = normalizePersonName(formatShortName(volunteerName, { unmasked: true }));
 
   return leftShort === right || left === rightShort || leftShort === rightShort;
 };

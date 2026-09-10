@@ -34,6 +34,11 @@ import { invalidateProfilesMapSnapshot, PROFILE_GEO_FIELDS } from '@/lib/profile
 import { syncProfileAddressFromCep } from '@/lib/syncProfileAddressFromCep';
 import { formatFullName } from '@/lib/fullName';
 import {
+  applyIbsManualDisplayName,
+  formatIbsManualUiPhone,
+  refreshIbsManualDisplayMask,
+} from '@/lib/ibsManualDisplayMask';
+import {
   buildAppIndexRoute,
   buildDashboardFamilyAgendaRoute,
   buildRegisterRoute,
@@ -176,6 +181,7 @@ export function ProfileClassPanel({
   const [showCurrentAccessPin, setShowCurrentAccessPin] = useState(false);
   const [showNewAccessPin, setShowNewAccessPin] = useState(false);
   const [showConfirmAccessPin, setShowConfirmAccessPin] = useState(false);
+  const [ibsMaskEpoch, setIbsMaskEpoch] = useState(0);
   const currentAccessPinRef = useRef<TextInput>(null);
   const newAccessPinRef = useRef<TextInput>(null);
   const confirmAccessPinRef = useRef<TextInput>(null);
@@ -701,6 +707,20 @@ export function ProfileClassPanel({
       };
     }, [fetchProfile, ghostModeActive, isRecoveryAccessPinFlow, router])
   );
+
+  useEffect(() => {
+    let active = true;
+
+    void refreshIbsManualDisplayMask().then(() => {
+      if (active) {
+        setIbsMaskEpoch((current) => current + 1);
+      }
+    });
+
+    return () => {
+      active = false;
+    };
+  }, [profile?.id]);
 
   useEffect(() => {
     if (loading || !profile) {
@@ -1515,11 +1535,18 @@ export function ProfileClassPanel({
         : 'Informe o valor'
     : '';
 
-  const displayName =
-    profile?.full_name && !isPlaceholderVisitorName(String(profile.full_name))
-      ? formatFullName(String(profile.full_name))
-      : 'Perfil sem nome';
-  const displayPhone = profile?.phone ? String(profile.phone) : 'Telefone não informado';
+  const displayName = (() => {
+    void ibsMaskEpoch;
+
+    if (!profile?.full_name || isPlaceholderVisitorName(String(profile.full_name))) {
+      return 'Perfil sem nome';
+    }
+
+    return applyIbsManualDisplayName(profile.full_name, profile.id);
+  })();
+  const displayPhone = profile?.phone
+    ? formatIbsManualUiPhone(String(profile.phone), profile.id) || String(profile.phone)
+    : 'Telefone não informado';
   const displayBirth = profile?.birth_date ? formatDisplayDateLike(String(profile.birth_date)) : 'Nascimento não informado';
   const displayFamily = profile?.family_id || profile?.codigo_membro
     ? String(profile.family_id ?? profile.codigo_membro)

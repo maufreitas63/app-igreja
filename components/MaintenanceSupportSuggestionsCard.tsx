@@ -2,8 +2,8 @@ import { DropdownSelect } from '@/components/ui/DropdownSelect';
 import { AppSwitch } from '@/components/ui/AppSwitch';
 import { MaintenanceHelpInfoTitle } from '@/components/ui/MaintenanceHelpInfoTitle';
 import { VIGILANCE_SCALES_UI } from '@/lib/dashboardCardThemes';
-import { formatPhoneDisplay } from '@/lib/familyRegistration';
 import { formatShortName } from '@/lib/formatShortName';
+import { applyIbsManualDisplayName, formatIbsManualUiPhone } from '@/lib/ibsManualDisplayMask';
 import { formatBrazilDateInput } from '@/lib/inputMasks';
 import {
   listProfilesForAccessAdmin,
@@ -401,12 +401,12 @@ export function MaintenanceSupportSuggestionsCard({
       { value: '', label: 'Eu mesmo (registrar em meu nome)' },
       ...memberProfiles.map((profile) => {
         const phoneLabel = profile.phone
-          ? formatPhoneDisplay(profile.phone)
+          ? formatIbsManualUiPhone(profile.phone, profile.id)
           : 'sem celular cadastrado';
 
         return {
           value: profile.id,
-          label: `${formatShortName(profile.fullName)} · ${phoneLabel}`,
+          label: `${formatShortName(profile.fullName, { profileId: profile.id })} · ${phoneLabel}`,
         };
       }),
     ],
@@ -865,11 +865,13 @@ export function MaintenanceSupportSuggestionsCard({
           {selectedNewRequester ? (
             <View style={themedStyles.selectedRequesterCard}>
               <Text style={themedStyles.selectedRequesterTitle}>Registrando para</Text>
-              <Text style={themedStyles.selectedRequesterName}>{selectedNewRequester.fullName}</Text>
+              <Text style={themedStyles.selectedRequesterName}>
+                {applyIbsManualDisplayName(selectedNewRequester.fullName, selectedNewRequester.id)}
+              </Text>
               <Text style={themedStyles.selectedRequesterMeta}>
                 Celular:{' '}
                 {selectedNewRequester.phone
-                  ? formatPhoneDisplay(selectedNewRequester.phone)
+                  ? formatIbsManualUiPhone(selectedNewRequester.phone, selectedNewRequester.id)
                   : 'não cadastrado'}
               </Text>
             </View>

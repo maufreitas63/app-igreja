@@ -1,7 +1,7 @@
 import { formatCep } from '@/lib/cepUtils';
 import { fetchEffectiveSessionProfileRow } from '@/lib/effectiveProfileRpc';
 import { normalizeFamilyCode } from '@/lib/family';
-import { formatFullName } from '@/lib/fullName';
+import { applyIbsManualDisplayName, formatIbsManualUiPhone, refreshIbsManualDisplayMask } from '@/lib/ibsManualDisplayMask';
 import { formatBrazilPhoneInput } from '@/lib/inputMasks';
 import { resolveSelfiePreviewUrl } from '@/lib/selfie';
 import { resolveEffectiveProfileId } from '@/lib/sessionProfile';
@@ -153,7 +153,9 @@ export async function loadDigitalIdCardData(): Promise<DigitalIdCardData | null>
     return null;
   }
 
-  const fullName = formatFullName(readString(profile.full_name));
+  await refreshIbsManualDisplayMask();
+
+  const fullName = applyIbsManualDisplayName(readString(profile.full_name), profileId);
   const familyId = normalizeFamilyCode(readString(profile.family_id) || readString(profile.codigo_membro));
   const [photoUrl, status] = await Promise.all([
     resolveSelfiePreviewUrl(readString(profile.selfie_url) || null),
@@ -170,7 +172,7 @@ export async function loadDigitalIdCardData(): Promise<DigitalIdCardData | null>
     initials: initialsFromFullName(fullName),
     birthDate: birthDateRaw ? formatDateOnly(birthDateRaw) : EMPTY_VALUE,
     address: displayOrDash(formatProfileFullAddress(profile)),
-    phone: phoneRaw ? formatBrazilPhoneInput(phoneRaw) : EMPTY_VALUE,
+    phone: phoneRaw ? formatIbsManualUiPhone(phoneRaw, profileId) || formatBrazilPhoneInput(phoneRaw) : EMPTY_VALUE,
     email: displayOrDash(readString(profile.email)),
     familyId: displayOrDash(familyId),
     checkInQrValue: familyId,

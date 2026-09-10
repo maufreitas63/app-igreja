@@ -441,7 +441,9 @@ export function MembersListsClassPanel() {
               {familyModalMembers.map((member) => (
                 <View key={member.id} style={styles.familyModalRow}>
                   <View style={styles.familyModalRowContent}>
-                    <Text style={styles.familyModalName}>{member.full_name}</Text>
+                    <Text style={styles.familyModalName}>
+                      {member.short_name || member.full_name}
+                    </Text>
                     {member.relationship ? (
                       <Text style={styles.familyModalRelationship}>{member.relationship}</Text>
                     ) : null}

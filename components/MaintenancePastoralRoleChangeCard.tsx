@@ -136,7 +136,7 @@ export function MaintenancePastoralRoleChangeCard({
 
     setMembershipDateEditor({
       profileId: profile.id,
-      profileName: formatShortName(profile.fullName),
+      profileName: formatShortName(profile.fullName, { profileId: profile.id }),
       dateInput: formatMembershipDateFromIso(dateSource),
       outDateInput: formatMembershipDateFromIso(outDateSource),
       readOnly: !editable,
@@ -338,7 +338,7 @@ export function MaintenancePastoralRoleChangeCard({
               profiles.map((profile, index) => {
                 const isSaving = savingProfileId === profile.id;
                 const hasMembershipLink = profileHasMembershipDateLink(profile);
-                const shortName = formatShortName(profile.fullName);
+                const shortName = formatShortName(profile.fullName, { profileId: profile.id });
                 const hasMembershipOut = !isProfileVisibleInApp(profile.membershipOut);
 
                 return (

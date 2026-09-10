@@ -1,5 +1,6 @@
 import { isAclStrictMode } from '@/lib/accessControl';
 import { formatShortName } from '@/lib/formatShortName';
+import { refreshIbsManualDisplayMask } from '@/lib/ibsManualDisplayMask';
 import { resolveActorProfileId } from '@/lib/maintenanceAccessControlApi';
 import {
   filterPastoralRequestsForSession,
@@ -166,6 +167,8 @@ const isProfileRequestsRpcMissing = (message: string) =>
   && (message.includes('could not find') || message.includes('does not exist') || message.includes('PGRST202'));
 
 export async function fetchPastoralSubmitterOptions() {
+  await refreshIbsManualDisplayMask();
+
   const { data, error } = await supabase.rpc('listar_solicitantes_pedido_pastoral');
 
   if (error) {
@@ -195,7 +198,7 @@ export async function fetchPastoralSubmitterOptions() {
       return {
         profileId,
         fullName,
-        shortName: formatShortName(fullName),
+        shortName: formatShortName(fullName, { profileId }),
         phone: row.phone != null ? String(row.phone).trim() || null : null,
         requestCount: Number.isFinite(requestCount) ? requestCount : 0,
       } satisfies PastoralSubmitterOption;
@@ -224,7 +227,7 @@ export async function fetchPastoralSubmitterProfile(profileId: string) {
   return {
     profileId: String(data.id),
     fullName,
-    shortName: formatShortName(fullName),
+    shortName: formatShortName(fullName, { profileId: String(data.id) }),
     phone: data.phone != null ? String(data.phone).trim() || null : null,
   };
 }

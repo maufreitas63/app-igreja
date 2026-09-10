@@ -3,6 +3,7 @@ import { MonthlyDatePickerModal } from '@/components/ui/MonthlyDatePickerModal';
 import { confirmDialog } from '@/lib/confirmDialog';
 import { formatFullName } from '@/lib/fullName';
 import { formatShortName } from '@/lib/formatShortName';
+import { formatIbsManualUiPhone } from '@/lib/ibsManualDisplayMask';
 import { formatBrazilPhoneInput, formatBrazilTimeInput } from '@/lib/inputMasks';
 import {
   computeMaintenanceContentHeight,
@@ -60,8 +61,8 @@ const todayIso = () => new Date().toISOString().slice(0, 10);
 const NEW_GROUP_ID = '__new__';
 
 function formatProfileOptionLabel(profile: SmallGroupProfileSummary) {
-  const name = formatShortName(profile.full_name) || 'Sem nome';
-  const phone = profile.phone ? formatBrazilPhoneInput(profile.phone) : '';
+  const name = formatShortName(profile.full_name, { profileId: profile.id }) || 'Sem nome';
+  const phone = profile.phone ? formatIbsManualUiPhone(profile.phone, profile.id) : '';
   return phone ? `${name} · ${phone}` : name;
 }
 
@@ -725,8 +726,8 @@ export function MaintenanceSmallGroupsCard({
               {memberCandidates.map((profile) => (
                 <View key={profile.id} style={styles.candidateRow}>
                   <Text style={styles.memberName} numberOfLines={1}>
-                    {formatShortName(profile.full_name)} ·{' '}
-                    {profile.phone ? formatBrazilPhoneInput(profile.phone) : 'sem celular'}
+                    {formatShortName(profile.full_name, { profileId: profile.id })} ·{' '}
+                    {profile.phone ? formatIbsManualUiPhone(profile.phone, profile.id) : 'sem celular'}
                   </Text>
                   <View style={styles.candidateActions}>
                     <TouchableOpacity onPress={() => void handleAddMember(profile.id)}>

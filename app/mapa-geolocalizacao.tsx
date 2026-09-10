@@ -7,6 +7,7 @@ import {
   type ProfileNotOnMap,
 } from '@/hooks/useProfilesMapMarkers';
 import { formatShortName } from '@/lib/formatShortName';
+import { formatIbsManualUiPhone } from '@/lib/ibsManualDisplayMask';
 import { fetchCepGeolocationRecordsByDigits } from '@/lib/cepGeolocationApi';
 import {
   buildProfileMapAddressDisplay,
@@ -23,7 +24,6 @@ import { useReturnToCallerOnLeave } from '@/hooks/useReturnToCallerOnLeave';
 import { resolveReturnDashboardCardParam, resolveReturnRouteParam } from '@/lib/dashboardReturnNavigation';
 import { MAP_PIN_COLOR, type MapMarker } from '@/lib/profilesMapMarkersTypes';
 import { fetchSmallGroupMapPins } from '@/lib/smallGroupsApi';
-import { formatPhoneForDisplay } from '@/lib/totemDevice';
 import { openMemberWhatsapp } from '@/lib/whatsapp';
 import { ProfilesMapCanvas } from '@/components/geo-map/ProfilesMapCanvas';
 import * as Clipboard from 'expo-clipboard';
@@ -273,7 +273,9 @@ export default function MapGeolocalizacaoScreen() {
 
     if (!marker) {
       const notOnMap = profilesNotOnMap.find((profile) => profile.id === focusProfileId);
-      const shortName = notOnMap ? formatShortName(notOnMap.full_name) : 'Este membro';
+      const shortName = notOnMap
+        ? formatShortName(notOnMap.full_name, { profileId: notOnMap.id })
+        : 'Este membro';
 
       Toast.show({
         type: 'info',
@@ -306,8 +308,8 @@ export default function MapGeolocalizacaoScreen() {
       return null;
     }
 
-    return formatPhoneForDisplay(phone);
-  }, [selectedProfile?.phone]);
+    return formatIbsManualUiPhone(phone, selectedProfile.id);
+  }, [selectedProfile?.id, selectedProfile?.phone]);
 
   const handleOpenSelectedWhatsapp = useCallback(() => {
     if (!selectedProfile?.phone) {
@@ -525,13 +527,15 @@ export default function MapGeolocalizacaoScreen() {
               showsVerticalScrollIndicator
             >
               {profilesNotOnMap.map((profile) => {
-                const phoneDisplay = profile.phone ? formatPhoneForDisplay(profile.phone) : '—';
+                const phoneDisplay = profile.phone
+                  ? formatIbsManualUiPhone(profile.phone, profile.id)
+                  : '—';
 
                 return (
                   <View key={profile.id} style={styles.invalidCepsRow}>
                     <View style={styles.invalidCepsRowContent}>
                       <Text style={styles.invalidCepsName}>
-                        {formatShortName(profile.full_name)}
+                        {formatShortName(profile.full_name, { profileId: profile.id })}
                       </Text>
                       <Text style={styles.invalidCepsMeta}>
                         CEP: {profile.cepDisplay}
@@ -548,7 +552,7 @@ export default function MapGeolocalizacaoScreen() {
                       disabled={!profile.phone}
                       activeOpacity={0.85}
                       accessibilityRole="button"
-                      accessibilityLabel={`Abrir WhatsApp de ${formatShortName(profile.full_name)}`}
+                      accessibilityLabel={`Abrir WhatsApp de ${formatShortName(profile.full_name, { profileId: profile.id })}`}
                     >
                       <FontAwesome
                         name="whatsapp"

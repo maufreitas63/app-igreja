@@ -4,6 +4,7 @@ import { SectionLabel } from '@/components/ui/SectionLabel';
 import { useGhostMode } from '@/context/GhostModeContext';
 import { confirmDialog } from '@/lib/confirmDialog';
 import { formatShortName } from '@/lib/formatShortName';
+import { formatIbsManualUiPhone } from '@/lib/ibsManualDisplayMask';
 import {
   fetchGhostTargetAccessAuditReport,
   fetchGhostTargetProfilePreview,
@@ -475,7 +476,9 @@ export function MaintenanceGhostModeCard({
     () =>
       profiles.map((profile) => ({
         value: profile.id,
-        label: `${formatShortName(profile.fullName)}${profile.phone ? ` · ${profile.phone}` : ''}`,
+        label: `${formatShortName(profile.fullName, { profileId: profile.id })}${
+          profile.phone ? ` · ${formatIbsManualUiPhone(profile.phone, profile.id)}` : ''
+        }`,
       })),
     [profiles]
   );
@@ -494,7 +497,7 @@ export function MaintenanceGhostModeCard({
 
     const confirmed = await confirmDialog(
       'Ativar Modo Ghost',
-      `Simular a sessão de ${formatShortName(selectedProfile.fullName)}?\n\nVocê verá o aplicativo com as mesmas permissões deste usuário. As alterações serão registradas em nome dele, com auditoria do operador real.`,
+      `Simular a sessão de ${formatShortName(selectedProfile.fullName, { profileId: selectedProfile.id })}?\n\nVocê verá o aplicativo com as mesmas permissões deste usuário. As alterações serão registradas em nome dele, com auditoria do operador real.`,
       'Ativar',
       'Cancelar'
     );

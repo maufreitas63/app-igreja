@@ -8,6 +8,7 @@ import {
 import { formatAccessPinDisplay } from '@/lib/accessPin';
 import { confirmDialog } from '@/lib/confirmDialog';
 import { formatShortName } from '@/lib/formatShortName';
+import { applyIbsManualDisplayName, formatIbsManualFieldDisplay, formatIbsManualUiPhone } from '@/lib/ibsManualDisplayMask';
 import { useMaintenanceProfileCadastro } from '@/hooks/useMaintenanceProfileCadastro';
 import { CONTAIN_WIDTH } from '@/lib/minimalPresentation';
 import { MINIMAL_SECTION_TITLE, MINIMAL_UI } from '@/lib/minimalUiTheme';
@@ -39,7 +40,11 @@ const ADDRESS_READONLY_KEYS = new Set([
   'address_state',
 ]);
 
-const formatDisplayValue = (key: string, value: string | null | undefined) => {
+const formatDisplayValue = (
+  key: string,
+  value: string | null | undefined,
+  profileId?: string | null
+) => {
   const trimmed = value?.trim();
 
   if (!trimmed) {
@@ -54,7 +59,7 @@ const formatDisplayValue = (key: string, value: string | null | undefined) => {
     }
   }
 
-  return trimmed;
+  return formatIbsManualFieldDisplay(key, trimmed, profileId);
 };
 
 function SectionHeading({ children, minimal }: { children: string; minimal: boolean }) {
@@ -224,15 +229,19 @@ export function MaintenanceProfileCadastroCard({
                   accessibilityState={{ expanded: isSelected }}
                   accessibilityLabel={
                     isSelected
-                      ? `Ocultar dados de ${formatShortName(option.fullName)}`
-                      : `Exibir dados de ${formatShortName(option.fullName)}`
+                      ? `Ocultar dados de ${formatShortName(option.fullName, { profileId: option.id })}`
+                      : `Exibir dados de ${formatShortName(option.fullName, { profileId: option.id })}`
                   }
                 >
                   <Text style={[styles.resultName, minimal && styles.resultNameMinimal]}>
-                    {formatShortName(option.fullName)}
+                    {formatShortName(option.fullName, { profileId: option.id })}
                   </Text>
                   <Text style={[styles.resultMeta, minimal && styles.resultMetaMinimal]}>
-                    {[option.phone, option.memberCode].filter(Boolean).join(' · ') || option.fullName}
+                    {[
+                      option.phone ? formatIbsManualUiPhone(option.phone, option.id) : null,
+                      option.memberCode,
+                    ].filter(Boolean).join(' · ') ||
+                      applyIbsManualDisplayName(option.fullName, option.id)}
                   </Text>
                 </TouchableOpacity>
               );
@@ -258,7 +267,10 @@ export function MaintenanceProfileCadastroCard({
           keyboardShouldPersistTaps="handled"
         >
           <Text style={[styles.selectedTitle, minimal && styles.selectedTitleMinimal]}>
-            {selectedPickerOption?.fullName ?? profile.full_name ?? 'Usuário selecionado'}
+            {applyIbsManualDisplayName(
+              selectedPickerOption?.fullName ?? profile.full_name,
+              profile.id
+            ) || 'Usuário selecionado'}
           </Text>
 
           <Text style={[styles.groupTitle, minimal && styles.groupTitleMinimal]}>
@@ -270,7 +282,7 @@ export function MaintenanceProfileCadastroCard({
                 {field.label}
               </Text>
               <Text style={[styles.fieldValue, minimal && styles.fieldValueMinimal]}>
-                {formatDisplayValue(field.key, profile[field.key])}
+                {formatDisplayValue(field.key, profile[field.key], profile.id)}
               </Text>
             </View>
           ))}
@@ -378,7 +390,7 @@ export function MaintenanceProfileCadastroCard({
                 {field.label}
               </Text>
               <Text style={[styles.fieldValue, minimal && styles.fieldValueMinimal]}>
-                {formatDisplayValue(field.key, profile[field.key])}
+                {formatDisplayValue(field.key, profile[field.key], profile.id)}
               </Text>
             </View>
           ))}

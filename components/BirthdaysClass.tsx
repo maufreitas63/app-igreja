@@ -5,6 +5,7 @@ import {
   type BirthdaysClassEntry,
 } from '@/lib/birthdaysClassTypes';
 import { formatBirthdayDayMonth } from '@/lib/birthdaysClassUtils';
+import { formatShortName } from '@/lib/formatShortName';
 import { FontAwesome } from '@expo/vector-icons';
 import React from 'react';
 import {
@@ -96,7 +97,7 @@ export function BirthdaysClass({
                     </Text>
                   </View>
                   <View style={styles.rowContent}>
-                    <Text style={styles.nameText}>{entry.full_name}</Text>
+                    <Text style={styles.nameText}>{formatShortName(entry.full_name)}</Text>
                     <TouchableOpacity
                       style={[styles.whatsappButton, !entry.phone && styles.whatsappButtonDisabled]}
                       onPress={() => onOpenWhatsapp?.(entry)}

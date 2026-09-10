@@ -3,6 +3,7 @@ import { AppSwitch } from '@/components/ui/AppSwitch';
 import { DropdownSelect } from '@/components/ui/DropdownSelect';
 import { SectionLabel } from '@/components/ui/SectionLabel';
 import { formatShortName } from '@/lib/formatShortName';
+import { formatIbsManualUiPhone } from '@/lib/ibsManualDisplayMask';
 import { FINANCIAL_ACCESS_SCREEN_RESOURCE_KEYS } from '@/lib/accessControl';
 import {
   ACCESS_CONTROL_PANEL_RESOURCE,
@@ -630,8 +631,11 @@ export function MaintenanceAccessControlCard({
   const profileDropdownOptions = useMemo(
     () =>
       allProfiles.map((profile) => {
-        const meta = [profile.phone, profile.memberCode].filter(Boolean).join(' · ');
-        const shortName = formatShortName(profile.fullName);
+        const phoneLabel = profile.phone
+          ? formatIbsManualUiPhone(profile.phone, profile.id)
+          : '';
+        const meta = [phoneLabel, profile.memberCode].filter(Boolean).join(' · ');
+        const shortName = formatShortName(profile.fullName, { profileId: profile.id });
 
         return {
           value: profile.id,
@@ -1316,12 +1320,17 @@ export function MaintenanceAccessControlCard({
                           activeOpacity={0.85}
                         >
                           <Text style={[styles.peopleName, minimal && styles.peopleNameMinimal]}>
-                            {formatShortName(person.fullName)}
+                            {formatShortName(person.fullName, { profileId: person.profileId })}
                             {person.desligado ? ' · desligado' : ''}
                           </Text>
                           {person.phone || person.memberCode ? (
                             <Text style={[styles.peopleMeta, minimal && styles.peopleMetaMinimal]}>
-                              {[person.phone, person.memberCode].filter(Boolean).join(' · ')}
+                              {[
+                                person.phone
+                                  ? formatIbsManualUiPhone(person.phone, person.profileId)
+                                  : null,
+                                person.memberCode,
+                              ].filter(Boolean).join(' · ')}
                             </Text>
                           ) : null}
                         </TouchableOpacity>

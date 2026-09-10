@@ -18,6 +18,7 @@ import {
 } from '@/lib/pastoralAccess';
 import { sessionHasAccess } from '@/lib/accessControl';
 import { formatShortName } from '@/lib/formatShortName';
+import { formatIbsManualUiPhone } from '@/lib/ibsManualDisplayMask';
 import { confirmDialog } from '@/lib/confirmDialog';
 import {
   hasPastoralCancellationRequested,
@@ -338,7 +339,9 @@ export function MaintenancePastoralCareCard({
                       numberOfLines={1}
                     >
                       {submitter.requestCount} pedido{submitter.requestCount === 1 ? '' : 's'}
-                      {submitter.phone ? ` · ${submitter.phone}` : ''}
+                      {submitter.phone
+                        ? ` · ${formatIbsManualUiPhone(submitter.phone, submitter.profileId)}`
+                        : ''}
                     </Text>
                   </View>
                   <View
@@ -438,7 +441,9 @@ export function MaintenancePastoralCareCard({
                     style={[styles.contactPhone, minimal && styles.contactPhoneMinimal]}
                     numberOfLines={1}
                   >
-                    {selectedRequest.phone?.trim() || '—'}
+                    {selectedRequest.phone?.trim()
+                      ? formatIbsManualUiPhone(selectedRequest.phone, selectedSubmitter?.profileId)
+                      : '—'}
                   </Text>
                 </View>
                 {!isDetailExpanded ? (

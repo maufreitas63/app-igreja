@@ -14,6 +14,7 @@ import {
   membersClassStyles,
 } from '@/lib/manageMembers/membersClassStyles';
 import { formatShortName } from '@/lib/formatShortName';
+import { applyIbsManualDisplayName, formatIbsManualUiPhone } from '@/lib/ibsManualDisplayMask';
 import { canSearchProfileByName } from '@/lib/lookupProfileByPhoneForMember';
 import { type ProfileMemberLookup } from '@/lib/lookupProfileByPhoneForMember';
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
@@ -206,11 +207,16 @@ export function MembersClass({
                             activeOpacity={0.85}
                           >
                             <Text style={membersClassStyles.nameSearchResultName}>
-                              {formatShortName(profile.full_name)}
+                              {formatShortName(profile.full_name, { profileId: profile.id })}
                             </Text>
                             <Text style={membersClassStyles.nameSearchResultMeta}>
-                              {[profile.phone, profile.family_id].filter(Boolean).join(' · ') ||
-                                profile.full_name?.trim() ||
+                              {[
+                                profile.phone
+                                  ? formatIbsManualUiPhone(profile.phone, profile.id)
+                                  : null,
+                                profile.family_id,
+                              ].filter(Boolean).join(' · ') ||
+                                applyIbsManualDisplayName(profile.full_name, profile.id) ||
                                 'Sem dados adicionais'}
                             </Text>
                           </TouchableOpacity>
@@ -364,7 +370,9 @@ export function MembersClass({
               return (
                 <View style={membersClassStyles.memberContent}>
                   <View style={membersClassStyles.memberNameRow}>
-                    <Text style={membersClassStyles.memberName}>{item.full_name}</Text>
+                    <Text style={membersClassStyles.memberName}>
+                      {applyIbsManualDisplayName(item.full_name, item.id)}
+                    </Text>
                     {(() => {
                       const roomStatus = getMemberRoomStatus(item.birth_date, idadeKids, idadeTeens);
 
@@ -386,7 +394,7 @@ export function MembersClass({
                     {item.family_id} • {item.relationship}
                   </Text>
                   <Text style={membersClassStyles.memberInfo}>
-                    {item.phone ? `${item.phone} ` : 'Sem telefone '}
+                    {item.phone ? `${formatIbsManualUiPhone(item.phone, item.id)} ` : 'Sem telefone '}
                     {item.birth_date ? `• Nasc: ${formatDisplayDate(item.birth_date)}` : ''}
                   </Text>
                   {showVidaTmp && birthDateElapsedCode ? (

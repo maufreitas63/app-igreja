@@ -112,7 +112,7 @@ export function ProfilesMapCanvas({
                 longitude: marker.coord.lng,
               }}
               pinColor={pinColor}
-              title={formatShortName(marker.profile.full_name)}
+              title={formatShortName(marker.profile.full_name, { profileId: marker.profile.id })}
               description={marker.profile.roleLabel}
               onPress={() => {
                 if (!pinsInteractive) {

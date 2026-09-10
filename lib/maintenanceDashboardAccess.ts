@@ -144,7 +144,7 @@ async function resolveMaintenanceDashboardAccess(): Promise<MaintenanceDashboard
     const profileName = sessionProfile?.full_name?.trim();
 
     if (profileName) {
-      headerUserName = formatShortName(profileName);
+      headerUserName = formatShortName(profileName, { profileId: sessionProfile?.id });
     }
   } catch {
     headerUserName = null;

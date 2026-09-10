@@ -4,11 +4,25 @@ import {
   MINIMAL_TYPO,
   MINIMAL_UI,
 } from '@/lib/minimalUiTheme';
+import {
+  applyIbsManualDisplayName,
+  ensureIbsManualDisplayMaskStarted,
+  IBS_MANUAL_DISPLAY_NAME,
+  refreshIbsManualDisplayMask,
+} from '@/lib/ibsManualDisplayMask';
 import { loadEffectiveSessionProfile } from '@/lib/loadSessionProfile';
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
-function resolveGreetingName(fullName: string | null | undefined): string {
+function resolveGreetingName(
+  fullName: string | null | undefined,
+  profileId?: string | null
+): string {
+  const masked = applyIbsManualDisplayName(fullName, profileId);
+  if (masked === IBS_MANUAL_DISPLAY_NAME) {
+    return masked;
+  }
+
   const trimmed = fullName?.trim();
 
   if (!trimmed) {
@@ -32,13 +46,15 @@ export function MinimalTopIdentityBar({ showGreeting = false }: { showGreeting?:
     let active = true;
 
     void (async () => {
+      ensureIbsManualDisplayMaskStarted();
+      await refreshIbsManualDisplayMask();
       const profile = await loadEffectiveSessionProfile();
 
       if (!active) {
         return;
       }
 
-      setGreetingName(resolveGreetingName(profile?.full_name));
+      setGreetingName(resolveGreetingName(profile?.full_name, profile?.id));
     })();
 
     return () => {

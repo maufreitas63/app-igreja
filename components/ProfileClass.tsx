@@ -8,6 +8,7 @@ import {
 } from '@/lib/manageProfile/shared';
 import { PROFILE_CLASS_ICON_COLOR, profileClassStyles } from '@/lib/manageProfile/profileClassStyles';
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
+import { formatIbsManualFieldDisplay } from '@/lib/ibsManualDisplayMask';
 import { BiometricUnlockSettingsCard } from '@/components/BiometricUnlockSettingsCard';
 import { CloseFooterBar } from '@/components/minimal/CloseFooterBar';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -419,7 +420,7 @@ export function ProfileClass({
                                 </View>
                               ) : (
                                 <Text style={profileClassStyles.fieldValue} numberOfLines={6}>
-                                  {field.value}
+                                  {formatIbsManualFieldDisplay(field.key, field.value, profile?.id)}
                                 </Text>
                               )}
                             </View>

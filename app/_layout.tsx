@@ -13,6 +13,7 @@ import { isApkPwaShellEnabled } from '@/lib/apkRuntimeMode';
 import { installExecutionErrorClipboard } from '@/lib/appToast';
 import { installRnWebDeprecationGuard } from '@/lib/rnWebDeprecationGuard';
 import { ICON_FONT_SOURCES } from '@/lib/iconFonts';
+import { ensureIbsManualDisplayMaskStarted } from '@/lib/ibsManualDisplayMask';
 import { installWebTextSelectionGuard, WEB_NON_SELECTABLE_VIEW_STYLES } from '@/lib/webTextSelectionGuard';
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
@@ -36,6 +37,7 @@ export default function RootLayout() {
   const [fontsTimedOut, setFontsTimedOut] = useState(usePwaShell);
 
   useEffect(() => installWebTextSelectionGuard(), []);
+  useEffect(() => ensureIbsManualDisplayMaskStarted(), []);
 
   useEffect(() => {
     if (usePwaShell) {

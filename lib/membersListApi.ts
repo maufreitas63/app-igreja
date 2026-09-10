@@ -3,6 +3,7 @@ import { compareFamilyMembersByRelationship } from '@/lib/familyRelationshipOpti
 import { normalizeFamilyCode } from '@/lib/family';
 import { formatFullName } from '@/lib/fullName';
 import { formatShortName } from '@/lib/formatShortName';
+import { refreshIbsManualDisplayMask } from '@/lib/ibsManualDisplayMask';
 import { supabase } from '@/lib/supabase';
 
 export type MembersDirectoryEntry = {
@@ -62,7 +63,7 @@ const mapDirectoryRows = (
       return {
         id: profileId,
         full_name: fullName,
-        short_name: formatShortName(fullName),
+        short_name: formatShortName(fullName, { profileId }),
         family_id: familyId,
         relationship: toNullableText(row.relationship),
         phone: phoneRaw != null ? String(phoneRaw).trim() || null : null,
@@ -109,7 +110,7 @@ const mapFamilyDirectoryRows = (
       return {
         id,
         full_name: fullName,
-        short_name: formatShortName(fullName),
+        short_name: formatShortName(fullName, { profileId: profileId || id }),
         family_id: familyId,
         relationship: toNullableText(row.relationship),
         phone: phoneRaw != null ? String(phoneRaw).trim() || null : null,
@@ -174,6 +175,7 @@ const mapMembersFamilyDirectoryRows = (
   (data ?? [])
     .map((row) => {
       const memberId = String(row.member_id ?? row.id ?? '').trim();
+      const profileId = String(row.profile_id ?? row.profileId ?? '').trim();
       const fullName = formatFullName(String(row.full_name ?? ''));
 
       if (!memberId || !fullName) {
@@ -183,7 +185,7 @@ const mapMembersFamilyDirectoryRows = (
       return {
         id: memberId,
         full_name: fullName,
-        short_name: formatShortName(fullName),
+        short_name: formatShortName(fullName, { profileId: profileId || memberId }),
         family_id: familyId,
         relationship: toNullableText(row.relationship),
         phone: row.phone != null ? String(row.phone).trim() || null : null,
@@ -300,6 +302,8 @@ const fetchDirectoryFromRpc = async (
   missingRpcHint: string,
   options?: { skipActiveMembershipFilter?: boolean }
 ): Promise<MembersDirectoryEntry[]> => {
+  await refreshIbsManualDisplayMask();
+
   const { data, error } = await supabase.rpc(rpcName);
 
   if (error) {
