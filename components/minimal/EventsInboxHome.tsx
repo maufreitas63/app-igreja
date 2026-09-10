@@ -1,6 +1,11 @@
 import { FamilyAgendaModal } from '@/components/FamilyAgendaModal';
 import { HomeInboxPagerNav } from '@/components/minimal/HomeInboxPagerNav';
-import { InboxList, type InboxListItem } from '@/components/minimal/InboxList';
+import {
+  InboxList,
+  INBOX_LIST_MAX_HEIGHT,
+  INBOX_VISIBLE_EVENT_ROWS,
+  type InboxListItem,
+} from '@/components/minimal/InboxList';
 import { useMinimalHome } from '@/context/MinimalHomeContext';
 import {
   EVENT_AVISOS_SQL_HINT,
@@ -39,9 +44,6 @@ import {
   useWindowDimensions,
   View,
 } from 'react-native';
-
-/** Lista um pouco mais baixa para caber a faixa Avisos/Eventos. */
-const EVENTS_VISIBLE_ROWS = 3;
 
 export function EventsInboxHome() {
   const { setHomeAgendaOpen } = useMinimalHome();
@@ -260,9 +262,10 @@ export function EventsInboxHome() {
     );
   }
 
+  const minPageHeight = INBOX_LIST_MAX_HEIGHT + 44;
   const pageSizeStyle = {
     width: resolvedPageWidth,
-    ...(pageHeight > 0 ? { height: pageHeight } : { flex: 1 }),
+    height: Math.max(pageHeight, minPageHeight),
   };
 
   return (
@@ -299,7 +302,7 @@ export function EventsInboxHome() {
                 items={inboxItems}
                 emptyMessage="Nenhum evento disponível no momento."
                 onItemPress={handleItemPress}
-                maxVisibleRows={EVENTS_VISIBLE_ROWS}
+                maxVisibleRows={INBOX_VISIBLE_EVENT_ROWS}
               />
             </View>
           </View>
@@ -436,23 +439,26 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   inboxSection: {
-    flex: 1,
-    minHeight: 0,
+    flexGrow: 1,
+    flexShrink: 0,
+    minHeight: INBOX_LIST_MAX_HEIGHT + 44,
     width: '100%',
     maxWidth: '100%',
     overflow: 'hidden',
     backgroundColor: MINIMAL_UI.background,
   },
   avisosSection: {
-    flex: 1,
-    minHeight: 0,
+    flexGrow: 1,
+    flexShrink: 0,
+    minHeight: INBOX_LIST_MAX_HEIGHT + 44,
     width: '100%',
     maxWidth: '100%',
     overflow: 'hidden',
   },
   avisosList: {
-    flex: 1,
-    minHeight: 0,
+    flexGrow: 0,
+    minHeight: INBOX_LIST_MAX_HEIGHT,
+    maxHeight: INBOX_LIST_MAX_HEIGHT,
     width: '100%',
   },
   avisosListContent: {

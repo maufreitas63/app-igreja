@@ -3,7 +3,7 @@ import { MinimalEuQueroFooter } from '@/components/minimal/MinimalEuQueroFooter'
 import { MinimalScreenLayout } from '@/components/minimal/MinimalScreenLayout';
 import { useHomeBackExitConfirmation } from '@/hooks/useHomeBackExitConfirmation';
 import React from 'react';
-import { StyleSheet } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 export default function DashboardIndexScreen() {
   useHomeBackExitConfirmation();
@@ -12,7 +12,11 @@ export default function DashboardIndexScreen() {
     <MinimalScreenLayout
       scroll={false}
       showGreeting
-      footer={<MinimalEuQueroFooter />}
+      footer={
+        <View style={styles.homeFooter}>
+          <MinimalEuQueroFooter />
+        </View>
+      }
       contentContainerStyle={styles.homeMain}
     >
       <MinimalMainPanel />
@@ -25,5 +29,9 @@ const styles = StyleSheet.create({
     width: '95%',
     maxWidth: '95%',
     alignSelf: 'flex-start',
+  },
+  homeFooter: {
+    flexShrink: 1,
+    minHeight: 0,
   },
 });

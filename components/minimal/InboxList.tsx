@@ -43,7 +43,7 @@ export function InboxList({
 
   return (
     <ScrollView
-      style={[styles.list, { maxHeight: listMaxHeight }]}
+      style={[styles.list, { maxHeight: listMaxHeight, minHeight: listMaxHeight }]}
       contentContainerStyle={styles.listContent}
       nestedScrollEnabled
       showsVerticalScrollIndicator
