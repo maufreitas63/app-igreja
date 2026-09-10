@@ -282,13 +282,6 @@ export const APP_DRAWER_SETTINGS_ITEMS: AppDrawerSettingsItem[] = [
     group: 'culto',
   },
   {
-    letter: 'c9',
-    label: 'Orquestrador',
-    moduleKey: 'menu_orquestrador',
-    group: 'culto',
-    hint: 'Painel de avisos em tela cheia',
-  },
-  {
     letter: 'f1',
     label: 'Informações Financeiras',
     moduleKey: 'financials',
