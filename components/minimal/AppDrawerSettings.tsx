@@ -138,6 +138,14 @@ export function AppDrawerSettings({
   return (
     <View style={[styles.panel, { paddingBottom: Math.max(insets.bottom, 12) }]}>
       <View style={styles.headerRow}>
+        <View
+          style={styles.titleIcon}
+          pointerEvents="none"
+          accessible={false}
+          importantForAccessibility="no"
+        >
+          <FontAwesome name="cog" size={MINIMAL_ICON.menu - 2} color={MINIMAL_UI.icon} />
+        </View>
         <Text style={styles.title}>Configurações</Text>
       </View>
 
@@ -250,10 +258,14 @@ const styles = StyleSheet.create({
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 12,
+    justifyContent: 'flex-start',
+    gap: 8,
     marginBottom: 12,
     paddingHorizontal: 16,
+  },
+  titleIcon: {
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   title: {
     ...MINIMAL_TYPO.screenTitle,
