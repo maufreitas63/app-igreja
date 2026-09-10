@@ -405,7 +405,19 @@ export function MembersListsClassPanel() {
       >
         <Pressable style={styles.familyBackdrop} onPress={() => setFamilyModalSeedEntry(null)}>
           <Pressable style={styles.familyModalCard} onPress={() => undefined}>
-            <Text style={styles.familyModalTitle}>Membros da família</Text>
+            <View style={styles.familyModalHeader}>
+              <Text style={styles.familyModalTitle}>Membros da família</Text>
+              <TouchableOpacity
+                accessibilityRole="button"
+                accessibilityLabel="Fechar"
+                onPress={() => setFamilyModalSeedEntry(null)}
+                activeOpacity={0.7}
+                hitSlop={8}
+                style={styles.familyModalCloseButton}
+              >
+                <Text style={styles.familyModalCloseX}>X</Text>
+              </TouchableOpacity>
+            </View>
             {familyModalFamilyId ? (
               <Text style={styles.familyModalSubtitle}>Família {familyModalFamilyId}</Text>
             ) : null}
@@ -480,6 +492,27 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '800',
     textAlign: 'center',
+    paddingHorizontal: 28,
+  },
+  familyModalHeader: {
+    width: '100%',
+    position: 'relative',
+    justifyContent: 'center',
+  },
+  familyModalCloseButton: {
+    position: 'absolute',
+    right: 0,
+    top: 0,
+    minWidth: 28,
+    minHeight: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  familyModalCloseX: {
+    color: '#DC2626',
+    fontSize: 20,
+    fontWeight: '800',
+    lineHeight: 24,
   },
   familyModalSubtitle: {
     color: VIGILANCE_SCALES_UI.accent,
