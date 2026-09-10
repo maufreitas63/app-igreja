@@ -529,7 +529,7 @@ begin
     return jsonb_build_object('success', false, 'message', 'Este anúncio não está disponível.');
   end if;
 
-  if v_post.user_id = v_me then
+  if v_post.user_id = v_me and v_post.tipo is distinct from 'pedido' then
     return jsonb_build_object('success', false, 'message', 'Este anúncio é seu.');
   end if;
 
@@ -581,25 +581,27 @@ begin
 
   v_label := case when v_post.tipo = 'doacao' then 'doação' else 'pedido' end;
 
-  insert into public.generosity_notices (tenant_id, profile_id, post_id, title, body)
-  values (
-    v_tenant,
-    v_post.user_id,
-    v_post.id,
-    'Interesse no mural',
-    case
-      when v_kind = 'emprestar' then
-        'Alguém da comunidade pode emprestar o item do seu pedido "'
-        || v_post.titulo || '". Veja a lista no anúncio.'
-      when v_kind = 'doar' then
-        'Alguém da comunidade pode doar o item do seu pedido "'
-        || v_post.titulo || '". Veja a lista no anúncio.'
-      else
-        'Alguém da comunidade demonstrou interesse no seu anúncio de '
-        || v_label || ': "' || v_post.titulo
-        || '". A liderança fará a ponte sem expor telefones no mural.'
-    end
-  );
+  if v_post.user_id is distinct from v_me then
+    insert into public.generosity_notices (tenant_id, profile_id, post_id, title, body)
+    values (
+      v_tenant,
+      v_post.user_id,
+      v_post.id,
+      'Interesse no mural',
+      case
+        when v_kind = 'emprestar' then
+          'Alguém da comunidade pode emprestar o item do seu pedido "'
+          || v_post.titulo || '". Veja a lista no anúncio.'
+        when v_kind = 'doar' then
+          'Alguém da comunidade pode doar o item do seu pedido "'
+          || v_post.titulo || '". Veja a lista no anúncio.'
+        else
+          'Alguém da comunidade demonstrou interesse no seu anúncio de '
+          || v_label || ': "' || v_post.titulo
+          || '". A liderança fará a ponte sem expor telefones no mural.'
+      end
+    );
+  end if;
 
   return jsonb_build_object(
     'success', true,

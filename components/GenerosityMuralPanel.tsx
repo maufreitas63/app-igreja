@@ -56,42 +56,38 @@ function PedidoOfferBlock({
 
   return (
     <View style={styles.offerBlock}>
-      {post.isMine ? null : (
-        <>
-          <Text style={styles.offerPrompt}>Eu tenho para</Text>
-          <View style={styles.offerButtons}>
-            {(['doar', 'emprestar'] as const).map((kind) => {
-              const selected = post.myInterestKind === kind;
-              const busy = busyId === `${post.id}:${kind}`;
+      <Text style={styles.offerPrompt}>Eu tenho para</Text>
+      <View style={styles.offerButtons}>
+        {(['doar', 'emprestar'] as const).map((kind) => {
+          const selected = post.myInterestKind === kind;
+          const busy = busyId === `${post.id}:${kind}`;
 
-              return (
-                <TouchableOpacity
-                  key={kind}
-                  style={[styles.offerButton, selected && styles.offerButtonSelected]}
-                  onPress={() => onOffer(kind)}
-                  disabled={Boolean(busyId)}
-                  activeOpacity={0.85}
-                  accessibilityRole="button"
-                  accessibilityLabel={kind === 'doar' ? 'Doar' : 'Emprestar'}
+          return (
+            <TouchableOpacity
+              key={kind}
+              style={[styles.offerButton, selected && styles.offerButtonSelected]}
+              onPress={() => onOffer(kind)}
+              disabled={Boolean(busyId)}
+              activeOpacity={0.85}
+              accessibilityRole="button"
+              accessibilityLabel={kind === 'doar' ? 'Doar' : 'Emprestar'}
+            >
+              {busy ? (
+                <ActivityIndicator size="small" color={MINIMAL_UI.blueDark} />
+              ) : (
+                <Text
+                  style={[
+                    styles.offerButtonText,
+                    selected && styles.offerButtonTextSelected,
+                  ]}
                 >
-                  {busy ? (
-                    <ActivityIndicator size="small" color={MINIMAL_UI.blueDark} />
-                  ) : (
-                    <Text
-                      style={[
-                        styles.offerButtonText,
-                        selected && styles.offerButtonTextSelected,
-                      ]}
-                    >
-                      {kind === 'doar' ? 'Doar' : 'Emprestar'}
-                    </Text>
-                  )}
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-        </>
-      )}
+                  {kind === 'doar' ? 'Doar' : 'Emprestar'}
+                </Text>
+              )}
+            </TouchableOpacity>
+          );
+        })}
+      </View>
       {count > 0 ? (
         <>
           <TouchableOpacity
@@ -122,8 +118,6 @@ function PedidoOfferBlock({
               ))
             : null}
         </>
-      ) : post.isMine ? (
-        <Text style={styles.ownHint}>Ainda ninguém se ofereceu.</Text>
       ) : null}
     </View>
   );
