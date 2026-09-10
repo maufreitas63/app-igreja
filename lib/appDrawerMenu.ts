@@ -60,6 +60,7 @@ export type AppDrawerModuleKey =
   | 'pastoral_care'
   | 'small_groups_management'
   | 'campaigns_management'
+  | 'primicias_management'
   | 'volunteer_mural'
   | 'generosity_moderation'
   | 'discipleship_themes'
@@ -295,6 +296,13 @@ export const APP_DRAWER_SETTINGS_ITEMS: AppDrawerSettingsItem[] = [
     group: 'financas',
   },
   {
+    letter: 'f2b',
+    label: 'Prímicias',
+    moduleKey: 'primicias_management',
+    group: 'financas',
+    hint: 'Itens em espécie da campanha',
+  },
+  {
     letter: 'f3',
     label: 'Modelo Preditivo',
     moduleKey: 'predictive_insights',
@@ -395,6 +403,7 @@ const MAINTENANCE_PANEL_BY_MODULE: Partial<Record<AppDrawerModuleKey, string>> =
   pastoral_care: 'pastoral_care',
   small_groups_management: 'small_groups_management',
   campaigns_management: 'campaigns_management',
+  primicias_management: 'primicias_management',
   volunteer_mural: 'volunteer_mural',
   generosity_moderation: 'generosity_moderation',
   discipleship_themes: 'discipleship_themes',

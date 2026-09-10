@@ -17,6 +17,7 @@ export const DASHBOARD_SCREEN_DENIED_MESSAGES: Record<string, string> = {
   '/trilha-discipulado': 'Você não tem permissão para abrir a Trilha de Discipulado.',
   '/pequeno-grupo': 'Você não tem permissão para abrir Minha Célula.',
   '/mural-oportunidades': 'Você não tem permissão para abrir o Mural de Oportunidades.',
+  '/primicias': 'Você não tem permissão para abrir a campanha Prímicias.',
 };
 
 export async function ensureScreenAccess(

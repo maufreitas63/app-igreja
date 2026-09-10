@@ -9,6 +9,7 @@ export type MaintenancePanelContent =
   | 'pastoral_care'
   | 'small_groups_management'
   | 'campaigns_management'
+  | 'primicias_management'
   | 'volunteer_mural'
   | 'generosity_moderation'
   | 'mudanca_papeis'
@@ -49,6 +50,7 @@ export type MaintenanceShortcutIconName =
   | 'comments'
   | 'flag'
   | 'gift'
+  | 'shopping-basket'
   | 'user-secret';
 
 /** Ícone FontAwesome por módulo de manutenção. */
@@ -66,6 +68,7 @@ export const MAINTENANCE_SHORTCUT_ICONS: Record<
   pastoral_care: 'heart',
   small_groups_management: 'group',
   campaigns_management: 'flag',
+  primicias_management: 'shopping-basket',
   volunteer_mural: 'users',
   generosity_moderation: 'gift',
   mudanca_papeis: 'exchange',
@@ -95,6 +98,7 @@ export const MAINTENANCE_SHORTCUT_ICON_COLORS: Record<MaintenancePanelContent, s
   pastoral_care: '#F472B6',
   small_groups_management: '#A78BFA',
   campaigns_management: '#F59E0B',
+  primicias_management: '#F59E0B',
   volunteer_mural: '#0D9488',
   generosity_moderation: '#F59E0B',
   mudanca_papeis: '#FB7185',

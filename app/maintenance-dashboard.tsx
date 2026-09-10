@@ -23,6 +23,7 @@ import { MaintenanceSupportSuggestionsCard } from '@/components/MaintenanceSuppo
 import { MaintenancePastoralCareCard } from '@/components/MaintenancePastoralCareCard';
 import { MaintenanceSmallGroupsCard } from '@/components/MaintenanceSmallGroupsCard';
 import { MaintenanceCampaignsCard } from '@/components/MaintenanceCampaignsCard';
+import { MaintenancePrimiciasCard } from '@/components/MaintenancePrimiciasCard';
 import { MaintenanceVolunteerMuralCard } from '@/components/MaintenanceVolunteerMuralCard';
 import { MaintenanceGenerosityModerationCard } from '@/components/MaintenanceGenerosityModerationCard';
 import { MaintenanceDiscipleshipAlertsCard } from '@/components/MaintenanceDiscipleshipAlertsCard';
@@ -155,6 +156,7 @@ type MaintenanceCarouselCard = {
     | 'pastoral_care'
     | 'small_groups_management'
     | 'campaigns_management'
+    | 'primicias_management'
     | 'volunteer_mural'
     | 'generosity_moderation'
     | 'mudanca_papeis'
@@ -186,6 +188,7 @@ const MAINTENANCE_PANEL_CARDS: MaintenanceCarouselCard[] = [
   { id: '8', title: 'Cuidado Pastoral', content: 'pastoral_care' },
   { id: '24', title: 'Gestão de Pequenos Grupos', content: 'small_groups_management' },
   { id: '25', title: 'Gestão de Campanhas', content: 'campaigns_management' },
+  { id: '29', title: 'Gestão de Prímicias', content: 'primicias_management' },
   { id: '26', title: 'Mural de Voluntários', content: 'volunteer_mural' },
   { id: '28', title: 'Moderação do Mural', content: 'generosity_moderation' },
   { id: '21', title: 'Temas da Trilha', content: 'discipleship_themes' },
@@ -1095,6 +1098,7 @@ export default function MaintenanceDashboard() {
             !isMinimalPresentation && item.content === 'pastoral_care' && styles.panelCardInnerPadding,
             !isMinimalPresentation && item.content === 'small_groups_management' && styles.panelCardInnerPadding,
             !isMinimalPresentation && item.content === 'campaigns_management' && styles.panelCardInnerPadding,
+            !isMinimalPresentation && item.content === 'primicias_management' && styles.panelCardInnerPadding,
             !isMinimalPresentation && item.content === 'volunteer_mural' && styles.panelCardInnerPadding,
             !isMinimalPresentation && item.content === 'generosity_moderation' && styles.panelCardInnerPadding,
             !isMinimalPresentation && item.content === 'mudanca_papeis' && styles.panelCardInnerPadding,
@@ -1194,6 +1198,19 @@ export default function MaintenanceDashboard() {
               ]}
             >
               <MaintenanceCampaignsCard
+                isActive
+                panelHeight={cardHeight}
+                minimal={isMinimalPresentation}
+              />
+            </View>
+          ) : item.content === 'primicias_management' ? (
+            <View
+              style={[
+                styles.pastoralCarePanel,
+                isMinimalPresentation && styles.pastoralCarePanelMinimal,
+              ]}
+            >
+              <MaintenancePrimiciasCard
                 isActive
                 panelHeight={cardHeight}
                 minimal={isMinimalPresentation}

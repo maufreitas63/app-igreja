@@ -57,6 +57,7 @@ const SETTINGS_ICONS: Partial<Record<AppDrawerModuleKey, React.ComponentProps<ty
   menu_orquestrador: 'film',
   financials: 'line-chart',
   campaigns_management: 'flag',
+  primicias_management: 'shopping-basket',
   predictive_insights: 'lightbulb-o',
   discipleship_themes: 'book',
   discipleship_alerts: 'graduation-cap',

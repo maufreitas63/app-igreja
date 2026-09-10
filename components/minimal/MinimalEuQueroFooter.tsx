@@ -110,6 +110,16 @@ export function MinimalEuQueroFooter() {
     })();
   };
 
+  const handleOpenPrimicias = () => {
+    void navigateWithScreenAccess(
+      router,
+      '/primicias',
+      ACCESS_SCREEN.primicias,
+      withReturnRoute('/(tabs)'),
+      { deniedMessage: 'Você não tem permissão para abrir a campanha Prímicias.' }
+    );
+  };
+
   const handleOpenPastoral = () => {
     void navigateWithScreenAccess(
       router,
@@ -160,6 +170,12 @@ export function MinimalEuQueroFooter() {
               title="Campanhas e Projetos"
               subtitle="Informe o valor e copie o Pix já identificado."
               onPress={handleOpenCampaign}
+            />
+            <EuQueroItem
+              icon="shopping-basket"
+              title="Prímicias"
+              subtitle="Comprometa-se com um item da cesta em espécie."
+              onPress={handleOpenPrimicias}
             />
           </View>
         ) : null}
