@@ -1,5 +1,6 @@
 import { CardLoadingState } from '@/components/ui/CardLoadingState';
 import { useQuorumRegistry } from '@/hooks/useQuorumRegistry';
+import { eventRequiresPreCheckinBeforeQr } from '@/lib/familyPreCheckin';
 import {
   computeMaintenanceContentHeight,
   maintenancePanelStyles,
@@ -46,10 +47,27 @@ export function MaintenanceQuorumPresenceCard({
   panelHeight,
   minimal = false,
 }: Props) {
-  const quorumEvents = useMemo(
-    () => (events ?? []).filter((event) => event.requer_quorum === true),
-    [events]
-  );
+  const quorumEvents = useMemo(() => {
+    const eligible = (events ?? []).filter((event) => eventRequiresPreCheckinBeforeQr(event));
+    const now = Date.now();
+
+    return [...eligible].sort((left, right) => {
+      const leftAt = left.event_date ? new Date(left.event_date).getTime() : 0;
+      const rightAt = right.event_date ? new Date(right.event_date).getTime() : 0;
+      const leftUpcoming = Number.isFinite(leftAt) && leftAt >= now;
+      const rightUpcoming = Number.isFinite(rightAt) && rightAt >= now;
+
+      if (leftUpcoming !== rightUpcoming) {
+        return leftUpcoming ? -1 : 1;
+      }
+
+      if (leftUpcoming) {
+        return leftAt - rightAt;
+      }
+
+      return rightAt - leftAt;
+    });
+  }, [events]);
 
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
 
@@ -124,8 +142,8 @@ export function MaintenanceQuorumPresenceCard({
       <>
         <FontAwesome name="clipboard" size={28} color="#64748B" />
         <Text style={maintenancePanelStyles.panelHint}>
-          Nenhum evento com Requer Quórum = Sim. Ative o quórum na edição de um evento para
-          gerar a lista de check-in.
+          Nenhum evento com Totem ou Requer Quórum ativo. Ative Totem ou Quórum na edição do
+          evento para gravar e exibir a lista de presença.
         </Text>
       </>,
       styles.panelMessage
@@ -353,7 +371,7 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   eventNameHeading: {
-    color: '#FFFFFF',
+    color: MINIMAL_UI.blueDark,
     fontSize: 16,
     fontWeight: '800',
     marginTop: 2,
@@ -362,13 +380,13 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   metaLine: {
-    color: '#334155',
+    color: MINIMAL_UI.text,
     fontSize: 14,
     lineHeight: 20,
   },
   metaLabel: {
     fontWeight: '800',
-    color: '#FFFFFF',
+    color: MINIMAL_UI.blueDark,
   },
   introText: {
     color: '#334155',
@@ -425,7 +443,7 @@ const styles = StyleSheet.create({
   attendanceCell: {
     paddingVertical: 10,
     paddingHorizontal: 10,
-    color: '#FFFFFF',
+    color: MINIMAL_UI.text,
     fontSize: 14,
     lineHeight: 18,
   },
