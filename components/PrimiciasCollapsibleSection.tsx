@@ -7,6 +7,8 @@ type Props = {
   title: string;
   subtitle?: string;
   defaultOpen?: boolean;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
   children: React.ReactNode;
 };
 
@@ -14,9 +16,21 @@ export function PrimiciasCollapsibleSection({
   title,
   subtitle,
   defaultOpen = false,
+  open: openProp,
+  onOpenChange,
   children,
 }: Props) {
-  const [open, setOpen] = useState(defaultOpen);
+  const [uncontrolledOpen, setUncontrolledOpen] = useState(defaultOpen);
+  const isControlled = openProp !== undefined;
+  const open = isControlled ? openProp : uncontrolledOpen;
+
+  const toggle = () => {
+    const next = !open;
+    if (!isControlled) {
+      setUncontrolledOpen(next);
+    }
+    onOpenChange?.(next);
+  };
 
   return (
     <View style={styles.wrap}>
@@ -24,7 +38,7 @@ export function PrimiciasCollapsibleSection({
         accessibilityRole="button"
         accessibilityState={{ expanded: open }}
         accessibilityLabel={title}
-        onPress={() => setOpen((current) => !current)}
+        onPress={toggle}
         style={({ pressed }) => [styles.header, pressed && styles.headerPressed]}
       >
         <View style={styles.headerText}>

@@ -15,6 +15,7 @@ import {
 } from '@/lib/primiciasApi';
 import { MINIMAL_SECTION_TITLE, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { FontAwesome } from '@expo/vector-icons';
+import { useFocusEffect } from '@react-navigation/native';
 import React, {
   forwardRef,
   useCallback,
@@ -82,6 +83,7 @@ function ItemRow({ item, busy, onPress }: ItemRowProps) {
 }
 
 export type PrimiciasPanelHandle = {
+  collapseOpenSections: () => boolean;
   closeWithCalendarOffer: () => Promise<void>;
 };
 
@@ -91,12 +93,15 @@ export const PrimiciasPanel = forwardRef<PrimiciasPanelHandle>(function Primicia
   const [error, setError] = useState<string | null>(null);
   const [items, setItems] = useState<PrimiciasItem[]>([]);
   const [occurrence, setOccurrence] = useState<PrimiciasOccurrence | null>(null);
+  const [openSections, setOpenSections] = useState<Record<string, boolean>>({});
   const itemsRef = useRef(items);
   const occurrenceRef = useRef(occurrence);
   const pledgedThisVisitRef = useRef(false);
+  const openSectionsRef = useRef(openSections);
 
   itemsRef.current = items;
   occurrenceRef.current = occurrence;
+  openSectionsRef.current = openSections;
 
   const load = useCallback(async () => {
     const result = await listPrimiciasItems();
@@ -129,6 +134,12 @@ export const PrimiciasPanel = forwardRef<PrimiciasPanelHandle>(function Primicia
     };
   }, [load]);
 
+  useFocusEffect(
+    useCallback(() => {
+      setOpenSections({});
+    }, [])
+  );
+
   const grouped = useMemo(() => {
     return PRIMICIAS_CATEGORIES.map((category) => ({
       category,
@@ -137,6 +148,15 @@ export const PrimiciasPanel = forwardRef<PrimiciasPanelHandle>(function Primicia
   }, [items]);
 
   useImperativeHandle(ref, () => ({
+    collapseOpenSections: () => {
+      const anyOpen = Object.values(openSectionsRef.current).some(Boolean);
+      if (!anyOpen) {
+        return false;
+      }
+
+      setOpenSections({});
+      return true;
+    },
     closeWithCalendarOffer: async () => {
       const occ = occurrenceRef.current;
       const mineItems = itemsRef.current.filter((item) =>
@@ -228,17 +248,15 @@ export const PrimiciasPanel = forwardRef<PrimiciasPanelHandle>(function Primicia
         </Text>
       )}
 
-      {grouped.map((group) => {
-        const mineCount = group.items.filter((item) =>
-          item.pledges.some((pledge) => pledge.isMine)
-        ).length;
-
-        return (
+      {grouped.map((group) => (
           <PrimiciasCollapsibleSection
             key={group.category}
             title={PRIMICIAS_CATEGORY_LABEL[group.category]}
             subtitle={formatPrimiciasPendingCount(group.items)}
-            defaultOpen={mineCount > 0}
+            open={openSections[group.category] === true}
+            onOpenChange={(next) => {
+              setOpenSections((current) => ({ ...current, [group.category]: next }));
+            }}
           >
             {group.items.map((item) => (
               <ItemRow
@@ -249,8 +267,7 @@ export const PrimiciasPanel = forwardRef<PrimiciasPanelHandle>(function Primicia
               />
             ))}
           </PrimiciasCollapsibleSection>
-        );
-      })}
+      ))}
     </ScrollView>
   );
 });

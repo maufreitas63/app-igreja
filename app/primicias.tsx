@@ -27,6 +27,10 @@ export default function PrimiciasScreen() {
       return;
     }
 
+    if (panelRef.current?.collapseOpenSections()) {
+      return;
+    }
+
     closingRef.current = true;
 
     try {
