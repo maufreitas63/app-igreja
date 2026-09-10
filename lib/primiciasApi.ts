@@ -107,7 +107,7 @@ export function countPendingPrimiciasItems(items: PrimiciasItem[]) {
 
 export function formatPrimiciasPendingCount(items: PrimiciasItem[]) {
   const pending = countPendingPrimiciasItems(items);
-  return `${pending} ${pending === 1 ? 'item' : 'itens'}`;
+  return `${pending} ${pending === 1 ? 'item pendente' : 'itens pendentes'}`;
 }
 
 export function formatPrimiciasIsoDate(value: string | null | undefined) {
