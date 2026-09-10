@@ -20,6 +20,7 @@ import {
   setIgrejaActiveAdmin,
   setIgrejaOfferingsAdmin,
   setIgrejaSocialLinksAdmin,
+  setIgrejaSuperAdminGeolocalizacaoAdmin,
   type SessionIgreja,
 } from '@/lib/tenantSession';
 import { setIgrejaMaeTenantAdmin } from '@/lib/alianca/aliancaApi';
@@ -467,6 +468,43 @@ function IgrejasAdminPanel() {
     await applyActiveFlag(church, nextActive);
   };
 
+  const handleToggleSuperAdminGeo = async (church: SessionIgreja, nextEnabled: boolean) => {
+    if (nextEnabled === church.super_admin_geolocalizacao) {
+      return;
+    }
+
+    const title = nextEnabled
+      ? 'Ativar geolocalização do Superadministrador'
+      : 'Ocultar Superadministrador no mapa';
+    setEditBusy(true);
+    try {
+      const result = await setIgrejaSuperAdminGeolocalizacaoAdmin(church.id, nextEnabled);
+      if (!result?.success) {
+        Toast.show({
+          type: 'error',
+          text1: title,
+          text2: result?.message || 'Não foi possível atualizar.',
+        });
+        return;
+      }
+      Toast.show({
+        type: 'success',
+        text1: title,
+        text2: result.message || church.name,
+      });
+      await load();
+    } catch (error) {
+      console.error(error);
+      Toast.show({
+        type: 'error',
+        text1: title,
+        text2: error instanceof Error ? error.message : 'Falha ao atualizar.',
+      });
+    } finally {
+      setEditBusy(false);
+    }
+  };
+
   const handleDelete = async (church: SessionIgreja) => {
     if (isProtectedDefaultChurch(church)) {
       Toast.show({
@@ -700,6 +738,34 @@ function IgrejasAdminPanel() {
                       A igreja mãe recebe 40% da assinatura trimestral desta instância, em até 4
                       ciclos. O sistema recusa ciclos na árvore de indicações.
                     </Text>
+
+                    <Text style={styles.socialFieldLabel}>
+                      Geolocalização do Superadministrador
+                    </Text>
+                    <View style={styles.geoSwitchRow}>
+                      <Text style={[styles.logoHint, styles.geoSwitchHint]}>
+                        Quando desligada, o pin do Superadministrador não entra no mapa desta
+                        instância. Evita que um CEP distante desloque o posicionamento.
+                      </Text>
+                      <AppSwitch
+                        value={church.super_admin_geolocalizacao}
+                        onValueChange={(nextEnabled) => {
+                          void handleToggleSuperAdminGeo(church, nextEnabled);
+                        }}
+                        disabled={editBusy}
+                        accessibilityRole="switch"
+                        accessibilityState={{
+                          checked: church.super_admin_geolocalizacao,
+                          disabled: editBusy,
+                        }}
+                        accessibilityLabel={
+                          church.super_admin_geolocalizacao
+                            ? `Geolocalização do Superadministrador ligada em ${church.name}`
+                            : `Geolocalização do Superadministrador desligada em ${church.name}`
+                        }
+                      />
+                    </View>
+
                     <Text style={styles.socialFieldLabel}>Site oficial (URL)</Text>
                     <TextInput
                       style={styles.input}
@@ -1166,6 +1232,14 @@ const styles = StyleSheet.create({
     color: MINIMAL_UI.textMuted,
     fontSize: 12,
     lineHeight: 16,
+  },
+  geoSwitchRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  geoSwitchHint: {
+    flex: 1,
   },
   secondaryButton: {
     borderWidth: 1,

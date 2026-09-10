@@ -24,8 +24,10 @@ const isServerTableCoord = (coord: LatLng | undefined): coord is LatLng => {
 import { withActiveMembershipProfileFilter } from '@/lib/activeMemberProfile';
 import {
   attachMapAclToProfiles,
+  excludeSuperAdminFromMapProfiles,
   fetchProfilesAclSyncFingerprint,
   fetchProfilesMapAclInfo,
+  fetchSessionMapGeolocalizacaoSettings,
 } from '@/lib/profileMapAcl';
 import {
   readCepCoordCache,
@@ -200,20 +202,26 @@ const fetchAndBuildSnapshot = async (
   }
 
   const rawProfiles = (data ?? []) as Array<Omit<ProfileForMap, 'isVisitantesOnly'> & { isVisitantesOnly?: boolean }>;
-  const mapAclResult = await fetchProfilesMapAclInfo();
-  const profilesList = attachMapAclToProfiles(
-    rawProfiles.map((row) => ({
-      id: row.id,
-      full_name: formatFullName(row.full_name),
-      phone: row.phone,
-      cep: row.cep,
-      address_street: row.address_street,
-      address_number: row.address_number,
-      address_neighborhood: row.address_neighborhood,
-      address_city: row.address_city,
-      address_state: row.address_state,
-    })),
-    mapAclResult
+  const [mapAclResult, geoSettings] = await Promise.all([
+    fetchProfilesMapAclInfo(),
+    fetchSessionMapGeolocalizacaoSettings(),
+  ]);
+  const profilesList = excludeSuperAdminFromMapProfiles(
+    attachMapAclToProfiles(
+      rawProfiles.map((row) => ({
+        id: row.id,
+        full_name: formatFullName(row.full_name),
+        phone: row.phone,
+        cep: row.cep,
+        address_street: row.address_street,
+        address_number: row.address_number,
+        address_neighborhood: row.address_neighborhood,
+        address_city: row.address_city,
+        address_state: row.address_state,
+      })),
+      mapAclResult
+    ),
+    geoSettings
   );
   const profilesByCep = new Map<string, ProfileForMap>();
   let withoutCep = 0;

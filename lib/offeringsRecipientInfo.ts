@@ -211,6 +211,7 @@ async function resolveActiveChurchForOfferings(): Promise<SessionIgreja | null> 
       mae_tenant_id: null,
       mae_code: null,
       mae_name: null,
+      super_admin_geolocalizacao: true,
     };
   }
 }

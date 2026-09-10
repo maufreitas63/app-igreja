@@ -14,7 +14,17 @@ export type ProfileMapAclFetchResult = {
   availability: ProfileMapAclAvailability;
 };
 
+export type SessionMapGeolocalizacaoSettings = {
+  showSuperAdmin: boolean;
+  superAdminIds: Set<string>;
+};
+
 export const PROFILE_MAP_ACL_UNAVAILABLE = 'PROFILE_MAP_ACL_UNAVAILABLE';
+
+const DEFAULT_MAP_GEO_SETTINGS: SessionMapGeolocalizacaoSettings = {
+  showSuperAdmin: true,
+  superAdminIds: new Set(),
+};
 
 const isNetworkFailure = (message: string) =>
   message.includes('failed to fetch') || message.includes('network');
@@ -84,6 +94,58 @@ export const fetchProfilesMapAclInfo = async (): Promise<ProfileMapAclFetchResul
   }
 
   return { info: infoByProfileId, availability: 'ok' };
+};
+
+export const fetchSessionMapGeolocalizacaoSettings =
+  async (): Promise<SessionMapGeolocalizacaoSettings> => {
+    try {
+      const { data, error } = await supabase.rpc('session_map_geolocalizacao_settings');
+
+      if (error) {
+        if (isSupabaseRpcMissingError(error, 'session_map_geolocalizacao_settings')) {
+          return DEFAULT_MAP_GEO_SETTINGS;
+        }
+
+        const message = (error.message ?? '').toLowerCase();
+        if (isNetworkFailure(message)) {
+          return DEFAULT_MAP_GEO_SETTINGS;
+        }
+
+        throw error;
+      }
+
+      const payload =
+        data && typeof data === 'object' && !Array.isArray(data)
+          ? (data as Record<string, unknown>)
+          : null;
+
+      const idsRaw = payload?.super_admin_ids;
+      const superAdminIds = new Set<string>();
+      if (Array.isArray(idsRaw)) {
+        for (const id of idsRaw) {
+          const text = String(id ?? '').trim();
+          if (text) superAdminIds.add(text);
+        }
+      }
+
+      return {
+        showSuperAdmin: payload?.show_super_admin === false ? false : true,
+        superAdminIds,
+      };
+    } catch {
+      return DEFAULT_MAP_GEO_SETTINGS;
+    }
+  };
+
+export const excludeSuperAdminFromMapProfiles = <T extends { id: string }>(
+  profiles: T[],
+  settings: SessionMapGeolocalizacaoSettings
+): T[] => {
+  if (settings.showSuperAdmin || settings.superAdminIds.size === 0) {
+    return profiles;
+  }
+
+  return profiles.filter((profile) => !settings.superAdminIds.has(profile.id));
 };
 
 /** @deprecated Use fetchProfilesMapAclInfo */

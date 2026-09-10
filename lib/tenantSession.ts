@@ -76,6 +76,7 @@ export type SessionIgreja = {
   mae_tenant_id: string | null;
   mae_code: string | null;
   mae_name: string | null;
+  super_admin_geolocalizacao: boolean;
 };
 
 export type ActiveIgrejaBranding = {
@@ -121,6 +122,7 @@ function mapSessionIgreja(row: Record<string, unknown> | null | undefined): Sess
     mae_tenant_id: asText(row?.mae_tenant_id) || null,
     mae_code: asText(row?.mae_code) || null,
     mae_name: asText(row?.mae_name) || null,
+    super_admin_geolocalizacao: row?.super_admin_geolocalizacao === false ? false : true,
   };
 }
 
@@ -756,6 +758,36 @@ export async function setIgrejaOfferingsAdmin(
     pix_key?: string | null;
     pix_key_secundaria?: string | null;
     pix_institution_secundaria?: string | null;
+  };
+}
+
+export async function setIgrejaSuperAdminGeolocalizacaoAdmin(
+  tenantId: string,
+  enabled: boolean
+) {
+  const { data, error } = await supabase.rpc('set_igreja_super_admin_geolocalizacao_admin', {
+    p_tenant_id: tenantId.trim(),
+    p_enabled: enabled,
+  });
+
+  if (error) {
+    if (isSupabaseRpcMissingError(error, 'set_igreja_super_admin_geolocalizacao_admin')) {
+      return {
+        success: false as const,
+        message:
+          'RPC ausente. Execute scripts/igreja-super-admin-geolocalizacao.sql no Supabase.',
+      };
+    }
+    return {
+      success: false as const,
+      message: error.message?.trim() || 'Não foi possível atualizar a geolocalização.',
+    };
+  }
+
+  return data as {
+    success?: boolean;
+    message?: string;
+    super_admin_geolocalizacao?: boolean;
   };
 }
 
