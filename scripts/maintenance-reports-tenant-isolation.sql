@@ -149,6 +149,8 @@ grant execute on function public._report_event_registrations(jsonb) to authentic
 
 -- ---------------------------------------------------------------------------
 -- 1. Membros ativos/inativos
+-- Performance: scripts/maintenance-reports-1-2-fast.sql substitui esta versão
+-- (consulta por linha estourava os 20s do cliente).
 -- ---------------------------------------------------------------------------
 create or replace function public._report_members_active_inactive(p_params jsonb)
 returns jsonb

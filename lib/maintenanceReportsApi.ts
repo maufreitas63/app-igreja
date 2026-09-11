@@ -73,6 +73,14 @@ export async function generateMaintenanceReport(
       throw new Error(MAINTENANCE_REPORTS_SQL_HINT);
     }
 
+    const message = String(error.message ?? '');
+    if (
+      error.name === 'AbortError' ||
+      /aborted|abort|timed out|timeout/i.test(message)
+    ) {
+      throw new Error('A consulta do relatório excedeu o tempo limite. Tente novamente.');
+    }
+
     throw error;
   }
 

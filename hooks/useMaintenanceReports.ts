@@ -75,8 +75,13 @@ export function useMaintenanceReports() {
 
       return result;
     } catch (runError) {
-      const message =
-        runError instanceof Error ? runError.message : 'Não foi possível gerar o relatório.';
+      const raw = runError instanceof Error ? runError.message : '';
+      const timedOut =
+        (runError instanceof Error && runError.name === 'AbortError') ||
+        /aborted|abort|timed out|timeout/i.test(raw);
+      const message = timedOut
+        ? 'A consulta do relatório excedeu o tempo limite. Tente novamente.'
+        : raw || 'Não foi possível gerar o relatório.';
       setErrorsByCode((current) => ({
         ...current,
         [definition.code]: message,
