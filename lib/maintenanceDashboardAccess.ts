@@ -37,7 +37,6 @@ export type MaintenanceDashboardAccessSnapshot = {
   canAccessPastoralCare: boolean;
   canAccessPastoralRoleChange: boolean;
   canOperateGhostMode: boolean;
-  familyTimelineEnabled: boolean;
   headerUserName: string | null;
 };
 
@@ -55,7 +54,6 @@ const EMPTY_SNAPSHOT: MaintenanceDashboardAccessSnapshot = {
   canAccessPastoralCare: false,
   canAccessPastoralRoleChange: false,
   canOperateGhostMode: false,
-  familyTimelineEnabled: true,
   headerUserName: null,
 };
 
@@ -103,7 +101,6 @@ async function resolveMaintenanceDashboardAccess(): Promise<MaintenanceDashboard
   let canManageSupportRequests = false;
   let canBypassEventPastDateLock = false;
   let canOperateGhostMode = false;
-  let familyTimelineEnabled = true;
 
   try {
     let profileId = await resolveEffectiveProfileId();
@@ -167,7 +164,6 @@ async function resolveMaintenanceDashboardAccess(): Promise<MaintenanceDashboard
     canAccessPastoralCare,
     canAccessPastoralRoleChange,
     canOperateGhostMode,
-    familyTimelineEnabled,
     headerUserName,
   };
 }

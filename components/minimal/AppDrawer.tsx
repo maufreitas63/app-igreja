@@ -44,7 +44,6 @@ const SETTINGS_ICONS: Partial<Record<AppDrawerModuleKey, React.ComponentProps<ty
   generosity_moderation: 'gift',
   family_reception: 'home',
   visitor_followup: 'handshake-o',
-  family_timeline: 'clock-o',
   profile_cadastro: 'user-plus',
   menu_administrativo: 'briefcase',
   Events: 'calendar',

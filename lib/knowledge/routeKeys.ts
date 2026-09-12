@@ -50,7 +50,6 @@ export const KNOWLEDGE_ROUTE = {
   generosityModeration: maintenancePanel('generosity_moderation'),
   familyReception: maintenancePanel('family_reception'),
   visitorFollowup: maintenancePanel('visitor_followup'),
-  familyTimeline: maintenancePanel('family_timeline'),
   profileCadastro: maintenancePanel('profile_cadastro'),
   campaigns: maintenancePanel('campaigns_management'),
   primicias: maintenancePanel('primicias_management'),

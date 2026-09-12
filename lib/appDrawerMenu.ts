@@ -77,7 +77,6 @@ export type AppDrawerModuleKey =
   | 'profile_cadastro'
   | 'family_reception'
   | 'visitor_followup'
-  | 'family_timeline'
   | 'access_control'
   | 'mudanca_papeis'
   | 'transferencia_igreja'
@@ -217,13 +216,6 @@ export const APP_DRAWER_SETTINGS_ITEMS: AppDrawerSettingsItem[] = [
     moduleKey: 'visitor_followup',
     group: 'pessoas',
     hint: 'D+1 WhatsApp, D+4 célula, D+8 culto — após a Recepção Familiar',
-  },
-  {
-    letter: 'p7c',
-    label: 'Linha do tempo da família',
-    moduleKey: 'family_timeline',
-    group: 'pessoas',
-    hint: 'Jornada da família nesta igreja — dá para ocultar se não servir',
   },
   {
     letter: 'p8',
@@ -443,7 +435,6 @@ const MAINTENANCE_PANEL_BY_MODULE: Partial<Record<AppDrawerModuleKey, string>> =
   profile_cadastro: 'profile_cadastro',
   family_reception: 'family_reception',
   visitor_followup: 'visitor_followup',
-  family_timeline: 'family_timeline',
   access_control: 'access_control',
   mudanca_papeis: 'mudanca_papeis',
   transferencia_igreja: 'transferencia_igreja',
