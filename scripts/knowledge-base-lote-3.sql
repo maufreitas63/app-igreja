@@ -425,13 +425,13 @@ Há confirmação para desvincular. Depois disso a tela volta a sugerir grupos d
     'Mural de Oportunidades',
     'Como me candidato a uma vaga de serviço?',
     $body$## O que aparece
-Vagas alinhadas ao Perfil Ministerial (Trilha). A lição 5.1 em si não é uma vaga.
+Todas as vagas abertas. Não é preciso ter concluído a Trilha nem a Lição 5.1 para se candidatar. Se já houver Perfil Ministerial, o match só destaca vagas combinadas.
 
 ## Candidatar-se
-Toque na vaga para registrar interesse. O aplicativo avisa o líder e, se houver telefone, pode abrir o WhatsApp.
+Toque em Tenho Interesse. O aplicativo avisa o líder e, se houver telefone, pode abrir o WhatsApp. O avaliador caminha com você no processo da Trilha.
 
 ## Sem vagas
-Falta perfil ministerial ou a igreja ainda não publicou oportunidades em Mural de Voluntários (engrenagem).$body$,
+A igreja ainda não publicou oportunidades em Mural de Voluntários (engrenagem).$body$,
     '/mural-oportunidades',
     v_member,
     170

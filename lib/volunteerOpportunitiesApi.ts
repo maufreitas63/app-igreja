@@ -1,7 +1,7 @@
 /**
  * Mural de Oportunidades e Voluntariado.
  * SQL: scripts/volunteer-opportunities-schema.sql
- * Match usa ministerial_resultados (Lição 5.1); o mural do membro não recebe o perfil.
+ * Candidatura não exige Trilha. O match (Lição 5.1) só destaca vagas quando já existe resultado.
  */
 
 import { supabase } from '@/lib/supabase';

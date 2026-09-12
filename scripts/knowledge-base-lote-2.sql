@@ -88,13 +88,13 @@ Avise o líder pelo WhatsApp se não puder ir. Quando houver roteiro da semana, 
     'Mural de Oportunidades',
     'Como me candidato a uma vaga de serviço?',
     $body$## O que aparece
-Vagas alinhadas ao seu Perfil Ministerial. O resultado da Lição 5.1 da Trilha não é listado aqui — só o cruzamento com as vagas abertas.
+Todas as vagas abertas. Não é preciso ter concluído a Trilha nem a Lição 5.1 para se candidatar.
 
 ## Candidatar-se
-Toque na vaga para registrar interesse. O aplicativo avisa o líder da frente e, se houver telefone, abre o WhatsApp.
+Toque em Tenho Interesse. O aplicativo registra a candidatura e, se houver telefone, abre o WhatsApp com o líder. O avaliador caminha com você no processo da Trilha.
 
 ## Sem vagas
-Pode faltar perfil ministerial preenchido ou a igreja ainda não publicou oportunidades.$body$,
+A igreja ainda não publicou oportunidades em Mural de Voluntários (engrenagem).$body$,
     '/mural-oportunidades',
     v_member,
     170

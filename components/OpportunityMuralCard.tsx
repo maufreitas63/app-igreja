@@ -8,12 +8,7 @@ import {
   fetchVolunteerOpportunitiesForMe,
   type VolunteerOpportunityMember,
 } from '@/lib/volunteerOpportunitiesApi';
-import { ACCESS_SCREEN } from '@/lib/accessControl';
-import { navigateWithScreenAccess } from '@/lib/dashboardScreenNavigation';
 import { normalizePhoneForWhatsApp } from '@/lib/whatsapp';
-import { fetchMinisterialProfileResult } from '@/lib/ministerialProfileQuestionnaire';
-import { resolveEffectiveProfileId } from '@/lib/sessionProfile';
-import { useRouter } from 'expo-router';
 import * as Linking from 'expo-linking';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
@@ -32,10 +27,8 @@ type Props = {
 };
 
 export function OpportunityMuralCard({ panelHeight, isActive = true }: Props) {
-  const router = useRouter();
   const contentHeight = computeMaintenanceContentHeight(panelHeight);
   const [loading, setLoading] = useState(true);
-  const [hasResult, setHasResult] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [rows, setRows] = useState<VolunteerOpportunityMember[]>([]);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -45,11 +38,7 @@ export function OpportunityMuralCard({ panelHeight, isActive = true }: Props) {
 
     try {
       await loadEffectiveSessionProfile();
-      const profileId = (await resolveEffectiveProfileId())?.trim() ?? null;
-      const result = profileId ? await fetchMinisterialProfileResult(profileId) : null;
-      const completed = Boolean(result && result.success && result.hasResult);
-      setHasResult(completed);
-      setRows(completed ? await fetchVolunteerOpportunitiesForMe() : []);
+      setRows(await fetchVolunteerOpportunitiesForMe());
     } catch (loadError) {
       setRows([]);
       setError(loadError instanceof Error ? loadError.message : 'Não foi possível carregar o mural.');
@@ -103,15 +92,7 @@ export function OpportunityMuralCard({ panelHeight, isActive = true }: Props) {
     }
   };
 
-  const handleOpenTrail = () => {
-    void navigateWithScreenAccess(
-      router,
-      '/trilha-discipulado',
-      ACCESS_SCREEN.discipleshipTrail,
-      {},
-      { deniedMessage: 'Você não tem permissão para abrir a Trilha de Discipulado.' }
-    );
-  };
+  const showMatchedSection = forYou.length > 0;
 
   return (
     <View style={[styles.panel, { maxHeight: contentHeight }]}>
@@ -121,52 +102,44 @@ export function OpportunityMuralCard({ panelHeight, isActive = true }: Props) {
         titleStyle={maintenancePanelStyles.panelTitle}
       />
       <Text style={styles.subtitle}>
-        Vagas alinhadas ao seu Perfil Ministerial. O resultado da Lição 5.1 não aparece aqui — só o match.
+        Vagas abertas para servir. Não é preciso ter concluído a Trilha para se candidatar — o
+        avaliador caminha com você nesse processo.
       </Text>
 
       {loading ? (
         <ActivityIndicator color="#1E3A5F" style={styles.loader} />
       ) : error ? (
         <Text style={styles.error}>{error}</Text>
-      ) : !hasResult ? (
-        <View style={styles.emptyBox}>
-          <Text style={styles.empty}>
-            Conclua a Lição 5.1 (Descobrindo meus Dons) para ver vagas combinadas com o seu chamado.
-          </Text>
-          <TouchableOpacity style={styles.primary} onPress={handleOpenTrail} activeOpacity={0.85}>
-            <Text style={styles.primaryText}>Abrir Trilha de Discipulado</Text>
-          </TouchableOpacity>
-        </View>
+      ) : rows.length === 0 ? (
+        <Text style={styles.empty}>A igreja ainda não publicou oportunidades.</Text>
       ) : (
         <ScrollView style={styles.list} contentContainerStyle={styles.listContent}>
-          <Text style={styles.section}>Vagas para você</Text>
-          {forYou.length === 0 ? (
-            <Text style={styles.empty}>Nenhuma vaga com o seu dom principal no momento.</Text>
-          ) : (
-            forYou.map((row) => (
-              <OpportunityCard
-                key={row.id}
-                row={row}
-                busy={busyId === row.id}
-                showSeal
-                onInterest={() => void handleInterest(row)}
-              />
-            ))
-          )}
-          {others.length ? (
+          {showMatchedSection ? (
             <>
-              <Text style={styles.section}>Outras vagas abertas</Text>
-              {others.map((row) => (
+              <Text style={styles.section}>Vagas para você</Text>
+              {forYou.map((row) => (
                 <OpportunityCard
                   key={row.id}
                   row={row}
                   busy={busyId === row.id}
-                  showSeal={false}
+                  showSeal
                   onInterest={() => void handleInterest(row)}
                 />
               ))}
+              {others.length ? <Text style={styles.section}>Outras vagas abertas</Text> : null}
             </>
-          ) : null}
+          ) : (
+            <Text style={styles.section}>Vagas abertas</Text>
+          )}
+          {(showMatchedSection ? others : rows).map((row) => (
+            <OpportunityCard
+              key={row.id}
+              row={row}
+              busy={busyId === row.id}
+              showSeal={false}
+              onInterest={() => void handleInterest(row)}
+            />
+          ))}
         </ScrollView>
       )}
     </View>
@@ -234,10 +207,6 @@ const styles = StyleSheet.create({
   error: {
     color: '#DC2626',
     textAlign: 'center',
-  },
-  emptyBox: {
-    gap: 12,
-    paddingVertical: 12,
   },
   empty: {
     color: MINIMAL_UI.textMuted,

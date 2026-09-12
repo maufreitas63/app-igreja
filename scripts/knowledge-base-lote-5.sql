@@ -283,13 +283,13 @@ Confirme ou recuse o encaixe. Sair do grupo o membro confirma na própria tela.$
     'Mural de Voluntários',
     'Como publico uma vaga e acompanho o interesse?',
     $body$## Nova vaga
-Título, descrição, ministério (tipo de escala), líder responsável (WhatsApp das candidaturas) e dons da Lição 5.1. Status: rascunho, aberta, pausada, concluída. Só Aberta aparece para o membro.
+Título, descrição, ministério (tipo de escala), líder responsável (WhatsApp das candidaturas) e, se quiser, dons da Lição 5.1 para o match. Status: rascunho, aberta, pausada, concluída. Só Aberta aparece para o membro. A Trilha não é pré-requisito para o membro se candidatar.
 
 ## Privacidade
-O perfil ministerial individual não vai para o mural público — só o cruzamento com a vaga.
+O perfil ministerial individual não vai para o mural público — só o cruzamento com a vaga, quando existir.
 
 ## Interesse
-Candidatura avisa o líder. Acompanhe a lista; o membro usa Mural de Oportunidades.
+Candidatura avisa o líder, inclusive de quem ainda não fez a Trilha. Acompanhe a lista e caminhe com o candidato nesse processo. O membro usa Mural de Oportunidades.
 
 ## Depois
 Sem tipo de escala, a vaga não se encaixa na programação. Cadastre o tipo em Tipos de Escala se a frente for nova.$body$,

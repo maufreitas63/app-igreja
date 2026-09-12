@@ -271,7 +271,7 @@ export function MaintenanceVolunteerMuralCard({
     <View style={[styles.panel, { height: contentHeight }]}>
       <MaintenanceHelpInfoTitle
         title="Mural de Voluntários"
-        helpText="Cadastre vagas, vincule o ministério (tipo de escala) e os dons da Lição 5.1. A busca ativa lista quem já concluiu o questionário e combina com a vaga. O perfil ministerial não aparece no mural público."
+        helpText="Cadastre vagas, vincule o ministério (tipo de escala) e, se quiser, os dons da Lição 5.1 para o match. O membro pode se candidatar sem ter feito a Trilha — o avaliador caminha com ele nesse processo. O perfil ministerial não aparece no mural público."
         minimal={minimal}
       />
 
@@ -384,8 +384,9 @@ export function MaintenanceVolunteerMuralCard({
                 Busca ativa ({matches.length})
               </Text>
               <Text style={styles.hint}>
-                Membros que concluíram a Lição 5.1 com dons compatíveis. Convide pelo WhatsApp; o
-                perfil completo permanece restrito à liderança.
+                Inclui quem se candidatou mesmo sem a Trilha e quem já tem dons compatíveis. Convide
+                pelo WhatsApp e caminhe com o candidato no processo da Trilha; o perfil completo
+                permanece restrito à liderança.
               </Text>
               {matchesLoading ? (
                 <ActivityIndicator color={MINIMAL_UI.blueDark} />
