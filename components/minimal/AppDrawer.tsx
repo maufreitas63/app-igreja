@@ -72,6 +72,7 @@ const SETTINGS_ICONS: Partial<Record<AppDrawerModuleKey, React.ComponentProps<ty
   menu_alianca: 'handshake-o',
   menu_igrejas: 'building',
   menu_como_faco: 'question-circle',
+  menu_como_faco_manutencao: 'question-circle',
   menu_conhecimento: 'book',
 };
 
@@ -117,7 +118,7 @@ export function AppDrawer() {
   const visibleItems = items.filter((item) => item.enabled);
   const enabledSettings = settingsItems.filter((item) => item.enabled);
 
-  const { sections, trailItems, pinnedItem } = useMemo(() => {
+  const { sections, trailItems, pinnedItem, helpItem } = useMemo(() => {
     const toRow = (item: (typeof enabledSettings)[number]): AppDrawerSettingsRow => ({
       id: item.moduleKey,
       label: item.label,
@@ -128,9 +129,12 @@ export function AppDrawer() {
 
     const trail = enabledSettings.filter((item) => DISCIPLESHIP_SETTINGS_MODULE_KEYS.has(item.moduleKey));
     const igrejas = enabledSettings.find((item) => item.moduleKey === 'menu_igrejas') ?? null;
+    const help = enabledSettings.find((item) => item.moduleKey === 'menu_como_faco_manutencao') ?? null;
     const rest = enabledSettings.filter(
       (item) =>
-        !DISCIPLESHIP_SETTINGS_MODULE_KEYS.has(item.moduleKey) && item.moduleKey !== 'menu_igrejas'
+        !DISCIPLESHIP_SETTINGS_MODULE_KEYS.has(item.moduleKey)
+        && item.moduleKey !== 'menu_igrejas'
+        && item.moduleKey !== 'menu_como_faco_manutencao'
     );
 
     const sectionsNext: AppDrawerSettingsSection[] = APP_DRAWER_SETTINGS_GROUPS.map((group) => ({
@@ -143,6 +147,7 @@ export function AppDrawer() {
       sections: sectionsNext,
       trailItems: trail.map(toRow),
       pinnedItem: igrejas ? toRow(igrejas) : null,
+      helpItem: help ? toRow(help) : null,
     };
   }, [enabledSettings, handleSettingsNavigate]);
 
@@ -176,6 +181,7 @@ export function AppDrawer() {
               sections={sections}
               trailItems={trailItems}
               pinnedItem={pinnedItem}
+              helpItem={helpItem}
             />
           ) : (
             <View style={styles.panel}>

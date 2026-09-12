@@ -264,12 +264,20 @@ export function useAppDrawerMenu() {
           enabled: isDrawerModuleEnabled(item.moduleKey, context, 'member'),
         }))
       );
+      const nextSettings = APP_DRAWER_SETTINGS_ITEMS.map((item) => ({
+        ...item,
+        pendingRoute: isDrawerMenuPlaceholder(item.moduleKey),
+        enabled: isDrawerModuleEnabled(item.moduleKey, context, 'settings'),
+      }));
+      const canOpenGear = nextSettings.some(
+        (item) => item.enabled && item.moduleKey !== 'menu_como_faco_manutencao'
+      );
       setSettingsItems(
-        APP_DRAWER_SETTINGS_ITEMS.map((item) => ({
-          ...item,
-          pendingRoute: isDrawerMenuPlaceholder(item.moduleKey),
-          enabled: isDrawerModuleEnabled(item.moduleKey, context, 'settings'),
-        }))
+        nextSettings.map((item) =>
+          item.moduleKey === 'menu_como_faco_manutencao'
+            ? { ...item, enabled: canOpenGear }
+            : item
+        )
       );
     } catch (error) {
       console.error('Erro ao carregar menu lateral:', error);

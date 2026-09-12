@@ -7,7 +7,7 @@ import {
   resolveReturnRouteParam,
 } from '@/lib/dashboardReturnNavigation';
 import { listKnowledgeArticles } from '@/lib/knowledge/knowledgeApi';
-import { knowledgeRouteHref } from '@/lib/knowledge/routeKeys';
+import { knowledgeCatalogFromParam, knowledgeRouteHref } from '@/lib/knowledge/routeKeys';
 import type { KnowledgeListItem } from '@/lib/knowledge/types';
 import { MINIMAL_SECTION_TITLE, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { FontAwesome } from '@expo/vector-icons';
@@ -25,6 +25,8 @@ import {
 export default function ComoFacoScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
+  const catalog = knowledgeCatalogFromParam(params.catalog);
+  const isMaintenanceCatalog = catalog === 'maintenance';
   const returnToCaller = useReturnToCallerOnLeave({
     returnRoute: resolveReturnRouteParam(params),
     returnDashboardCard: resolveReturnDashboardCardParam(params),
@@ -37,11 +39,11 @@ export default function ComoFacoScreen() {
   const load = useCallback(async (search: string) => {
     setLoading(true);
     try {
-      setArticles(await listKnowledgeArticles(search));
+      setArticles(await listKnowledgeArticles(search, catalog));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [catalog]);
 
   useEffect(() => {
     const handle = setTimeout(() => {
@@ -54,7 +56,9 @@ export default function ComoFacoScreen() {
     <MinimalScreenLayout footer={<CloseFooterBar onPress={returnToCaller} />}>
       <Text style={styles.title}>Como faço…?</Text>
       <Text style={styles.hint}>
-        Busque pela dúvida. Só aparecem artigos da sua igreja e do seu papel.
+        {isMaintenanceCatalog
+          ? 'Ajuda das telas da engrenagem. Só entram artigos do seu papel nesta igreja.'
+          : 'Ajuda do que você usa no dia a dia. Só entram artigos do seu papel nesta igreja.'}
       </Text>
       <View style={styles.searchRow}>
         <FontAwesome name="search" size={16} color={MINIMAL_UI.icon} />

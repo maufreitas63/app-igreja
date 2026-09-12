@@ -99,9 +99,13 @@ export async function getKnowledgeArticleForRoute(
   return mapArticle(row.article);
 }
 
-export async function listKnowledgeArticles(query = ''): Promise<KnowledgeListItem[]> {
+export async function listKnowledgeArticles(
+  query = '',
+  catalog: 'member' | 'maintenance' = 'member'
+): Promise<KnowledgeListItem[]> {
   const { data, error } = await supabase.rpc('list_knowledge_articles', {
     p_query: query.trim() || null,
+    p_catalog: catalog,
   });
 
   if (error) {
@@ -114,7 +118,9 @@ export async function listKnowledgeArticles(query = ''): Promise<KnowledgeListIt
 
   const row = asRecord(data);
   const items = Array.isArray(row?.articles) ? row.articles : [];
-  return items.map(mapListItem).filter((item): item is KnowledgeListItem => item != null);
+  return items
+    .map(mapListItem)
+    .filter((item): item is KnowledgeListItem => item != null && item.slug !== 'modo-ghost');
 }
 
 export async function getKnowledgeEditorCapabilities(): Promise<KnowledgeEditorCapabilities> {

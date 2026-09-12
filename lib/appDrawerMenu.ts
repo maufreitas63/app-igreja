@@ -43,6 +43,7 @@ export type AppDrawerModuleKey =
   | 'menu_redes_sociais'
   | 'menu_sobre_conecta'
   | 'menu_como_faco'
+  | 'menu_como_faco_manutencao'
   | 'menu_conhecimento'
   | 'menu_billing'
   | 'menu_salas'
@@ -335,9 +336,9 @@ export const APP_DRAWER_SETTINGS_ITEMS: AppDrawerSettingsItem[] = [
   {
     letter: 'g0',
     label: 'Como faço…?',
-    moduleKey: 'menu_como_faco',
+    moduleKey: 'menu_como_faco_manutencao',
     group: 'governanca',
-    hint: 'Ajuda por tela e por papel',
+    hint: 'Ajuda das telas da engrenagem',
   },
   {
     letter: 'g0b',
@@ -680,6 +681,14 @@ export async function navigateDrawerMenuItem(
 
   if (moduleKey === 'menu_como_faco') {
     openScreen(router, '/como-faco', withFailClosedReturn());
+    return;
+  }
+
+  if (moduleKey === 'menu_como_faco_manutencao') {
+    openScreen(router, '/como-faco', {
+      ...withFailClosedReturn(),
+      catalog: 'manutencao',
+    });
     return;
   }
 

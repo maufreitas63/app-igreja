@@ -1,6 +1,10 @@
 import { MEMBER_HOME_PATH } from '@/lib/failClosedNavigation';
 import type { Href } from 'expo-router';
 
+function maintenancePanel(panel: string) {
+  return `maintenance-dashboard?panel=${panel}` as const;
+}
+
 /** Chaves estáveis ligadas à rota visível (não à URL crua com query extra). */
 export const KNOWLEDGE_ROUTE = {
   home: 'home',
@@ -9,15 +13,48 @@ export const KNOWLEDGE_ROUTE = {
   pastoral: '/pastoral',
   escalas: '/escalas',
   financial: '/financial',
+  pequenoGrupo: '/pequeno-grupo',
+  muralOportunidades: '/mural-oportunidades',
+  muralGenerosidade: '/mural-generosidade',
   alianca: '/alianca-conecta-reino',
   igrejas: '/igrejas',
   totem: '/totem-checkin',
   billing: '/billing',
-  relatorios: 'maintenance-dashboard?panel=relatorios',
-  mudancaPapeis: 'maintenance-dashboard?panel=mudanca_papeis',
-  auditor: 'maintenance-dashboard?panel=auditor',
-  accessControl: 'maintenance-dashboard?panel=access_control',
+  salas: '/configuracao-salas',
+  autorizacaoMidia: '/autorizacao-midia',
+  membros: '/membros',
+  mapa: '/mapa-geolocalizacao',
+  aniversariantes: '/aniversariantes',
+  administrativo: '/administrativo',
+  livros: '/livros-doados',
   suggestions: '/suggestions-improvements',
+  relatorios: maintenancePanel('relatorios'),
+  mudancaPapeis: maintenancePanel('mudanca_papeis'),
+  auditor: maintenancePanel('auditor'),
+  accessControl: maintenancePanel('access_control'),
+  financialsPanel: maintenancePanel('financials'),
+  events: maintenancePanel('events'),
+  eventsGantt: maintenancePanel('events_gantt'),
+  eventOrchestration: maintenancePanel('event_orchestration'),
+  pastoralCare: maintenancePanel('pastoral_care'),
+  smallGroupsAdmin: maintenancePanel('small_groups_management'),
+  volunteerMuralAdmin: maintenancePanel('volunteer_mural'),
+  generosityModeration: maintenancePanel('generosity_moderation'),
+  familyReception: maintenancePanel('family_reception'),
+  visitorFollowup: maintenancePanel('visitor_followup'),
+  profileCadastro: maintenancePanel('profile_cadastro'),
+  campaigns: maintenancePanel('campaigns_management'),
+  primicias: maintenancePanel('primicias_management'),
+  predictive: maintenancePanel('predictive_insights'),
+  scaleTypes: maintenancePanel('scale_types'),
+  scaleVolunteers: maintenancePanel('scale_volunteers'),
+  scalesAdmin: maintenancePanel('scales'),
+  quorumPresence: maintenancePanel('quorum_presence'),
+  discipleshipThemes: maintenancePanel('discipleship_themes'),
+  discipleshipAlerts: maintenancePanel('discipleship_alerts'),
+  discipleshipReset: maintenancePanel('discipleship_reset'),
+  transferencia: maintenancePanel('transferencia_igreja'),
+  profileAccessInsights: maintenancePanel('profile_access_insights'),
 } as const;
 
 export type KnowledgeRouteKey = (typeof KNOWLEDGE_ROUTE)[keyof typeof KNOWLEDGE_ROUTE];
@@ -35,50 +72,42 @@ export const KNOWLEDGE_ROLE_OPTIONS: { code: string; label: string }[] = [
   { code: 'super_admin', label: 'Super Administrador' },
 ];
 
+const MAINTENANCE_PANEL_PREFIX = 'maintenance-dashboard?panel=';
+
+/** Rotas do catálogo do menu do membro (o que o usuário acessa no dia a dia). */
+export const MEMBER_KNOWLEDGE_ROUTE_KEYS: ReadonlySet<string> = new Set([
+  KNOWLEDGE_ROUTE.home,
+  KNOWLEDGE_ROUTE.perfil,
+  KNOWLEDGE_ROUTE.ofertas,
+  KNOWLEDGE_ROUTE.pastoral,
+  KNOWLEDGE_ROUTE.escalas,
+  KNOWLEDGE_ROUTE.financial,
+  KNOWLEDGE_ROUTE.pequenoGrupo,
+  KNOWLEDGE_ROUTE.muralOportunidades,
+  KNOWLEDGE_ROUTE.muralGenerosidade,
+  KNOWLEDGE_ROUTE.suggestions,
+]);
+
+export type KnowledgeCatalog = 'member' | 'maintenance';
+
+export function knowledgeCatalogFromParam(value: unknown): KnowledgeCatalog {
+  const raw = Array.isArray(value) ? String(value[0] || '') : String(value || '');
+  return raw.trim().toLowerCase() === 'manutencao' ? 'maintenance' : 'member';
+}
+
 export function knowledgeRouteHref(routeKey: string): Href | null {
+  if (routeKey.startsWith(MAINTENANCE_PANEL_PREFIX)) {
+    const panel = routeKey.slice(MAINTENANCE_PANEL_PREFIX.length).trim();
+    if (!panel) return null;
+    return {
+      pathname: '/maintenance-dashboard',
+      params: { panel },
+    } as Href;
+  }
+
   switch (routeKey) {
     case KNOWLEDGE_ROUTE.home:
       return MEMBER_HOME_PATH;
-    case KNOWLEDGE_ROUTE.perfil:
-      return '/perfil';
-    case KNOWLEDGE_ROUTE.ofertas:
-      return '/ofertas';
-    case KNOWLEDGE_ROUTE.pastoral:
-      return '/pastoral';
-    case KNOWLEDGE_ROUTE.escalas:
-      return '/escalas';
-    case KNOWLEDGE_ROUTE.financial:
-      return '/financial';
-    case KNOWLEDGE_ROUTE.alianca:
-      return '/alianca-conecta-reino';
-    case KNOWLEDGE_ROUTE.igrejas:
-      return '/igrejas';
-    case KNOWLEDGE_ROUTE.totem:
-      return '/totem-checkin';
-    case KNOWLEDGE_ROUTE.billing:
-      return '/billing';
-    case KNOWLEDGE_ROUTE.suggestions:
-      return '/suggestions-improvements';
-    case KNOWLEDGE_ROUTE.relatorios:
-      return {
-        pathname: '/maintenance-dashboard',
-        params: { panel: 'relatorios' },
-      } as Href;
-    case KNOWLEDGE_ROUTE.mudancaPapeis:
-      return {
-        pathname: '/maintenance-dashboard',
-        params: { panel: 'mudanca_papeis' },
-      } as Href;
-    case KNOWLEDGE_ROUTE.auditor:
-      return {
-        pathname: '/maintenance-dashboard',
-        params: { panel: 'auditor' },
-      } as Href;
-    case KNOWLEDGE_ROUTE.accessControl:
-      return {
-        pathname: '/maintenance-dashboard',
-        params: { panel: 'access_control' },
-      } as Href;
     default:
       if (routeKey.startsWith('/')) {
         return routeKey as Href;

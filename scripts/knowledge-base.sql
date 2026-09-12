@@ -244,7 +244,12 @@ begin
 end;
 $$;
 
-create or replace function public.list_knowledge_articles(p_query text default null)
+drop function if exists public.list_knowledge_articles(text);
+
+create or replace function public.list_knowledge_articles(
+  p_query text default null,
+  p_catalog text default 'member'
+)
 returns jsonb
 language plpgsql
 stable
@@ -255,10 +260,27 @@ declare
   v_profile uuid := public.current_session_profile_id();
   v_tenant uuid;
   v_q text := nullif(btrim(coalesce(p_query, '')), '');
+  v_catalog text := lower(btrim(coalesce(p_catalog, 'member')));
+  v_member_keys text[] := array[
+    'home',
+    '/perfil',
+    '/ofertas',
+    '/pastoral',
+    '/escalas',
+    '/financial',
+    '/pequeno-grupo',
+    '/mural-oportunidades',
+    '/mural-generosidade',
+    '/suggestions-improvements'
+  ];
   v_rows jsonb;
 begin
   if v_profile is null then
     return jsonb_build_object('success', false, 'articles', '[]'::jsonb);
+  end if;
+
+  if v_catalog not in ('member', 'maintenance') then
+    v_catalog := 'member';
   end if;
 
   v_tenant := public.require_session_tenant_id();
@@ -270,12 +292,17 @@ begin
              a.id, a.sort_order, a.title, a.slug
         from public.knowledge_articles a
        where a.is_published = true
+         and a.slug is distinct from 'modo-ghost'
          and (a.tenant_id is null or a.tenant_id = v_tenant)
          and exists (
            select 1
              from public.knowledge_article_roles r
             where r.article_id = a.id
               and r.role_code = any (public.knowledge_actor_role_codes(v_profile))
+         )
+         and (
+           (v_catalog = 'member' and a.route_key = any (v_member_keys))
+           or (v_catalog = 'maintenance' and a.route_key <> all (v_member_keys))
          )
          and (
            v_q is null
@@ -504,7 +531,7 @@ revoke all on function public.assert_knowledge_editor(boolean) from public, anon
 
 grant execute on function public.can_edit_knowledge_articles() to anon, authenticated;
 grant execute on function public.get_knowledge_article_for_route(text) to anon, authenticated;
-grant execute on function public.list_knowledge_articles(text) to anon, authenticated;
+grant execute on function public.list_knowledge_articles(text, text) to anon, authenticated;
 grant execute on function public.list_knowledge_articles_admin(text) to anon, authenticated;
 grant execute on function public.upsert_knowledge_article(uuid, text, text, text, text, text, boolean, boolean, integer, text[]) to anon, authenticated;
 grant execute on function public.unpublish_knowledge_article(uuid) to anon, authenticated;

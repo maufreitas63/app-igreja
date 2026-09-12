@@ -33,6 +33,7 @@ type Props = {
   sections: AppDrawerSettingsSection[];
   trailItems?: AppDrawerSettingsRow[];
   pinnedItem?: AppDrawerSettingsRow | null;
+  helpItem?: AppDrawerSettingsRow | null;
 };
 
 function SettingsRowView({
@@ -110,6 +111,7 @@ export function AppDrawerSettings({
   sections,
   trailItems = [],
   pinnedItem = null,
+  helpItem = null,
 }: Props) {
   const insets = useSafeAreaInsets();
   const [expandedSectionId, setExpandedSectionId] = useState<string | null>(null);
@@ -148,6 +150,12 @@ export function AppDrawerSettings({
         </View>
         <Text style={styles.title}>Configurações</Text>
       </View>
+
+      {helpItem ? (
+        <View style={styles.helpCall}>
+          <SettingsRowView item={helpItem} pinned />
+        </View>
+      ) : null}
 
       <ScrollView
         style={styles.scroll}
@@ -260,8 +268,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'flex-start',
     gap: 8,
-    marginBottom: 12,
+    marginBottom: 4,
     paddingHorizontal: 16,
+  },
+  helpCall: {
+    paddingHorizontal: 16,
+    marginBottom: 8,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: MINIMAL_UI.divider,
   },
   titleIcon: {
     alignItems: 'center',
