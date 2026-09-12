@@ -119,7 +119,7 @@ export function AppDrawer() {
   const visibleItems = items.filter((item) => item.enabled);
   const enabledSettings = settingsItems.filter((item) => item.enabled);
 
-  const { sections, trailItems, pinnedItem, helpItem } = useMemo(() => {
+  const { sections, trailItems, pinnedItems, helpItem } = useMemo(() => {
     const toRow = (item: (typeof enabledSettings)[number]): AppDrawerSettingsRow => ({
       id: item.moduleKey,
       label: item.label,
@@ -130,11 +130,13 @@ export function AppDrawer() {
 
     const trail = enabledSettings.filter((item) => DISCIPLESHIP_SETTINGS_MODULE_KEYS.has(item.moduleKey));
     const igrejas = enabledSettings.find((item) => item.moduleKey === 'menu_igrejas') ?? null;
+    const glossario = enabledSettings.find((item) => item.moduleKey === 'menu_glossario') ?? null;
     const help = enabledSettings.find((item) => item.moduleKey === 'menu_como_faco_manutencao') ?? null;
     const rest = enabledSettings.filter(
       (item) =>
         !DISCIPLESHIP_SETTINGS_MODULE_KEYS.has(item.moduleKey)
         && item.moduleKey !== 'menu_igrejas'
+        && item.moduleKey !== 'menu_glossario'
         && item.moduleKey !== 'menu_como_faco_manutencao'
     );
 
@@ -147,7 +149,9 @@ export function AppDrawer() {
     return {
       sections: sectionsNext,
       trailItems: trail.map(toRow),
-      pinnedItem: igrejas ? toRow(igrejas) : null,
+      pinnedItems: [glossario, igrejas]
+        .filter((item): item is NonNullable<typeof item> => item != null)
+        .map(toRow),
       helpItem: help ? toRow(help) : null,
     };
   }, [enabledSettings, handleSettingsNavigate]);
@@ -181,7 +185,7 @@ export function AppDrawer() {
               }}
               sections={sections}
               trailItems={trailItems}
-              pinnedItem={pinnedItem}
+              pinnedItems={pinnedItems}
               helpItem={helpItem}
             />
           ) : (
