@@ -72,8 +72,18 @@ function isDrawerModuleEnabled(
     return true;
   }
 
-  if (moduleKey === 'events_panel' || moduleKey === 'menu_redes_sociais' || moduleKey === 'menu_sobre_conecta') {
+  if (
+    moduleKey === 'events_panel'
+    || moduleKey === 'menu_redes_sociais'
+    || moduleKey === 'menu_sobre_conecta'
+    || moduleKey === 'menu_como_faco'
+  ) {
     return true;
+  }
+
+  if (moduleKey === 'menu_conhecimento') {
+    // Proteção aplicada: Gestor não tem visibilidade do Super Administrador
+    return context.isSuperAdmin;
   }
 
   if (moduleKey === 'menu_igrejas') {
@@ -163,6 +173,7 @@ const MEMBER_FALLBACK_KEYS: ReadonlySet<AppDrawerModuleKey> = new Set([
   'events_panel',
   'menu_redes_sociais',
   'menu_sobre_conecta',
+  'menu_como_faco',
 ]);
 
 export function useAppDrawerMenu() {

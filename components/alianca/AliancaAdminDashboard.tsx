@@ -1,4 +1,4 @@
-import { AliancaPremiacaoInfoModal } from '@/components/alianca/AliancaPremiacaoInfoModal';
+import { KnowledgeSectionTitle } from '@/components/knowledge/KnowledgeSectionTitle';
 import {
   getAliancaAdminStatement,
   settleAliancaPayoutAdmin,
@@ -8,13 +8,12 @@ import {
   formatAliancaDate,
   type AliancaAdminStatement,
 } from '@/lib/alianca/types';
+import { KNOWLEDGE_ROUTE } from '@/lib/knowledge/routeKeys';
 import { confirmDialog } from '@/lib/confirmDialog';
 import { MINIMAL_SECTION_TITLE, MINIMAL_UI } from '@/lib/minimalUiTheme';
-import { FontAwesome } from '@expo/vector-icons';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
-  Pressable,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -25,7 +24,6 @@ import Toast from 'react-native-toast-message';
 export function AliancaAdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState<string | null>(null);
-  const [infoOpen, setInfoOpen] = useState(false);
   const [statement, setStatement] = useState<AliancaAdminStatement | null>(null);
 
   const load = useCallback(async () => {
@@ -69,18 +67,12 @@ export function AliancaAdminDashboard() {
 
   return (
     <View style={styles.root}>
-      <View style={styles.titleRow}>
-        <Text style={styles.title}>Aliança Conecta Reino</Text>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Como funciona a premiação por indicação de novas igrejas"
-          onPress={() => setInfoOpen(true)}
-          style={styles.infoButton}
-        >
-          <FontAwesome name="info-circle" size={20} color={MINIMAL_UI.icon} />
-        </Pressable>
-      </View>
-      <AliancaPremiacaoInfoModal visible={infoOpen} onClose={() => setInfoOpen(false)} />
+      <KnowledgeSectionTitle
+        title="Aliança Conecta Reino"
+        routeKey={KNOWLEDGE_ROUTE.alianca}
+        titleStyle={styles.title}
+        accessibilityLabel="Como funciona a premiação por indicação de novas igrejas"
+      />
       <Text style={styles.hint}>
         Demonstrativo das assinaturas Conecta+ (cartão, baixa imediata) e do passivo de 40% às
         igrejas mães. A quitação é manual: oferta de apoio ministerial, em até 30 dias.
@@ -163,24 +155,9 @@ const styles = StyleSheet.create({
     paddingBottom: 24,
     gap: 8,
   },
-  titleRow: {
-    width: '100%',
-    position: 'relative',
-    justifyContent: 'center',
-  },
   title: {
     ...MINIMAL_SECTION_TITLE,
     width: '100%',
-    paddingRight: 44,
-  },
-  infoButton: {
-    position: 'absolute',
-    right: 8,
-    top: 0,
-    bottom: 0,
-    justifyContent: 'center',
-    paddingHorizontal: 8,
-    zIndex: 2,
   },
   hint: {
     color: MINIMAL_UI.textMuted,

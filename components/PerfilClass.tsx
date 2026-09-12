@@ -1,3 +1,5 @@
+import { KnowledgeSectionTitle } from '@/components/knowledge/KnowledgeSectionTitle';
+import { KNOWLEDGE_ROUTE } from '@/lib/knowledge/routeKeys';
 import { MINIMAL_SECTION_TITLE } from '@/lib/minimalUiTheme';
 import { VIGILANCE_SCALES_UI } from '@/lib/dashboardCardThemes';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -46,7 +48,11 @@ export function PerfilClass({
 
   return (
     <View style={styles.root}>
-      <Text style={styles.title}>{title}</Text>
+      <KnowledgeSectionTitle
+        title={title}
+        routeKey={KNOWLEDGE_ROUTE.perfil}
+        titleStyle={styles.title}
+      />
 
       <View style={styles.body}>
         {actions.length ? (

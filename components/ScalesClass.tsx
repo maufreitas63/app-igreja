@@ -1,3 +1,5 @@
+import { KnowledgeSectionTitle } from '@/components/knowledge/KnowledgeSectionTitle';
+import { KNOWLEDGE_ROUTE } from '@/lib/knowledge/routeKeys';
 import { MINIMAL_SECTION_TITLE } from '@/lib/minimalUiTheme';
 import { VIGILANCE_SCALES_UI } from '@/lib/dashboardCardThemes';
 import {
@@ -214,7 +216,13 @@ export function ScalesClass({
 
   return (
     <View style={styles.root}>
-      {title.trim() ? <Text style={styles.title}>{title}</Text> : null}
+      {title.trim() ? (
+        <KnowledgeSectionTitle
+          title={title}
+          routeKey={KNOWLEDGE_ROUTE.escalas}
+          titleStyle={styles.title}
+        />
+      ) : null}
 
       <View style={styles.pickerSection}>
         <MyScaleSlots

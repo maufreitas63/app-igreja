@@ -1,3 +1,5 @@
+import { KnowledgeSectionTitle } from '@/components/knowledge/KnowledgeSectionTitle';
+import { KNOWLEDGE_ROUTE } from '@/lib/knowledge/routeKeys';
 import { CardLoadingState } from '@/components/ui/CardLoadingState';
 import { AppSwitch } from '@/components/ui/AppSwitch';
 import { DropdownSelect } from '@/components/ui/DropdownSelect';
@@ -211,7 +213,11 @@ function AccessControlPanelHeader({
   if (minimal) {
     return (
       <View style={styles.panelHeaderMinimal}>
-        <Text style={styles.sectionTitleMinimal}>Controle de Acesso</Text>
+        <KnowledgeSectionTitle
+          title="Controle de Acesso"
+          routeKey={KNOWLEDGE_ROUTE.accessControl}
+          titleStyle={styles.sectionTitleMinimal}
+        />
         <View style={styles.panelHeaderControlsMinimal}>
           {appToggle}
           {lgpdToggle}
@@ -222,9 +228,11 @@ function AccessControlPanelHeader({
 
   return (
     <View style={styles.panelHeaderBlock}>
-      <Text style={styles.panelTitleCompact} numberOfLines={1}>
-        Controle de Acesso
-      </Text>
+      <KnowledgeSectionTitle
+        title="Controle de Acesso"
+        routeKey={KNOWLEDGE_ROUTE.accessControl}
+        titleStyle={styles.panelTitleCompact}
+      />
       <View style={styles.panelHeaderControls}>
         {appToggle}
         {lgpdToggle}

@@ -1,3 +1,5 @@
+import { KnowledgeSectionTitle } from '@/components/knowledge/KnowledgeSectionTitle';
+import { KNOWLEDGE_ROUTE } from '@/lib/knowledge/routeKeys';
 import { CardLoadingState } from '@/components/ui/CardLoadingState';
 import { DropdownSelect } from '@/components/ui/DropdownSelect';
 import { SectionLabel } from '@/components/ui/SectionLabel';
@@ -535,7 +537,11 @@ export function MaintenanceGhostModeCard({
           { height: contentHeight, maxHeight: contentHeight },
         ]}
       >
-        <Text style={minimal ? styles.sectionTitle : styles.title}>Modo Ghost (Auditor)</Text>
+        <KnowledgeSectionTitle
+          title="Modo Ghost (Auditor)"
+          routeKey={KNOWLEDGE_ROUTE.auditor}
+          titleStyle={minimal ? styles.sectionTitle : styles.title}
+        />
         <Text style={[styles.hint, minimal && styles.hintMinimal]}>
           O Modo Ghost já está ativo. Use o banner superior para encerrar a simulação e voltar ao seu
           usuário real.
@@ -552,7 +558,11 @@ export function MaintenanceGhostModeCard({
       keyboardShouldPersistTaps="handled"
       nestedScrollEnabled
     >
-      <Text style={minimal ? styles.sectionTitle : styles.title}>Modo Ghost (Auditor)</Text>
+      <KnowledgeSectionTitle
+        title="Modo Ghost (Auditor)"
+        routeKey={KNOWLEDGE_ROUTE.auditor}
+        titleStyle={minimal ? styles.sectionTitle : styles.title}
+      />
       <Text style={[styles.hint, minimal && styles.hintMinimal]}>
         Digite nome, telefone ou código de um usuário ativo para simular a identidade dele e validar
         permissões na Dashboard e nas demais telas. Disponível apenas para administradores

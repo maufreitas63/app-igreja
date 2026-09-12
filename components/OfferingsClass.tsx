@@ -1,3 +1,5 @@
+import { KnowledgeSectionTitle } from '@/components/knowledge/KnowledgeSectionTitle';
+import { KNOWLEDGE_ROUTE } from '@/lib/knowledge/routeKeys';
 import { MINIMAL_SECTION_TITLE } from '@/lib/minimalUiTheme';
 import { VIGILANCE_SCALES_UI } from '@/lib/dashboardCardThemes';
 import type { OfferingsRecipientRow } from '@/lib/offeringsRecipientInfo';
@@ -95,7 +97,11 @@ export function OfferingsClass({
       keyboardShouldPersistTaps="handled"
       showsVerticalScrollIndicator={false}
     >
-      <Text style={styles.title}>{title}</Text>
+      <KnowledgeSectionTitle
+        title={title}
+        routeKey={KNOWLEDGE_ROUTE.ofertas}
+        titleStyle={styles.title}
+      />
 
       {campaignTitle ? (
         <View style={styles.campaignBanner}>

@@ -11,6 +11,8 @@ import {
 import { pickChurchLogoFromGallery, saveChurchLogoForTenant } from '@/lib/churchLogo';
 import { confirmDialog } from '@/lib/confirmDialog';
 import { formatBrazilPhoneInput } from '@/lib/inputMasks';
+import { KnowledgeSectionTitle } from '@/components/knowledge/KnowledgeSectionTitle';
+import { KNOWLEDGE_ROUTE } from '@/lib/knowledge/routeKeys';
 import { MINIMAL_SECTION_TITLE, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import {
   activateSessionTenant,
@@ -627,7 +629,11 @@ function IgrejasAdminPanel() {
 
   return (
     <View style={styles.root}>
-      <Text style={styles.title}>Instâncias (igrejas)</Text>
+      <KnowledgeSectionTitle
+        title="Instâncias (igrejas)"
+        routeKey={KNOWLEDGE_ROUTE.igrejas}
+        titleStyle={styles.title}
+      />
       <Text style={styles.hint}>
         Super administrador: crie novas instâncias e alterne entre elas com o mesmo celular.
         Checkbox marcado = instância ativa. Desmarcado = inativa (usuários sem acesso; o super

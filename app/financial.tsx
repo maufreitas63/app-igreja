@@ -8,6 +8,8 @@ import { FinancialMonthlyComparison } from '@/components/FinancialMonthlyCompari
 import { AliancaMaeFinancialSection } from '@/components/alianca/AliancaMaeFinancialSection';
 import { getAliancaMaePanel } from '@/lib/alianca/aliancaApi';
 import type { AliancaMaePanel } from '@/lib/alianca/types';
+import { KnowledgeSectionTitle } from '@/components/knowledge/KnowledgeSectionTitle';
+import { KNOWLEDGE_ROUTE } from '@/lib/knowledge/routeKeys';
 import { ACCESS_SCREEN } from '@/lib/accessControl';
 import { CloseFooterBar } from '@/components/minimal/CloseFooterBar';
 import {
@@ -603,7 +605,11 @@ export default function FinancialScreen() {
 
   const minimalFixedTop = (
     <View style={styles.minimalFixedTop}>
-      <Text style={styles.minimalScreenTitle}>Financeiro</Text>
+      <KnowledgeSectionTitle
+        title="Financeiro"
+        routeKey={KNOWLEDGE_ROUTE.financial}
+        titleStyle={styles.minimalScreenTitle}
+      />
       {monthFilter}
     </View>
   );
@@ -634,7 +640,11 @@ export default function FinancialScreen() {
       <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
         <View style={styles.headerBar}>
           <View style={styles.headerTitles}>
-            <Text style={styles.title}>Financeiro</Text>
+            <KnowledgeSectionTitle
+              title="Financeiro"
+              routeKey={KNOWLEDGE_ROUTE.financial}
+              titleStyle={styles.title}
+            />
             <Text style={styles.subtitle}>Gestão financeira da igreja</Text>
           </View>
         </View>

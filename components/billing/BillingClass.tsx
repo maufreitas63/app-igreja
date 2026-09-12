@@ -1,3 +1,5 @@
+import { KnowledgeSectionTitle } from '@/components/knowledge/KnowledgeSectionTitle';
+import { KNOWLEDGE_ROUTE } from '@/lib/knowledge/routeKeys';
 import {
   formatPlanUserCap,
   planCoversActiveUsers,
@@ -105,7 +107,11 @@ export function BillingClass({
       contentContainerStyle={styles.content}
       keyboardShouldPersistTaps="handled"
     >
-      <Text style={styles.title}>{title}</Text>
+      <KnowledgeSectionTitle
+        title={title}
+        routeKey={KNOWLEDGE_ROUTE.billing}
+        titleStyle={styles.title}
+      />
       <Text style={styles.subtitle}>{subtitle}</Text>
 
       {showStatus ? (

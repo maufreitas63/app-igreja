@@ -71,6 +71,8 @@ const SETTINGS_ICONS: Partial<Record<AppDrawerModuleKey, React.ComponentProps<ty
   menu_billing: 'credit-card',
   menu_alianca: 'handshake-o',
   menu_igrejas: 'building',
+  menu_como_faco: 'question-circle',
+  menu_conhecimento: 'book',
 };
 
 export function AppDrawer() {

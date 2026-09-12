@@ -20,6 +20,7 @@ import { ACCESS_SCREEN, sessionHasAccess } from '@/lib/accessControl';
 import { PastoralSchedulePanel } from '@/components/PastoralSchedulePanel';
 import { PASTORAL_SCHEDULE_RESOURCE } from '@/lib/pastoralAccess';
 import { supabase } from '@/lib/supabase';
+import { KnowledgeRouteInfo } from '@/components/knowledge/KnowledgeRouteInfo';
 import { CloseFooterBar, CLOSE_FOOTER_DOCK_HEIGHT } from '@/components/minimal/CloseFooterBar';
 import { MinimalScreenLayout } from '@/components/minimal/MinimalScreenLayout';
 import { ScreenAccessGate } from '@/components/ScreenAccessGate';
@@ -33,6 +34,7 @@ import {
   withMinimalPresentation,
 } from '@/lib/dashboardReturnNavigation';
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
+import { KNOWLEDGE_ROUTE } from '@/lib/knowledge/routeKeys';
 import { VIGILANCE_SCALES_UI } from '@/lib/dashboardCardThemes';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import type { Href } from 'expo-router';
@@ -654,6 +656,7 @@ export default function PastoralScreen() {
             ) : (
               <View style={styles.headerTitlesMinimal} />
             )}
+            <KnowledgeRouteInfo routeKey={KNOWLEDGE_ROUTE.pastoral} />
             <TouchableOpacity
               accessibilityLabel="Limpar pedido"
               accessibilityRole="button"

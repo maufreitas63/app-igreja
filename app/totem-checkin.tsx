@@ -1,3 +1,4 @@
+import { KnowledgeSectionTitle } from '@/components/knowledge/KnowledgeSectionTitle';
 import { useCheckin } from '@/hooks/useCheckin';
 import { useLeadershipRouteGuard } from '@/hooks/useLeadershipRouteGuard';
 import { ScreenAccessGate } from '@/components/ScreenAccessGate';
@@ -17,6 +18,7 @@ import { isEventPublished, isEventVisibleForCheckIn, toEventVisibilityFields } f
 import { useExitSessionUi } from '@/hooks/useExitSessionUi';
 import { signOutAndNavigateToLogin } from '@/lib/userSession';
 import { lockPastEvents } from '@/lib/lockPastEvents';
+import { KNOWLEDGE_ROUTE } from '@/lib/knowledge/routeKeys';
 import { supabase } from '@/lib/supabase';
 import { isTotemDeviceSession } from '@/lib/totemDevice';
 import { getWebCameraProbe, requestWebCameraForTotem } from '@/lib/totemWebCamera';
@@ -501,7 +503,12 @@ export default function TotemCheckinScreen() {
     <ScreenAccessGate status={accessStatus}>
     <SafeAreaView style={styles.safe} edges={['top', 'left', 'right', 'bottom']}>
       <View style={styles.header}>
-        <Text style={styles.title}>Totem — Check-in</Text>
+        <KnowledgeSectionTitle
+          title="Totem — Check-in"
+          routeKey={KNOWLEDGE_ROUTE.totem}
+          titleStyle={styles.title}
+          iconColor="#f8fafc"
+        />
       </View>
 
       <View style={styles.body}>

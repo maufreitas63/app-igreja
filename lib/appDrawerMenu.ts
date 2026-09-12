@@ -42,6 +42,8 @@ export type AppDrawerModuleKey =
   | 'menu_alianca'
   | 'menu_redes_sociais'
   | 'menu_sobre_conecta'
+  | 'menu_como_faco'
+  | 'menu_conhecimento'
   | 'menu_billing'
   | 'menu_salas'
   | 'menu_livros'
@@ -127,6 +129,7 @@ export const APP_DRAWER_MENU_ITEMS: AppDrawerMenuItem[] = [
   { letter: 'f', label: 'Mural de Oportunidades', moduleKey: 'menu_opportunity_mural' },
   { letter: 'f2', label: 'Mural de Generosidade', moduleKey: 'menu_generosity_mural' },
   { letter: 'g', label: 'Sugestões', moduleKey: 'suggestions_improvements' },
+  { letter: 'g2', label: 'Como faço…?', moduleKey: 'menu_como_faco' },
   { letter: 'h', label: 'Redes Sociais', moduleKey: 'menu_redes_sociais' },
   { letter: 'i', label: 'Sobre o Conecta+', moduleKey: 'menu_sobre_conecta' },
 ];
@@ -328,6 +331,20 @@ export const APP_DRAWER_SETTINGS_ITEMS: AppDrawerSettingsItem[] = [
     moduleKey: 'discipleship_reset',
     group: 'governanca',
     hint: 'Reiniciar progresso de um usuário nesta igreja',
+  },
+  {
+    letter: 'g0',
+    label: 'Como faço…?',
+    moduleKey: 'menu_como_faco',
+    group: 'governanca',
+    hint: 'Ajuda por tela e por papel',
+  },
+  {
+    letter: 'g0b',
+    label: 'Base de conhecimento',
+    moduleKey: 'menu_conhecimento',
+    group: 'governanca',
+    hint: 'Editar artigos da ajuda in-app',
   },
   {
     letter: 'g4',
@@ -658,6 +675,16 @@ export async function navigateDrawerMenuItem(
 
   if (moduleKey === 'menu_sobre_conecta') {
     openScreen(router, '/sobre-conecta', withFailClosedReturn());
+    return;
+  }
+
+  if (moduleKey === 'menu_como_faco') {
+    openScreen(router, '/como-faco', withFailClosedReturn());
+    return;
+  }
+
+  if (moduleKey === 'menu_conhecimento') {
+    openScreen(router, '/conhecimento', withFailClosedReturn());
     return;
   }
 

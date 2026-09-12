@@ -6,7 +6,9 @@ import {
   INBOX_VISIBLE_EVENT_ROWS,
   type InboxListItem,
 } from '@/components/minimal/InboxList';
+import { KnowledgeSectionTitle } from '@/components/knowledge/KnowledgeSectionTitle';
 import { useMinimalHome } from '@/context/MinimalHomeContext';
+import { KNOWLEDGE_ROUTE } from '@/lib/knowledge/routeKeys';
 import {
   EVENT_AVISOS_SQL_HINT,
   fetchPublishedEventAvisos,
@@ -297,7 +299,11 @@ export function EventsInboxHome() {
         >
           <View style={[styles.page, pageSizeStyle]}>
             <View style={styles.inboxSection}>
-              <Text style={styles.sectionTitle}>Proximos Eventos</Text>
+              <KnowledgeSectionTitle
+                title="Proximos Eventos"
+                routeKey={KNOWLEDGE_ROUTE.home}
+                titleStyle={styles.sectionTitle}
+              />
               <InboxList
                 items={inboxItems}
                 emptyMessage="Nenhum evento disponível no momento."
