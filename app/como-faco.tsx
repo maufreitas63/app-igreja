@@ -6,6 +6,10 @@ import {
   resolveReturnDashboardCardParam,
   resolveReturnRouteParam,
 } from '@/lib/dashboardReturnNavigation';
+import {
+  KNOWLEDGE_CATALOG_HINT_MAINTENANCE,
+  KNOWLEDGE_CATALOG_HINT_MEMBER,
+} from '@/lib/knowledge/copy';
 import { listKnowledgeArticles } from '@/lib/knowledge/knowledgeApi';
 import { knowledgeCatalogFromParam, knowledgeRouteHref } from '@/lib/knowledge/routeKeys';
 import type { KnowledgeListItem } from '@/lib/knowledge/types';
@@ -57,8 +61,8 @@ export default function ComoFacoScreen() {
       <Text style={styles.title}>Como faço…?</Text>
       <Text style={styles.hint}>
         {isMaintenanceCatalog
-          ? 'Ajuda das telas da engrenagem. Só entram artigos do seu papel nesta igreja.'
-          : 'Ajuda do que você usa no dia a dia. Só entram artigos do seu papel nesta igreja.'}
+          ? KNOWLEDGE_CATALOG_HINT_MAINTENANCE
+          : KNOWLEDGE_CATALOG_HINT_MEMBER}
       </Text>
       <View style={styles.searchRow}>
         <FontAwesome name="search" size={16} color={MINIMAL_UI.icon} />

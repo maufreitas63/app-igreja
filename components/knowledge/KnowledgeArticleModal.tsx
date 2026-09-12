@@ -1,5 +1,6 @@
 import { CloseButton } from '@/components/minimal/CloseFooterBar';
 import { FontAwesome } from '@expo/vector-icons';
+import { KNOWLEDGE_PERMISSION_NOTE } from '@/lib/knowledge/copy';
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
 import type { KnowledgeListItem } from '@/lib/knowledge/types';
 import React, { useMemo } from 'react';
@@ -73,6 +74,7 @@ export function KnowledgeArticleModal({ visible, article, onClose }: Props) {
                 </Text>
               )
             )}
+            <Text style={styles.permissionNote}>{KNOWLEDGE_PERMISSION_NOTE}</Text>
           </ScrollView>
           <CloseButton onPress={onClose} />
         </View>
@@ -134,5 +136,10 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 22,
     color: MINIMAL_UI.blue,
+  },
+  permissionNote: {
+    fontSize: 13,
+    lineHeight: 20,
+    color: MINIMAL_UI.textMuted,
   },
 });
