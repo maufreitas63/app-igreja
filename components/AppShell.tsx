@@ -8,6 +8,7 @@ import { ScaleSwapNoticesListener } from '@/components/ScaleSwapNoticesListener'
 import { TotemDeviceRouteGuard } from '@/components/TotemDeviceRouteGuard';
 import { AppDrawerProvider } from '@/context/AppDrawerContext';
 import { EntityPrefixProvider } from '@/context/EntityPrefixContext';
+import { GlossaryProvider } from '@/context/GlossaryContext';
 import { PaletteProvider } from '@/context/PaletteContext';
 import { useProfileScreenVisitTracker } from '@/hooks/useProfileScreenVisitTracker';
 import {
@@ -81,11 +82,13 @@ function AppShellContent() {
 
 export function AppShell() {
   return (
-    <PaletteProvider>
-      <AppDrawerProvider>
-        <AppShellContent />
-      </AppDrawerProvider>
-    </PaletteProvider>
+    <GlossaryProvider>
+      <PaletteProvider>
+        <AppDrawerProvider>
+          <AppShellContent />
+        </AppDrawerProvider>
+      </PaletteProvider>
+    </GlossaryProvider>
   );
 }
 

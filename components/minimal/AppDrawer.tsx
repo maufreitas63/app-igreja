@@ -74,6 +74,7 @@ const SETTINGS_ICONS: Partial<Record<AppDrawerModuleKey, React.ComponentProps<ty
   menu_como_faco: 'question-circle',
   menu_como_faco_manutencao: 'question-circle',
   menu_conhecimento: 'book',
+  menu_glossario: 'font',
 };
 
 export function AppDrawer() {

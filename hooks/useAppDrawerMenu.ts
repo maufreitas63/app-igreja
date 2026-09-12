@@ -86,6 +86,11 @@ function isDrawerModuleEnabled(
     return context.isSuperAdmin;
   }
 
+  if (moduleKey === 'menu_glossario') {
+    // Proteção aplicada: Gestor não tem visibilidade do Super Administrador
+    return context.isSuperAdmin;
+  }
+
   if (moduleKey === 'menu_igrejas') {
     // Proteção aplicada: Gestor não tem visibilidade do Super Administrador
     return context.isSuperAdmin;

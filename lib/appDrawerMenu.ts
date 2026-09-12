@@ -45,6 +45,7 @@ export type AppDrawerModuleKey =
   | 'menu_como_faco'
   | 'menu_como_faco_manutencao'
   | 'menu_conhecimento'
+  | 'menu_glossario'
   | 'menu_billing'
   | 'menu_salas'
   | 'menu_livros'
@@ -346,6 +347,13 @@ export const APP_DRAWER_SETTINGS_ITEMS: AppDrawerSettingsItem[] = [
     moduleKey: 'menu_conhecimento',
     group: 'governanca',
     hint: 'Editar artigos da ajuda in-app',
+  },
+  {
+    letter: 'g0c',
+    label: 'Dicionário de termos',
+    moduleKey: 'menu_glossario',
+    group: 'governanca',
+    hint: 'Identificar jargões da plataforma no aplicativo',
   },
   {
     letter: 'g4',
@@ -694,6 +702,11 @@ export async function navigateDrawerMenuItem(
 
   if (moduleKey === 'menu_conhecimento') {
     openScreen(router, '/conhecimento', withFailClosedReturn());
+    return;
+  }
+
+  if (moduleKey === 'menu_glossario') {
+    openScreen(router, '/glossario', withFailClosedReturn());
     return;
   }
 
