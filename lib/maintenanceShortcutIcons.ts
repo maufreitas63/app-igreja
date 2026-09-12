@@ -17,6 +17,7 @@ export type MaintenancePanelContent =
   | 'profile_cadastro'
   | 'family_reception'
   | 'visitor_followup'
+  | 'family_timeline'
   | 'financials'
   | 'predictive_insights'
   | 'relatorios'
@@ -44,6 +45,7 @@ export type MaintenanceShortcutIconName =
   | 'id-card'
   | 'home'
   | 'handshake-o'
+  | 'clock-o'
   | 'shield'
   | 'history'
   | 'bullhorn'
@@ -79,6 +81,7 @@ export const MAINTENANCE_SHORTCUT_ICONS: Record<
   profile_cadastro: 'id-card',
   family_reception: 'home',
   visitor_followup: 'handshake-o',
+  family_timeline: 'clock-o',
   access_control: 'shield',
   profile_access_insights: 'history',
   auditor: 'user-secret',
@@ -109,6 +112,7 @@ export const MAINTENANCE_SHORTCUT_ICON_COLORS: Record<MaintenancePanelContent, s
   profile_cadastro: '#A78BFA',
   family_reception: '#34D399',
   visitor_followup: '#F59E0B',
+  family_timeline: '#6366F1',
   access_control: '#818CF8',
   profile_access_insights: '#FCD34D',
   auditor: '#FB7185',

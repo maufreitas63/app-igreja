@@ -36,6 +36,7 @@ import { MaintenanceIgrejaTransferCard } from '@/components/MaintenanceIgrejaTra
 import { MaintenanceEventOrchestrationCard } from '@/components/MaintenanceEventOrchestrationCard';
 import { MaintenanceFamilyReceptionCard } from '@/components/MaintenanceFamilyReceptionCard';
 import { MaintenanceVisitorFollowupCard } from '@/components/MaintenanceVisitorFollowupCard';
+import { MaintenanceFamilyTimelineCard } from '@/components/MaintenanceFamilyTimelineCard';
 import { MaintenanceProfileCadastroCard } from '@/components/MaintenanceProfileCadastroCard';
 import { MaintenanceProfileAccessInsightsCard } from '@/components/MaintenanceProfileAccessInsightsCard';
 import { MaintenanceGhostModeCard } from '@/components/MaintenanceGhostModeCard';
@@ -166,6 +167,7 @@ type MaintenanceCarouselCard = {
     | 'profile_cadastro'
     | 'family_reception'
     | 'visitor_followup'
+    | 'family_timeline'
     | 'financials'
     | 'predictive_insights'
     | 'relatorios'
@@ -204,6 +206,7 @@ const MAINTENANCE_PANEL_CARDS: MaintenanceCarouselCard[] = [
   { id: '11', title: 'Cadastro de Usuário', content: 'profile_cadastro' },
   { id: '12', title: 'Recepção Familiar', content: 'family_reception' },
   { id: '27', title: 'Régua de Acolhimento', content: 'visitor_followup' },
+  { id: '30', title: 'Linha do tempo da família', content: 'family_timeline' },
   { id: '10', title: 'Controle de Acesso', content: 'access_control' },
   { id: '13', title: 'Mudança de Papéis', content: 'mudanca_papeis' },
   { id: '23', title: 'Transferência de Membro', content: 'transferencia_igreja' },
@@ -454,6 +457,7 @@ export default function MaintenanceDashboard() {
   const [canAccessPastoralRoleChange, setCanAccessPastoralRoleChange] = useState(false);
   const [canMonitorFamilyReception, setCanMonitorFamilyReception] = useState(false);
   const [canAccessProfileCadastro, setCanAccessProfileCadastro] = useState(false);
+  const [familyTimelineEnabled, setFamilyTimelineEnabled] = useState(true);
   const [canUpdateMaintenanceEvents, setCanUpdateMaintenanceEvents] = useState(false);
   const [canBypassEventPastDateLock, setCanBypassEventPastDateLock] = useState(false);
   const [canOperateGhostMode, setCanOperateGhostMode] = useState(false);
@@ -591,6 +595,7 @@ export default function MaintenanceDashboard() {
         setCanAccessAccessControlCard(snapshot.canOpenAccessControlCard);
         setCanMonitorFamilyReception(snapshot.canMonitorFamilyReception);
         setCanAccessProfileCadastro(snapshot.canAccessProfileCadastro);
+        setFamilyTimelineEnabled(snapshot.familyTimelineEnabled !== false);
         setCanUpdateMaintenanceEvents(snapshot.canUpdateMaintenanceEvents);
         setCanBypassEventPastDateLock(snapshot.canBypassEventPastDateLock);
         setMaintenancePanelAccess(snapshot.maintenancePanelAccess);
@@ -911,6 +916,13 @@ export default function MaintenanceDashboard() {
         return canAccessProfileCadastro || maintenancePanelAccess[card.content] === true;
       }
 
+      if (card.content === 'family_timeline') {
+        if (!familyTimelineEnabled && !canManageAccessControl) {
+          return false;
+        }
+        return canAccessProfileCadastro || maintenancePanelAccess[card.content] === true;
+      }
+
       return maintenancePanelAccess[card.content] === true;
     });
   }, [
@@ -918,6 +930,7 @@ export default function MaintenanceDashboard() {
     canAccessPastoralCare,
     canAccessPastoralRoleChange,
     canAccessProfileCadastro,
+    familyTimelineEnabled,
     canOperateGhostMode,
     canManageAccessControl,
     maintenancePanelAccess,
@@ -1108,6 +1121,7 @@ export default function MaintenanceDashboard() {
             !isMinimalPresentation && item.content === 'profile_cadastro' && styles.panelCardInnerPadding,
             !isMinimalPresentation && item.content === 'family_reception' && styles.panelCardInnerPadding,
             !isMinimalPresentation && item.content === 'visitor_followup' && styles.panelCardInnerPadding,
+            !isMinimalPresentation && item.content === 'family_timeline' && styles.panelCardInnerPadding,
             !isMinimalPresentation && item.content === 'financials' && styles.panelCardInnerPadding,
             !isMinimalPresentation && item.content === 'predictive_insights' && styles.panelCardInnerPadding,
             !isMinimalPresentation && item.content === 'relatorios' && styles.panelCardInnerPadding,
@@ -1343,6 +1357,19 @@ export default function MaintenanceDashboard() {
               ]}
             >
               <MaintenanceVisitorFollowupCard
+                isActive
+                panelHeight={cardHeight}
+                minimal={isMinimalPresentation}
+              />
+            </View>
+          ) : item.content === 'family_timeline' ? (
+            <View
+              style={[
+                styles.familyReceptionPanel,
+                isMinimalPresentation && styles.familyReceptionPanelMinimal,
+              ]}
+            >
+              <MaintenanceFamilyTimelineCard
                 isActive
                 panelHeight={cardHeight}
                 minimal={isMinimalPresentation}

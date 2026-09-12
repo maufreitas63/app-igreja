@@ -54,6 +54,7 @@ type DrawerEnableContext = {
   canAccessPastoralCare: boolean;
   hasActiveMembership: boolean;
   isSuperAdmin: boolean;
+  familyTimelineEnabled: boolean;
 };
 
 const SETTINGS_PEOPLE_OPS_KEYS: ReadonlySet<AppDrawerModuleKey> = new Set([
@@ -79,6 +80,10 @@ function isDrawerModuleEnabled(
     || moduleKey === 'menu_como_faco'
   ) {
     return true;
+  }
+
+  if (moduleKey === 'family_timeline' && !context.familyTimelineEnabled && !context.isSuperAdmin) {
+    return false;
   }
 
   if (moduleKey === 'menu_conhecimento') {
@@ -255,6 +260,7 @@ export function useAppDrawerMenu() {
         canAccessPastoralCare: maintenanceAccess.canAccessPastoralCare === true,
         hasActiveMembership,
         isSuperAdmin: superAdmin,
+        familyTimelineEnabled: maintenanceAccess.familyTimelineEnabled !== false,
       };
 
       setItems(
