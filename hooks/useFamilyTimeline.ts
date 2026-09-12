@@ -77,6 +77,16 @@ export function useFamilyTimeline(isActive: boolean) {
     }
   }, []);
 
+  const clearSearch = useCallback(() => {
+    setQuery('');
+    setHits([]);
+    setSelectedId(null);
+    setTimeline(null);
+    setSearching(false);
+    setLoadingTimeline(false);
+    setError(null);
+  }, []);
+
   const toggleFeature = useCallback(async (nextEnabled: boolean) => {
     setToggling(true);
     setError(null);
@@ -118,5 +128,6 @@ export function useFamilyTimeline(isActive: boolean) {
     selectFamily,
     toggleFeature,
     refreshState,
+    clearSearch,
   };
 }

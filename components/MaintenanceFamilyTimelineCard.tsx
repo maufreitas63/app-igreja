@@ -10,7 +10,7 @@ import {
   maintenancePanelStyles,
 } from '@/lib/maintenanceCardStyles';
 import { MINIMAL_SECTION_TITLE, MINIMAL_UI } from '@/lib/minimalUiTheme';
-import { FontAwesome } from '@expo/vector-icons';
+import { FontAwesome, MaterialIcons } from '@expo/vector-icons';
 import React from 'react';
 import Toast from 'react-native-toast-message';
 import {
@@ -48,6 +48,7 @@ export function MaintenanceFamilyTimelineCard({
     toggling,
     selectFamily,
     toggleFeature,
+    clearSearch,
   } = useFamilyTimeline(isActive);
 
   const handleToggle = async () => {
@@ -106,6 +107,23 @@ export function MaintenanceFamilyTimelineCard({
               autoCorrect={false}
               accessibilityLabel="Buscar família na linha do tempo"
             />
+            <TouchableOpacity
+              style={[
+                styles.searchClearButton,
+                query.length === 0 && !timeline && hits.length === 0 && styles.searchClearButtonDisabled,
+              ]}
+              onPress={clearSearch}
+              disabled={query.length === 0 && !timeline && hits.length === 0}
+              activeOpacity={0.8}
+              accessibilityRole="button"
+              accessibilityLabel="Limpar busca e dados da família"
+            >
+              <MaterialIcons
+                name="close"
+                size={20}
+                color={minimal ? MINIMAL_UI.icon : '#94A3B8'}
+              />
+            </TouchableOpacity>
           </View>
 
           {searching ? <CardLoadingState lines={2} compact minimal={minimal} /> : null}
@@ -270,6 +288,15 @@ const styles = StyleSheet.create({
   },
   searchInputMinimal: {
     color: MINIMAL_UI.text,
+  },
+  searchClearButton: {
+    width: 32,
+    height: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  searchClearButtonDisabled: {
+    opacity: 0.35,
   },
   hitList: {
     gap: 6,
