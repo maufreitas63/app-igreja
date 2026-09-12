@@ -34,17 +34,8 @@ export function ScreenAccessGate({
     router.replace(deniedRedirectPath as Href);
   }, [deniedRedirectPath, router, status]);
 
-  if (status === 'allowed' || status === 'skipped') {
+  if (status === 'allowed' || status === 'skipped' || status === 'checking') {
     return <>{children}</>;
-  }
-
-  if (status === 'checking') {
-    return (
-      <View style={styles.gate}>
-        <ActivityIndicator color={MINIMAL_UI.blueDark} size="large" />
-        <Text style={styles.gateText}>Verificando permissão...</Text>
-      </View>
-    );
   }
 
   return (

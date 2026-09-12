@@ -56,7 +56,10 @@ export function useScreenAccessGuard({
       let active = true;
 
       void (async () => {
-        const aclStatus = await getAccessControlRpcStatus();
+        const [aclStatus, allowed] = await Promise.all([
+          getAccessControlRpcStatus(),
+          sessionHasAccess('screen', resourceKey, 'view'),
+        ]);
 
         if (!active) {
           return;
@@ -65,12 +68,6 @@ export function useScreenAccessGuard({
         if (aclStatus === 'missing' && isAclStrictMode()) {
           setStatus('denied');
           denyScreenAccessAndRedirect(router, redirectPath, 'ACL indisponível', ACL_UNAVAILABLE_MESSAGE);
-          return;
-        }
-
-        const allowed = await sessionHasAccess('screen', resourceKey, 'view');
-
-        if (!active) {
           return;
         }
 

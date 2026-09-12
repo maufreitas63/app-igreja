@@ -1,4 +1,5 @@
 import { MaintenanceSupportSuggestionsCard } from '@/components/MaintenanceSupportSuggestionsCard';
+import { KnowledgeSectionTitle } from '@/components/knowledge/KnowledgeSectionTitle';
 import { CloseFooterBar } from '@/components/minimal/CloseFooterBar';
 import { MinimalScreenLayout } from '@/components/minimal/MinimalScreenLayout';
 import { ScreenAccessGate } from '@/components/ScreenAccessGate';
@@ -13,6 +14,7 @@ import {
 import { computeDashboardCardHeight } from '@/lib/dashboardPanelLayout';
 import { VIGILANCE_SCALES_UI } from '@/lib/dashboardCardThemes';
 import { MEMBER_HOME_PATH } from '@/lib/failClosedNavigation';
+import { KNOWLEDGE_ROUTE } from '@/lib/knowledge/routeKeys';
 import { MINIMAL_SECTION_TITLE, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
 import React, { useCallback, useMemo } from 'react';
@@ -65,7 +67,11 @@ export default function SuggestionsImprovementsScreen() {
         footer={<CloseFooterBar onPress={handleLeave} />}
       >
         <View style={styles.header}>
-          <Text style={styles.welcomeText}>Sugestões e Melhorias</Text>
+          <KnowledgeSectionTitle
+            title="Sugestões e Melhorias"
+            routeKey={KNOWLEDGE_ROUTE.suggestions}
+            titleStyle={styles.welcomeText}
+          />
           <Text style={styles.badgeTitle}>Registrar solicitação</Text>
         </View>
 

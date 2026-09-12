@@ -1,3 +1,5 @@
+import { getCachedOrFetch } from '@/lib/asyncResultCache';
+import { resolveEffectiveProfileId } from '@/lib/sessionProfile';
 import { supabase } from '@/lib/supabase';
 import { isSupabaseRpcMissingError } from '@/lib/supabaseRpc';
 import type {
@@ -82,21 +84,29 @@ export async function getKnowledgeArticleForRoute(
   const key = routeKey.trim();
   if (!key) return null;
 
-  const { data, error } = await supabase.rpc('get_knowledge_article_for_route', {
-    p_route_key: key,
-  });
+  const profileId = (await resolveEffectiveProfileId())?.trim() || 'anon';
 
-  if (error) {
-    if (isSupabaseRpcMissingError(error, 'get_knowledge_article_for_route')) {
-      return null;
-    }
-    console.warn('get_knowledge_article_for_route', error.message);
-    return null;
-  }
+  return getCachedOrFetch(
+    `knowledge:route:${key}`,
+    async () => {
+      const { data, error } = await supabase.rpc('get_knowledge_article_for_route', {
+        p_route_key: key,
+      });
 
-  const row = asRecord(data);
-  if (!row || row.success === false) return null;
-  return mapArticle(row.article);
+      if (error) {
+        if (isSupabaseRpcMissingError(error, 'get_knowledge_article_for_route')) {
+          return null;
+        }
+        console.warn('get_knowledge_article_for_route', error.message);
+        return null;
+      }
+
+      const row = asRecord(data);
+      if (!row || row.success === false) return null;
+      return mapArticle(row.article);
+    },
+    { scopeId: profileId, ttlMs: 120_000 }
+  );
 }
 
 export async function listKnowledgeArticles(

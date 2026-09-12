@@ -37,20 +37,12 @@ export async function ensureScreenAccess(
 export async function navigateWithScreenAccess(
   router: RouterLike,
   pathname: string,
-  resourceKey: string,
+  _resourceKey: string,
   params?: Record<string, string>,
   options?: { method?: 'push' | 'navigate' | 'replace'; deniedMessage?: string }
 ): Promise<boolean> {
-  const allowed = await ensureScreenAccess(
-    resourceKey,
-    options?.deniedMessage ?? DASHBOARD_SCREEN_DENIED_MESSAGES[pathname]
-  );
-
-  if (!allowed) {
-    return false;
-  }
-
   const method = options?.method ?? 'push';
+  // A tela de destino aplica o ScreenAccessGate; esperar ACL aqui atrasava a troca de rota.
   router[method]({ pathname, params } as Href);
   return true;
 }

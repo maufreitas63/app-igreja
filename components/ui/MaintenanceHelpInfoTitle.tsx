@@ -1,11 +1,9 @@
-import { CloseFooterBar, CLOSE_FOOTER_DOCK_HEIGHT } from '@/components/minimal/CloseFooterBar';
+import { CenteredCloseDialog } from '@/components/minimal/CenteredCloseDialog';
 import { maintenancePanelStyles } from '@/lib/maintenanceCardStyles';
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { FontAwesome } from '@expo/vector-icons';
 import React, { useState } from 'react';
 import {
-  Modal,
-  Pressable,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -13,8 +11,6 @@ import {
   type StyleProp,
   type TextStyle,
 } from 'react-native';
-
-const ACCENT = '#3A96DD';
 
 type Props = {
   title: string;
@@ -38,7 +34,7 @@ export function MaintenanceHelpInfoTitle({
   modalTitle = 'Como usar',
 }: Props) {
   const [open, setOpen] = useState(false);
-  const color = iconColor ?? (minimal ? MINIMAL_UI.blueDark : ACCENT);
+  const color = iconColor ?? (minimal ? MINIMAL_UI.icon : MINIMAL_UI.accent);
   const spacer = showSubtitleSpacer ?? !minimal;
 
   return (
@@ -57,16 +53,14 @@ export function MaintenanceHelpInfoTitle({
       </View>
       {spacer ? <View style={maintenancePanelStyles.panelSubtitleSpacer} /> : null}
 
-      <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
-        <View style={[styles.overlay, minimal && styles.overlayMinimal]}>
-          <Pressable style={styles.backdrop} onPress={() => setOpen(false)} />
-          <View style={[styles.bubble, minimal && styles.bubbleMinimal]}>
-            <Text style={[styles.modalTitle, minimal && styles.modalTitleMinimal]}>{modalTitle}</Text>
-            <Text style={[styles.helpText, minimal && styles.helpTextMinimal]}>{helpText}</Text>
-            <CloseFooterBar onPress={() => setOpen(false)} />
-          </View>
-        </View>
-      </Modal>
+      <CenteredCloseDialog
+        visible={open}
+        onClose={() => setOpen(false)}
+        title={modalTitle}
+        accessibilityCloseLabel="Fechar como usar"
+      >
+        <Text style={[styles.helpText, minimal && styles.helpTextMinimal]}>{helpText}</Text>
+      </CenteredCloseDialog>
     </>
   );
 }
@@ -92,79 +86,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  overlay: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 20,
-    paddingBottom: CLOSE_FOOTER_DOCK_HEIGHT,
-    backgroundColor: 'rgba(2, 6, 23, 0.58)',
-  },
-  overlayMinimal: {
-    backgroundColor: 'rgba(30, 64, 175, 0.28)',
-  },
-  backdrop: {
-    ...StyleSheet.absoluteFillObject,
-  },
-  bubble: {
-    width: '100%',
-    maxWidth: 320,
-    borderWidth: 1,
-    borderColor: 'rgba(96, 165, 250, 0.45)',
-    borderRadius: 14,
-    backgroundColor: 'rgba(15, 23, 42, 0.98)',
-    paddingTop: 14,
-    paddingHorizontal: 0,
-    overflow: 'hidden',
-    gap: 8,
-  },
-  bubbleMinimal: {
-    borderColor: MINIMAL_UI.border,
-    backgroundColor: MINIMAL_UI.background,
-  },
-  modalTitle: {
-    color: '#BFDBFE',
-    fontSize: 13,
-    fontWeight: '800',
-    paddingHorizontal: 14,
-  },
-  modalTitleMinimal: {
-    color: MINIMAL_UI.blueDark,
-  },
   helpText: {
-    color: '#3A96DD',
-    fontSize: 13,
-    lineHeight: 19,
-    paddingHorizontal: 14,
+    color: MINIMAL_UI.blue,
+    fontSize: 14,
+    lineHeight: 22,
   },
   helpTextMinimal: {
     color: MINIMAL_UI.text,
-  },
-  actions: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-  },
-  closeButton: {
-    minWidth: 76,
-    minHeight: 34,
-    borderRadius: 999,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 12,
-    borderWidth: 1,
-    borderColor: 'rgba(52, 211, 153, 0.35)',
-    backgroundColor: 'rgba(15, 23, 42, 0.85)',
-  },
-  closeButtonMinimal: {
-    borderColor: MINIMAL_UI.blueDark,
-    backgroundColor: MINIMAL_UI.background,
-  },
-  closeText: {
-    color: '#3A96DD',
-    fontSize: 12,
-    fontWeight: '800',
-  },
-  closeTextMinimal: {
-    color: MINIMAL_UI.blueDark,
   },
 });

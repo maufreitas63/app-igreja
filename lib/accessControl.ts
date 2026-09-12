@@ -493,6 +493,7 @@ export function invalidateAccessControlCache(options?: {
 
   if (options?.allProfiles || !options?.profileId?.trim()) {
     invalidateAsyncCache('acl:');
+    invalidateAsyncCache('knowledge:');
     invalidateAsyncCache('dashboard:cards:');
     invalidateAsyncCache('dashboard:screens:');
     invalidateAsyncCache('dashboard:grouped-manage:');

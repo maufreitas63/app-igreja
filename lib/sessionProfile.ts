@@ -24,6 +24,7 @@ export function invalidateSessionProfileCache() {
   invalidateAsyncCache('session:super_admin');
   invalidateAsyncCache('operator:super_admin');
   invalidateAsyncCache('acl:');
+  invalidateAsyncCache('knowledge:');
   invalidateAsyncCache('dashboard:cards:');
   invalidateAsyncCache('dashboard:screens:');
   invalidateAsyncCache('dashboard:grouped-manage:');
