@@ -32,7 +32,7 @@ type Props = {
   onClose: () => void;
   sections: AppDrawerSettingsSection[];
   trailItems?: AppDrawerSettingsRow[];
-  pinnedItems?: AppDrawerSettingsRow[];
+  pinnedItem?: AppDrawerSettingsRow | null;
   helpItem?: AppDrawerSettingsRow | null;
 };
 
@@ -110,7 +110,7 @@ export function AppDrawerSettings({
   onClose,
   sections,
   trailItems = [],
-  pinnedItems = [],
+  pinnedItem = null,
   helpItem = null,
 }: Props) {
   const insets = useSafeAreaInsets();
@@ -242,15 +242,9 @@ export function AppDrawerSettings({
         ) : null}
       </ScrollView>
 
-      {pinnedItems.length > 0 ? (
+      {pinnedItem ? (
         <View style={styles.pinnedFooter}>
-          {pinnedItems.map((item, index) => (
-            <SettingsRowView
-              key={item.id}
-              item={item}
-              pinned={index === pinnedItems.length - 1}
-            />
-          ))}
+          <SettingsRowView item={pinnedItem} pinned />
         </View>
       ) : null}
       <CloseFooterBar onPress={onClose} accessibilityLabel="Fechar configurações" />

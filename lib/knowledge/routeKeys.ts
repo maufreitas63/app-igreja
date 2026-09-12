@@ -26,7 +26,6 @@ export const KNOWLEDGE_ROUTE = {
   muralGenerosidade: '/mural-generosidade',
   alianca: '/alianca-conecta-reino',
   igrejas: '/igrejas',
-  glossario: '/glossario',
   totem: '/totem-checkin',
   billing: '/billing',
   salas: '/configuracao-salas',
