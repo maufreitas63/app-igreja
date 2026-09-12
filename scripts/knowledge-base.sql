@@ -5,6 +5,8 @@
 -- Edição: Super Admin (plataforma + igreja); Secretaria (só artigos da igreja).
 -- Gestor de acesso não edita. Proteção aplicada: Gestor não tem visibilidade do Super Administrador.
 -- Execute: npx supabase db query --linked -f scripts/knowledge-base.sql
+-- Depois do bootstrap, aplicar na ordem os lotes 2–5 (textos operacionais
+-- mais densos). O lote 5 é a fonte da profundidade da engrenagem.
 
 begin;
 
