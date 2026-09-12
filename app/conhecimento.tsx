@@ -24,6 +24,7 @@ import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
+  Platform,
   Pressable,
   StyleSheet,
   Text,
@@ -505,7 +506,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: MINIMAL_UI.border,
+    borderColor: 'transparent',
     borderRadius: 12,
     paddingHorizontal: 12,
   },
@@ -513,6 +514,8 @@ const styles = StyleSheet.create({
     color: MINIMAL_UI.text,
     fontSize: 15,
     paddingVertical: 10,
+    borderWidth: 0,
+    ...(Platform.OS === 'web' ? { outlineStyle: 'none' as const } : null),
   },
   loader: {
     marginTop: 24,
