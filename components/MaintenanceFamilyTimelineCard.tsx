@@ -170,6 +170,8 @@ export function MaintenanceFamilyTimelineCard({
               style={styles.timelineScroll}
               contentContainerStyle={styles.timelineContent}
               nestedScrollEnabled
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator
             >
               {timeline.nextHint ? (
                 <Text style={[styles.nextHint, minimal && styles.nextHintMinimal]}>

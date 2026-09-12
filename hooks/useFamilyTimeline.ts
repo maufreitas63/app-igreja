@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   fetchFamilyTimelineFeatureState,
   getFamilyTimeline,
@@ -19,6 +19,7 @@ export function useFamilyTimeline(isActive: boolean) {
   const [enabled, setEnabled] = useState(true);
   const [canToggle, setCanToggle] = useState(false);
   const [toggling, setToggling] = useState(false);
+  const searchGen = useRef(0);
 
   const refreshState = useCallback(async () => {
     try {
@@ -31,19 +32,26 @@ export function useFamilyTimeline(isActive: boolean) {
   }, []);
 
   const runSearch = useCallback(async (text: string) => {
+    const gen = ++searchGen.current;
     if (text.trim().length < 2) {
       setHits([]);
+      setSearching(false);
       return;
     }
     setSearching(true);
     setError(null);
     try {
-      setHits(await searchFamilyTimeline(text));
+      const rows = await searchFamilyTimeline(text);
+      if (gen !== searchGen.current) return;
+      setHits(rows);
     } catch (err) {
+      if (gen !== searchGen.current) return;
       setHits([]);
       setError(err instanceof Error ? err.message : 'Busca indisponível.');
     } finally {
-      setSearching(false);
+      if (gen === searchGen.current) {
+        setSearching(false);
+      }
     }
   }, []);
 
@@ -78,6 +86,7 @@ export function useFamilyTimeline(isActive: boolean) {
   }, []);
 
   const clearSearch = useCallback(() => {
+    searchGen.current += 1;
     setQuery('');
     setHits([]);
     setSelectedId(null);

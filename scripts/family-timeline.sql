@@ -157,6 +157,7 @@ begin
   end if;
 
   v_tenant := public.require_session_tenant_id();
+  perform set_config('statement_timeout', '6000', true);
 
   if not public.family_timeline_enabled_for_tenant(v_tenant)
      and not public.is_super_admin_profile(v_profile) then
@@ -194,7 +195,7 @@ begin
                 where p.full_name is not null and btrim(p.full_name) <> ''
               ) as rep_name,
               count(*)::int as member_count,
-              string_agg(distinct coalesce(nullif(btrim(p.role), ''), 'visitante'), ', ' order by coalesce(nullif(btrim(p.role), ''), 'visitante')) as roles
+              string_agg(distinct coalesce(nullif(btrim(p.role), ''), 'visitante'), ', ') as roles
             from public.profiles p
            where p.tenant_id = v_tenant
              and p.family_id is not null
@@ -202,9 +203,12 @@ begin
              -- Proteção aplicada: Gestor não tem visibilidade do Super Administrador
              and public.profile_visible_to_access_actor(v_profile, p.id)
              and (
-               p.family_id ilike '%' || v_q || '%'
+               p.family_id ilike v_q || '%'
                or p.full_name ilike '%' || v_q || '%'
-               or (v_digits is not null and regexp_replace(coalesce(p.phone, ''), '\D', '', 'g') like '%' || v_digits || '%')
+               or (
+                 char_length(coalesce(v_digits, '')) >= 4
+                 and p.phone like '%' || v_digits || '%'
+               )
              )
            group by p.family_id
            limit 20
@@ -249,6 +253,7 @@ begin
   end if;
 
   v_tenant := public.require_session_tenant_id();
+  perform set_config('statement_timeout', '8000', true);
 
   if not public.family_timeline_enabled_for_tenant(v_tenant)
      and not public.is_super_admin_profile(v_profile) then
@@ -289,9 +294,11 @@ begin
     from public.profiles p
    where p.id = any (v_ids);
 
-  select coalesce(jsonb_agg(ev.item order by (ev.item->>'at')::timestamptz, ev.item->>'kind'), '[]'::jsonb)
+  select coalesce(jsonb_agg(ev.item order by (nullif(ev.item->>'at', ''))::timestamptz nulls last, ev.item->>'kind'), '[]'::jsonb)
     into v_events
     from (
+      select raw.item
+      from (
       select jsonb_build_object(
         'kind', 'recepcao',
         'at', coalesce(l.processed_at, l.created_at),
@@ -363,13 +370,14 @@ begin
 
       union all
 
+      select item from (
       select jsonb_build_object(
         'kind', 'pre_checkin',
         'at', coalesce(er.check_in_time, er.created_at),
         'title', 'Pré-check-in na Agenda da Família',
         'detail', coalesce(e.name, 'Evento'),
         'status', coalesce(er.status, '')
-      )
+      ) as item
       from public.event_registrations er
       left join public.events e
         on e.id = er.event_id
@@ -379,16 +387,20 @@ begin
          er.profile_id = any (v_ids)
          or lower(btrim(coalesce(er.family_id, ''))) = lower(v_family)
        )
+     order by coalesce(er.check_in_time, er.created_at) desc
+     limit 8
+      ) pre_cap
 
       union all
 
+      select item from (
       select jsonb_build_object(
         'kind', 'totem',
         'at', coalesce(c.timestamp_confirmacao, c.created_at),
         'title', 'Confirmada no totem',
         'detail', coalesce(e.name, 'Culto'),
         'status', coalesce(c.status, '')
-      )
+      ) as item
       from public.checkins c
       left join public.events e
         on e.id = c.event_id
@@ -398,6 +410,9 @@ begin
          c.profile_id = any (v_ids)
          or lower(btrim(coalesce(c.family_id, ''))) = lower(v_family)
        )
+     order by coalesce(c.timestamp_confirmacao, c.created_at) desc
+     limit 8
+      ) totem_cap
 
       union all
 
@@ -437,13 +452,14 @@ begin
 
       union all
 
+      select item from (
       select jsonb_build_object(
         'kind', 'campanha',
         'at', i.created_at,
         'title', 'PIX de campanha',
         'detail', coalesce(cp.titulo, 'Campanha'),
         'status', 'feito'
-      )
+      ) as item
       from public.campaign_contribution_intents i
       left join public.campaign_projects cp
         on cp.id = i.campaign_id
@@ -451,6 +467,12 @@ begin
      where v_see_giving
        and i.tenant_id = v_tenant
        and i.profile_id = any (v_ids)
+     order by i.created_at desc
+     limit 8
+      ) camp_cap
+      ) raw
+      order by (nullif(raw.item->>'at', ''))::timestamptz desc nulls last
+      limit 40
     ) ev;
 
   select coalesce(bool_or(t.tipo_tarefa = 'whatsapp_dia_1' and t.status = 'Pendente'), false),

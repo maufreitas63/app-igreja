@@ -16,7 +16,6 @@ import {
   type MaintenanceScalePanelContent,
 } from '@/lib/scaleAccess';
 import { checkSessionCanOperateGhostMode } from '@/lib/ghostModeApi';
-import { fetchFamilyTimelineFeatureState } from '@/lib/familyTimelineApi';
 import { formatShortName } from '@/lib/formatShortName';
 import { loadEffectiveSessionProfile } from '@/lib/loadSessionProfile';
 import {
@@ -152,12 +151,6 @@ async function resolveMaintenanceDashboardAccess(): Promise<MaintenanceDashboard
     }
   } catch {
     headerUserName = null;
-  }
-
-  try {
-    familyTimelineEnabled = (await fetchFamilyTimelineFeatureState()).enabled;
-  } catch {
-    familyTimelineEnabled = true;
   }
 
   return {
