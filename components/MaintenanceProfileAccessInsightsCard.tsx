@@ -1,3 +1,5 @@
+import { KnowledgeSectionTitle } from '@/components/knowledge/KnowledgeSectionTitle';
+import { KNOWLEDGE_ROUTE } from '@/lib/knowledge/routeKeys';
 import { CloseFooterBar, CLOSE_FOOTER_DOCK_HEIGHT } from '@/components/minimal/CloseFooterBar';
 import { CardLoadingState } from '@/components/ui/CardLoadingState';
 import { SectionLabel } from '@/components/ui/SectionLabel';
@@ -248,9 +250,11 @@ export function MaintenanceProfileAccessInsightsCard({
 
   return (
     <View style={[styles.panel, minimal && styles.panelMinimal, { height: contentHeight }]}>
-      <Text style={minimal ? styles.sectionTitle : maintenancePanelStyles.panelTitle}>
-        Acessos de Usuários
-      </Text>
+      <KnowledgeSectionTitle
+        title="Acessos de Usuários"
+        routeKey={KNOWLEDGE_ROUTE.profileAccessInsights}
+        titleStyle={minimal ? styles.sectionTitle : maintenancePanelStyles.panelTitle}
+      />
       {!minimal ? <View style={maintenancePanelStyles.panelSubtitleSpacer} /> : null}
 
       <Text style={[styles.helpText, minimal && styles.helpTextMinimal]}>

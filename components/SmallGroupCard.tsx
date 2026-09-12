@@ -8,6 +8,8 @@ import {
   computeMaintenanceContentHeight,
   MAINTENANCE_SCROLL_PROPS,
 } from '@/lib/maintenanceCardStyles';
+import { KnowledgeSectionTitle } from '@/components/knowledge/KnowledgeSectionTitle';
+import { KNOWLEDGE_ROUTE } from '@/lib/knowledge/routeKeys';
 import { MINIMAL_SECTION_TITLE } from '@/lib/minimalUiTheme';
 import {
   fetchCurrentSmallGroupGuide,
@@ -262,7 +264,11 @@ export function SmallGroupCard({ panelHeight, isActive = true }: Props) {
 
   return (
     <View style={[styles.panel, { maxHeight: contentHeight }]}>
-      <Text style={styles.title}>Pequeno Grupo</Text>
+      <KnowledgeSectionTitle
+        title="Pequeno Grupo"
+        routeKey={KNOWLEDGE_ROUTE.pequenoGrupo}
+        titleStyle={styles.title}
+      />
       <Text style={styles.subtitle}>Célula da sua jornada em comunidade.</Text>
 
       {loading ? (

@@ -1,3 +1,5 @@
+import { KnowledgeSectionTitle } from '@/components/knowledge/KnowledgeSectionTitle';
+import { KNOWLEDGE_ROUTE } from '@/lib/knowledge/routeKeys';
 import { loadEffectiveSessionProfile } from '@/lib/loadSessionProfile';
 import { computeMaintenanceContentHeight, maintenancePanelStyles } from '@/lib/maintenanceCardStyles';
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
@@ -113,7 +115,11 @@ export function OpportunityMuralCard({ panelHeight, isActive = true }: Props) {
 
   return (
     <View style={[styles.panel, { maxHeight: contentHeight }]}>
-      <Text style={maintenancePanelStyles.panelTitle}>Mural de Oportunidades</Text>
+      <KnowledgeSectionTitle
+        title="Mural de Oportunidades"
+        routeKey={KNOWLEDGE_ROUTE.muralOportunidades}
+        titleStyle={maintenancePanelStyles.panelTitle}
+      />
       <Text style={styles.subtitle}>
         Vagas alinhadas ao seu Perfil Ministerial. O resultado da Lição 5.1 não aparece aqui — só o match.
       </Text>

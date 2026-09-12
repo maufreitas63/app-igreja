@@ -1,5 +1,7 @@
+import { KnowledgeSectionTitle } from '@/components/knowledge/KnowledgeSectionTitle';
 import { usePalette } from '@/context/PaletteContext';
 import { EVENT_AVISOS_SQL_HINT, fetchPublishedEventAvisos, type EventAvisoRow } from '@/lib/eventAvisosApi';
+import { KNOWLEDGE_ROUTE } from '@/lib/knowledge/routeKeys';
 import { buildIndexScreenGradient } from '@/lib/paletteTheme';
 import { supabase } from '@/lib/supabase';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -81,7 +83,12 @@ export default function AvisosScreen() {
           <Pressable onPress={() => router.back()} style={styles.backButton}>
             <Text style={styles.backButtonText}>Voltar</Text>
           </Pressable>
-          <Text style={styles.title}>Avisos</Text>
+          <KnowledgeSectionTitle
+            title="Avisos"
+            routeKey={KNOWLEDGE_ROUTE.avisos}
+            titleStyle={styles.title}
+            iconColor="#F8FAFC"
+          />
           <Text style={styles.subtitle}>Comunicados do culto em tempo real</Text>
         </View>
 

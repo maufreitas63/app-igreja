@@ -1,3 +1,5 @@
+import { KnowledgeSectionTitle } from '@/components/knowledge/KnowledgeSectionTitle';
+import { KNOWLEDGE_ROUTE } from '@/lib/knowledge/routeKeys';
 import { EventOrchestratorPanel } from '@/components/EventOrchestratorPanel';
 import { setEventOrchestrationPanelFocused } from '@/lib/eventOrchestrationPanelFocus';
 import { computeMaintenanceContentHeight, maintenancePanelStyles } from '@/lib/maintenanceCardStyles';
@@ -38,6 +40,11 @@ export function MaintenanceEventOrchestrationCard({
         { maxHeight: contentHeight },
       ]}
     >
+      <KnowledgeSectionTitle
+        title="Manutenção de Avisos"
+        routeKey={KNOWLEDGE_ROUTE.eventOrchestration}
+        titleStyle={maintenancePanelStyles.panelTitle}
+      />
       <EventOrchestratorPanel isActive={isActive} compact showTitle={false} minimal={minimal} />
     </View>
   );

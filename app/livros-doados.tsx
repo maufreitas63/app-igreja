@@ -10,6 +10,8 @@ import {
   resolveReturnDashboardCardParam,
   resolveReturnRouteParam,
 } from '@/lib/dashboardReturnNavigation';
+import { KnowledgeSectionTitle } from '@/components/knowledge/KnowledgeSectionTitle';
+import { KNOWLEDGE_ROUTE } from '@/lib/knowledge/routeKeys';
 import { MINIMAL_SECTION_TITLE, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { useLocalSearchParams } from 'expo-router';
 import React, { useState } from 'react';
@@ -38,7 +40,11 @@ export default function LivrosDoadosScreen() {
   return (
     <ScreenAccessGate status={accessStatus}>
       <MinimalScreenLayout footer={<CloseFooterBar onPress={returnToCaller} />}>
-        <Text style={styles.title}>Livros doados</Text>
+        <KnowledgeSectionTitle
+          title="Livros doados"
+          routeKey={KNOWLEDGE_ROUTE.livros}
+          titleStyle={styles.title}
+        />
         <View style={styles.tabs}>
           {TABS.map((item) => {
             const selected = tab === item.id;

@@ -11,6 +11,8 @@ import { AppSwitch } from '@/components/ui/AppSwitch';
 import { EventFavoriteLocationPickerModal } from '@/components/EventFavoriteLocationPickerModal';
 import { MonthlyDatePickerModal } from '@/components/ui/MonthlyDatePickerModal';
 import { ClockTimePickerModal, addOneHourHm } from '@/components/ui/ClockTimePickerModal';
+import { KnowledgeSectionTitle } from '@/components/knowledge/KnowledgeSectionTitle';
+import { KNOWLEDGE_ROUTE } from '@/lib/knowledge/routeKeys';
 import { EventsGanttChart } from '@/components/EventsGanttChart';
 import { MaintenanceQuorumPresenceCard } from '@/components/MaintenanceQuorumPresenceCard';
 import { MaintenanceScaleTypesCard } from '@/components/MaintenanceScaleTypesCard';
@@ -1462,14 +1464,14 @@ export default function MaintenanceDashboard() {
             </View>
           ) : item.content === 'events_gantt' ? (
             <View style={[styles.ganttPanel, isMinimalPresentation && styles.ganttPanelMinimal]}>
-              <Text
-                style={[
+              <KnowledgeSectionTitle
+                title={item.title}
+                routeKey={KNOWLEDGE_ROUTE.eventsGantt}
+                titleStyle={[
                   styles.eventsScreenTitle,
                   isMinimalPresentation && styles.eventsScreenTitleMinimal,
                 ]}
-              >
-                {item.title}
-              </Text>
+              />
               {!isMinimalPresentation ? <View style={styles.ganttPanelSubtitleSpacer} /> : null}
               <EventsGanttChart
                 events={safeEvents}

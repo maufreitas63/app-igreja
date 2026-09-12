@@ -263,6 +263,7 @@ declare
   v_catalog text := lower(btrim(coalesce(p_catalog, 'member')));
   v_member_keys text[] := array[
     'home',
+    'login',
     '/perfil',
     '/ofertas',
     '/pastoral',
@@ -271,7 +272,13 @@ declare
     '/pequeno-grupo',
     '/mural-oportunidades',
     '/mural-generosidade',
-    '/suggestions-improvements'
+    '/suggestions-improvements',
+    '/avisos',
+    '/primicias',
+    '/trilha-discipulado',
+    '/expense-report',
+    '/redes-sociais',
+    '/sobre-conecta'
   ];
   v_rows jsonb;
 begin
@@ -605,15 +612,21 @@ begin
   perform public._seed_knowledge_article(
     'proximos-eventos',
     'Próximos Eventos',
-    'Como vejo os cultos e eventos da minha igreja?',
-    $body$## O que aparece nesta lista
-Os próximos eventos publicados da sua igreja. Toque no item para ver data, horário e, quando houver, fazer o pré-check-in da família.
+    'Como vejo os cultos, faço pré-check-in e uso Eu quero…?',
+    $body$## Agenda da Família
+Toque no evento para marcar quem do núcleo vai ao culto e confirmar o pré-check-in. Isso reserva vaga, alimenta o quórum esperado e agiliza o totem no hall.
+
+## Calendário do celular
+Depois de confirmar, o aplicativo pode oferecer gravar o compromisso no calendário do aparelho. Pode recusar.
+
+## Eu quero…
+No rodapé da home: Dízimos e Ofertas, Campanhas e Projetos, Prímicias e pedido de oração — sem abrir o menu.
 
 ## Avisos
-Deslize para a página de Avisos para comunicados, pedidos pastorais e avisos de campanha. Nada desta tela é o mural antigo do Painel.
+Deslize para a página de Avisos. Comunicados oficiais saem da Manutenção de Avisos, na engrenagem.
 
-## Se a lista estiver vazia
-Ainda não há evento publicado na janela visível, ou o evento não está marcado como visível para a congregação.$body$,
+## Lista vazia
+Ainda não há evento publicado na janela visível, ou ele não está marcado como visível para a congregação.$body$,
     'home',
     v_member,
     10
@@ -622,12 +635,15 @@ Ainda não há evento publicado na janela visível, ou o evento não está marca
   perform public._seed_knowledge_article(
     'perfil-identidade',
     'Perfil e Identidade',
-    'Como atualizo meus dados e os da minha família?',
-    $body$## O que é esta tela
-Aqui você gerencia o próprio cadastro, a família, foto e dados de contato. O que você altera vale para a igreja em que está logado.
+    'Como atualizo meus dados, a carteirinha e a família?',
+    $body$## Carteirinha digital
+Duas faces: dados e foto na frente; QR na outra. Use na recepção e em eventos da igreja.
 
 ## Família
-Use Gerenciar família para incluir cônjuge e filhos. Crianças e adolescentes entram no mesmo núcleo para check-in e agenda.
+Em Gerenciar família inclua cônjuge e filhos (nome, telefone, nascimento, parentesco e foto). O núcleo entra na Agenda da Família e no totem.
+
+## Outros atalhos
+Pelo perfil você abre a Trilha de Discipulado e, se o papel permitir, Relatório de Despesas (reembolso).
 
 ## Privacidade
 Alguns campos só a Secretaria ou o Pastoral alteram. Se um botão não aparecer, o seu papel não tem essa permissão.$body$,
@@ -640,14 +656,14 @@ Alguns campos só a Secretaria ou o Pastoral alteram. Se um botão não aparecer
     'dizimos-ofertas',
     'Dízimos e Ofertas',
     'Como contribuo com dízimo, oferta ou campanha?',
-    $body$## Chave PIX da igreja
-Os dados do recebedor e a chave PIX são os cadastrados pela sua igreja. Copie a chave ou o código copia-e-cola gerado para o valor digitado.
+    $body$## PIX Copia e Cola
+Confira o recebedor da sua igreja. Digite o valor com centavos, copie a chave e cole no Pix Copia e Cola do banco. Guarde o comprovante no aplicativo do banco.
 
 ## Campanhas
-Quando uma campanha está aberta, esta mesma tela mostra o valor da campanha. Prímicias (itens em espécie) ficam em outro fluxo, no menu Eu quero.
+Em Eu quero… > Campanhas e Projetos, escolha o fundo. O valor pode ganhar centavos identificadores (por exemplo R$ 50,31). Não altere esses centavos no banco — eles marcam a campanha na conciliação.
 
-## Comprovante
-O aplicativo não substitui o comprovante do seu banco. Guarde o PIX no aplicativo do banco.$body$,
+## Prímicias
+Doação em item (cesta, higiene) fica em Eu quero… > Prímicias, não nesta tela de PIX.$body$,
     '/ofertas',
     v_member,
     30
@@ -658,13 +674,16 @@ O aplicativo não substitui o comprovante do seu banco. Guarde o PIX no aplicati
     'Coração Aberto',
     'Como faço um pedido pastoral ou agendo atendimento?',
     $body$## Pedido
-Descreva o cuidado que precisa. Você escolhe o destinatário (pastor, intercessão etc.) e, quando pedido, o beneficiário (você, familiar ou outra pessoa).
+Escolha motivo e, se houver, submotivo. Diga se é para você, familiar ou terceiros. Sigilo pastoral fica só com quem tem permissão; Intercessão entra na fila de oração.
 
 ## Agendar atendimento
-Quem tem permissão vê a aba Agendar Atendimento, com horários liberados pelo Pastoral. Sem horário publicado, o pedido de oração continua disponível.
+Na outra aba escolha presencial ou online, o horário publicado pelo Pastoral e confirme. Sem horário na agenda, o pedido de oração continua disponível.
 
 ## Histórico
-Use «Ver meus pedidos» para acompanhar o que já enviou. O conteúdo é pastoral e não aparece no mural público.$body$,
+O relógio abre Meus pedidos (Novo, em atendimento, concluído). Dá para excluir o que ainda não foi tratado.
+
+## Não misturar
+Sugestão de produto e mural de generosidade têm telas próprias.$body$,
     '/pastoral',
     v_member,
     40
@@ -675,13 +694,13 @@ Use «Ver meus pedidos» para acompanhar o que já enviou. O conteúdo é pastor
     'Escalas',
     'Como vejo se estou escalado e peço troca?',
     $body$## Minha escala
-No topo aparecem as suas datas futuras. Abaixo, escolha o tipo de escala (louvor, recepção, intercessão…) para ver a programação.
+No topo, as suas datas futuras. Abaixo, escolha o tipo (louvor, acolhimento, infantil…).
 
 ## Pedido de troca
-Se a igreja liberou trocas, toque em Solicitar troca nesta data. O pedido vai para quem pode cobrir o horário.
+Se a igreja liberou, toque em Solicitar troca nesta data. A outra aba lista convites que você recebeu.
 
-## Pedidos de troca
-A outra aba lista convites que você recebeu. Aceitar ou recusar atualiza a escala.$body$,
+## Veículo
+Alguns tipos de acolhimento/estacionamento pedem identificação do carro. Isso não reabre o card antigo do Painel.$body$,
     '/escalas',
     v_member,
     50
@@ -692,13 +711,13 @@ A outra aba lista convites que você recebeu. Aceitar ou recusar atualiza a esca
     'Informações financeiras',
     'Como leio o resultado, o comparativo e o orçamento da igreja?',
     $body$## Mês de referência
-Tudo nesta tela usa o mês escolhido no topo. Mês só com lançamentos planejados mostra o realizado vazio.
+Tudo nesta tela usa o mês escolhido no topo. Expanda cada cartão (resumo, resultado, comparativo, 12 meses, orçamento, saldo) conforme a ACL do seu papel.
 
-## Seções
-Abra Resultado, Comparativo, 12 meses, Orçamento e Saldo conforme a permissão do seu papel. Tesouraria lança; os demais papéis só veem o que a ACL liberar.
+## Tesouraria
+Quem lança extrato, RD e orçamento usa Informações Financeiras na engrenagem. Aqui é a leitura de prestação de contas.
 
 ## Aliança
-Se a sua igreja é mãe no programa Aliança Conecta Reino, a seção Aliança mostra o recorte das ofertas de apoio — ela não efetiva o pagamento.$body$,
+Se a igreja é mãe no programa Aliança Conecta Reino, a seção Aliança mostra o recorte das ofertas de apoio — ela não efetiva o pagamento.$body$,
     '/financial',
     v_ops,
     60
@@ -764,10 +783,10 @@ Telefone/senha do totem e chaves PIX são por igreja. Alterar aqui não muda as 
     'Totem de check-in',
     'Como o totem confirma a família no culto?',
     $body$## Quem usa
-Este kiosk fica no hall. Aponte a câmera para o QR da família. Só confirma quem já fez pré-check-in no evento de hoje.
+Kiosk no hall. Aponte a câmera para o QR da família. Só confirma quem já fez pré-check-in no evento de hoje.
 
 ## Evento de hoje
-O totem só lista evento publicado, com data de hoje e Totem ou Quórum ativo na manutenção. Sem isso, a tela explica o motivo.
+O totem lista evento publicado, com data de hoje e Totem ou Quórum ativo na Programação de Eventos. «Nenhum totem aberto hoje» significa data errada ou chave Totem desligada.
 
 ## Já confirmado
 Se o QR já passou, a mensagem avisa. Não é preciso escanear de novo.$body$,
@@ -866,10 +885,10 @@ O Gestor de acesso opera esta tela, mas não vê nem altera o Super Administrado
     'Sugestões',
     'Como envio uma sugestão ou vejo as que já enviei?',
     $body$## Enviar
-Descreva a melhoria com clareza. A equipe da igreja e, quando couber, a plataforma recebem o registro.
+Nova: escolha o tipo de registro, descreva a melhoria ou a dúvida. A equipe da igreja recebe o chamado.
 
 ## Acompanhar
-A lista mostra o andamento do que você já enviou. Não é canal pastoral — pedidos de oração ficam em Coração Aberto.$body$,
+Atualizar recarrega o andamento e a resposta. Não é canal pastoral — pedidos de oração ficam em Coração Aberto.$body$,
     '/suggestions-improvements',
     v_member,
     150

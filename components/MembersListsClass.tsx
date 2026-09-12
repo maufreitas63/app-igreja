@@ -1,3 +1,5 @@
+import { KnowledgeSectionTitle } from '@/components/knowledge/KnowledgeSectionTitle';
+import { KNOWLEDGE_ROUTE } from '@/lib/knowledge/routeKeys';
 import { MINIMAL_SECTION_TITLE, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import type {
   MembersListsClassAudience,
@@ -123,7 +125,11 @@ export function MembersListsClass({
 
   return (
     <View style={styles.root}>
-      <Text style={styles.title}>{screenTitle}</Text>
+      <KnowledgeSectionTitle
+        title={screenTitle}
+        routeKey={KNOWLEDGE_ROUTE.membros}
+        titleStyle={styles.title}
+      />
 
       <View style={styles.body}>
         <View style={styles.toolbarRow}>

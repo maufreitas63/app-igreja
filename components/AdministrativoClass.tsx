@@ -7,6 +7,8 @@ import {
   type AssemblyMinuteRecord,
 } from '@/lib/assemblyMinutesApi';
 import { VIGILANCE_SCALES_UI } from '@/lib/dashboardCardThemes';
+import { KnowledgeSectionTitle } from '@/components/knowledge/KnowledgeSectionTitle';
+import { KNOWLEDGE_ROUTE } from '@/lib/knowledge/routeKeys';
 import { MINIMAL_SECTION_TITLE } from '@/lib/minimalUiTheme';
 import { FontAwesome, MaterialIcons } from '@expo/vector-icons';
 import React, { useCallback, useState } from 'react';
@@ -121,7 +123,11 @@ export function AdministrativoClass({
 
   return (
     <View style={styles.root}>
-      <Text style={styles.title}>{title}</Text>
+      <KnowledgeSectionTitle
+        title={title}
+        routeKey={KNOWLEDGE_ROUTE.administrativo}
+        titleStyle={styles.title}
+      />
       <Text style={styles.description}>{description}</Text>
 
       <View style={styles.tabRow}>

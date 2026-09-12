@@ -1,3 +1,5 @@
+import { KnowledgeSectionTitle } from '@/components/knowledge/KnowledgeSectionTitle';
+import { KNOWLEDGE_ROUTE } from '@/lib/knowledge/routeKeys';
 import { CardLoadingState } from '@/components/ui/CardLoadingState';
 import { DropdownSelect } from '@/components/ui/DropdownSelect';
 import { SegmentChipRow } from '@/components/ui/SegmentChipRow';
@@ -291,7 +293,11 @@ export function GenerosityMuralPanel() {
 
   return (
     <View style={styles.root}>
-      <Text style={styles.title}>Mural de Generosidade</Text>
+      <KnowledgeSectionTitle
+        title="Mural de Generosidade"
+        routeKey={KNOWLEDGE_ROUTE.muralGenerosidade}
+        titleStyle={styles.title}
+      />
 
       <TouchableOpacity
         style={styles.newButton}

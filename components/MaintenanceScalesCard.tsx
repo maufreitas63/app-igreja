@@ -1,3 +1,5 @@
+import { KnowledgeSectionTitle } from '@/components/knowledge/KnowledgeSectionTitle';
+import { KNOWLEDGE_ROUTE } from '@/lib/knowledge/routeKeys';
 import { ScaleSwapRequestModal } from '@/components/ScaleSwapRequestModal';
 import { CardLoadingState } from '@/components/ui/CardLoadingState';
 import { DropdownSelect } from '@/components/ui/DropdownSelect';
@@ -390,9 +392,11 @@ export function MaintenanceScalesCard({
 
   return (
     <View style={[styles.panel, minimal && styles.panelMinimal, { height: contentHeight }]}>
-      <Text style={minimal ? styles.sectionTitle : maintenancePanelStyles.panelTitle}>
-        {PANEL_TITLE}
-      </Text>
+      <KnowledgeSectionTitle
+        title={PANEL_TITLE}
+        routeKey={KNOWLEDGE_ROUTE.scalesAdmin}
+        titleStyle={minimal ? styles.sectionTitle : maintenancePanelStyles.panelTitle}
+      />
       {!minimal ? <View style={maintenancePanelStyles.panelSubtitleSpacer} /> : null}
 
       {rpcMissing ? (

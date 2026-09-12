@@ -1,9 +1,11 @@
 import { ConectaPrivacyDeclarationModal } from '@/components/ConectaPrivacyDeclarationModal';
 import { CloseFooterBar } from '@/components/minimal/CloseFooterBar';
+import { KnowledgeSectionTitle } from '@/components/knowledge/KnowledgeSectionTitle';
 import { MinimalScreenLayout } from '@/components/minimal/MinimalScreenLayout';
 import { loadConectaAboutInfo } from '@/lib/conectaAbout';
 import { CONECTA_PRIVACY_DECLARATION_BUTTON_LABEL } from '@/lib/conectaPrivacyDeclaration';
 import { resolveReturnDashboardCardParam, resolveReturnRouteParam } from '@/lib/dashboardReturnNavigation';
+import { KNOWLEDGE_ROUTE } from '@/lib/knowledge/routeKeys';
 import { MINIMAL_SECTION_TITLE, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { useReturnToCallerOnLeave } from '@/hooks/useReturnToCallerOnLeave';
 import { useLocalSearchParams } from 'expo-router';
@@ -48,7 +50,7 @@ export default function SobreConectaScreen() {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator
       >
-        <Text style={styles.title}>Sobre o Conecta+</Text>
+        <KnowledgeSectionTitle title="Sobre o Conecta+" routeKey={KNOWLEDGE_ROUTE.sobre} titleStyle={styles.title} />
         <View style={styles.body}>
           <Text style={styles.paragraph}>
             O Conecta+ é a plataforma digital que integra a rotina, o cuidado e a administração da

@@ -14,6 +14,8 @@ import {
   resolveReturnDashboardCardParam,
   resolveReturnRouteParam,
 } from '@/lib/dashboardReturnNavigation';
+import { KnowledgeSectionTitle } from '@/components/knowledge/KnowledgeSectionTitle';
+import { KNOWLEDGE_ROUTE } from '@/lib/knowledge/routeKeys';
 import { MINIMAL_SECTION_TITLE, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { useFocusEffect, useLocalSearchParams } from 'expo-router';
 import React, { useCallback, useState } from 'react';
@@ -56,7 +58,11 @@ export default function ConfiguracaoSalasScreen() {
   return (
     <ScreenAccessGate status={accessStatus}>
       <MinimalScreenLayout footer={<CloseFooterBar onPress={returnToCaller} />}>
-        <Text style={styles.title}>Configuração de Salas</Text>
+        <KnowledgeSectionTitle
+          title="Configuração de Salas"
+          routeKey={KNOWLEDGE_ROUTE.salas}
+          titleStyle={styles.title}
+        />
 
         {loading ? (
           <ActivityIndicator color={MINIMAL_UI.accent} style={styles.loader} />

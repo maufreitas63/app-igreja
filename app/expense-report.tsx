@@ -26,7 +26,9 @@ import {
 } from '@/lib/dashboardReturnNavigation';
 import { useReturnToCallerOnLeave } from '@/hooks/useReturnToCallerOnLeave';
 import { CloseFooterBar } from '@/components/minimal/CloseFooterBar';
+import { KnowledgeSectionTitle } from '@/components/knowledge/KnowledgeSectionTitle';
 import { MINIMAL_SECTION_TITLE, MINIMAL_TYPO, MINIMAL_UI } from '@/lib/minimalUiTheme';
+import { KNOWLEDGE_ROUTE } from '@/lib/knowledge/routeKeys';
 import { toFinancialMonthReferenceDate } from '@/lib/maintenanceFinancialApi';
 import {
   getCalendarMonthKey,
@@ -355,7 +357,11 @@ export default function ExpenseReportScreen() {
               <MaterialIcons name="chevron-left" size={24} color={MINIMAL_UI.icon} />
             </TouchableOpacity>
             <View style={styles.headerTitles}>
-              <Text style={styles.title}>Relatório de Despesas</Text>
+              <KnowledgeSectionTitle
+                title="Relatório de Despesas"
+                routeKey={KNOWLEDGE_ROUTE.expenseReport}
+                titleStyle={styles.title}
+              />
               <Text style={styles.subtitle}>RD · reembolso de despesas</Text>
             </View>
           </View>

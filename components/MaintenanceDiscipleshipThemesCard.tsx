@@ -1,3 +1,5 @@
+import { KnowledgeSectionTitle } from '@/components/knowledge/KnowledgeSectionTitle';
+import { KNOWLEDGE_ROUTE } from '@/lib/knowledge/routeKeys';
 import {
   fetchDiscipleshipTrailAdmin,
   saveDiscipleshipLessonAdmin,
@@ -218,7 +220,11 @@ export function MaintenanceDiscipleshipThemesCard({
 
   return (
     <View style={[maintenancePanelStyles.panel, { height: contentHeight }]}>
-      <Text style={minimal ? styles.titleMinimal : styles.title}>Temas da Trilha</Text>
+      <KnowledgeSectionTitle
+        title="Temas da Trilha"
+        routeKey={KNOWLEDGE_ROUTE.discipleshipThemes}
+        titleStyle={minimal ? styles.titleMinimal : styles.title}
+      />
       <Text style={styles.subtitle}>
         Conteúdo exclusivo desta igreja. Edite textos, vídeos e reflexões dos passos da Trilha
         para disponibilizar aos participantes.

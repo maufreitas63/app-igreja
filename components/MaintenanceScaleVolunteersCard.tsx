@@ -1,3 +1,5 @@
+import { KnowledgeSectionTitle } from '@/components/knowledge/KnowledgeSectionTitle';
+import { KNOWLEDGE_ROUTE } from '@/lib/knowledge/routeKeys';
 import { CardLoadingState } from '@/components/ui/CardLoadingState';
 import { DropdownSelect } from '@/components/ui/DropdownSelect';
 import { useMaintenanceScaleVolunteers , MAINTENANCE_SCALE_VOLUNTEERS_SQL_HINT } from '@/hooks/useMaintenanceScaleVolunteers';
@@ -168,9 +170,11 @@ export function MaintenanceScaleVolunteersCard({
   return (
     <View style={[styles.panel, minimal && styles.panelMinimal, { height: contentHeight }]}>
       <View style={styles.sectionTitleWrap}>
-        <Text style={minimal ? styles.sectionTitleMinimal : maintenancePanelStyles.panelTitle}>
-          {PANEL_TITLE}
-        </Text>
+        <KnowledgeSectionTitle
+          title={PANEL_TITLE}
+          routeKey={KNOWLEDGE_ROUTE.scaleVolunteers}
+          titleStyle={minimal ? styles.sectionTitleMinimal : maintenancePanelStyles.panelTitle}
+        />
       </View>
 
       {rpcMissing ? (

@@ -1,3 +1,5 @@
+import { KnowledgeSectionTitle } from '@/components/knowledge/KnowledgeSectionTitle';
+import { KNOWLEDGE_ROUTE } from '@/lib/knowledge/routeKeys';
 import { CardLoadingState } from '@/components/ui/CardLoadingState';
 import { useQuorumRegistry } from '@/hooks/useQuorumRegistry';
 import { eventRequiresPreCheckinBeforeQr } from '@/lib/familyPreCheckin';
@@ -104,9 +106,11 @@ export function MaintenanceQuorumPresenceCard({
 
   const screenTitle = (
     <View style={styles.sectionTitleWrap}>
-      <Text style={minimal ? styles.sectionTitleMinimal : maintenancePanelStyles.panelTitle}>
-        {PANEL_TITLE}
-      </Text>
+      <KnowledgeSectionTitle
+        title={PANEL_TITLE}
+        routeKey={KNOWLEDGE_ROUTE.quorumPresence}
+        titleStyle={minimal ? styles.sectionTitleMinimal : maintenancePanelStyles.panelTitle}
+      />
     </View>
   );
 

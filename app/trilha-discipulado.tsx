@@ -1,5 +1,6 @@
 import { DiscipleshipTrailPanel } from '@/components/DiscipleshipTrailPanel';
 import { CloseFooterBar } from '@/components/minimal/CloseFooterBar';
+import { KnowledgeSectionTitle } from '@/components/knowledge/KnowledgeSectionTitle';
 import { MinimalScreenLayout } from '@/components/minimal/MinimalScreenLayout';
 import { ScreenAccessGate } from '@/components/ScreenAccessGate';
 import { useScreenAccessGuard } from '@/hooks/useScreenAccessGuard';
@@ -10,6 +11,8 @@ import {
   resolveReturnDashboardCardParam,
   resolveReturnRouteParam,
 } from '@/lib/dashboardReturnNavigation';
+import { KNOWLEDGE_ROUTE } from '@/lib/knowledge/routeKeys';
+import { MINIMAL_SECTION_TITLE } from '@/lib/minimalUiTheme';
 import { useLocalSearchParams } from 'expo-router';
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -30,12 +33,16 @@ export default function TrilhaDiscipuladoScreen() {
   return (
     <ScreenAccessGate status={accessStatus}>
       <MinimalScreenLayout
-        title="Trilha de Discipulado"
         showGreeting={false}
         scroll={false}
         contentContainerStyle={styles.content}
         footer={<CloseFooterBar onPress={returnToCaller} />}
       >
+        <KnowledgeSectionTitle
+          title="Trilha de Discipulado"
+          routeKey={KNOWLEDGE_ROUTE.trilha}
+          titleStyle={styles.title}
+        />
         <View style={[styles.panel, isMinimalPresentation && styles.panelMinimal]}>
           <DiscipleshipTrailPanel />
         </View>
@@ -48,6 +55,11 @@ const styles = StyleSheet.create({
   content: {
     flexGrow: 1,
     paddingHorizontal: 0,
+  },
+  title: {
+    ...MINIMAL_SECTION_TITLE,
+    width: '100%',
+    paddingHorizontal: 16,
   },
   panel: {
     flex: 1,

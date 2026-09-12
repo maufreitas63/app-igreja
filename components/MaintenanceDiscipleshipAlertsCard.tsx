@@ -1,3 +1,5 @@
+import { KnowledgeRouteInfo } from '@/components/knowledge/KnowledgeRouteInfo';
+import { KNOWLEDGE_ROUTE } from '@/lib/knowledge/routeKeys';
 import { CardLoadingState } from '@/components/ui/CardLoadingState';
 import { DiscipleshipProcessGuideModal } from '@/components/DiscipleshipProcessGuideModal';
 import {
@@ -116,6 +118,7 @@ export function MaintenanceDiscipleshipAlertsCard({
         <Text style={[minimal ? styles.titleMinimal : styles.title, styles.titleFlex]}>
           Trilha — Reconhecimentos
         </Text>
+        <KnowledgeRouteInfo routeKey={KNOWLEDGE_ROUTE.discipleshipAlerts} />
         <TouchableOpacity
           style={styles.guideButton}
           onPress={() => setGuideVisible(true)}

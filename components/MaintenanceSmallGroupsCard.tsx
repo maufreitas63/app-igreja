@@ -1,3 +1,5 @@
+import { KnowledgeSectionTitle } from '@/components/knowledge/KnowledgeSectionTitle';
+import { KNOWLEDGE_ROUTE } from '@/lib/knowledge/routeKeys';
 import { DropdownSelect } from '@/components/ui/DropdownSelect';
 import { MonthlyDatePickerModal } from '@/components/ui/MonthlyDatePickerModal';
 import { confirmDialog } from '@/lib/confirmDialog';
@@ -592,7 +594,11 @@ export function MaintenanceSmallGroupsCard({
 
   return (
     <View style={[maintenancePanelStyles.panel, { height: contentHeight }]}>
-      <Text style={maintenancePanelStyles.panelTitle}>Gestão de Pequenos Grupos</Text>
+      <KnowledgeSectionTitle
+        title="Gestão de Pequenos Grupos"
+        routeKey={KNOWLEDGE_ROUTE.smallGroupsAdmin}
+        titleStyle={maintenancePanelStyles.panelTitle}
+      />
       <Text style={maintenancePanelStyles.panelSubtitle}>
         Chamada, visitantes e relatório espiritual da célula.
       </Text>

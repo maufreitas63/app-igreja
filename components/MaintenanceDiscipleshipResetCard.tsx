@@ -1,3 +1,5 @@
+import { KnowledgeSectionTitle } from '@/components/knowledge/KnowledgeSectionTitle';
+import { KNOWLEDGE_ROUTE } from '@/lib/knowledge/routeKeys';
 import {
   resetDiscipleshipTrailForProfile,
   searchDiscipleshipResetCandidates,
@@ -95,7 +97,11 @@ export function MaintenanceDiscipleshipResetCard({
 
   return (
     <View style={[maintenancePanelStyles.panel, { height: contentHeight }]}>
-      <Text style={minimal ? styles.titleMinimal : styles.title}>Resetar Trilha</Text>
+      <KnowledgeSectionTitle
+        title="Resetar Trilha"
+        routeKey={KNOWLEDGE_ROUTE.discipleshipReset}
+        titleStyle={minimal ? styles.titleMinimal : styles.title}
+      />
       <Text style={styles.subtitle}>
         Super administrador: reinicie o progresso de um usuário nesta igreja para que ele possa
         refazer a Trilha do início.

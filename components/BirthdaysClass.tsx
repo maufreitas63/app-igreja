@@ -1,4 +1,6 @@
 import { DropdownSelect } from '@/components/ui/DropdownSelect';
+import { KnowledgeSectionTitle } from '@/components/knowledge/KnowledgeSectionTitle';
+import { KNOWLEDGE_ROUTE } from '@/lib/knowledge/routeKeys';
 import { MINIMAL_SECTION_TITLE, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import {
   BIRTHDAYS_CLASS_MONTHS,
@@ -43,7 +45,11 @@ export function BirthdaysClass({
 }: BirthdaysClassProps) {
   return (
     <View style={styles.root}>
-      <Text style={styles.title}>{title}</Text>
+      <KnowledgeSectionTitle
+        title={title}
+        routeKey={KNOWLEDGE_ROUTE.aniversariantes}
+        titleStyle={styles.title}
+      />
 
       <View style={styles.body}>
         <View style={styles.filterSection}>

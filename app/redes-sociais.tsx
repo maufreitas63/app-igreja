@@ -1,6 +1,8 @@
 import { SocialBrandIcon } from '@/components/SocialBrandIcon';
+import { KnowledgeSectionTitle } from '@/components/knowledge/KnowledgeSectionTitle';
 import { MinimalScreenLayout } from '@/components/minimal/MinimalScreenLayout';
 import { MINIMAL_ICON, MINIMAL_SECTION_TITLE, MINIMAL_UI } from '@/lib/minimalUiTheme';
+import { KNOWLEDGE_ROUTE } from '@/lib/knowledge/routeKeys';
 import { listSessionIgrejas, getStoredTenantId, type SessionIgreja } from '@/lib/tenantSession';
 import { FontAwesome } from '@expo/vector-icons';
 import React, { useCallback, useEffect, useState } from 'react';
@@ -102,7 +104,7 @@ export default function RedesSociaisScreen() {
 
   return (
     <MinimalScreenLayout footer={<CloseFooterBar onPress={returnToCaller} />}>
-      <Text style={styles.title}>Redes Sociais</Text>
+      <KnowledgeSectionTitle title="Redes Sociais" routeKey={KNOWLEDGE_ROUTE.redesSociais} titleStyle={styles.title} />
       <Text style={styles.hint}>
         {church?.name
           ? `Links oficiais de ${church.name}.`

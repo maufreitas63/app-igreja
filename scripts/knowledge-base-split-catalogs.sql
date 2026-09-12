@@ -21,6 +21,7 @@ declare
   v_catalog text := lower(btrim(coalesce(p_catalog, 'member')));
   v_member_keys text[] := array[
     'home',
+    'login',
     '/perfil',
     '/ofertas',
     '/pastoral',
@@ -29,7 +30,13 @@ declare
     '/pequeno-grupo',
     '/mural-oportunidades',
     '/mural-generosidade',
-    '/suggestions-improvements'
+    '/suggestions-improvements',
+    '/avisos',
+    '/primicias',
+    '/trilha-discipulado',
+    '/expense-report',
+    '/redes-sociais',
+    '/sobre-conecta'
   ];
   v_rows jsonb;
 begin

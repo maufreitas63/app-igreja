@@ -1,3 +1,5 @@
+import { KnowledgeSectionTitle } from '@/components/knowledge/KnowledgeSectionTitle';
+import { KNOWLEDGE_ROUTE } from '@/lib/knowledge/routeKeys';
 import { CloseFooterBar, CLOSE_FOOTER_DOCK_HEIGHT } from '@/components/minimal/CloseFooterBar';
 import { createStyles } from '@/lib/createStyles';
 import { FontAwesome } from '@expo/vector-icons';
@@ -379,7 +381,12 @@ export default function MapGeolocalizacaoScreen() {
     <ScreenAccessGate status={accessStatus}>
     <SafeAreaView style={styles.screen} edges={['top', 'left', 'right', 'bottom']}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Mapa de Geolocalização</Text>
+        <KnowledgeSectionTitle
+          title="Mapa de Geolocalização"
+          routeKey={KNOWLEDGE_ROUTE.mapa}
+          titleStyle={styles.headerTitle}
+          iconColor="#F8FAFC"
+        />
         <TouchableOpacity onPress={returnToCaller} activeOpacity={0.8}>
           <Text style={styles.headerBack}>← Voltar</Text>
         </TouchableOpacity>

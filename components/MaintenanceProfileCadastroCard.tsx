@@ -1,3 +1,5 @@
+import { KnowledgeSectionTitle } from '@/components/knowledge/KnowledgeSectionTitle';
+import { KNOWLEDGE_ROUTE } from '@/lib/knowledge/routeKeys';
 import { CardLoadingState } from '@/components/ui/CardLoadingState';
 import { SectionLabel } from '@/components/ui/SectionLabel';
 import { PROFILE_CADASTRO_FIELD_META } from '@/lib/maintenanceProfileCadastroApi';
@@ -160,9 +162,11 @@ export function MaintenanceProfileCadastroCard({
 
   return (
     <View style={[styles.panel, minimal && styles.panelMinimal, { height: contentHeight }]}>
-      <Text style={minimal ? styles.sectionTitle : maintenancePanelStyles.panelTitle}>
-        Cadastro de Usuário
-      </Text>
+      <KnowledgeSectionTitle
+        title="Cadastro de Usuário"
+        routeKey={KNOWLEDGE_ROUTE.profileCadastro}
+        titleStyle={minimal ? styles.sectionTitle : maintenancePanelStyles.panelTitle}
+      />
       {!minimal ? <View style={maintenancePanelStyles.panelSubtitleSpacer} /> : null}
 
       {error ? (

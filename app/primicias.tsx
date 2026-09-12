@@ -1,13 +1,17 @@
 import { PrimiciasPanel, type PrimiciasPanelHandle } from '@/components/PrimiciasPanel';
 import { CloseFooterBar } from '@/components/minimal/CloseFooterBar';
+import { KnowledgeSectionTitle } from '@/components/knowledge/KnowledgeSectionTitle';
 import { MinimalScreenLayout } from '@/components/minimal/MinimalScreenLayout';
 import { ScreenAccessGate } from '@/components/ScreenAccessGate';
 import { useReturnToCallerOnLeave } from '@/hooks/useReturnToCallerOnLeave';
 import { useScreenAccessGuard } from '@/hooks/useScreenAccessGuard';
 import { ACCESS_SCREEN } from '@/lib/accessControl';
 import { resolveReturnDashboardCardParam, resolveReturnRouteParam } from '@/lib/dashboardReturnNavigation';
+import { KNOWLEDGE_ROUTE } from '@/lib/knowledge/routeKeys';
+import { MINIMAL_SECTION_TITLE } from '@/lib/minimalUiTheme';
 import { useLocalSearchParams } from 'expo-router';
 import React, { useCallback, useRef } from 'react';
+import { StyleSheet } from 'react-native';
 
 export default function PrimiciasScreen() {
   const params = useLocalSearchParams();
@@ -43,8 +47,21 @@ export default function PrimiciasScreen() {
   return (
     <ScreenAccessGate status={accessStatus}>
       <MinimalScreenLayout scroll={false} footer={<CloseFooterBar onPress={() => void handleClose()} />}>
+        <KnowledgeSectionTitle
+          title="Prímicias"
+          routeKey={KNOWLEDGE_ROUTE.primiciasMember}
+          titleStyle={styles.title}
+        />
         <PrimiciasPanel ref={panelRef} />
       </MinimalScreenLayout>
     </ScreenAccessGate>
   );
 }
+
+const styles = StyleSheet.create({
+  title: {
+    ...MINIMAL_SECTION_TITLE,
+    width: '100%',
+    paddingHorizontal: 16,
+  },
+});

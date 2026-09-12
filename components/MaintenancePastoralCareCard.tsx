@@ -1,3 +1,5 @@
+import { KnowledgeSectionTitle } from '@/components/knowledge/KnowledgeSectionTitle';
+import { KNOWLEDGE_ROUTE } from '@/lib/knowledge/routeKeys';
 import { CardLoadingState } from '@/components/ui/CardLoadingState';
 import { DropdownSelect } from '@/components/ui/DropdownSelect';
 import { SegmentChipRow } from '@/components/ui/SegmentChipRow';
@@ -232,9 +234,11 @@ export function MaintenancePastoralCareCard({
 
   return (
     <View style={[styles.panel, minimal && styles.panelMinimal, { height: contentHeight }]}>
-      <Text style={minimal ? styles.sectionTitle : maintenancePanelStyles.panelTitle}>
-        {PANEL_TITLE}
-      </Text>
+      <KnowledgeSectionTitle
+        title={PANEL_TITLE}
+        routeKey={KNOWLEDGE_ROUTE.pastoralCare}
+        titleStyle={minimal ? styles.sectionTitle : maintenancePanelStyles.panelTitle}
+      />
       {!minimal ? <View style={maintenancePanelStyles.panelSubtitleSpacer} /> : null}
 
       {canManageAgenda ? (

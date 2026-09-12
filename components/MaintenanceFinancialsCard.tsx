@@ -1,3 +1,5 @@
+import { KnowledgeSectionTitle } from '@/components/knowledge/KnowledgeSectionTitle';
+import { KNOWLEDGE_ROUTE } from '@/lib/knowledge/routeKeys';
 import { FinancialEntryEditModal } from '@/components/FinancialEntryEditModal';
 import { RDConciliationModal } from '@/components/RDConciliationModal';
 import { CardLoadingState } from '@/components/ui/CardLoadingState';
@@ -1240,9 +1242,11 @@ export function MaintenanceFinancialsCard({
 
   return (
     <View style={[styles.panel, minimal && styles.panelMinimal, { height: contentHeight }]}>
-      <Text style={minimal ? styles.sectionTitleMinimal : maintenancePanelStyles.panelTitle}>
-        Informações Financeiras
-      </Text>
+      <KnowledgeSectionTitle
+        title="Informações Financeiras"
+        routeKey={KNOWLEDGE_ROUTE.financialsPanel}
+        titleStyle={minimal ? styles.sectionTitleMinimal : maintenancePanelStyles.panelTitle}
+      />
       {!minimal ? <View style={maintenancePanelStyles.panelSubtitleSpacer} /> : null}
 
       {rpcMissing ? (

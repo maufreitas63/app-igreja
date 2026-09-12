@@ -13,6 +13,13 @@ export const KNOWLEDGE_ROUTE = {
   pastoral: '/pastoral',
   escalas: '/escalas',
   financial: '/financial',
+  login: 'login',
+  avisos: '/avisos',
+  primiciasMember: '/primicias',
+  trilha: '/trilha-discipulado',
+  expenseReport: '/expense-report',
+  redesSociais: '/redes-sociais',
+  sobre: '/sobre-conecta',
   pequenoGrupo: '/pequeno-grupo',
   muralOportunidades: '/mural-oportunidades',
   muralGenerosidade: '/mural-generosidade',
@@ -77,6 +84,7 @@ const MAINTENANCE_PANEL_PREFIX = 'maintenance-dashboard?panel=';
 /** Rotas do catálogo do menu do membro (o que o usuário acessa no dia a dia). */
 export const MEMBER_KNOWLEDGE_ROUTE_KEYS: ReadonlySet<string> = new Set([
   KNOWLEDGE_ROUTE.home,
+  KNOWLEDGE_ROUTE.login,
   KNOWLEDGE_ROUTE.perfil,
   KNOWLEDGE_ROUTE.ofertas,
   KNOWLEDGE_ROUTE.pastoral,
@@ -86,6 +94,12 @@ export const MEMBER_KNOWLEDGE_ROUTE_KEYS: ReadonlySet<string> = new Set([
   KNOWLEDGE_ROUTE.muralOportunidades,
   KNOWLEDGE_ROUTE.muralGenerosidade,
   KNOWLEDGE_ROUTE.suggestions,
+  KNOWLEDGE_ROUTE.avisos,
+  KNOWLEDGE_ROUTE.primiciasMember,
+  KNOWLEDGE_ROUTE.trilha,
+  KNOWLEDGE_ROUTE.expenseReport,
+  KNOWLEDGE_ROUTE.redesSociais,
+  KNOWLEDGE_ROUTE.sobre,
 ]);
 
 export type KnowledgeCatalog = 'member' | 'maintenance';
