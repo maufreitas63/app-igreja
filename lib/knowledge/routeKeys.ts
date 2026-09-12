@@ -14,6 +14,7 @@ export const KNOWLEDGE_ROUTE = {
   escalas: '/escalas',
   financial: '/financial',
   login: 'login',
+  sair: 'sair',
   avisos: '/avisos',
   primiciasMember: '/primicias',
   trilha: '/trilha-discipulado',
@@ -85,6 +86,7 @@ const MAINTENANCE_PANEL_PREFIX = 'maintenance-dashboard?panel=';
 export const MEMBER_KNOWLEDGE_ROUTE_KEYS: ReadonlySet<string> = new Set([
   KNOWLEDGE_ROUTE.home,
   KNOWLEDGE_ROUTE.login,
+  KNOWLEDGE_ROUTE.sair,
   KNOWLEDGE_ROUTE.perfil,
   KNOWLEDGE_ROUTE.ofertas,
   KNOWLEDGE_ROUTE.pastoral,
@@ -100,6 +102,7 @@ export const MEMBER_KNOWLEDGE_ROUTE_KEYS: ReadonlySet<string> = new Set([
   KNOWLEDGE_ROUTE.expenseReport,
   KNOWLEDGE_ROUTE.redesSociais,
   KNOWLEDGE_ROUTE.sobre,
+  KNOWLEDGE_ROUTE.livros,
 ]);
 
 export type KnowledgeCatalog = 'member' | 'maintenance';

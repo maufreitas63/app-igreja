@@ -264,6 +264,7 @@ declare
   v_member_keys text[] := array[
     'home',
     'login',
+    'sair',
     '/perfil',
     '/ofertas',
     '/pastoral',
@@ -278,7 +279,8 @@ declare
     '/trilha-discipulado',
     '/expense-report',
     '/redes-sociais',
-    '/sobre-conecta'
+    '/sobre-conecta',
+    '/livros-doados'
   ];
   v_rows jsonb;
 begin
