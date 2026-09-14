@@ -11,12 +11,12 @@ create table if not exists public.alianca_partner_leads (
   indicated_name text not null,
   indicated_role text not null,
   indicated_phone text not null,
-  stage text not null default 'prospeccao',
+  stage text not null default 'primeiro_contato',
+  sub_stage integer not null default 1,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   constraint alianca_partner_leads_stage_chk check (
     stage in (
-      'prospeccao',
       'primeiro_contato',
       'qualificacao',
       'apresentacao',
@@ -25,6 +25,7 @@ create table if not exists public.alianca_partner_leads (
       'fechamento'
     )
   ),
+  constraint alianca_partner_leads_sub_stage_chk check (sub_stage between 1 and 3),
   constraint alianca_partner_leads_name_chk check (length(btrim(indicated_name)) >= 2),
   constraint alianca_partner_leads_role_chk check (length(btrim(indicated_role)) >= 2),
   constraint alianca_partner_leads_phone_chk check (length(indicated_phone) between 10 and 15),
@@ -39,6 +40,38 @@ create index if not exists alianca_partner_leads_created_idx
 
 create index if not exists alianca_partner_leads_stage_idx
   on public.alianca_partner_leads (stage, created_at desc);
+
+alter table public.alianca_partner_leads
+  add column if not exists sub_stage integer not null default 1;
+
+update public.alianca_partner_leads
+   set stage = 'primeiro_contato',
+       updated_at = now()
+ where stage = 'prospeccao';
+
+alter table public.alianca_partner_leads
+  drop constraint if exists alianca_partner_leads_stage_chk;
+
+alter table public.alianca_partner_leads
+  add constraint alianca_partner_leads_stage_chk check (
+    stage in (
+      'primeiro_contato',
+      'qualificacao',
+      'apresentacao',
+      'follow_up',
+      'negociacao',
+      'fechamento'
+    )
+  );
+
+alter table public.alianca_partner_leads
+  drop constraint if exists alianca_partner_leads_sub_stage_chk;
+
+alter table public.alianca_partner_leads
+  add constraint alianca_partner_leads_sub_stage_chk check (sub_stage between 1 and 3);
+
+alter table public.alianca_partner_leads
+  alter column stage set default 'primeiro_contato';
 
 alter table public.alianca_partner_leads enable row level security;
 
@@ -176,6 +209,7 @@ begin
         'indicated_role', l.indicated_role,
         'indicated_phone', l.indicated_phone,
         'stage', l.stage,
+        'sub_stage', l.sub_stage,
         'referrer_name', l.referrer_name,
         'instance_code', i.code,
         'instance_name', i.name,
@@ -195,9 +229,12 @@ begin
 end;
 $$;
 
+drop function if exists public.set_alianca_partner_lead_stage(uuid, text);
+
 create or replace function public.set_alianca_partner_lead_stage(
   p_lead_id uuid,
-  p_stage text
+  p_stage text,
+  p_sub_stage integer default 1
 )
 returns jsonb
 language plpgsql
@@ -208,6 +245,7 @@ as $$
 declare
   v_actor uuid := public.current_session_profile_id();
   v_stage text := lower(btrim(coalesce(p_stage, '')));
+  v_sub integer := coalesce(p_sub_stage, 1);
 begin
   if v_actor is null then
     return jsonb_build_object('success', false, 'message', 'Sessão inválida.');
@@ -219,7 +257,6 @@ begin
     return jsonb_build_object('success', false, 'message', 'Indicado não informado.');
   end if;
   if v_stage not in (
-    'prospeccao',
     'primeiro_contato',
     'qualificacao',
     'apresentacao',
@@ -229,9 +266,13 @@ begin
   ) then
     return jsonb_build_object('success', false, 'message', 'Etapa comercial inválida.');
   end if;
+  if v_sub not between 1 and 3 then
+    return jsonb_build_object('success', false, 'message', 'Atividade da etapa inválida.');
+  end if;
 
   update public.alianca_partner_leads
      set stage = v_stage,
+         sub_stage = v_sub,
          updated_at = now()
    where id = p_lead_id;
 
@@ -239,17 +280,22 @@ begin
     return jsonb_build_object('success', false, 'message', 'Indicado não encontrado.');
   end if;
 
-  return jsonb_build_object('success', true, 'stage', v_stage, 'message', 'Etapa atualizada.');
+  return jsonb_build_object(
+    'success', true,
+    'stage', v_stage,
+    'sub_stage', v_sub,
+    'message', 'Etapa atualizada.'
+  );
 end;
 $$;
 
 revoke all on function public.submit_alianca_partner_lead(text, text, text) from public, anon, authenticated;
 revoke all on function public.list_alianca_partner_leads() from public, anon, authenticated;
-revoke all on function public.set_alianca_partner_lead_stage(uuid, text) from public, anon, authenticated;
+revoke all on function public.set_alianca_partner_lead_stage(uuid, text, integer) from public, anon, authenticated;
 
 grant execute on function public.submit_alianca_partner_lead(text, text, text) to anon, authenticated, service_role;
 grant execute on function public.list_alianca_partner_leads() to anon, authenticated, service_role;
-grant execute on function public.set_alianca_partner_lead_stage(uuid, text) to anon, authenticated, service_role;
+grant execute on function public.set_alianca_partner_lead_stage(uuid, text, integer) to anon, authenticated, service_role;
 
 commit;
 

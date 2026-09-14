@@ -34,8 +34,8 @@ export default function AliancaIndicadosScreen() {
             accessibilityLabel="Como usar a lista de indicados da Aliança"
           />
           <Text style={styles.hint}>
-            Cada indicação traz nome, posição, celular, quem indicou e a instância. Avance o funil
-            comercial na ordem que fizer sentido para aquele contato.
+            O indicado já entrou no funil. Avance da abordagem ao fechamento e marque a atividade
+            em curso (1.1 a 6.3).
           </Text>
           <AliancaIndicadosList />
         </View>

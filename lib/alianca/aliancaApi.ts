@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase';
 import { isSupabaseRpcMissingError } from '@/lib/supabaseRpc';
+import { aliancaPartnerLeadSubStage } from '@/lib/alianca/partnerLeadStages';
 import type {
   AliancaAdminStatement,
   AliancaMaePanel,
@@ -195,7 +196,10 @@ function mapPartnerLead(raw: unknown): AliancaPartnerLead | null {
     indicatedName: asText(row.indicated_name),
     indicatedRole: asText(row.indicated_role),
     indicatedPhone: asText(row.indicated_phone),
-    stage: asText(row.stage) || 'prospeccao',
+    stage: asText(row.stage) || 'primeiro_contato',
+    subStage: aliancaPartnerLeadSubStage(
+      typeof row.sub_stage === 'number' ? row.sub_stage : Number(row.sub_stage ?? row.subStage)
+    ),
     referrerName: asText(row.referrer_name),
     instanceCode: asText(row.instance_code),
     instanceName: asText(row.instance_name),
@@ -257,11 +261,13 @@ export async function listAliancaPartnerLeads(): Promise<{
 
 export async function setAliancaPartnerLeadStage(
   leadId: string,
-  stage: string
+  stage: string,
+  subStage = 1
 ): Promise<{ success: boolean; message: string }> {
   const { data, error } = await supabase.rpc('set_alianca_partner_lead_stage', {
     p_lead_id: leadId,
     p_stage: stage,
+    p_sub_stage: aliancaPartnerLeadSubStage(subStage),
   });
   if (error) {
     if (isSupabaseRpcMissingError(error, 'set_alianca_partner_lead_stage')) {

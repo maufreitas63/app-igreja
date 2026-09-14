@@ -2,6 +2,7 @@ import { listAliancaPartnerLeads, setAliancaPartnerLeadStage } from '@/lib/alian
 import {
   ALIANCA_PARTNER_LEAD_STAGES,
   aliancaPartnerLeadStageByCode,
+  aliancaPartnerLeadSubStage,
 } from '@/lib/alianca/partnerLeadStages';
 import type { AliancaPartnerLead } from '@/lib/alianca/types';
 import { formatPhoneDisplay } from '@/lib/familyRegistration';
@@ -48,11 +49,14 @@ export function AliancaIndicadosList() {
     void load();
   }, [load]);
 
-  const handleStage = async (lead: AliancaPartnerLead, stage: string) => {
-    if (lead.stage === stage) return;
+  const handleProgress = async (lead: AliancaPartnerLead, stage: string, subStage: number) => {
+    const nextSub = aliancaPartnerLeadSubStage(subStage);
+    if (lead.stage === stage && aliancaPartnerLeadSubStage(lead.subStage) === nextSub) {
+      return;
+    }
     setBusyId(lead.id);
     try {
-      const result = await setAliancaPartnerLeadStage(lead.id, stage);
+      const result = await setAliancaPartnerLeadStage(lead.id, stage, nextSub);
       Toast.show({
         type: result.success ? 'success' : 'error',
         text1: result.success ? 'Funil comercial' : 'Etapa',
@@ -60,7 +64,9 @@ export function AliancaIndicadosList() {
       });
       if (result.success) {
         setLeads((current) =>
-          current.map((item) => (item.id === lead.id ? { ...item, stage } : item))
+          current.map((item) =>
+            item.id === lead.id ? { ...item, stage, subStage: nextSub } : item
+          )
         );
       }
     } finally {
@@ -88,7 +94,9 @@ export function AliancaIndicadosList() {
     <View style={styles.list}>
       {leads.map((lead) => {
         const current = aliancaPartnerLeadStageByCode(lead.stage);
+        const currentSub = aliancaPartnerLeadSubStage(lead.subStage);
         const instance = [lead.instanceCode, lead.instanceName].filter(Boolean).join(' · ');
+        const currentActivity = current.activities.find((item) => item.number === currentSub);
         return (
           <View key={lead.id} style={styles.card}>
             <Text style={styles.name}>{lead.indicatedName}</Text>
@@ -99,34 +107,82 @@ export function AliancaIndicadosList() {
             <Text style={styles.meta}>Indicada em {formatWhen(lead.createdAt)}</Text>
 
             <Text style={styles.stageNow}>
-              Etapa atual: {current.number}. {current.label}
+              Etapa atual: {current.number}.{currentSub} {current.label}
+              {currentActivity ? ` — ${currentActivity.title}` : ''}
             </Text>
-            <Text style={styles.stageHelp}>{current.description}</Text>
 
             <View style={styles.stages}>
               {ALIANCA_PARTNER_LEAD_STAGES.map((stage) => {
-                const active = stage.code === lead.stage;
+                const active = stage.code === current.code;
                 return (
-                  <Pressable
+                  <View
                     key={stage.code}
-                    onPress={() => void handleStage(lead, stage.code)}
-                    disabled={busyId === lead.id}
-                    accessibilityRole="button"
-                    accessibilityLabel={`Definir etapa ${stage.number} ${stage.label}`}
-                    style={[styles.stageChip, active && styles.stageChipActive]}
+                    style={[styles.stageBlock, active && styles.stageBlockActive]}
                   >
-                    <Text style={[styles.stageNum, active && styles.stageNumActive]}>
-                      {stage.number}
-                    </Text>
-                    <View style={styles.stageCopy}>
-                      <Text style={[styles.stageLabel, active && styles.stageLabelActive]}>
-                        {stage.label}
+                    <Pressable
+                      onPress={() => void handleProgress(lead, stage.code, active ? currentSub : 1)}
+                      disabled={busyId === lead.id}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Definir etapa ${stage.number} ${stage.label}`}
+                      style={styles.stageHeader}
+                    >
+                      <Text style={[styles.stageNum, active && styles.stageNumActive]}>
+                        {stage.number}
                       </Text>
-                      <Text style={[styles.stageSub, active && styles.stageSubActive]}>
-                        {stage.subtitle}
-                      </Text>
-                    </View>
-                  </Pressable>
+                      <View style={styles.stageCopy}>
+                        <Text style={[styles.stageLabel, active && styles.stageLabelActive]}>
+                          {stage.label}
+                        </Text>
+                        <Text style={[styles.stageSub, active && styles.stageSubActive]}>
+                          {stage.subtitle}
+                        </Text>
+                      </View>
+                    </Pressable>
+
+                    {active ? (
+                      <View style={styles.details}>
+                        <Text style={styles.stageHelp}>{stage.description}</Text>
+                        {stage.activities.map((item) => {
+                          const itemActive = item.number === currentSub;
+                          const code = `${stage.number}.${item.number}`;
+                          return (
+                            <Pressable
+                              key={code}
+                              onPress={() => void handleProgress(lead, stage.code, item.number)}
+                              disabled={busyId === lead.id}
+                              accessibilityRole="button"
+                              accessibilityLabel={`Definir atividade ${code} ${item.title}`}
+                              style={[styles.activity, itemActive && styles.activityActive]}
+                            >
+                              <Text
+                                style={[styles.activityCode, itemActive && styles.activityCodeActive]}
+                              >
+                                {code}
+                              </Text>
+                              <View style={styles.stageCopy}>
+                                <Text
+                                  style={[
+                                    styles.activityTitle,
+                                    itemActive && styles.activityTitleActive,
+                                  ]}
+                                >
+                                  {item.title}
+                                </Text>
+                                <Text
+                                  style={[
+                                    styles.activityText,
+                                    itemActive && styles.activityTextActive,
+                                  ]}
+                                >
+                                  Atividade: {item.activity}
+                                </Text>
+                              </View>
+                            </Pressable>
+                          );
+                        })}
+                      </View>
+                    ) : null}
+                  </View>
                 );
               })}
             </View>
@@ -177,29 +233,27 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '800',
     marginTop: 8,
-  },
-  stageHelp: {
-    color: MINIMAL_UI.blue,
-    fontSize: 12,
+    marginBottom: 4,
     lineHeight: 18,
-    marginBottom: 6,
   },
   stages: {
-    gap: 6,
+    gap: 8,
   },
-  stageChip: {
+  stageBlock: {
     borderWidth: 1,
     borderColor: MINIMAL_UI.border,
     borderRadius: 10,
-    paddingVertical: 8,
-    paddingHorizontal: 10,
+    overflow: 'hidden',
+  },
+  stageBlockActive: {
+    borderColor: MINIMAL_UI.accent,
+  },
+  stageHeader: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: 8,
-  },
-  stageChipActive: {
-    backgroundColor: MINIMAL_UI.accent,
-    borderColor: MINIMAL_UI.accent,
+    paddingVertical: 8,
+    paddingHorizontal: 10,
   },
   stageNum: {
     minWidth: 18,
@@ -208,12 +262,12 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   stageNumActive: {
-    color: '#FFFFFF',
+    color: MINIMAL_UI.accent,
   },
   stageCopy: {
     flex: 1,
     minWidth: 0,
-    gap: 1,
+    gap: 2,
   },
   stageLabel: {
     color: MINIMAL_UI.blueDark,
@@ -221,13 +275,63 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   stageLabelActive: {
-    color: '#FFFFFF',
+    color: MINIMAL_UI.accent,
   },
   stageSub: {
     color: MINIMAL_UI.textMuted,
     fontSize: 11,
   },
   stageSubActive: {
+    color: MINIMAL_UI.blue,
+  },
+  details: {
+    paddingHorizontal: 10,
+    paddingBottom: 10,
+    gap: 8,
+  },
+  stageHelp: {
+    color: MINIMAL_UI.blue,
+    fontSize: 12,
+    lineHeight: 18,
+  },
+  activity: {
+    borderWidth: 1,
+    borderColor: MINIMAL_UI.border,
+    borderRadius: 8,
+    padding: 8,
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 8,
+    backgroundColor: '#FFFFFF',
+  },
+  activityActive: {
+    backgroundColor: MINIMAL_UI.accent,
+    borderColor: MINIMAL_UI.accent,
+  },
+  activityCode: {
+    minWidth: 24,
+    color: MINIMAL_UI.blueDark,
+    fontSize: 12,
+    fontWeight: '800',
+  },
+  activityCodeActive: {
+    color: '#FFFFFF',
+  },
+  activityTitle: {
+    color: MINIMAL_UI.blueDark,
+    fontSize: 12,
+    fontWeight: '700',
+    lineHeight: 16,
+  },
+  activityTitleActive: {
+    color: '#FFFFFF',
+  },
+  activityText: {
+    color: MINIMAL_UI.textMuted,
+    fontSize: 12,
+    lineHeight: 16,
+  },
+  activityTextActive: {
     color: '#DBEAFE',
   },
 });

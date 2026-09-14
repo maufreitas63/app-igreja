@@ -76,6 +76,7 @@ export type AliancaPartnerLead = {
   indicatedRole: string;
   indicatedPhone: string;
   stage: string;
+  subStage: number;
   referrerName: string;
   instanceCode: string;
   instanceName: string;
