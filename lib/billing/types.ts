@@ -34,3 +34,17 @@ export type TenantBillingStatus = {
   plan: BillingPlan | null;
   message?: string;
 };
+
+export type BillingSaasContract = {
+  id: string;
+  sequenceNumber: number;
+  eventType: 'contratacao' | 'renovacao' | string;
+  planCode: string;
+  planName: string;
+  planType: string;
+  periodStart: string | null;
+  periodEnd: string | null;
+  acceptedAt: string | null;
+  licensedName: string;
+  body: string;
+};

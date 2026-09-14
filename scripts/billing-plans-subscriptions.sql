@@ -423,6 +423,19 @@ begin
         updated_at = now()
   returning * into v_row;
 
+  if public.tenant_subscription_is_access_allowed(v_row.status)
+     and v_row.current_period_start is not null then
+    perform public.ensure_billing_saas_contract(
+      v_row.tenant_id,
+      v_row.plan_id,
+      v_row.status,
+      v_row.current_period_start,
+      v_row.current_period_end,
+      v_row.stripe_subscription_id,
+      v_row.stripe_checkout_session_id
+    );
+  end if;
+
   return jsonb_build_object(
     'success', true,
     'tenant_id', v_row.tenant_id,

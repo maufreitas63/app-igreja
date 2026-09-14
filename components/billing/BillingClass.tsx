@@ -11,7 +11,8 @@ import {
   formatPlanQuarterlyPriceLine,
   resolvePlanQuarterlyAmountCents,
 } from '@/lib/billing/billingInterval';
-import type { BillingPlan } from '@/lib/billing/types';
+import { BillingContractsSection } from '@/components/billing/BillingContractsSection';
+import type { BillingPlan, BillingSaasContract } from '@/lib/billing/types';
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { FontAwesome } from '@expo/vector-icons';
 import React from 'react';
@@ -45,6 +46,7 @@ export type BillingClassProps = {
   onSubscribe: (plan: BillingPlan) => void;
   onRenewContract?: () => void;
   onRescindContract?: () => void;
+  contracts?: BillingSaasContract[];
   title?: string;
   subtitle?: string;
 };
@@ -84,6 +86,7 @@ export function BillingClass({
   onSubscribe,
   onRenewContract,
   onRescindContract,
+  contracts = [],
   title = 'Assinaturas',
   subtitle = BILLING_SCREEN_SUBTITLE,
 }: BillingClassProps) {
@@ -241,6 +244,8 @@ export function BillingClass({
           );
         })}
       </View>
+
+      <BillingContractsSection contracts={contracts} />
     </ScrollView>
   );
 }

@@ -1,4 +1,4 @@
-import type { BillingPlan, TenantBillingStatus } from '@/lib/billing/types';
+import type { BillingPlan, BillingSaasContract, TenantBillingStatus } from '@/lib/billing/types';
 import { DEFAULT_PRODUCTION_APP_URL } from '@/lib/productionAppUrl';
 import { isSupabaseRpcMissingError } from '@/lib/supabaseRpc';
 import { supabase } from '@/lib/supabase';
@@ -241,4 +241,48 @@ export async function manageTenantSubscription(input: {
     message: payload.message || 'Contratação atualizada.',
     cancelAtPeriodEnd: payload.cancel_at_period_end === true,
   };
+}
+
+export async function listBillingSaasContracts(
+  tenantId?: string | null
+): Promise<BillingSaasContract[]> {
+  const resolvedTenant = tenantId?.trim() || (await getStoredTenantId());
+  const { data, error } = await supabase.rpc('list_billing_saas_contracts', {
+    p_tenant_id: resolvedTenant,
+  });
+
+  if (error) {
+    if (isSupabaseRpcMissingError(error, 'list_billing_saas_contracts')) {
+      return [];
+    }
+    console.warn('list_billing_saas_contracts:', error.message);
+    return [];
+  }
+
+  const record = (
+    Array.isArray(data) ? data[0] : data ?? {}
+  ) as Record<string, unknown>;
+  const rows = Array.isArray(record.contracts) ? record.contracts : [];
+
+  return rows
+    .map((item) => {
+      const row = item && typeof item === 'object' ? (item as Record<string, unknown>) : {};
+      const id = String(row.id ?? '').trim();
+      const body = String(row.body ?? '').trim();
+      if (!id || !body) return null;
+      return {
+        id,
+        sequenceNumber: Number(row.sequence_number ?? 0) || 0,
+        eventType: String(row.event_type ?? 'contratacao'),
+        planCode: String(row.plan_code ?? ''),
+        planName: String(row.plan_name ?? ''),
+        planType: String(row.plan_type ?? ''),
+        periodStart: row.period_start != null ? String(row.period_start) : null,
+        periodEnd: row.period_end != null ? String(row.period_end) : null,
+        acceptedAt: row.accepted_at != null ? String(row.accepted_at) : null,
+        licensedName: String(row.licensed_name ?? ''),
+        body,
+      } satisfies BillingSaasContract;
+    })
+    .filter((row): row is BillingSaasContract => row != null);
 }

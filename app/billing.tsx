@@ -6,10 +6,11 @@ import {
   createStripeCheckoutSession,
   getTenantBillingStatus,
   listBillingPlans,
+  listBillingSaasContracts,
   manageTenantSubscription,
   syncTenantSubscriptionFromStripe,
 } from '@/lib/billing/billingApi';
-import type { BillingPlan } from '@/lib/billing/types';
+import type { BillingPlan, BillingSaasContract } from '@/lib/billing/types';
 import { confirmDialog } from '@/lib/confirmDialog';
 import { MEMBER_HOME_PATH } from '@/lib/failClosedNavigation';
 import { getStoredTenantId } from '@/lib/tenantSession';
@@ -51,12 +52,14 @@ export default function BillingScreen() {
   const [activeCongregados, setActiveCongregados] = useState<number | null>(null);
   const [checkoutLoadingPlanCode, setCheckoutLoadingPlanCode] = useState<string | null>(null);
   const [contractBusy, setContractBusy] = useState(false);
+  const [contracts, setContracts] = useState<BillingSaasContract[]>([]);
 
   const fetchBilling = useCallback(async () => {
     const tenantId = await getStoredTenantId();
-    const [planRows, billing] = await Promise.all([
+    const [planRows, billing, contractRows] = await Promise.all([
       listBillingPlans(),
       getTenantBillingStatus(tenantId),
+      listBillingSaasContracts(tenantId),
     ]);
     setPlans(planRows);
     setCurrentPlanCode(billing.plan?.code ?? null);
@@ -68,6 +71,7 @@ export default function BillingScreen() {
     setActiveUsers(billing.memberCount);
     setActiveMembers(billing.activeMembers);
     setActiveCongregados(billing.activeCongregados);
+    setContracts(contractRows);
   }, []);
 
   useEffect(() => {
@@ -307,6 +311,7 @@ export default function BillingScreen() {
         onSubscribe={(plan) => void handleSubscribe(plan)}
         onRenewContract={() => void handleRenewContract()}
         onRescindContract={() => void handleRescindContract()}
+        contracts={contracts}
       />
       <CloseFooterBar onPress={() => router.replace(MEMBER_HOME_PATH)} includeScreenPadding />
     </View>
