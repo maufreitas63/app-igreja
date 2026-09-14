@@ -52,15 +52,6 @@ export function CenteredCloseDialog({
           <View style={styles.header}>
             <FontAwesome name="info-circle" size={20} color={MINIMAL_UI.icon} />
             <Text style={styles.title}>{title}</Text>
-            <Pressable
-              onPress={onClose}
-              accessibilityRole="button"
-              accessibilityLabel={accessibilityCloseLabel}
-              hitSlop={8}
-              style={styles.headerClose}
-            >
-              <Text style={styles.headerCloseX}>×</Text>
-            </Pressable>
           </View>
           {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
           <ScrollView
@@ -113,18 +104,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
     color: MINIMAL_UI.text,
-  },
-  headerClose: {
-    minWidth: 28,
-    minHeight: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  headerCloseX: {
-    color: '#DC2626',
-    fontSize: 22,
-    fontWeight: '800',
-    lineHeight: 24,
   },
   subtitle: {
     fontSize: 14,
