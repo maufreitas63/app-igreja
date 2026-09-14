@@ -1,3 +1,4 @@
+import { AliancaIndicatePartnerSection } from '@/components/alianca/AliancaIndicatePartnerSection';
 import { KnowledgeSectionTitle } from '@/components/knowledge/KnowledgeSectionTitle';
 import {
   getAliancaAdminStatement,
@@ -8,9 +9,11 @@ import {
   formatAliancaDate,
   type AliancaAdminStatement,
 } from '@/lib/alianca/types';
+import { withFailClosedReturn } from '@/lib/failClosedNavigation';
 import { KNOWLEDGE_ROUTE } from '@/lib/knowledge/routeKeys';
 import { confirmDialog } from '@/lib/confirmDialog';
 import { MINIMAL_SECTION_TITLE, MINIMAL_UI } from '@/lib/minimalUiTheme';
+import { useRouter, type Href } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
@@ -22,6 +25,7 @@ import {
 import Toast from 'react-native-toast-message';
 
 export function AliancaAdminDashboard() {
+  const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [statement, setStatement] = useState<AliancaAdminStatement | null>(null);
@@ -145,6 +149,24 @@ export function AliancaAdminDashboard() {
           )}
         </>
       )}
+
+      <AliancaIndicatePartnerSection />
+
+      <TouchableOpacity
+        style={styles.indicadosLink}
+        onPress={() =>
+          router.push({
+            pathname: '/alianca-indicados',
+            params: withFailClosedReturn(),
+          } as Href)
+        }
+        activeOpacity={0.85}
+        accessibilityRole="button"
+        accessibilityLabel="Abrir lista de indicados"
+      >
+        <Text style={styles.indicadosLinkText}>Indicados</Text>
+        <Text style={styles.indicadosLinkHint}>Funil comercial das igrejas parceiras</Text>
+      </TouchableOpacity>
     </View>
   );
 }
@@ -235,5 +257,24 @@ const styles = StyleSheet.create({
     color: MINIMAL_UI.onDark,
     fontSize: 14,
     fontWeight: '700',
+  },
+  indicadosLink: {
+    marginHorizontal: 16,
+    marginTop: 8,
+    borderWidth: 1,
+    borderColor: MINIMAL_UI.border,
+    borderRadius: 12,
+    padding: 14,
+    backgroundColor: '#FFFFFF',
+    gap: 2,
+  },
+  indicadosLinkText: {
+    color: MINIMAL_UI.blueDark,
+    fontSize: 16,
+    fontWeight: '800',
+  },
+  indicadosLinkHint: {
+    color: MINIMAL_UI.textMuted,
+    fontSize: 13,
   },
 });

@@ -12,6 +12,7 @@ export const ACCESS_SCREEN = {
   pastoralHistory: '/pastoral-history',
   financial: '/financial',
   aliancaConectaReino: '/alianca-conecta-reino',
+  aliancaIndicados: '/alianca-indicados',
   expenseReport: '/expense-report',
   mapGeolocation: '/mapa-geolocalizacao',
   mapGeolocationPinDetail: '/mapa-geolocalizacao/detalhe-pin',

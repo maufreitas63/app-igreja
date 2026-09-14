@@ -137,6 +137,10 @@ export function isDrawerOperatorToolAllowed(
     return context.isSuperAdmin;
   }
 
+  if (moduleKey === 'menu_alianca_indicados') {
+    return context.isSuperAdmin;
+  }
+
   if (moduleKey === 'menu_orquestrador') {
     return isDrawerMaintenanceModuleAllowed('event_orchestration', 'event_orchestration', context);
   }
@@ -162,6 +166,10 @@ export function isDrawerMaintenanceModuleAllowed(
   }
 
   if (moduleKey === 'menu_alianca') {
+    return context.isSuperAdmin;
+  }
+
+  if (moduleKey === 'menu_alianca_indicados') {
     return context.isSuperAdmin;
   }
 

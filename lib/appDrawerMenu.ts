@@ -40,6 +40,7 @@ export type AppDrawerModuleKey =
   | 'menu_administrativo'
   | 'menu_igrejas'
   | 'menu_alianca'
+  | 'menu_alianca_indicados'
   | 'menu_redes_sociais'
   | 'menu_sobre_conecta'
   | 'menu_como_faco'
@@ -398,6 +399,13 @@ export const APP_DRAWER_SETTINGS_ITEMS: AppDrawerSettingsItem[] = [
     hint: 'Indicações, passivo de 40% e baixa manual das ofertas',
   },
   {
+    letter: 'g10c',
+    label: 'Indicados',
+    moduleKey: 'menu_alianca_indicados',
+    group: 'governanca',
+    hint: 'Funil comercial das igrejas parceiras indicadas',
+  },
+  {
     letter: 'g11',
     label: 'Instâncias (Igrejas)',
     moduleKey: 'menu_igrejas',
@@ -630,6 +638,11 @@ export async function navigateDrawerMenuItem(
 
   if (moduleKey === 'menu_alianca') {
     openScreen(router, '/alianca-conecta-reino', withFailClosedReturn());
+    return;
+  }
+
+  if (moduleKey === 'menu_alianca_indicados') {
+    openScreen(router, '/alianca-indicados', withFailClosedReturn());
     return;
   }
 

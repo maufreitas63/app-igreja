@@ -70,6 +70,20 @@ export type AliancaAdminStatement = {
   payouts: AliancaAdminPayoutRow[];
 };
 
+export type AliancaPartnerLead = {
+  id: string;
+  indicatedName: string;
+  indicatedRole: string;
+  indicatedPhone: string;
+  stage: string;
+  referrerName: string;
+  instanceCode: string;
+  instanceName: string;
+  tenantId: string;
+  createdAt: string | null;
+  updatedAt: string | null;
+};
+
 export function formatAliancaCents(cents: number | null | undefined): string {
   const value = (Number(cents) || 0) / 100;
   return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });

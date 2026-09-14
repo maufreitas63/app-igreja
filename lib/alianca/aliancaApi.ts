@@ -1,6 +1,10 @@
 import { supabase } from '@/lib/supabase';
 import { isSupabaseRpcMissingError } from '@/lib/supabaseRpc';
-import type { AliancaAdminStatement, AliancaMaePanel } from '@/lib/alianca/types';
+import type {
+  AliancaAdminStatement,
+  AliancaMaePanel,
+  AliancaPartnerLead,
+} from '@/lib/alianca/types';
 
 function asRecord(value: unknown): Record<string, unknown> | null {
   return value && typeof value === 'object' && !Array.isArray(value)
@@ -179,5 +183,95 @@ export async function setIgrejaMaeTenantAdmin(
   return {
     success: row.success === true,
     message: asText(row.message) || (row.success === true ? 'Salvo.' : 'Falha.'),
+  };
+}
+
+function mapPartnerLead(raw: unknown): AliancaPartnerLead | null {
+  const row = asRecord(raw) || {};
+  const id = asText(row.id);
+  if (!id) return null;
+  return {
+    id,
+    indicatedName: asText(row.indicated_name),
+    indicatedRole: asText(row.indicated_role),
+    indicatedPhone: asText(row.indicated_phone),
+    stage: asText(row.stage) || 'prospeccao',
+    referrerName: asText(row.referrer_name),
+    instanceCode: asText(row.instance_code),
+    instanceName: asText(row.instance_name),
+    tenantId: asText(row.tenant_id),
+    createdAt: asTextOrNull(row.created_at),
+    updatedAt: asTextOrNull(row.updated_at),
+  };
+}
+
+export async function submitAliancaPartnerLead(input: {
+  indicatedName: string;
+  indicatedRole: string;
+  indicatedPhone: string;
+}): Promise<{ success: boolean; message: string }> {
+  const { data, error } = await supabase.rpc('submit_alianca_partner_lead', {
+    p_indicated_name: input.indicatedName,
+    p_indicated_role: input.indicatedRole,
+    p_indicated_phone: input.indicatedPhone,
+  });
+  if (error) {
+    if (isSupabaseRpcMissingError(error, 'submit_alianca_partner_lead')) {
+      return { success: false, message: MISSING_SQL };
+    }
+    return { success: false, message: error.message || 'Falha ao registrar a indicação.' };
+  }
+  const row = asRecord(data) || {};
+  return {
+    success: row.success === true,
+    message: asText(row.message) || (row.success === true ? 'Indicação registrada.' : 'Falha.'),
+  };
+}
+
+export async function listAliancaPartnerLeads(): Promise<{
+  success: boolean;
+  message?: string;
+  leads: AliancaPartnerLead[];
+}> {
+  const { data, error } = await supabase.rpc('list_alianca_partner_leads');
+  if (error) {
+    if (isSupabaseRpcMissingError(error, 'list_alianca_partner_leads')) {
+      return { success: false, message: MISSING_SQL, leads: [] };
+    }
+    return {
+      success: false,
+      message: error.message || 'Não foi possível carregar os indicados.',
+      leads: [],
+    };
+  }
+  const row = asRecord(data) || {};
+  const leads = Array.isArray(row.leads)
+    ? row.leads.map(mapPartnerLead).filter((item): item is AliancaPartnerLead => item != null)
+    : [];
+  return {
+    success: row.success === true,
+    message: asTextOrNull(row.message) ?? undefined,
+    leads,
+  };
+}
+
+export async function setAliancaPartnerLeadStage(
+  leadId: string,
+  stage: string
+): Promise<{ success: boolean; message: string }> {
+  const { data, error } = await supabase.rpc('set_alianca_partner_lead_stage', {
+    p_lead_id: leadId,
+    p_stage: stage,
+  });
+  if (error) {
+    if (isSupabaseRpcMissingError(error, 'set_alianca_partner_lead_stage')) {
+      return { success: false, message: MISSING_SQL };
+    }
+    return { success: false, message: error.message || 'Falha ao atualizar a etapa.' };
+  }
+  const row = asRecord(data) || {};
+  return {
+    success: row.success === true,
+    message: asText(row.message) || (row.success === true ? 'Etapa atualizada.' : 'Falha.'),
   };
 }
