@@ -19,6 +19,7 @@ type Props = {
   title: string;
   subtitle?: string | null;
   children: React.ReactNode;
+  footerExtra?: React.ReactNode;
   accessibilityCloseLabel?: string;
 };
 
@@ -32,6 +33,7 @@ export function CenteredCloseDialog({
   title,
   subtitle,
   children,
+  footerExtra,
   accessibilityCloseLabel = 'Fechar',
 }: Props) {
   const { height } = useWindowDimensions();
@@ -69,6 +71,7 @@ export function CenteredCloseDialog({
             {children}
           </ScrollView>
           <View style={styles.footer}>
+            {footerExtra}
             <CloseButton onPress={onClose} accessibilityLabel={accessibilityCloseLabel} />
           </View>
         </View>
@@ -137,5 +140,6 @@ const styles = StyleSheet.create({
   },
   footer: {
     flexShrink: 0,
+    gap: 10,
   },
 });

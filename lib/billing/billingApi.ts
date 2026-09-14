@@ -1,3 +1,4 @@
+import { formatBillingSaasContractNumber } from '@/lib/billing/contractNumber';
 import type { BillingPlan, BillingSaasContract, TenantBillingStatus } from '@/lib/billing/types';
 import { DEFAULT_PRODUCTION_APP_URL } from '@/lib/productionAppUrl';
 import { isSupabaseRpcMissingError } from '@/lib/supabaseRpc';
@@ -270,9 +271,16 @@ export async function listBillingSaasContracts(
       const id = String(row.id ?? '').trim();
       const body = String(row.body ?? '').trim();
       if (!id || !body) return null;
+      const sequenceNumber = Number(row.sequence_number ?? 0) || 0;
+      const licensedInstanceCode = String(
+        row.licensed_instance_code ?? row.licensedInstanceCode ?? ''
+      ).trim() || null;
+      const contractNumber =
+        String(row.contract_number ?? row.contractNumber ?? '').trim() ||
+        formatBillingSaasContractNumber(licensedInstanceCode, sequenceNumber);
       return {
         id,
-        sequenceNumber: Number(row.sequence_number ?? 0) || 0,
+        sequenceNumber,
         eventType: String(row.event_type ?? 'contratacao'),
         planCode: String(row.plan_code ?? ''),
         planName: String(row.plan_name ?? ''),
@@ -281,6 +289,8 @@ export async function listBillingSaasContracts(
         periodEnd: row.period_end != null ? String(row.period_end) : null,
         acceptedAt: row.accepted_at != null ? String(row.accepted_at) : null,
         licensedName: String(row.licensed_name ?? ''),
+        licensedInstanceCode,
+        contractNumber,
         body,
       } satisfies BillingSaasContract;
     })

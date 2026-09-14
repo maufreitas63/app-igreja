@@ -51,6 +51,19 @@ as $$
   end;
 $$;
 
+-- Número do contrato: código da instância + sequência local daquela igreja (IBN-001, IBEP-001…).
+create or replace function public.billing_saas_contract_number(p_code text, p_sequence integer)
+returns text
+language sql
+immutable
+as $$
+  select case
+    when nullif(upper(btrim(coalesce(p_code, ''))), '') is not null
+      then upper(btrim(p_code)) || '-' || lpad(greatest(coalesce(p_sequence, 0), 0)::text, 3, '0')
+    else lpad(greatest(coalesce(p_sequence, 0), 0)::text, 3, '0')
+  end;
+$$;
+
 create or replace function public.billing_saas_license_contract_text(
   p_sequence integer,
   p_event_type text,
@@ -88,7 +101,7 @@ begin
   return
     'CONTRATO DE LICENCIAMENTO DE USO DE SOFTWARE E PRESTAÇÃO DE SERVIÇOS (SaaS) — CONECTA+'
     || E'\n\n'
-    || 'Contrato nº ' || lpad(p_sequence::text, 3, '0')
+    || 'Contrato nº ' || public.billing_saas_contract_number(v_code, p_sequence)
     || '  ·  Natureza: ' || v_event
     || E'\n'
     || 'Data da aceitação eletrônica: ' || public.billing_saas_contract_format_date(p_accepted_at)
@@ -365,6 +378,8 @@ begin
         'period_end', c.period_end,
         'accepted_at', c.accepted_at,
         'licensed_name', c.licensed_name,
+        'licensed_instance_code', c.licensed_instance_code,
+        'contract_number', public.billing_saas_contract_number(c.licensed_instance_code, c.sequence_number),
         'body', c.body
       )
       order by c.sequence_number desc
@@ -516,7 +531,23 @@ begin
 end;
 $$;
 
+-- Regrava o número no corpo já existente (código da instância + sequência da igreja).
+update public.billing_saas_contracts c
+   set body = public.billing_saas_license_contract_text(
+     c.sequence_number,
+     c.event_type,
+     c.plan_name,
+     c.plan_type,
+     c.licensed_name,
+     c.licensed_document,
+     c.licensed_instance_code,
+     c.accepted_at,
+     c.period_start,
+     c.period_end
+   );
+
 revoke all on function public.billing_saas_contract_format_date(timestamptz) from public, anon, authenticated;
+revoke all on function public.billing_saas_contract_number(text, integer) from public, anon, authenticated;
 revoke all on function public.billing_saas_license_contract_text(integer, text, text, text, text, text, text, timestamptz, timestamptz, timestamptz) from public, anon, authenticated;
 revoke all on function public.ensure_billing_saas_contract(uuid, uuid, text, timestamptz, timestamptz, text, text) from public, anon, authenticated;
 revoke all on function public.list_billing_saas_contracts(uuid) from public, anon, authenticated;

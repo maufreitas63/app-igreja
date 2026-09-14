@@ -70,6 +70,18 @@ export function openWhatsAppLikeBirthdaysWithText(
   return url;
 }
 
+/** Abre o WhatsApp com texto pronto; o usuário escolhe o chat se não houver telefone. */
+export function openWhatsAppShareText(message: string) {
+  const trimmed = message.trim();
+  if (!trimmed) {
+    return null;
+  }
+
+  const url = `https://wa.me/?text=${encodeURIComponent(trimmed)}`;
+  void Linking.openURL(url);
+  return url;
+}
+
 /**
  * Abre wa.me com texto (pode falhar na web após awaits — prefira copiar + openWhatsAppLikeBirthdays).
  */

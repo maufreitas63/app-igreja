@@ -1,8 +1,19 @@
 import { CenteredCloseDialog } from '@/components/minimal/CenteredCloseDialog';
+import { formatBillingSaasContractNumber } from '@/lib/billing/contractNumber';
 import type { BillingSaasContract } from '@/lib/billing/types';
+import { getEffectiveUserPhone } from '@/lib/loadSessionProfile';
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
-import React, { useMemo, useState } from 'react';
+import {
+  openWhatsAppLikeBirthdaysWithText,
+  openWhatsAppShareText,
+} from '@/lib/whatsapp';
+import { FontAwesome } from '@expo/vector-icons';
+import * as Clipboard from 'expo-clipboard';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import Toast from 'react-native-toast-message';
+
+const WHATSAPP_TEXT_LIMIT = 3500;
 
 function formatPtDate(value?: string | null) {
   if (!value) return '—';
@@ -19,8 +30,23 @@ function eventLabel(eventType: string) {
   return eventType === 'renovacao' ? 'Renovação' : 'Contratação';
 }
 
-function sequenceLabel(value: number) {
-  return `nº ${String(value).padStart(3, '0')}`;
+function contractNumberLabel(item: BillingSaasContract) {
+  const stored = String(item.contractNumber ?? '').trim();
+  if (stored) return stored;
+  return formatBillingSaasContractNumber(item.licensedInstanceCode, item.sequenceNumber);
+}
+
+function buildWhatsAppContractCopy(item: BillingSaasContract) {
+  const number = contractNumberLabel(item);
+  const body = item.body.trim();
+  if (body.length <= WHATSAPP_TEXT_LIMIT) {
+    return body;
+  }
+
+  return (
+    `${body.slice(0, WHATSAPP_TEXT_LIMIT).trim()}\n\n` +
+    `[Trecho do contrato nº ${number}] O texto integral foi copiado. Cole nesta conversa para guardar a cópia completa.`
+  );
 }
 
 function ContractParagraph({ text }: { text: string }) {
@@ -50,17 +76,56 @@ type Props = {
 
 export function BillingContractsSection({ contracts }: Props) {
   const [openId, setOpenId] = useState<string | null>(null);
+  const [clickerPhone, setClickerPhone] = useState<string | null>(null);
   const selected = useMemo(
     () => contracts.find((item) => item.id === openId) ?? null,
     [contracts, openId]
   );
 
+  useEffect(() => {
+    let cancelled = false;
+    void getEffectiveUserPhone().then((phone) => {
+      if (!cancelled) {
+        setClickerPhone(phone);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const sendContractCopy = (item: BillingSaasContract) => {
+    const number = contractNumberLabel(item);
+    void Clipboard.setStringAsync(item.body);
+    const message = buildWhatsAppContractCopy(item);
+    const opened = clickerPhone
+      ? openWhatsAppLikeBirthdaysWithText(clickerPhone, message)
+      : openWhatsAppShareText(message);
+
+    if (!opened) {
+      Toast.show({
+        type: 'error',
+        text1: 'WhatsApp',
+        text2: 'Não foi possível abrir o WhatsApp com a cópia do contrato.',
+      });
+      return;
+    }
+
+    Toast.show({
+      type: 'success',
+      text1: `Contrato ${number}`,
+      text2: clickerPhone
+        ? 'Cópia aberta no seu WhatsApp. Se o texto vier cortado, cole o contrato completo.'
+        : 'WhatsApp aberto com a cópia. Escolha o chat para enviar.',
+    });
+  };
+
   return (
     <View style={styles.section}>
       <Text style={styles.sectionTitle}>Gerenciamento de Contratos</Text>
       <Text style={styles.sectionHint}>
-        Histórico sequencial de cada contratação e renovação do pacote SaaS, com o instrumento
-        de licenciamento preenchido na aceitação eletrônica.
+        Cada instância tem numeração própria (código da igreja + sequência). O instrumento fica
+        gravado na aceitação eletrônica; envie uma cópia pelo WhatsApp quando precisar.
       </Text>
 
       {contracts.length === 0 ? (
@@ -70,46 +135,71 @@ export function BillingContractsSection({ contracts }: Props) {
         </Text>
       ) : (
         <View style={styles.list}>
-          {contracts.map((item) => (
-            <Pressable
-              key={item.id}
-              style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}
-              onPress={() => setOpenId(item.id)}
-              accessibilityRole="button"
-              accessibilityLabel={`Abrir contrato ${sequenceLabel(item.sequenceNumber)} ${item.planName}`}
-            >
-              <View style={styles.rowMain}>
-                <Text style={styles.rowTitle}>
-                  Contrato {sequenceLabel(item.sequenceNumber)} · {eventLabel(item.eventType)}
-                </Text>
-                <Text style={styles.rowPlan}>
-                  Plano {item.planName}
-                  {item.planType ? ` — ${item.planType}` : ''}
-                </Text>
-                <Text style={styles.rowMeta}>
-                  Ciclo {formatPtDate(item.periodStart)} a {formatPtDate(item.periodEnd)}
-                </Text>
+          {contracts.map((item) => {
+            const number = contractNumberLabel(item);
+            return (
+              <View key={item.id} style={styles.row}>
+                <Pressable
+                  style={({ pressed }) => [styles.rowMain, pressed && styles.rowPressed]}
+                  onPress={() => setOpenId(item.id)}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Abrir contrato ${number} ${item.planName}`}
+                >
+                  <Text style={styles.rowTitle}>
+                    Contrato {number} · {eventLabel(item.eventType)}
+                  </Text>
+                  <Text style={styles.rowPlan}>
+                    Plano {item.planName}
+                    {item.planType ? ` — ${item.planType}` : ''}
+                  </Text>
+                  <Text style={styles.rowMeta}>
+                    Ciclo {formatPtDate(item.periodStart)} a {formatPtDate(item.periodEnd)}
+                  </Text>
+                </Pressable>
+                <Pressable
+                  onPress={() => sendContractCopy(item)}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Enviar cópia do contrato ${number} no WhatsApp`}
+                  hitSlop={8}
+                  style={styles.rowWhatsapp}
+                >
+                  <FontAwesome name="whatsapp" size={22} color="#25D366" />
+                </Pressable>
+                <Pressable
+                  onPress={() => setOpenId(item.id)}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Abrir contrato ${number}`}
+                  hitSlop={8}
+                >
+                  <Text style={styles.rowOpen}>Abrir</Text>
+                </Pressable>
               </View>
-              <Text style={styles.rowOpen}>Abrir</Text>
-            </Pressable>
-          ))}
+            );
+          })}
         </View>
       )}
 
       <CenteredCloseDialog
         visible={selected != null}
         onClose={() => setOpenId(null)}
-        title={
-          selected
-            ? `Contrato ${sequenceLabel(selected.sequenceNumber)}`
-            : 'Contrato'
-        }
+        title={selected ? `Contrato ${contractNumberLabel(selected)}` : 'Contrato'}
         subtitle={
-          selected
-            ? `${eventLabel(selected.eventType)} · ${selected.planName}`
-            : null
+          selected ? `${eventLabel(selected.eventType)} · ${selected.planName}` : null
         }
         accessibilityCloseLabel="Fechar contrato"
+        footerExtra={
+          selected ? (
+            <Pressable
+              onPress={() => sendContractCopy(selected)}
+              accessibilityRole="button"
+              accessibilityLabel={`Enviar cópia do contrato ${contractNumberLabel(selected)} no WhatsApp`}
+              style={({ pressed }) => [styles.whatsappSend, pressed && styles.whatsappSendPressed]}
+            >
+              <FontAwesome name="whatsapp" size={18} color="#FFFFFF" />
+              <Text style={styles.whatsappSendText}>Enviar cópia no WhatsApp</Text>
+            </Pressable>
+          ) : null
+        }
       >
         {selected ? (
           <View style={styles.contractBody}>
@@ -182,10 +272,34 @@ const styles = StyleSheet.create({
     color: MINIMAL_UI.textMuted,
     fontSize: 12,
   },
+  rowWhatsapp: {
+    minWidth: 36,
+    minHeight: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   rowOpen: {
     color: MINIMAL_UI.accent,
     fontSize: 13,
     fontWeight: '700',
+  },
+  whatsappSend: {
+    minHeight: 48,
+    borderRadius: 16,
+    backgroundColor: '#25D366',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingHorizontal: 16,
+  },
+  whatsappSendPressed: {
+    opacity: 0.88,
+  },
+  whatsappSendText: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '800',
   },
   contractBody: {
     gap: 10,

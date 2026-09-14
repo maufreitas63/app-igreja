@@ -46,5 +46,7 @@ export type BillingSaasContract = {
   periodEnd: string | null;
   acceptedAt: string | null;
   licensedName: string;
+  licensedInstanceCode: string | null;
+  contractNumber: string;
   body: string;
 };
