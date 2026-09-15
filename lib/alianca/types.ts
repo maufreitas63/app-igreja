@@ -75,14 +75,45 @@ export type AliancaPartnerLead = {
   indicatedName: string;
   indicatedRole: string;
   indicatedPhone: string;
+  indicatedChurchName: string;
+  city: string;
+  uf: string;
+  estimatedMembers: number | null;
+  currentSystems: string;
+  governanceNotes: string;
+  tiNotes: string;
+  priority: string;
+  lastContactAt: string | null;
+  nextActionAt: string | null;
+  lostReason: string;
   stage: string;
   subStage: number;
+  enteredStageAt: string | null;
   referrerName: string;
   instanceCode: string;
   instanceName: string;
   tenantId: string;
   createdAt: string | null;
   updatedAt: string | null;
+};
+
+export type AliancaPartnerLeadMovement = {
+  id: string;
+  fromStage: string | null;
+  fromSubStage: number | null;
+  toStage: string;
+  toSubStage: number;
+  actorProfileId: string;
+  actorName: string;
+  createdAt: string | null;
+};
+
+export type AliancaPartnerLeadNotification = {
+  id: string;
+  leadId: string;
+  title: string;
+  body: string;
+  createdAt: string | null;
 };
 
 export function formatAliancaCents(cents: number | null | undefined): string {

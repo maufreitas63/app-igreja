@@ -26,6 +26,7 @@ import {
 } from '@/lib/sessionProfile';
 import {
   isColumnResourceAllowedForAccessActor,
+  isAliancaIndicadosExclusiveResource,
   isRoleVisibleToAccessActor,
   isSuperAdminRoleCode,
 } from '@/lib/gestorControleAcessoSecurity';
@@ -33,6 +34,7 @@ import {
 export { accessRoleDisplayRank } from '@/lib/accessRoleDisplayOrder';
 export {
   isColumnResourceAllowedForAccessActor,
+  isAliancaIndicadosExclusiveResource,
   isRoleVisibleToAccessActor,
   isSuperAdminRoleCode,
 };
@@ -637,11 +639,15 @@ export async function listRoleGrantsAdmin(roleCode: string, resourceType: Access
     parseGrantRows
   );
 
+  const visibleRows = rows.filter(
+    (row) => !isAliancaIndicadosExclusiveResource(row.resourceType, row.resourceKey)
+  );
+
   if (resourceType !== 'column') {
-    return rows;
+    return visibleRows;
   }
 
-  return rows.filter((row) =>
+  return visibleRows.filter((row) =>
     isColumnResourceAllowedForAccessActor(row.resourceKey, actorIsSuperAdmin)
   );
 }
@@ -711,6 +717,13 @@ export async function saveRoleGrantAdmin(
     return {
       success: false as const,
       message: '403 Forbidden: Gestor não pode gerenciar PIN/senha.',
+    };
+  }
+
+  if (isAliancaIndicadosExclusiveResource(resourceType, resourceKey)) {
+    return {
+      success: false as const,
+      message: 'O funil de Indicados é exclusivo do Super Administrador.',
     };
   }
 

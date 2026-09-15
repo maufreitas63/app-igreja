@@ -5,8 +5,11 @@ import type { ScreenAccessStatus } from '@/hooks/useScreenAccessGuard';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 
-/** Acesso à rota `/igrejas` — apenas super_admin. */
-export function useIgrejasAdminAccess(redirectPath: string = MEMBER_HOME_PATH): ScreenAccessStatus {
+/** Acesso a rotas exclusivas do super_admin (Instâncias, Aliança, Indicados). */
+export function useIgrejasAdminAccess(
+  redirectPath: string = MEMBER_HOME_PATH,
+  deniedMessage = 'Apenas super administradores gerenciam instâncias.'
+): ScreenAccessStatus {
   const router = useRouter();
   const [status, setStatus] = useState<ScreenAccessStatus>('checking');
 
@@ -25,7 +28,7 @@ export function useIgrejasAdminAccess(redirectPath: string = MEMBER_HOME_PATH): 
               router,
               redirectPath,
               'Acesso negado',
-              'Apenas super administradores gerenciam instâncias.'
+              deniedMessage
             );
             return;
           }
@@ -45,7 +48,7 @@ export function useIgrejasAdminAccess(redirectPath: string = MEMBER_HOME_PATH): 
       return () => {
         active = false;
       };
-    }, [redirectPath, router])
+    }, [deniedMessage, redirectPath, router])
   );
 
   return status;

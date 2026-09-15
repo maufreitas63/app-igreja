@@ -411,7 +411,7 @@ export const APP_DRAWER_SETTINGS_ITEMS: AppDrawerSettingsItem[] = [
     label: 'Indicados',
     moduleKey: 'menu_alianca_indicados',
     group: 'governanca',
-    hint: 'Funil comercial das igrejas parceiras indicadas',
+    hint: 'Funil Kanban exclusivo do Super Administrador',
   },
   {
     letter: 'g11',

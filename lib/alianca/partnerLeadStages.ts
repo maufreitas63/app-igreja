@@ -194,3 +194,54 @@ export function aliancaPartnerLeadSubStage(
   if (Number.isInteger(n) && n >= 1 && n <= max) return n;
   return 1;
 }
+
+export function aliancaPartnerLeadStageIndex(code: string | null | undefined) {
+  return ALIANCA_PARTNER_LEAD_STAGES.findIndex(
+    (item) => item.code === aliancaPartnerLeadStageByCode(code).code
+  );
+}
+
+export function aliancaPartnerLeadAdjacentStage(
+  code: string | null | undefined,
+  direction: -1 | 1
+) {
+  const index = aliancaPartnerLeadStageIndex(code);
+  return ALIANCA_PARTNER_LEAD_STAGES[index + direction] ?? null;
+}
+
+export function aliancaPartnerLeadIsLostDeal(stage: string | null | undefined, subStage: number) {
+  return aliancaPartnerLeadStageByCode(stage).code === 'negociacao' && subStage === 4;
+}
+
+export function aliancaPartnerLeadCanMoveToStage(
+  fromStage: string | null | undefined,
+  fromSubStage: number,
+  toStage: string | null | undefined
+) {
+  const from = aliancaPartnerLeadStageByCode(fromStage);
+  const to = aliancaPartnerLeadStageByCode(toStage);
+  if (from.code === to.code) return true;
+  if (Math.abs(aliancaPartnerLeadStageIndex(from.code) - aliancaPartnerLeadStageIndex(to.code)) !== 1) {
+    return false;
+  }
+  if (aliancaPartnerLeadIsLostDeal(from.code, fromSubStage) && to.code === 'fechamento') {
+    return false;
+  }
+  return true;
+}
+
+export const ALIANCA_PARTNER_LEAD_PRIORITIES = [
+  { code: 'baixa', label: 'Baixa' },
+  { code: 'media', label: 'Média' },
+  { code: 'alta', label: 'Alta' },
+] as const;
+
+export type AliancaPartnerLeadPriority = (typeof ALIANCA_PARTNER_LEAD_PRIORITIES)[number]['code'];
+
+export function aliancaPartnerLeadPriority(
+  value: string | null | undefined
+): AliancaPartnerLeadPriority {
+  const normalized = String(value ?? '').trim().toLowerCase();
+  if (normalized === 'baixa' || normalized === 'alta') return normalized;
+  return 'media';
+}

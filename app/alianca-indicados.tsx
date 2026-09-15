@@ -9,6 +9,7 @@ import {
   resolveReturnDashboardCardParam,
   resolveReturnRouteParam,
 } from '@/lib/dashboardReturnNavigation';
+import { MEMBER_HOME_PATH } from '@/lib/failClosedNavigation';
 import { KNOWLEDGE_ROUTE } from '@/lib/knowledge/routeKeys';
 import { MINIMAL_SECTION_TITLE, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { useLocalSearchParams } from 'expo-router';
@@ -16,7 +17,10 @@ import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 export default function AliancaIndicadosScreen() {
-  const accessStatus = useIgrejasAdminAccess();
+  const accessStatus = useIgrejasAdminAccess(
+    MEMBER_HOME_PATH,
+    'Apenas o Super Administrador acessa o funil de Indicados.'
+  );
   const params = useLocalSearchParams();
   const returnToCaller = useReturnToCallerOnLeave({
     returnRoute: resolveReturnRouteParam(params),
@@ -25,17 +29,21 @@ export default function AliancaIndicadosScreen() {
 
   return (
     <ScreenAccessGate status={accessStatus}>
-      <MinimalScreenLayout footer={<CloseFooterBar onPress={returnToCaller} />}>
+      <MinimalScreenLayout
+        scroll={false}
+        footer={<CloseFooterBar onPress={returnToCaller} />}
+        contentContainerStyle={styles.layoutContent}
+      >
         <View style={styles.root}>
           <KnowledgeSectionTitle
             title="Indicados"
             routeKey={KNOWLEDGE_ROUTE.aliancaIndicados}
             titleStyle={styles.title}
-            accessibilityLabel="Como usar a lista de indicados da Aliança"
+            accessibilityLabel="Como usar o funil Kanban de indicados da Aliança"
           />
           <Text style={styles.hint}>
-            O indicado já entrou no funil. Avance da abordagem ao fechamento e marque a atividade
-            em curso (1.1 a 6.3). Use 5.4 para encerrar a negociação por negócio não concluído.
+            Funil exclusivo do Super Administrador. Avance uma coluna por vez; a atividade (1.1 a
+            6.3) fica no card. 5.4 encerra a tratativa sem ir ao fechamento.
           </Text>
           <AliancaIndicadosList />
         </View>
@@ -45,9 +53,14 @@ export default function AliancaIndicadosScreen() {
 }
 
 const styles = StyleSheet.create({
+  layoutContent: {
+    flexGrow: 1,
+  },
   root: {
     width: '100%',
-    paddingBottom: 24,
+    flex: 1,
+    minHeight: 0,
+    paddingBottom: 8,
     gap: 8,
   },
   title: {
@@ -59,7 +72,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
     textAlign: 'center',
     paddingHorizontal: 16,
-    marginBottom: 8,
+    marginBottom: 4,
     lineHeight: 18,
   },
 });

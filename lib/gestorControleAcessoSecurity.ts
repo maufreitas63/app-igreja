@@ -23,6 +23,12 @@ export const GESTOR_BLOCKED_COLUMN_RESOURCE_FRAGMENTS = [
   'senha',
 ] as const;
 
+/** Funil de Indicados: exclusivo do Super Administrador (não entra na matriz de grants). */
+export const ALIANCA_INDICADOS_EXCLUSIVE_SCREEN_KEYS = [
+  '/alianca-indicados',
+  'menu_alianca_indicados',
+] as const;
+
 export function isSuperAdminRoleCode(roleCode: string | null | undefined): boolean {
   return (roleCode ?? '').trim().toLowerCase() === SUPER_ADMIN_ROLE_CODE;
 }
@@ -54,4 +60,16 @@ export function isColumnResourceAllowedForAccessActor(
 
   const key = resourceKey.trim().toLowerCase();
   return !GESTOR_BLOCKED_COLUMN_RESOURCE_FRAGMENTS.some((fragment) => key.includes(fragment));
+}
+
+export function isAliancaIndicadosExclusiveResource(
+  resourceType: string | null | undefined,
+  resourceKey: string | null | undefined
+): boolean {
+  if ((resourceType ?? '').trim().toLowerCase() !== 'screen') {
+    return false;
+  }
+
+  const key = (resourceKey ?? '').trim();
+  return (ALIANCA_INDICADOS_EXCLUSIVE_SCREEN_KEYS as readonly string[]).includes(key);
 }

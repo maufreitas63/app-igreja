@@ -5,6 +5,8 @@ import type {
   AliancaAdminStatement,
   AliancaMaePanel,
   AliancaPartnerLead,
+  AliancaPartnerLeadMovement,
+  AliancaPartnerLeadNotification,
 } from '@/lib/alianca/types';
 
 function asRecord(value: unknown): Record<string, unknown> | null {
@@ -191,22 +193,69 @@ function mapPartnerLead(raw: unknown): AliancaPartnerLead | null {
   const row = asRecord(raw) || {};
   const id = asText(row.id);
   if (!id) return null;
+  const stage = asText(row.stage) || 'primeiro_contato';
   return {
     id,
     indicatedName: asText(row.indicated_name),
     indicatedRole: asText(row.indicated_role),
     indicatedPhone: asText(row.indicated_phone),
-    stage: asText(row.stage) || 'primeiro_contato',
+    indicatedChurchName: asText(row.indicated_church_name),
+    city: asText(row.city),
+    uf: asText(row.uf).toUpperCase(),
+    estimatedMembers:
+      row.estimated_members == null || row.estimated_members === ''
+        ? null
+        : asNumber(row.estimated_members),
+    currentSystems: asText(row.current_systems),
+    governanceNotes: asText(row.governance_notes),
+    tiNotes: asText(row.ti_notes),
+    priority: asText(row.priority) || 'media',
+    lastContactAt: asTextOrNull(row.last_contact_at),
+    nextActionAt: asTextOrNull(row.next_action_at),
+    lostReason: asText(row.lost_reason),
+    stage,
     subStage: aliancaPartnerLeadSubStage(
       typeof row.sub_stage === 'number' ? row.sub_stage : Number(row.sub_stage ?? row.subStage),
-      asText(row.stage) || 'primeiro_contato'
+      stage
     ),
+    enteredStageAt: asTextOrNull(row.entered_stage_at),
     referrerName: asText(row.referrer_name),
     instanceCode: asText(row.instance_code),
     instanceName: asText(row.instance_name),
     tenantId: asText(row.tenant_id),
     createdAt: asTextOrNull(row.created_at),
     updatedAt: asTextOrNull(row.updated_at),
+  };
+}
+
+function mapPartnerLeadMovement(raw: unknown): AliancaPartnerLeadMovement | null {
+  const row = asRecord(raw) || {};
+  const id = asText(row.id);
+  if (!id) return null;
+  const fromSub = row.from_sub_stage == null ? null : Number(row.from_sub_stage);
+  const toSub = Number(row.to_sub_stage ?? row.toSubStage);
+  return {
+    id,
+    fromStage: asTextOrNull(row.from_stage),
+    fromSubStage: Number.isInteger(fromSub) ? fromSub : null,
+    toStage: asText(row.to_stage) || 'primeiro_contato',
+    toSubStage: Number.isInteger(toSub) && toSub > 0 ? toSub : 1,
+    actorProfileId: asText(row.actor_profile_id),
+    actorName: asText(row.actor_name) || 'Super Administrador',
+    createdAt: asTextOrNull(row.created_at),
+  };
+}
+
+function mapPartnerLeadNotification(raw: unknown): AliancaPartnerLeadNotification | null {
+  const row = asRecord(raw) || {};
+  const id = asText(row.id);
+  if (!id) return null;
+  return {
+    id,
+    leadId: asText(row.lead_id),
+    title: asText(row.title) || 'Funil Indicados',
+    body: asText(row.body),
+    createdAt: asTextOrNull(row.created_at),
   };
 }
 
@@ -237,26 +286,34 @@ export async function listAliancaPartnerLeads(): Promise<{
   success: boolean;
   message?: string;
   leads: AliancaPartnerLead[];
+  notifications: AliancaPartnerLeadNotification[];
 }> {
   const { data, error } = await supabase.rpc('list_alianca_partner_leads');
   if (error) {
     if (isSupabaseRpcMissingError(error, 'list_alianca_partner_leads')) {
-      return { success: false, message: MISSING_SQL, leads: [] };
+      return { success: false, message: MISSING_SQL, leads: [], notifications: [] };
     }
     return {
       success: false,
       message: error.message || 'Não foi possível carregar os indicados.',
       leads: [],
+      notifications: [],
     };
   }
   const row = asRecord(data) || {};
   const leads = Array.isArray(row.leads)
     ? row.leads.map(mapPartnerLead).filter((item): item is AliancaPartnerLead => item != null)
     : [];
+  const notifications = Array.isArray(row.notifications)
+    ? row.notifications
+        .map(mapPartnerLeadNotification)
+        .filter((item): item is AliancaPartnerLeadNotification => item != null)
+    : [];
   return {
     success: row.success === true,
     message: asTextOrNull(row.message) ?? undefined,
     leads,
+    notifications,
   };
 }
 
@@ -280,6 +337,77 @@ export async function setAliancaPartnerLeadStage(
   return {
     success: row.success === true,
     message: asText(row.message) || (row.success === true ? 'Etapa atualizada.' : 'Falha.'),
+  };
+}
+
+export async function updateAliancaPartnerLead(input: {
+  leadId: string;
+  indicatedChurchName: string;
+  city: string;
+  uf: string;
+  estimatedMembers: number | null;
+  currentSystems: string;
+  governanceNotes: string;
+  tiNotes: string;
+  priority: string;
+  lastContactAt: string | null;
+  nextActionAt: string | null;
+  lostReason: string;
+}): Promise<{ success: boolean; message: string; lead?: AliancaPartnerLead }> {
+  const { data, error } = await supabase.rpc('update_alianca_partner_lead', {
+    p_lead_id: input.leadId,
+    p_indicated_church_name: input.indicatedChurchName,
+    p_city: input.city,
+    p_uf: input.uf,
+    p_estimated_members: input.estimatedMembers,
+    p_current_systems: input.currentSystems,
+    p_governance_notes: input.governanceNotes,
+    p_ti_notes: input.tiNotes,
+    p_priority: input.priority,
+    p_last_contact_at: input.lastContactAt,
+    p_next_action_at: input.nextActionAt,
+    p_lost_reason: input.lostReason,
+  });
+  if (error) {
+    if (isSupabaseRpcMissingError(error, 'update_alianca_partner_lead')) {
+      return { success: false, message: MISSING_SQL };
+    }
+    return { success: false, message: error.message || 'Falha ao salvar os dados de governança.' };
+  }
+  const row = asRecord(data) || {};
+  return {
+    success: row.success === true,
+    message: asText(row.message) || (row.success === true ? 'Dados de governança atualizados.' : 'Falha.'),
+    lead: mapPartnerLead(row.lead) ?? undefined,
+  };
+}
+
+export async function listAliancaPartnerLeadMovements(
+  leadId: string
+): Promise<{ success: boolean; message?: string; movements: AliancaPartnerLeadMovement[] }> {
+  const { data, error } = await supabase.rpc('list_alianca_partner_lead_movements', {
+    p_lead_id: leadId,
+  });
+  if (error) {
+    if (isSupabaseRpcMissingError(error, 'list_alianca_partner_lead_movements')) {
+      return { success: false, message: MISSING_SQL, movements: [] };
+    }
+    return {
+      success: false,
+      message: error.message || 'Não foi possível carregar o histórico.',
+      movements: [],
+    };
+  }
+  const row = asRecord(data) || {};
+  const movements = Array.isArray(row.movements)
+    ? row.movements
+        .map(mapPartnerLeadMovement)
+        .filter((item): item is AliancaPartnerLeadMovement => item != null)
+    : [];
+  return {
+    success: row.success === true,
+    message: asTextOrNull(row.message) ?? undefined,
+    movements,
   };
 }
 

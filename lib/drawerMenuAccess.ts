@@ -134,10 +134,12 @@ export function isDrawerOperatorToolAllowed(
   }
 
   if (moduleKey === 'menu_alianca') {
+    // Proteção aplicada: Gestor não tem visibilidade do Super Administrador
     return context.isSuperAdmin;
   }
 
   if (moduleKey === 'menu_alianca_indicados') {
+    // Proteção aplicada: Gestor não tem visibilidade do Super Administrador
     return context.isSuperAdmin;
   }
 
@@ -166,10 +168,12 @@ export function isDrawerMaintenanceModuleAllowed(
   }
 
   if (moduleKey === 'menu_alianca') {
+    // Proteção aplicada: Gestor não tem visibilidade do Super Administrador
     return context.isSuperAdmin;
   }
 
   if (moduleKey === 'menu_alianca_indicados') {
+    // Proteção aplicada: Gestor não tem visibilidade do Super Administrador
     return context.isSuperAdmin;
   }
 

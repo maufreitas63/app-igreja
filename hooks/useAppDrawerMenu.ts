@@ -96,6 +96,11 @@ function isDrawerModuleEnabled(
     return context.isSuperAdmin;
   }
 
+  if (moduleKey === 'menu_alianca_indicados') {
+    // Proteção aplicada: Gestor não tem visibilidade do Super Administrador
+    return context.isSuperAdmin;
+  }
+
   if (moduleKey === 'menu_livros') {
     return context.isSuperAdmin || context.dashboardScreenAccess[ACCESS_SCREEN.livrosDoados] === true;
   }

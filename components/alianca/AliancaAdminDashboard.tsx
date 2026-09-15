@@ -165,7 +165,7 @@ export function AliancaAdminDashboard() {
         accessibilityLabel="Abrir lista de indicados"
       >
         <Text style={styles.indicadosLinkText}>Indicados</Text>
-        <Text style={styles.indicadosLinkHint}>Funil comercial das igrejas parceiras</Text>
+        <Text style={styles.indicadosLinkHint}>Funil Kanban exclusivo do Super Administrador</Text>
       </TouchableOpacity>
     </View>
   );
