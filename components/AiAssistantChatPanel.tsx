@@ -1,4 +1,5 @@
 import { useAiChat } from '@/hooks/useAiChat';
+import { ABIGAIL_NAME } from '@/lib/abigailPersona';
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
 import React, { useEffect, useRef } from 'react';
 import {
@@ -29,8 +30,8 @@ export function AiAssistantChatPanel() {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <Text style={styles.helpText}>
-        Assistente de Gestão da Igreja. Pergunte sobre organização, eventos, comunicação ou
-        liderança. Não substitui aconselhamento pastoral confidencial.
+        {ABIGAIL_NAME} ajuda a liderança com a gestão da instância. Não substitui aconselhamento
+        pastoral confidencial.
       </Text>
 
       {error ? <Text style={styles.errorText}>{error}</Text> : null}
@@ -42,12 +43,7 @@ export function AiAssistantChatPanel() {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        {messages.length === 0 ? (
-          <Text style={styles.metaText}>
-            Faça uma pergunta sobre gestão, eventos, comunicação ou organização da igreja.
-          </Text>
-        ) : (
-          messages.map((message) => (
+        {messages.map((message) => (
             <View
               key={message.id}
               style={[
@@ -56,7 +52,7 @@ export function AiAssistantChatPanel() {
               ]}
             >
               <Text style={styles.messageRole}>
-                {message.role === 'user' ? 'Você' : 'Assistente'}
+                {message.role === 'user' ? 'Você' : ABIGAIL_NAME}
               </Text>
               <Text style={styles.messageText}>
                 {message.content}
@@ -64,13 +60,13 @@ export function AiAssistantChatPanel() {
               </Text>
             </View>
           ))
-        )}
+        }
       </ScrollView>
 
       <View style={styles.composerRow}>
         <TextInput
           style={styles.input}
-          placeholder="Digite sua pergunta..."
+          placeholder={`Pergunte à ${ABIGAIL_NAME}...`}
           placeholderTextColor={MINIMAL_UI.textMuted}
           value={draft}
           onChangeText={setDraft}
@@ -96,7 +92,7 @@ export function AiAssistantChatPanel() {
       <TouchableOpacity
         style={styles.secondaryButton}
         onPress={clearConversation}
-        disabled={streaming || messages.length === 0}
+        disabled={streaming || messages.every((message) => message.localOnly)}
       >
         <Text style={styles.secondaryButtonText}>Limpar conversa</Text>
       </TouchableOpacity>

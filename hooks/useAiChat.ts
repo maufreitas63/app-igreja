@@ -1,3 +1,4 @@
+import { pickAbigailGreeting } from '@/lib/abigailPersona';
 import { streamAiChatMessage, type AiChatHistoryItem } from '@/lib/aiChatApi';
 import { useCallback, useRef, useState } from 'react';
 
@@ -5,12 +6,20 @@ export type AiChatMessage = {
   id: string;
   role: 'user' | 'assistant';
   content: string;
+  localOnly?: boolean;
 };
 
 const createMessageId = () => `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
+const createGreetingMessage = (): AiChatMessage => ({
+  id: createMessageId(),
+  role: 'assistant',
+  content: pickAbigailGreeting(),
+  localOnly: true,
+});
+
 export function useAiChat() {
-  const [messages, setMessages] = useState<AiChatMessage[]>([]);
+  const [messages, setMessages] = useState<AiChatMessage[]>(() => [createGreetingMessage()]);
   const [draft, setDraft] = useState('');
   const [streaming, setStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -30,10 +39,12 @@ export function useAiChat() {
     };
     const assistantMessageId = createMessageId();
 
-    const history: AiChatHistoryItem[] = messages.map((message) => ({
-      role: message.role,
-      content: message.content,
-    }));
+    const history: AiChatHistoryItem[] = messages
+      .filter((message) => !message.localOnly)
+      .map((message) => ({
+        role: message.role,
+        content: message.content,
+      }));
 
     setMessages((current) => [
       ...current,
@@ -66,7 +77,7 @@ export function useAiChat() {
       const message =
         sendError instanceof Error
           ? sendError.message
-          : 'Não foi possível consultar o assistente de IA.';
+          : 'Não foi possível falar com a Abigail.';
 
       setError(message);
       setMessages((current) =>
@@ -81,7 +92,7 @@ export function useAiChat() {
   const clearConversation = useCallback(() => {
     abortRef.current?.abort();
     abortRef.current = null;
-    setMessages([]);
+    setMessages([createGreetingMessage()]);
     setDraft('');
     setError(null);
     setStreaming(false);

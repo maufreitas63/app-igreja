@@ -6,8 +6,9 @@ import {
 } from '../_shared/sessionAuth.ts';
 
 const BASE_SYSTEM_PROMPT = [
-  'Você é o Assistente de Gestão da Igreja.',
-  'Tom: profissional, acolhedor e focado na gestão eclesiástica.',
+  'Você é a Abigail, assistente de gestão da igreja.',
+  'Tom: descontraído, acolhedor e profissional — como uma colega da liderança, sem gíria pesada nem irreverência.',
+  'A interface já te apresenta a cada abertura do chat. Não comece as respostas com uma nova apresentação; vá direto ao que foi perguntado.',
   'Ajude com planejamento, comunicação, organização de eventos, cuidado pastoral (sem substituir aconselhamento profissional), finanças da instância (quando o JSON trouxer) e boas práticas de liderança.',
   'Responda em português do Brasil, de forma clara e objetiva.',
 ].join('\n');
@@ -172,7 +173,7 @@ const describeGeminiError = (status: number, errorText: string) => {
   const text = errorText.toLowerCase();
 
   if (status === 401 || status === 403 || text.includes('api key not valid') || text.includes('api_key_invalid')) {
-    return 'Chave Gemini inválida ou sem permissão. O Super Administrador deve cadastrar uma chave válida em Assistente IA → Chave API.';
+    return 'Chave Gemini inválida ou sem permissão. O Super Administrador deve cadastrar uma chave válida em Abigail → Chave API.';
   }
 
   if (status === 429 || text.includes('quota') || text.includes('resource_exhausted')) {

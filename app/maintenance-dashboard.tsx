@@ -200,7 +200,7 @@ const MAINTENANCE_PANEL_CARDS: MaintenanceCarouselCard[] = [
   { id: '22', title: 'Resetar Trilha', content: 'discipleship_reset' },
   { id: '9', title: 'Informações Financeiras', content: 'financials' },
   { id: '16', title: 'Modelo Preditivo', content: 'predictive_insights' },
-  { id: '30', title: 'Assistente IA', content: 'ai_assistant' },
+  { id: '30', title: 'Abigail', content: 'ai_assistant' },
   { id: '17', title: 'Relatórios', content: 'relatorios' },
   { id: '18', title: 'Sugestões e Melhorias', content: 'suggestions_improvements' },
   { id: '4', title: 'Lista de Presença', content: 'quorum_presence' },

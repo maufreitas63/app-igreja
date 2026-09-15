@@ -6,7 +6,7 @@ export const AI_CHAT_SQL_HINT =
   'Execute no Supabase: scripts/access-control-ai-leadership.sql e scripts/access-control-ai-tenant-context.sql';
 
 export const AI_CHAT_DEPLOY_HINT =
-  'O super admin deve cadastrar a chave Gemini da igreja em Manutenção → Assistente IA → Chave API (ou via SQL scripts/configurar-gemini-api-key.sql).';
+  'O super admin deve cadastrar a chave Gemini da igreja em Manutenção → Abigail → Chave API (ou via SQL scripts/configurar-gemini-api-key.sql).';
 
 const isLocalWebDevHost = (hostname: string) =>
   hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '0.0.0.0';

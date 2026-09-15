@@ -1,6 +1,7 @@
 import { AiAssistantChatPanel } from '@/components/AiAssistantChatPanel';
 import { CloseFooterBar } from '@/components/minimal/CloseFooterBar';
 import { useSessionCanUseAiAssistant } from '@/hooks/useSessionIsLeadership';
+import { ABIGAIL_NAME } from '@/lib/abigailPersona';
 import { sessionCanUseAiAssistant } from '@/lib/aiLeadershipAccess';
 import { MINIMAL_ICON, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { FontAwesome } from '@expo/vector-icons';
@@ -20,6 +21,7 @@ const FAB_SIZE = 56;
 export function LeadershipAiFab() {
   const { allowed, refresh } = useSessionCanUseAiAssistant();
   const [open, setOpen] = useState(false);
+  const [chatKey, setChatKey] = useState(0);
 
   useFocusEffect(
     useCallback(() => {
@@ -36,6 +38,7 @@ export function LeadershipAiFab() {
       return;
     }
 
+    setChatKey((current) => current + 1);
     setOpen(true);
   };
 
@@ -51,7 +54,7 @@ export function LeadershipAiFab() {
     <>
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel="Abrir Assistente IA"
+        accessibilityLabel={`Abrir ${ABIGAIL_NAME}`}
         onPress={() => void handleOpen()}
         style={({ pressed }) => [styles.fab, pressed && styles.fabPressed]}
       >
@@ -61,13 +64,13 @@ export function LeadershipAiFab() {
       <Modal animationType="slide" visible={open} onRequestClose={handleClose}>
         <SafeAreaView style={styles.modalSafe} edges={['top', 'left', 'right']}>
           <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>Assistente IA</Text>
-            <Text style={styles.modalHint}>Somente liderança</Text>
+            <Text style={styles.modalTitle}>{ABIGAIL_NAME}</Text>
+            <Text style={styles.modalHint}>Assistente da liderança</Text>
           </View>
           <View style={styles.modalBody}>
-            <AiAssistantChatPanel />
+            {open ? <AiAssistantChatPanel key={chatKey} /> : null}
           </View>
-          <CloseFooterBar onPress={handleClose} accessibilityLabel="Fechar Assistente IA" />
+          <CloseFooterBar onPress={handleClose} accessibilityLabel={`Fechar ${ABIGAIL_NAME}`} />
         </SafeAreaView>
       </Modal>
     </>

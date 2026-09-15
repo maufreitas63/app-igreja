@@ -290,10 +290,10 @@ export const APP_DRAWER_SETTINGS_ITEMS: AppDrawerSettingsItem[] = [
   },
   {
     letter: 'f0',
-    label: 'Assistente IA',
+    label: 'Abigail',
     moduleKey: 'ai_assistant',
     group: 'financas',
-    hint: 'Chat e chave Gemini — somente liderança',
+    hint: 'Assistente da liderança — chat e chave Gemini',
   },
   {
     letter: 'f1',
