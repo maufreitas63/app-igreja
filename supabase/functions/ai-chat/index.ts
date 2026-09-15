@@ -13,6 +13,13 @@ const SYSTEM_PROMPT = [
   'Responda em português do Brasil, de forma clara e objetiva.',
 ].join('\n');
 
+const GEMINI_MODELS = [
+  'gemini-3.8-flash',
+  'gemini-3.7-flash',
+  'gemini-2.5-flash',
+  'gemini-flash-latest',
+];
+
 type ChatHistoryItem = {
   role: 'user' | 'assistant';
   content: string;
@@ -80,6 +87,71 @@ const extractGeminiText = (payload: unknown) => {
     .join('');
 };
 
+const isGeminiModelUnavailable = (status: number, errorText: string) => {
+  const text = errorText.toLowerCase();
+  return status === 404 || text.includes('not found') || text.includes('is not found for api version');
+};
+
+const describeGeminiError = (status: number, errorText: string) => {
+  const text = errorText.toLowerCase();
+
+  if (status === 401 || status === 403 || text.includes('api key not valid') || text.includes('api_key_invalid')) {
+    return 'Chave Gemini inválida ou sem permissão. O Super Administrador deve cadastrar uma chave válida em Assistente IA → Chave API.';
+  }
+
+  if (status === 429 || text.includes('quota') || text.includes('resource_exhausted')) {
+    return 'A cota da API Gemini foi excedida. Tente novamente mais tarde.';
+  }
+
+  if (isGeminiModelUnavailable(status, errorText)) {
+    return 'O modelo de IA não está disponível para esta chave. Tente novamente após a atualização do aplicativo.';
+  }
+
+  return 'Falha ao consultar o modelo de IA.';
+};
+
+const fetchGeminiStream = async (apiKey: string, question: string, history: ChatHistoryItem[]) => {
+  const body = JSON.stringify({
+    systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
+    contents: buildGeminiContents(question, history),
+    generationConfig: {
+      temperature: 0.6,
+      maxOutputTokens: 2048,
+    },
+  });
+
+  let lastStatus = 0;
+  let lastText = '';
+
+  for (const model of GEMINI_MODELS) {
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent?alt=sse`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-goog-api-key': apiKey,
+        },
+        body,
+      }
+    );
+
+    if (response.ok) {
+      return { ok: true as const, response };
+    }
+
+    lastStatus = response.status;
+    lastText = await response.text();
+    console.error('Gemini API error:', model, lastStatus, lastText);
+
+    if (!isGeminiModelUnavailable(lastStatus, lastText)) {
+      break;
+    }
+  }
+
+  return { ok: false as const, status: lastStatus, errorText: lastText };
+};
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
@@ -111,20 +183,22 @@ serve(async (req) => {
       return jsonResponse({ error: 'Informe uma pergunta.' }, 400);
     }
 
-    let geminiApiKey = Deno.env.get('GEMINI_API_KEY')?.trim() || '';
+    let geminiApiKey = '';
 
-    if (!geminiApiKey) {
-      const { data: configRow, error: configError } = await supabase
-        .from('ai_server_config')
-        .select('config_value')
-        .eq('config_key', 'gemini_api_key')
-        .maybeSingle();
+    const { data: configRow, error: configError } = await supabase
+      .from('ai_server_config')
+      .select('config_value')
+      .eq('config_key', 'gemini_api_key')
+      .maybeSingle();
 
-      if (configError) {
-        console.error('ai_server_config:', configError.message);
-      }
+    if (configError) {
+      console.error('ai_server_config:', configError.message);
+    }
 
-      geminiApiKey = String(configRow?.config_value ?? '').trim();
+    geminiApiKey = String(configRow?.config_value ?? '').trim();
+
+    if (!geminiApiKey.startsWith('AIza')) {
+      geminiApiKey = Deno.env.get('GEMINI_API_KEY')?.trim() || '';
     }
 
     if (!geminiApiKey) {
@@ -132,8 +206,6 @@ serve(async (req) => {
     }
 
     const history = Array.isArray(body.history) ? body.history : [];
-    const geminiUrl =
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:streamGenerateContent?alt=sse&key=${geminiApiKey}`;
 
     const stream = new ReadableStream<Uint8Array>({
       async start(controller) {
@@ -145,30 +217,15 @@ serve(async (req) => {
         };
 
         try {
-          const geminiResponse = await fetch(geminiUrl, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              system_instruction: {
-                parts: [{ text: SYSTEM_PROMPT }],
-              },
-              contents: buildGeminiContents(question, history),
-              generationConfig: {
-                temperature: 0.6,
-                maxOutputTokens: 2048,
-              },
-            }),
-          });
+          const gemini = await fetchGeminiStream(geminiApiKey, question, history);
 
-          if (!geminiResponse.ok) {
-            const errorText = await geminiResponse.text();
-            console.error('Gemini API error:', geminiResponse.status, errorText);
-            pushEvent({ error: 'Falha ao consultar o modelo de IA.' });
+          if (!gemini.ok) {
+            pushEvent({ error: describeGeminiError(gemini.status, gemini.errorText) });
             controller.close();
             return;
           }
+
+          const geminiResponse = gemini.response;
 
           if (!geminiResponse.body) {
             pushEvent({ error: 'Resposta vazia do modelo de IA.' });
