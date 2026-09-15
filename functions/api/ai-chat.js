@@ -15,33 +15,69 @@ const BASE_SYSTEM_PROMPT = [
 
 const ISOLATION_PROMPT = [
   'ISOLAMENTO OBRIGATÓRIO (não negociável):',
-  '- Use SOMENTE o JSON contexto_da_instancia. Ele já está limitado à igreja da sessão atual.',
+  '- Use o JSON contexto_da_instancia. Ele já está limitado à igreja da sessão atual.',
   '- É proibido usar, inferir, comparar ou pedir dados de outra igreja, tenant ou instância.',
   '- É proibido inventar números, nomes, totais ou eventos que não estejam no JSON.',
   '- É proibido instruir exportação, cópia, e-mail, planilha ou envio desses dados para fora do aplicativo.',
   '- Não revele IDs internos, tokens, chaves de API, PINs, senhas, chaves PIX ou senha de totem.',
   '- Cuidado pastoral: apenas totais, se existirem; nunca conteúdo, motivo, telefone ou identidade.',
-  '- Se o dado não estiver no JSON, diga que essa informação não está disponível nesta instância.',
+  '- Resultado histórico da tela Financeiro = financas.resultado_historico. O valor pedido é saldo_atual. Informe também período, receitas e despesas ordinárias e extraordinárias.',
+  '- Eventos: use eventos.recentes (já realizados) e eventos.proximos. totais.na_instancia é o total da instância. Lista vazia significa zero naquele recorte, não que o sistema não tenha cadastro.',
+  '- Se o JSON tiver a seção (pessoas, eventos, financas), responda com esses números mesmo que sejam zero. Só diga que não está disponível quando a seção não existir no JSON.',
+  '- Responda a pergunta por completo, em português do Brasil.',
 ].join('\n');
 
 const MAX_CONTEXT_CHARS = 14_000;
+
+const compactInstanceSnapshot = (snapshot) => {
+  if (!snapshot || typeof snapshot !== 'object') {
+    return snapshot;
+  }
+
+  const payload = {
+    isolamento: snapshot.isolamento,
+    igreja: snapshot.igreja,
+    operador: snapshot.operador,
+    pessoas: snapshot.pessoas,
+    financas: snapshot.financas,
+    relatorios_despesa: snapshot.relatorios_despesa,
+    eventos: snapshot.eventos,
+    proximos_eventos: snapshot.proximos_eventos,
+    pequenos_grupos: snapshot.pequenos_grupos,
+    cuidado_pastoral: snapshot.cuidado_pastoral,
+  };
+
+  if (JSON.stringify(payload).length <= MAX_CONTEXT_CHARS) {
+    return payload;
+  }
+
+  delete payload.pequenos_grupos;
+
+  if (payload.financas && typeof payload.financas === 'object') {
+    const finance = { ...payload.financas };
+    delete finance.meses_realizado;
+    payload.financas = finance;
+  }
+
+  if (JSON.stringify(payload).length <= MAX_CONTEXT_CHARS) {
+    return payload;
+  }
+
+  return {
+    isolamento: snapshot.isolamento,
+    igreja: snapshot.igreja,
+    pessoas: snapshot.pessoas,
+    financas: payload.financas,
+    cuidado_pastoral: snapshot.cuidado_pastoral,
+  };
+};
 
 const buildSystemPrompt = (snapshot) => {
   const parts = [BASE_SYSTEM_PROMPT, ISOLATION_PROMPT];
 
   if (snapshot && typeof snapshot === 'object') {
-    let serialized = JSON.stringify(snapshot);
-
-    if (serialized.length > MAX_CONTEXT_CHARS) {
-      serialized = JSON.stringify({
-        isolamento: snapshot.isolamento,
-        igreja: snapshot.igreja,
-        pessoas: snapshot.pessoas,
-        aviso: 'Contexto reduzido por tamanho; não invente o que foi omitido.',
-      });
-    }
-
-    parts.push(`contexto_da_instancia (confidencial, só esta igreja):\n${serialized}`);
+    const compact = compactInstanceSnapshot(snapshot);
+    parts.push(`contexto_da_instancia (confidencial, só esta igreja):\n${JSON.stringify(compact)}`);
   } else {
     parts.push(
       'Não há snapshot da instância disponível nesta consulta. Não invente dados internos da igreja.'
@@ -52,9 +88,9 @@ const buildSystemPrompt = (snapshot) => {
 };
 
 const GEMINI_MODELS = [
-  'gemini-3.6-flash',
-  'gemini-flash-latest',
   'gemini-3.8-flash',
+  'gemini-flash-latest',
+  'gemini-3.6-flash',
 ];
 
 const jsonResponse = (body, status = 200) =>
@@ -331,7 +367,10 @@ const extractGeminiText = (payload) => {
     return '';
   }
 
-  return parts.map((part) => String(part?.text ?? '')).join('');
+  return parts
+    .filter((part) => part?.thought !== true)
+    .map((part) => String(part?.text ?? ''))
+    .join('');
 };
 
 const isGeminiModelUnavailable = (status, errorText) => {
@@ -363,12 +402,20 @@ const describeGeminiError = (status, errorText) => {
 
 const fetchInstanceContext = async (env, auth) => {
   try {
-    const snapshot = await supabaseRpc(
+    let snapshot = await supabaseRpc(
       env,
       'obter_contexto_ia_lideranca',
       { p_actor_profile_id: auth.profileId },
       auth.request
     );
+
+    if (typeof snapshot === 'string') {
+      try {
+        snapshot = JSON.parse(snapshot);
+      } catch {
+        snapshot = null;
+      }
+    }
 
     if (snapshot && typeof snapshot === 'object' && !Array.isArray(snapshot)) {
       return snapshot;
@@ -381,68 +428,87 @@ const fetchInstanceContext = async (env, auth) => {
 };
 
 const fetchGeminiText = async (apiKey, question, history, systemPrompt) => {
-  const body = JSON.stringify({
+  const generationConfig = {
+    temperature: 0.3,
+    maxOutputTokens: 8192,
+    thinkingConfig: {
+      thinkingBudget: 0,
+      thinkingLevel: 'MINIMAL',
+    },
+  };
+
+  const bodyWithThinkingOff = JSON.stringify({
+    systemInstruction: { parts: [{ text: systemPrompt || BASE_SYSTEM_PROMPT }] },
+    contents: buildGeminiContents(question, history),
+    generationConfig,
+  });
+
+  const bodyPlain = JSON.stringify({
     systemInstruction: { parts: [{ text: systemPrompt || BASE_SYSTEM_PROMPT }] },
     contents: buildGeminiContents(question, history),
     generationConfig: {
-      temperature: 0.6,
-      maxOutputTokens: 2048,
+      temperature: 0.3,
+      maxOutputTokens: 8192,
     },
   });
 
   let lastStatus = 0;
   let lastText = '';
 
-  for (const model of GEMINI_MODELS) {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 12_000);
+  modelLoop: for (const model of GEMINI_MODELS) {
+    for (const body of [bodyWithThinkingOff, bodyPlain]) {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 18_000);
 
-    try {
-      const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-goog-api-key': apiKey,
-          },
-          body,
-          signal: controller.signal,
-        }
-      );
+      try {
+        const response = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'x-goog-api-key': apiKey,
+            },
+            body,
+            signal: controller.signal,
+          }
+        );
 
-      lastStatus = response.status;
-      lastText = await response.text();
+        lastStatus = response.status;
+        lastText = await response.text();
 
-      if (response.ok) {
-        let payload = null;
-        try {
-          payload = JSON.parse(lastText);
-        } catch {
+        if (response.ok) {
+          let payload = null;
+          try {
+            payload = JSON.parse(lastText);
+          } catch {
+            continue;
+          }
+
+          const text = extractGeminiText(payload).trim();
+
+          if (text) {
+            return { ok: true, text };
+          }
+
+          lastText = 'empty_candidates';
           continue;
         }
 
-        const text = extractGeminiText(payload).trim();
+        console.error('Gemini API error:', model, lastStatus, lastText);
 
-        if (text) {
-          return { ok: true, text };
+        if (lastStatus === 400 || isGeminiModelUnavailable(lastStatus, lastText)) {
+          continue;
         }
 
-        lastText = 'empty_candidates';
-        continue;
+        break modelLoop;
+      } catch (error) {
+        lastStatus = 0;
+        lastText = String(error?.message || error);
+        console.error('Gemini fetch error:', model, lastText);
+      } finally {
+        clearTimeout(timer);
       }
-
-      console.error('Gemini API error:', model, lastStatus, lastText);
-
-      if (!isGeminiModelUnavailable(lastStatus, lastText) && lastStatus !== 400) {
-        break;
-      }
-    } catch (error) {
-      lastStatus = 0;
-      lastText = String(error?.message || error);
-      console.error('Gemini fetch error:', model, lastText);
-    } finally {
-      clearTimeout(timer);
     }
   }
 

@@ -21,7 +21,9 @@ declare
   v_can_pastoral boolean := false;
   v_igreja jsonb;
   v_pessoas jsonb;
-  v_eventos jsonb := '[]'::jsonb;
+  v_eventos jsonb;
+  v_eventos_recentes jsonb := '[]'::jsonb;
+  v_eventos_proximos jsonb := '[]'::jsonb;
   v_grupos jsonb := '[]'::jsonb;
   v_financas jsonb;
   v_pastoral jsonb;
@@ -54,8 +56,11 @@ begin
     and not public.is_super_admin_profile(p_actor_profile_id);
 
   v_can_finance :=
-    public.session_has_resource_access('table', 'financials', 'view')
-    or public.session_has_screen_access('maintenance.card.financials', 'view');
+    public.is_super_admin_profile(p_actor_profile_id)
+    or public.profile_has_role_code(p_actor_profile_id, 'tesoureiro')
+    or public.session_has_resource_access('table', 'financials', 'view')
+    or public.session_has_screen_access('maintenance.card.financials', 'view')
+    or public.session_has_screen_access('/financial', 'view');
 
   v_can_pastoral :=
     public.profile_has_role_code(p_actor_profile_id, 'pastoral')
@@ -78,75 +83,113 @@ begin
     raise exception 'Igreja da sessão não encontrada.';
   end if;
 
-  select jsonb_build_object(
-    'membros_ativos', count(*) filter (where papel = 'member'),
-    'congregados_ativos', count(*) filter (where papel = 'congregado'),
-    'visitantes', count(*) filter (where papel = 'visitante'),
-    'outros', count(*) filter (where papel is null or papel not in ('member', 'congregado', 'visitante')),
-    'familias', count(distinct nullif(trim(coalesce(family_id, '')), '')),
-    'aniversariantes_mes', count(*) filter (
-      where birth_date is not null
-        and extract(month from birth_date) = extract(month from (now() at time zone 'America/Sao_Paulo'))
-    ),
-    'total_cadastros_visiveis', count(*)
-  )
-    into v_pessoas
-    from (
-      select
-        p.family_id,
-        p.birth_date,
-        public.resolve_basic_role_code_for_profile(p.id) as papel
-        from public.profiles p
-        cross join lateral public.resolve_effective_membership_dates_for_profile(p.id) eff
-       where p.tenant_id = v_tenant
-         and coalesce(
-           nullif(trim(p.full_name), ''),
-           nullif(trim(p.phone), ''),
-           nullif(trim(p.codigo_membro), '')
-         ) is not null
-         and coalesce(eff.membership_out::text, '') = ''
-         and (
-           not v_is_gestor
-           or not public.is_super_admin_profile(p.id)
-         )
-    ) pessoas;
-
   begin
-    select coalesce(
-      jsonb_agg(
-        jsonb_build_object(
-          'nome', ev.name,
-          'data', to_char(ev.event_date at time zone 'America/Sao_Paulo', 'YYYY-MM-DD HH24:MI'),
-          'local', nullif(trim(coalesce(ev.event_local, '')), ''),
-          'inscritos', ev.inscritos
-        )
-        order by ev.event_date
+    select jsonb_build_object(
+      'membros_ativos', count(*) filter (where papel = 'member'),
+      'congregados_ativos', count(*) filter (where papel = 'congregado'),
+      'visitantes', count(*) filter (where papel = 'visitante'),
+      'outros', count(*) filter (where papel is null or papel not in ('member', 'congregado', 'visitante')),
+      'familias', count(distinct nullif(trim(coalesce(family_id, '')), '')),
+      'aniversariantes_mes', count(*) filter (
+        where birth_date is not null
+          and extract(month from birth_date) = extract(month from (now() at time zone 'America/Sao_Paulo'))
       ),
-      '[]'::jsonb
+      'total_cadastros_visiveis', count(*)
     )
-      into v_eventos
+      into v_pessoas
       from (
         select
-          e.name,
-          e.event_date,
-          e.event_local,
-          (
-            select count(*)::int
-              from public.event_registrations er
-             where er.event_id = e.id
-               and er.tenant_id = v_tenant
-          ) as inscritos
+          p.family_id,
+          p.birth_date,
+          public.resolve_basic_role_code_for_profile(p.id) as papel
+          from public.profiles p
+         where p.tenant_id = v_tenant
+           and coalesce(
+             nullif(trim(p.full_name), ''),
+             nullif(trim(p.phone), ''),
+             nullif(trim(p.codigo_membro), '')
+           ) is not null
+           and coalesce(p.membership_out::text, '') = ''
+           and (
+             not v_is_gestor
+             or not public.is_super_admin_profile(p.id)
+           )
+      ) pessoas;
+  exception
+    when others then
+      v_pessoas := jsonb_build_object(
+        'total_cadastros_visiveis', (
+          select count(*)::int
+            from public.profiles p
+           where p.tenant_id = v_tenant
+        )
+      );
+  end;
+
+  begin
+    select jsonb_build_object(
+      'na_instancia', count(*)::int,
+      'realizados_90_dias', count(*) filter (
+        where e.event_date >= (now() - interval '90 days') and e.event_date < now()
+      )::int,
+      'proximos_30_dias', count(*) filter (
+        where e.event_date >= now() and e.event_date < (now() + interval '30 days')
+      )::int
+    )
+      into v_eventos
+      from public.events e
+     where e.tenant_id = v_tenant;
+
+    select coalesce(jsonb_agg(ev.item order by ev.sort_date desc), '[]'::jsonb)
+      into v_eventos_recentes
+      from (
+        select
+          e.event_date as sort_date,
+          jsonb_build_object(
+            'nome', e.name,
+            'data', to_char(e.event_date at time zone 'America/Sao_Paulo', 'YYYY-MM-DD HH24:MI'),
+            'local', nullif(trim(coalesce(e.event_local, '')), ''),
+            'inscritos', (
+              select count(*)::int
+                from public.event_registrations er
+               where er.event_id = e.id
+                 and er.tenant_id = v_tenant
+            )
+          ) as item
           from public.events e
          where e.tenant_id = v_tenant
-           and e.event_date >= (now() - interval '1 day')
+           and e.event_date < now()
+         order by e.event_date desc
+         limit 12
+      ) ev;
+
+    select coalesce(jsonb_agg(ev.item order by ev.sort_date), '[]'::jsonb)
+      into v_eventos_proximos
+      from (
+        select
+          e.event_date as sort_date,
+          jsonb_build_object(
+            'nome', e.name,
+            'data', to_char(e.event_date at time zone 'America/Sao_Paulo', 'YYYY-MM-DD HH24:MI'),
+            'local', nullif(trim(coalesce(e.event_local, '')), ''),
+            'inscritos', (
+              select count(*)::int
+                from public.event_registrations er
+               where er.event_id = e.id
+                 and er.tenant_id = v_tenant
+            )
+          ) as item
+          from public.events e
+         where e.tenant_id = v_tenant
+           and e.event_date >= now()
          order by e.event_date
          limit 12
       ) ev;
   exception
-    when undefined_table then
-      v_eventos := '[]'::jsonb;
     when others then
-      v_eventos := '[]'::jsonb;
+      v_eventos := jsonb_build_object('na_instancia', 0, 'realizados_90_dias', 0, 'proximos_30_dias', 0);
+      v_eventos_recentes := '[]'::jsonb;
+      v_eventos_proximos := '[]'::jsonb;
   end;
 
   if to_regclass('public.small_groups') is not null then
@@ -177,46 +220,103 @@ begin
 
   if v_can_finance then
     begin
+      with lanc as (
+        select
+          f.transaction_date,
+          f.amount,
+          f.ministry,
+          upper(translate(trim(f.transaction_kind), 'Íí', 'Ii')) as kind_n,
+          case
+            when upper(translate(trim(f.movement), 'ÁáÉéÍíÓóÚú', 'AaEeIiOoUu')) like '%EXTRAORDIN%'
+              then 'EXTRAORDINARIO'
+            else 'ORDINARIO'
+          end as bloco,
+          case
+            when upper(translate(trim(f.transaction_kind), 'Íí', 'Ii')) like 'ENTRADA%' then f.amount
+            when upper(translate(trim(f.transaction_kind), 'Íí', 'Ii')) like 'SAIDA%' then -abs(f.amount)
+            else f.amount
+          end as signed_amount
+          from public.financials f
+         where f.tenant_id = v_tenant
+           and upper(translate(trim(f.budget_version), 'Íí', 'Ii')) like '%REALIZ%'
+      )
       select jsonb_build_object(
         'disponivel', true,
         'moeda', 'BRL',
+        'resultado_historico', jsonb_build_object(
+          'nome', 'RESULTADO HISTÓRICO',
+          'periodo',
+            'Início das operações · até '
+            || to_char((now() at time zone 'America/Sao_Paulo'), 'MM / YYYY'),
+          'primeiro_lancamento', (select min(l.transaction_date) from lanc l),
+          'ultimo_lancamento', (select max(l.transaction_date) from lanc l),
+          'quantidade_lancamentos', (select count(*)::int from lanc l),
+          'saldo_inicial', 0,
+          'saldo_atual', (select round(coalesce(sum(l.signed_amount), 0), 2) from lanc l),
+          'ordinario', jsonb_build_object(
+            'receitas', (
+              select round(coalesce(sum(l.amount), 0), 2)
+                from lanc l
+               where l.bloco = 'ORDINARIO' and l.kind_n like 'ENTRADA%'
+            ),
+            'despesas', (
+              select round(coalesce(sum(l.signed_amount), 0), 2)
+                from lanc l
+               where l.bloco = 'ORDINARIO' and l.kind_n like 'SAIDA%'
+            ),
+            'entre_contas', (
+              select round(coalesce(sum(l.signed_amount), 0), 2)
+                from lanc l
+               where l.bloco = 'ORDINARIO' and l.kind_n like '%ENTRE CONTAS%'
+            ),
+            'resultado', (
+              select round(coalesce(sum(l.signed_amount), 0), 2)
+                from lanc l
+               where l.bloco = 'ORDINARIO'
+            )
+          ),
+          'extraordinario', jsonb_build_object(
+            'receitas', (
+              select round(coalesce(sum(l.amount), 0), 2)
+                from lanc l
+               where l.bloco = 'EXTRAORDINARIO' and l.kind_n like 'ENTRADA%'
+            ),
+            'despesas', (
+              select round(coalesce(sum(l.signed_amount), 0), 2)
+                from lanc l
+               where l.bloco = 'EXTRAORDINARIO' and l.kind_n like 'SAIDA%'
+            ),
+            'entre_contas', (
+              select round(coalesce(sum(l.signed_amount), 0), 2)
+                from lanc l
+               where l.bloco = 'EXTRAORDINARIO' and l.kind_n like '%ENTRE CONTAS%'
+            ),
+            'resultado', (
+              select round(coalesce(sum(l.signed_amount), 0), 2)
+                from lanc l
+               where l.bloco = 'EXTRAORDINARIO'
+            )
+          )
+        ),
         'meses_realizado', coalesce(
           (
             select jsonb_agg(
               jsonb_build_object(
                 'mes', fin.mes,
                 'entradas', fin.entradas,
-                'saidas', fin.saidas
+                'saidas', fin.saidas,
+                'resultado', fin.resultado
               )
               order by fin.mes
             )
               from (
                 select
-                  to_char(date_trunc('month', f.transaction_date), 'YYYY-MM') as mes,
-                  round(
-                    sum(
-                      case
-                        when upper(translate(f.transaction_kind, 'Íí', 'Ii')) like 'ENTRADA%'
-                          then f.amount
-                        else 0
-                      end
-                    ),
-                    2
-                  ) as entradas,
-                  round(
-                    sum(
-                      case
-                        when upper(translate(f.transaction_kind, 'Íí', 'Ii')) like 'SAIDA%'
-                          then f.amount
-                        else 0
-                      end
-                    ),
-                    2
-                  ) as saidas
-                  from public.financials f
-                 where f.tenant_id = v_tenant
-                   and upper(translate(trim(f.budget_version), 'Íí', 'Ii')) like '%REALIZ%'
-                   and f.transaction_date >= ((now() at time zone 'America/Sao_Paulo')::date - 365)
+                  to_char(date_trunc('month', l.transaction_date), 'YYYY-MM') as mes,
+                  round(coalesce(sum(l.amount) filter (where l.kind_n like 'ENTRADA%'), 0), 2) as entradas,
+                  round(coalesce(sum(l.signed_amount) filter (where l.kind_n like 'SAIDA%'), 0), 2) as saidas,
+                  round(coalesce(sum(l.signed_amount), 0), 2) as resultado
+                  from lanc l
+                 where l.transaction_date >= ((now() at time zone 'America/Sao_Paulo')::date - 365)
                  group by 1
                  order by 1
               ) fin
@@ -301,7 +401,15 @@ begin
       'papeis', public.profile_role_names_csv(p_actor_profile_id)
     ),
     'pessoas', coalesce(v_pessoas, jsonb_build_object()),
-    'proximos_eventos', coalesce(v_eventos, '[]'::jsonb),
+    'eventos', jsonb_build_object(
+      'totais', coalesce(
+        v_eventos,
+        jsonb_build_object('na_instancia', 0, 'realizados_90_dias', 0, 'proximos_30_dias', 0)
+      ),
+      'recentes', coalesce(v_eventos_recentes, '[]'::jsonb),
+      'proximos', coalesce(v_eventos_proximos, '[]'::jsonb)
+    ),
+    'proximos_eventos', coalesce(v_eventos_proximos, '[]'::jsonb),
     'pequenos_grupos', coalesce(v_grupos, '[]'::jsonb),
     'financas', v_financas,
     'relatorios_despesa', v_despesas,
