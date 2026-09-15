@@ -27,12 +27,54 @@ const DEFAULT_SUPABASE_URL = 'https://bldbrsuiwctoaxzcrjoc.supabase.co';
 const DEFAULT_SUPABASE_ANON_KEY =
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJsZGJyc3Vpd2N0b2F4emNyam9jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0NTgyMTQsImV4cCI6MjA5NTAzNDIxNH0.q2ME_1_Qatxfc6Aas02H7A6y6dUpk4BsNQyDIeQYVgU';
 
-const getSupabaseUrl = (env) => env.SUPABASE_URL?.trim() || DEFAULT_SUPABASE_URL;
+const isUsableSupabaseUrl = (value) => {
+  const base = String(value || '').trim().replace(/\/$/, '');
+  if (!base.startsWith('https://') || /\s/.test(base)) {
+    return false;
+  }
 
-const getSupabaseAnonKey = (env) =>
-  env.SUPABASE_ANON_KEY?.trim() ||
-  env.EXPO_PUBLIC_SUPABASE_ANON_KEY?.trim() ||
-  DEFAULT_SUPABASE_ANON_KEY;
+  try {
+    const parsed = new URL(base);
+    return parsed.protocol === 'https:' && Boolean(parsed.hostname);
+  } catch {
+    return false;
+  }
+};
+
+const isUsableSupabaseKey = (value) => {
+  const key = String(value || '').trim();
+  return key.startsWith('eyJ') && key.length > 80;
+};
+
+const getSupabaseUrl = (env) => {
+  const candidates = [env?.SUPABASE_URL, env?.EXPO_PUBLIC_SUPABASE_URL, DEFAULT_SUPABASE_URL];
+
+  for (const raw of candidates) {
+    const base = String(raw || '').trim().replace(/\/$/, '');
+    if (isUsableSupabaseUrl(base)) {
+      return base;
+    }
+  }
+
+  return DEFAULT_SUPABASE_URL;
+};
+
+const getSupabaseKey = (env) => {
+  const candidates = [
+    env?.SUPABASE_SERVICE_ROLE_KEY,
+    env?.SUPABASE_ANON_KEY,
+    env?.EXPO_PUBLIC_SUPABASE_ANON_KEY,
+    DEFAULT_SUPABASE_ANON_KEY,
+  ];
+
+  for (const raw of candidates) {
+    if (isUsableSupabaseKey(raw)) {
+      return String(raw).trim();
+    }
+  }
+
+  return DEFAULT_SUPABASE_ANON_KEY;
+};
 
 const copyIdentityHeaders = (request) => {
   const headers = {};
@@ -55,18 +97,25 @@ const copyIdentityHeaders = (request) => {
 
 const supabaseRpc = async (env, functionName, payload, request) => {
   const supabaseUrl = getSupabaseUrl(env);
-  const anonKey = getSupabaseAnonKey(env);
+  const supabaseKey = getSupabaseKey(env);
 
-  const response = await fetch(`${supabaseUrl}/rest/v1/rpc/${functionName}`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      apikey: anonKey,
-      Authorization: `Bearer ${anonKey}`,
-      ...(request ? copyIdentityHeaders(request) : {}),
-    },
-    body: JSON.stringify(payload),
-  });
+  let response;
+
+  try {
+    response = await fetch(`${supabaseUrl}/rest/v1/rpc/${functionName}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+        apikey: supabaseKey,
+        Authorization: `Bearer ${supabaseKey}`,
+        ...(request ? copyIdentityHeaders(request) : {}),
+      },
+      body: JSON.stringify(payload),
+    });
+  } catch (error) {
+    throw new Error(`${functionName}: network ${error?.message || error}`);
+  }
 
   if (!response.ok) {
     const errorText = await response.text();
@@ -115,15 +164,19 @@ const authenticateAiLeadership = async (request, env) => {
     '';
 
   if (ghostProfileId && ghostProfileId !== realProfileId) {
-    const canGhost = await supabaseRpc(
-      env,
-      'can_operate_ghost_mode',
-      { p_profile_id: realProfileId },
-      request
-    );
+    try {
+      const canGhost = await supabaseRpc(
+        env,
+        'can_operate_ghost_mode',
+        { p_profile_id: realProfileId },
+        request
+      );
 
-    if (canGhost === true) {
-      actorProfileId = ghostProfileId;
+      if (canGhost === true) {
+        actorProfileId = ghostProfileId;
+      }
+    } catch (error) {
+      console.error('can_operate_ghost_mode', error);
     }
   }
 
@@ -161,8 +214,35 @@ const authenticateAiLeadership = async (request, env) => {
 const resolveGeminiApiKey = async (env, auth) => {
   const fromEnv = env.GEMINI_API_KEY?.trim();
 
-  if (fromEnv) {
+  if (fromEnv && fromEnv.startsWith('AIza')) {
     return fromEnv;
+  }
+
+  const supabaseUrl = getSupabaseUrl(env);
+  const supabaseKey = getSupabaseKey(env);
+
+  try {
+    const configResponse = await fetch(
+      `${supabaseUrl}/rest/v1/ai_server_config?config_key=eq.gemini_api_key&select=config_value`,
+      {
+        headers: {
+          apikey: supabaseKey,
+          Authorization: `Bearer ${supabaseKey}`,
+          Accept: 'application/json',
+        },
+      }
+    );
+
+    if (configResponse.ok) {
+      const rows = await configResponse.json();
+      const fromTable = Array.isArray(rows) ? String(rows[0]?.config_value ?? '').trim() : '';
+
+      if (fromTable) {
+        return fromTable;
+      }
+    }
+  } catch (error) {
+    console.error('ai_server_config', error);
   }
 
   const fromDatabase = await supabaseRpc(
@@ -176,7 +256,7 @@ const resolveGeminiApiKey = async (env, auth) => {
     return fromDatabase.trim();
   }
 
-  return null;
+  return fromEnv || null;
 };
 
 const buildGeminiContents = (question, history) => {
@@ -219,8 +299,9 @@ const handlePost = async (request, env) => {
     auth = await authenticateAiLeadership(request, env);
   } catch (error) {
     console.error('auth error', error);
+    const detail = String(error?.message ?? error);
 
-    if (String(error).includes('missing_env:')) {
+    if (detail.includes('missing_env:')) {
       return jsonResponse(
         {
           error:
@@ -230,7 +311,34 @@ const handlePost = async (request, env) => {
       );
     }
 
-    return jsonResponse({ error: 'Erro de autenticação do assistente.' }, 500);
+    if (detail.includes('network')) {
+      return jsonResponse(
+        {
+          error:
+            'Não foi possível validar a sessão no servidor. Confira SUPABASE_URL no Cloudflare Pages.',
+        },
+        503
+      );
+    }
+
+    if (detail.includes('resolve_profile_session_token')) {
+      return jsonResponse(
+        { error: 'Sessão inválida. Saia e entre novamente no aplicativo.' },
+        401
+      );
+    }
+
+    if (detail.includes('profile_is_leadership')) {
+      return jsonResponse(
+        { error: 'Não foi possível confirmar o papel de liderança. Tente sair e entrar novamente.' },
+        503
+      );
+    }
+
+    return jsonResponse(
+      { error: 'Não foi possível autenticar o assistente. Saia e entre novamente.' },
+      401
+    );
   }
 
   if (!auth.ok) {

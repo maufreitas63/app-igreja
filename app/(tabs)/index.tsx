@@ -1,3 +1,4 @@
+import { LeadershipAiFab } from '@/components/LeadershipAiFab';
 import { MinimalMainPanel } from '@/components/minimal/MinimalMainPanel';
 import { MinimalEuQueroFooter } from '@/components/minimal/MinimalEuQueroFooter';
 import { MinimalScreenLayout } from '@/components/minimal/MinimalScreenLayout';
@@ -12,6 +13,7 @@ export default function DashboardIndexScreen() {
     <MinimalScreenLayout
       scroll={false}
       showGreeting
+      overlay={<LeadershipAiFab />}
       footer={
         <View style={styles.homeFooter}>
           <MinimalEuQueroFooter />

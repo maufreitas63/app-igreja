@@ -18,6 +18,8 @@ type Props = {
   contentContainerStyle?: ViewStyle;
   /** Quando false, o conteúdo ocupa flex:1 sem ScrollView (telas com listas internas). */
   scroll?: boolean;
+  /** Overlay absoluto na área principal (acima do rodapé), ex.: FAB. */
+  overlay?: React.ReactNode;
 };
 
 function MinimalScreenLayoutBody({
@@ -29,6 +31,7 @@ function MinimalScreenLayoutBody({
   contentContainerStyle,
   scroll = true,
   showGreeting = false,
+  overlay,
 }: Props) {
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
@@ -39,18 +42,25 @@ function MinimalScreenLayoutBody({
         <View style={styles.body}>
           {fixedTop ? <View style={styles.fixedTop}>{fixedTop}</View> : null}
 
-          {scroll ? (
-            <ScrollView
-              style={styles.main}
-              contentContainerStyle={[styles.scrollContent, contentContainerStyle]}
-              keyboardShouldPersistTaps="handled"
-              showsVerticalScrollIndicator
-            >
-              {children}
-            </ScrollView>
-          ) : (
-            <View style={[styles.main, styles.flexContent, contentContainerStyle]}>{children}</View>
-          )}
+          <View style={styles.mainColumn}>
+            {scroll ? (
+              <ScrollView
+                style={styles.main}
+                contentContainerStyle={[styles.scrollContent, contentContainerStyle]}
+                keyboardShouldPersistTaps="handled"
+                showsVerticalScrollIndicator
+              >
+                {children}
+              </ScrollView>
+            ) : (
+              <View style={[styles.main, styles.flexContent, contentContainerStyle]}>{children}</View>
+            )}
+            {overlay ? (
+              <View pointerEvents="box-none" style={styles.overlay}>
+                {overlay}
+              </View>
+            ) : null}
+          </View>
 
           {footer ? <View style={styles.footer}>{footer}</View> : null}
         </View>
@@ -102,6 +112,18 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: '100%',
     minWidth: 0,
+  },
+  mainColumn: {
+    flex: 1,
+    minHeight: 0,
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
+    position: 'relative',
+  },
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 40,
   },
   main: {
     flex: 1,
