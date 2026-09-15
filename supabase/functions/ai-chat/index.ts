@@ -5,13 +5,50 @@ import {
   createServiceSupabaseClient,
 } from '../_shared/sessionAuth.ts';
 
-const SYSTEM_PROMPT = [
+const BASE_SYSTEM_PROMPT = [
   'Você é o Assistente de Gestão da Igreja.',
   'Tom: profissional, acolhedor e focado na gestão eclesiástica.',
-  'Ajude com planejamento, comunicação, organização de eventos, cuidado pastoral (sem substituir aconselhamento profissional), finanças em nível conceitual e boas práticas de liderança.',
-  'Não invente dados internos da igreja; se faltar contexto, peça esclarecimentos.',
+  'Ajude com planejamento, comunicação, organização de eventos, cuidado pastoral (sem substituir aconselhamento profissional), finanças da instância (quando o JSON trouxer) e boas práticas de liderança.',
   'Responda em português do Brasil, de forma clara e objetiva.',
 ].join('\n');
+
+const ISOLATION_PROMPT = [
+  'ISOLAMENTO OBRIGATÓRIO (não negociável):',
+  '- Use SOMENTE o JSON contexto_da_instancia. Ele já está limitado à igreja da sessão atual.',
+  '- É proibido usar, inferir, comparar ou pedir dados de outra igreja, tenant ou instância.',
+  '- É proibido inventar números, nomes, totais ou eventos que não estejam no JSON.',
+  '- É proibido instruir exportação, cópia, e-mail, planilha ou envio desses dados para fora do aplicativo.',
+  '- Não revele IDs internos, tokens, chaves de API, PINs, senhas, chaves PIX ou senha de totem.',
+  '- Cuidado pastoral: apenas totais, se existirem; nunca conteúdo, motivo, telefone ou identidade.',
+  '- Se o dado não estiver no JSON, diga que essa informação não está disponível nesta instância.',
+].join('\n');
+
+const MAX_CONTEXT_CHARS = 14_000;
+
+const buildSystemPrompt = (snapshot: Record<string, unknown> | null) => {
+  const parts = [BASE_SYSTEM_PROMPT, ISOLATION_PROMPT];
+
+  if (snapshot) {
+    let serialized = JSON.stringify(snapshot);
+
+    if (serialized.length > MAX_CONTEXT_CHARS) {
+      serialized = JSON.stringify({
+        isolamento: snapshot.isolamento,
+        igreja: snapshot.igreja,
+        pessoas: snapshot.pessoas,
+        aviso: 'Contexto reduzido por tamanho; não invente o que foi omitido.',
+      });
+    }
+
+    parts.push(`contexto_da_instancia (confidencial, só esta igreja):\n${serialized}`);
+  } else {
+    parts.push(
+      'Não há snapshot da instância disponível nesta consulta. Não invente dados internos da igreja.'
+    );
+  }
+
+  return parts.join('\n\n');
+};
 
 const GEMINI_MODELS = [
   'gemini-3.6-flash',
@@ -113,9 +150,14 @@ const describeGeminiError = (status: number, errorText: string) => {
   return 'Falha ao consultar o modelo de IA.';
 };
 
-const fetchGeminiText = async (apiKey: string, question: string, history: ChatHistoryItem[]) => {
+const fetchGeminiText = async (
+  apiKey: string,
+  question: string,
+  history: ChatHistoryItem[],
+  systemPrompt: string
+) => {
   const body = JSON.stringify({
-    systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
+    systemInstruction: { parts: [{ text: systemPrompt || BASE_SYSTEM_PROMPT }] },
     contents: buildGeminiContents(question, history),
     generationConfig: {
       temperature: 0.6,
@@ -192,7 +234,7 @@ serve(async (req) => {
   }
 
   try {
-    const supabase = createServiceSupabaseClient();
+    const supabase = createServiceSupabaseClient(req);
     const auth = await authenticateAiLeadershipRequest(req, supabase);
 
     if (!auth.ok) {
@@ -237,6 +279,25 @@ serve(async (req) => {
 
     const history = Array.isArray(body.history) ? body.history : [];
 
+    let instanceContext: Record<string, unknown> | null = null;
+
+    try {
+      const { data: snapshot, error: snapshotError } = await supabase.rpc(
+        'obter_contexto_ia_lideranca',
+        { p_actor_profile_id: auth.profileId }
+      );
+
+      if (snapshotError) {
+        console.error('obter_contexto_ia_lideranca:', snapshotError.message);
+      } else if (snapshot && typeof snapshot === 'object' && !Array.isArray(snapshot)) {
+        instanceContext = snapshot as Record<string, unknown>;
+      }
+    } catch (error) {
+      console.error('obter_contexto_ia_lideranca:', error);
+    }
+
+    const systemPrompt = buildSystemPrompt(instanceContext);
+
     const stream = new ReadableStream<Uint8Array>({
       async start(controller) {
         const encoder = new TextEncoder();
@@ -247,7 +308,7 @@ serve(async (req) => {
         };
 
         try {
-          const gemini = await fetchGeminiText(geminiApiKey, question, history);
+          const gemini = await fetchGeminiText(geminiApiKey, question, history, systemPrompt);
 
           if (!gemini.ok) {
             pushEvent({ error: describeGeminiError(gemini.status, gemini.errorText) });

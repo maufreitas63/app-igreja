@@ -15,7 +15,26 @@ export type SessionAuthResult =
 
 const unauthorizedMessage = 'nao autorizado para esta funçao';
 
-export const createServiceSupabaseClient = () => {
+export const copyIdentityHeadersFromRequest = (req: Request): Record<string, string> => {
+  const headers: Record<string, string> = {};
+  const names = ['x-session-token', 'x-profile-id', 'x-ghost-profile-id', 'x-tenant-id'] as const;
+
+  for (const name of names) {
+    const mixed = name
+      .split('-')
+      .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+      .join('-');
+    const value = req.headers.get(name)?.trim() || req.headers.get(mixed)?.trim() || '';
+
+    if (value) {
+      headers[name] = value;
+    }
+  }
+
+  return headers;
+};
+
+export const createServiceSupabaseClient = (req?: Request) => {
   const supabaseUrl = Deno.env.get('SUPABASE_URL')?.trim();
   const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')?.trim();
 
@@ -27,6 +46,9 @@ export const createServiceSupabaseClient = () => {
     auth: {
       persistSession: false,
       autoRefreshToken: false,
+    },
+    global: {
+      headers: req ? copyIdentityHeadersFromRequest(req) : {},
     },
   });
 };
