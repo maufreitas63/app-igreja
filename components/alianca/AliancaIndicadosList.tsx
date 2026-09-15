@@ -1,10 +1,11 @@
-import { listAliancaPartnerLeads, setAliancaPartnerLeadStage } from '@/lib/alianca/aliancaApi';
+import { deleteAliancaPartnerLead, listAliancaPartnerLeads, setAliancaPartnerLeadStage } from '@/lib/alianca/aliancaApi';
 import {
   ALIANCA_PARTNER_LEAD_STAGES,
   aliancaPartnerLeadStageByCode,
   aliancaPartnerLeadSubStage,
 } from '@/lib/alianca/partnerLeadStages';
 import type { AliancaPartnerLead } from '@/lib/alianca/types';
+import { requestConfirmDialog } from '@/lib/confirmDialogHost';
 import { formatPhoneDisplay } from '@/lib/familyRegistration';
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
 import React, { useCallback, useEffect, useState } from 'react';
@@ -50,8 +51,8 @@ export function AliancaIndicadosList() {
   }, [load]);
 
   const handleProgress = async (lead: AliancaPartnerLead, stage: string, subStage: number) => {
-    const nextSub = aliancaPartnerLeadSubStage(subStage);
-    if (lead.stage === stage && aliancaPartnerLeadSubStage(lead.subStage) === nextSub) {
+    const nextSub = aliancaPartnerLeadSubStage(subStage, stage);
+    if (lead.stage === stage && aliancaPartnerLeadSubStage(lead.subStage, lead.stage) === nextSub) {
       return;
     }
     setBusyId(lead.id);
@@ -68,6 +69,35 @@ export function AliancaIndicadosList() {
             item.id === lead.id ? { ...item, stage, subStage: nextSub } : item
           )
         );
+      }
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const handleDelete = async (lead: AliancaPartnerLead) => {
+    const confirmed = await requestConfirmDialog({
+      title: 'Excluir indicado',
+      message: `Excluir ${lead.indicatedName} da lista de indicados? Esta ação não pode ser desfeita.`,
+      confirmLabel: 'Excluir',
+      cancelLabel: 'Cancelar',
+      destructive: true,
+    });
+
+    if (!confirmed) {
+      return;
+    }
+
+    setBusyId(lead.id);
+    try {
+      const result = await deleteAliancaPartnerLead(lead.id);
+      Toast.show({
+        type: result.success ? 'success' : 'error',
+        text1: 'Indicados',
+        text2: result.message,
+      });
+      if (result.success) {
+        setLeads((current) => current.filter((item) => item.id !== lead.id));
       }
     } finally {
       setBusyId(null);
@@ -94,12 +124,29 @@ export function AliancaIndicadosList() {
     <View style={styles.list}>
       {leads.map((lead) => {
         const current = aliancaPartnerLeadStageByCode(lead.stage);
-        const currentSub = aliancaPartnerLeadSubStage(lead.subStage);
+        const currentSub = aliancaPartnerLeadSubStage(lead.subStage, lead.stage);
         const instance = [lead.instanceCode, lead.instanceName].filter(Boolean).join(' · ');
         const currentActivity = current.activities.find((item) => item.number === currentSub);
         return (
           <View key={lead.id} style={styles.card}>
-            <Text style={styles.name}>{lead.indicatedName}</Text>
+            <View style={styles.cardHeader}>
+              <Text style={styles.name}>{lead.indicatedName}</Text>
+              <Pressable
+                onPress={() => void handleDelete(lead)}
+                disabled={busyId === lead.id}
+                accessibilityRole="button"
+                accessibilityLabel={`Excluir indicado ${lead.indicatedName}`}
+                style={({ pressed }) => [
+                  styles.deleteButton,
+                  busyId === lead.id && styles.deleteButtonDisabled,
+                  pressed && styles.deleteButtonPressed,
+                ]}
+              >
+                <Text style={styles.deleteButtonText}>
+                  {busyId === lead.id ? 'Aguarde...' : 'Excluir'}
+                </Text>
+              </Pressable>
+            </View>
             <Text style={styles.meta}>Posição: {lead.indicatedRole || '—'}</Text>
             <Text style={styles.meta}>Celular: {formatPhoneDisplay(lead.indicatedPhone)}</Text>
             <Text style={styles.meta}>Quem indicou: {lead.referrerName || '—'}</Text>
@@ -145,6 +192,7 @@ export function AliancaIndicadosList() {
                         {stage.activities.map((item) => {
                           const itemActive = item.number === currentSub;
                           const code = `${stage.number}.${item.number}`;
+                          const isLostDeal = stage.number === 5 && item.number === 4;
                           return (
                             <Pressable
                               key={code}
@@ -152,7 +200,12 @@ export function AliancaIndicadosList() {
                               disabled={busyId === lead.id}
                               accessibilityRole="button"
                               accessibilityLabel={`Definir atividade ${code} ${item.title}`}
-                              style={[styles.activity, itemActive && styles.activityActive]}
+                              style={[
+                                styles.activity,
+                                itemActive && styles.activityActive,
+                                isLostDeal && !itemActive && styles.activityLost,
+                                isLostDeal && itemActive && styles.activityLostActive,
+                              ]}
                             >
                               <Text
                                 style={[styles.activityCode, itemActive && styles.activityCodeActive]}
@@ -218,10 +271,36 @@ const styles = StyleSheet.create({
     gap: 4,
     backgroundColor: '#FFFFFF',
   },
+  cardHeader: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: 8,
+  },
   name: {
+    flex: 1,
+    minWidth: 0,
     color: MINIMAL_UI.blueDark,
     fontSize: 16,
     fontWeight: '800',
+  },
+  deleteButton: {
+    borderWidth: 1,
+    borderColor: MINIMAL_UI.border,
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  deleteButtonPressed: {
+    opacity: 0.7,
+  },
+  deleteButtonDisabled: {
+    opacity: 0.5,
+  },
+  deleteButtonText: {
+    color: MINIMAL_UI.blueDark,
+    fontSize: 12,
+    fontWeight: '700',
   },
   meta: {
     color: MINIMAL_UI.textMuted,
@@ -307,6 +386,13 @@ const styles = StyleSheet.create({
   activityActive: {
     backgroundColor: MINIMAL_UI.accent,
     borderColor: MINIMAL_UI.accent,
+  },
+  activityLost: {
+    borderColor: '#B45309',
+  },
+  activityLostActive: {
+    backgroundColor: '#B45309',
+    borderColor: '#B45309',
   },
   activityCode: {
     minWidth: 24,

@@ -133,6 +133,12 @@ export const ALIANCA_PARTNER_LEAD_STAGES = [
         activity:
           'Alinhar formas de pagamento via Stripe, prazos de implantação e customizações necessárias no painel administrativo.',
       },
+      {
+        number: 4,
+        title: 'Encerramento da negociação por negócio não concluído',
+        activity:
+          'Registrar o encerramento da tratativa quando a instituição não concluiu o negócio e não avançará para o fechamento.',
+      },
     ],
   },
   {
@@ -175,8 +181,16 @@ export function aliancaPartnerLeadStageByCode(code: string | null | undefined) {
   );
 }
 
-export function aliancaPartnerLeadSubStage(value: number | null | undefined) {
+export function aliancaPartnerLeadMaxSubStage(stageCode: string | null | undefined) {
+  return aliancaPartnerLeadStageByCode(stageCode).code === 'negociacao' ? 4 : 3;
+}
+
+export function aliancaPartnerLeadSubStage(
+  value: number | null | undefined,
+  stageCode?: string | null
+) {
   const n = Number(value);
-  if (n === 2 || n === 3) return n;
+  const max = aliancaPartnerLeadMaxSubStage(stageCode);
+  if (Number.isInteger(n) && n >= 1 && n <= max) return n;
   return 1;
 }

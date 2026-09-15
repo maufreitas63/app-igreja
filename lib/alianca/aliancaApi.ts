@@ -198,7 +198,8 @@ function mapPartnerLead(raw: unknown): AliancaPartnerLead | null {
     indicatedPhone: asText(row.indicated_phone),
     stage: asText(row.stage) || 'primeiro_contato',
     subStage: aliancaPartnerLeadSubStage(
-      typeof row.sub_stage === 'number' ? row.sub_stage : Number(row.sub_stage ?? row.subStage)
+      typeof row.sub_stage === 'number' ? row.sub_stage : Number(row.sub_stage ?? row.subStage),
+      asText(row.stage) || 'primeiro_contato'
     ),
     referrerName: asText(row.referrer_name),
     instanceCode: asText(row.instance_code),
@@ -267,7 +268,7 @@ export async function setAliancaPartnerLeadStage(
   const { data, error } = await supabase.rpc('set_alianca_partner_lead_stage', {
     p_lead_id: leadId,
     p_stage: stage,
-    p_sub_stage: aliancaPartnerLeadSubStage(subStage),
+    p_sub_stage: aliancaPartnerLeadSubStage(subStage, stage),
   });
   if (error) {
     if (isSupabaseRpcMissingError(error, 'set_alianca_partner_lead_stage')) {
@@ -279,5 +280,24 @@ export async function setAliancaPartnerLeadStage(
   return {
     success: row.success === true,
     message: asText(row.message) || (row.success === true ? 'Etapa atualizada.' : 'Falha.'),
+  };
+}
+
+export async function deleteAliancaPartnerLead(
+  leadId: string
+): Promise<{ success: boolean; message: string }> {
+  const { data, error } = await supabase.rpc('delete_alianca_partner_lead', {
+    p_lead_id: leadId,
+  });
+  if (error) {
+    if (isSupabaseRpcMissingError(error, 'delete_alianca_partner_lead')) {
+      return { success: false, message: MISSING_SQL };
+    }
+    return { success: false, message: error.message || 'Falha ao excluir o indicado.' };
+  }
+  const row = asRecord(data) || {};
+  return {
+    success: row.success === true,
+    message: asText(row.message) || (row.success === true ? 'Indicado excluído.' : 'Falha.'),
   };
 }

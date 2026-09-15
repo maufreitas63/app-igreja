@@ -35,7 +35,7 @@ export default function AliancaIndicadosScreen() {
           />
           <Text style={styles.hint}>
             O indicado já entrou no funil. Avance da abordagem ao fechamento e marque a atividade
-            em curso (1.1 a 6.3).
+            em curso (1.1 a 6.3). Use 5.4 para encerrar a negociação por negócio não concluído.
           </Text>
           <AliancaIndicadosList />
         </View>

@@ -25,7 +25,7 @@ create table if not exists public.alianca_partner_leads (
       'fechamento'
     )
   ),
-  constraint alianca_partner_leads_sub_stage_chk check (sub_stage between 1 and 3),
+  constraint alianca_partner_leads_sub_stage_chk check (sub_stage between 1 and 4),
   constraint alianca_partner_leads_name_chk check (length(btrim(indicated_name)) >= 2),
   constraint alianca_partner_leads_role_chk check (length(btrim(indicated_role)) >= 2),
   constraint alianca_partner_leads_phone_chk check (length(indicated_phone) between 10 and 15),
@@ -68,7 +68,7 @@ alter table public.alianca_partner_leads
   drop constraint if exists alianca_partner_leads_sub_stage_chk;
 
 alter table public.alianca_partner_leads
-  add constraint alianca_partner_leads_sub_stage_chk check (sub_stage between 1 and 3);
+  add constraint alianca_partner_leads_sub_stage_chk check (sub_stage between 1 and 4);
 
 alter table public.alianca_partner_leads
   alter column stage set default 'primeiro_contato';
@@ -266,7 +266,11 @@ begin
   ) then
     return jsonb_build_object('success', false, 'message', 'Etapa comercial inválida.');
   end if;
-  if v_sub not between 1 and 3 then
+  if v_stage = 'negociacao' then
+    if v_sub not between 1 and 4 then
+      return jsonb_build_object('success', false, 'message', 'Atividade da etapa inválida.');
+    end if;
+  elsif v_sub not between 1 and 3 then
     return jsonb_build_object('success', false, 'message', 'Atividade da etapa inválida.');
   end if;
 
@@ -289,13 +293,46 @@ begin
 end;
 $$;
 
+create or replace function public.delete_alianca_partner_lead(p_lead_id uuid)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+set row_security = off
+as $$
+declare
+  v_actor uuid := public.current_session_profile_id();
+begin
+  if v_actor is null then
+    return jsonb_build_object('success', false, 'message', 'Sessão inválida.');
+  end if;
+  if not public.profile_has_super_admin_role(v_actor) then
+    return jsonb_build_object('success', false, 'message', 'Apenas super administradores.');
+  end if;
+  if p_lead_id is null then
+    return jsonb_build_object('success', false, 'message', 'Indicado não informado.');
+  end if;
+
+  delete from public.alianca_partner_leads
+   where id = p_lead_id;
+
+  if not found then
+    return jsonb_build_object('success', false, 'message', 'Indicado não encontrado.');
+  end if;
+
+  return jsonb_build_object('success', true, 'message', 'Indicado excluído.');
+end;
+$$;
+
 revoke all on function public.submit_alianca_partner_lead(text, text, text) from public, anon, authenticated;
 revoke all on function public.list_alianca_partner_leads() from public, anon, authenticated;
 revoke all on function public.set_alianca_partner_lead_stage(uuid, text, integer) from public, anon, authenticated;
+revoke all on function public.delete_alianca_partner_lead(uuid) from public, anon, authenticated;
 
 grant execute on function public.submit_alianca_partner_lead(text, text, text) to anon, authenticated, service_role;
 grant execute on function public.list_alianca_partner_leads() to anon, authenticated, service_role;
 grant execute on function public.set_alianca_partner_lead_stage(uuid, text, integer) to anon, authenticated, service_role;
+grant execute on function public.delete_alianca_partner_lead(uuid) to anon, authenticated, service_role;
 
 commit;
 
