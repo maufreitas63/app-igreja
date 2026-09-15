@@ -19,6 +19,7 @@ export type MaintenancePanelContent =
   | 'visitor_followup'
   | 'financials'
   | 'predictive_insights'
+  | 'ai_assistant'
   | 'relatorios'
   | 'access_control'
   | 'profile_access_insights'
@@ -75,6 +76,7 @@ export const MAINTENANCE_SHORTCUT_ICONS: Record<
   transferencia_igreja: 'share',
   financials: 'line-chart',
   predictive_insights: 'area-chart',
+  ai_assistant: 'comments',
   relatorios: 'file-text-o',
   profile_cadastro: 'id-card',
   family_reception: 'home',
@@ -105,6 +107,7 @@ export const MAINTENANCE_SHORTCUT_ICON_COLORS: Record<MaintenancePanelContent, s
   transferencia_igreja: '#818CF8',
   financials: '#34D399',
   predictive_insights: '#22D3EE',
+  ai_assistant: '#A78BFA',
   relatorios: '#C084FC',
   profile_cadastro: '#A78BFA',
   family_reception: '#34D399',

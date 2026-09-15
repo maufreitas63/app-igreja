@@ -3,10 +3,20 @@ import { getSessionRequestIdentity } from '@/lib/sessionRequestIdentity';
 
 const FETCH_TIMEOUT_MS = 20_000;
 
+export type SupabaseSessionFetchInit = RequestInit & {
+  /** 0 desliga o timeout interno. Padrão: 20s. */
+  timeoutMs?: number;
+};
+
 /** Envia token de sessão (fase 2), profile-id e tenant ativo. */
-export const supabaseSessionFetch: typeof fetch = async (input, init) => {
+export async function supabaseSessionFetch(
+  input: RequestInfo | URL,
+  init?: SupabaseSessionFetchInit
+): Promise<Response> {
   const identity = await getSessionRequestIdentity();
   const headers = new Headers(init?.headers);
+  const timeoutMs = init?.timeoutMs ?? FETCH_TIMEOUT_MS;
+  const { timeoutMs: _timeoutMs, ...fetchInit } = init ?? {};
 
   if (identity.sessionToken) {
     headers.set('x-session-token', identity.sessionToken);
@@ -27,8 +37,9 @@ export const supabaseSessionFetch: typeof fetch = async (input, init) => {
   }
 
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
-  const parentSignal = init?.signal;
+  const timeout =
+    timeoutMs > 0 ? setTimeout(() => controller.abort(), timeoutMs) : null;
+  const parentSignal = fetchInit.signal;
 
   if (parentSignal) {
     if (parentSignal.aborted) {
@@ -39,8 +50,10 @@ export const supabaseSessionFetch: typeof fetch = async (input, init) => {
   }
 
   try {
-    return await fetch(input, { ...init, headers, signal: controller.signal });
+    return await fetch(input, { ...fetchInit, headers, signal: controller.signal });
   } finally {
-    clearTimeout(timeout);
+    if (timeout) {
+      clearTimeout(timeout);
+    }
   }
-};
+}

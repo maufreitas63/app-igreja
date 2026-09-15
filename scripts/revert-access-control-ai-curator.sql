@@ -8,9 +8,11 @@
 drop function if exists public.listar_ai_audit_logs_admin(uuid, integer);
 drop function if exists public.ia_gemini_esta_configurada_admin(uuid);
 drop function if exists public.salvar_chave_gemini_ia_admin(uuid, text);
+drop function if exists public.obter_chave_gemini_ia_lideranca(uuid);
 drop function if exists public.obter_chave_gemini_ia_curador(uuid);
 drop function if exists public.registrar_auditoria_ia_actor(uuid, text, text);
 drop function if exists public.insert_ai_audit_log(uuid, text, text, text);
+drop function if exists public.profile_is_leadership(uuid);
 drop function if exists public.profile_is_ai_curator(uuid);
 drop function if exists public.assert_ai_audit_logs_admin(uuid);
 drop function if exists public.profile_role_names_csv(uuid);

@@ -20,6 +20,7 @@ import { MaintenanceScaleVolunteersCard } from '@/components/MaintenanceScaleVol
 import { MaintenanceAccessControlCard } from '@/components/MaintenanceAccessControlCard';
 import { MaintenanceFinancialsCard } from '@/components/MaintenanceFinancialsCard';
 import { MaintenancePredictiveInsightsCard } from '@/components/MaintenancePredictiveInsightsCard';
+import { MaintenanceAiAssistantCard } from '@/components/MaintenanceAiAssistantCard';
 import { MaintenanceReportsCard } from '@/components/MaintenanceReportsCard';
 import { MaintenanceSupportSuggestionsCard } from '@/components/MaintenanceSupportSuggestionsCard';
 import { MaintenancePastoralCareCard } from '@/components/MaintenancePastoralCareCard';
@@ -168,6 +169,7 @@ type MaintenanceCarouselCard = {
     | 'visitor_followup'
     | 'financials'
     | 'predictive_insights'
+    | 'ai_assistant'
     | 'relatorios'
     | 'suggestions_improvements'
     | 'access_control'
@@ -198,6 +200,7 @@ const MAINTENANCE_PANEL_CARDS: MaintenanceCarouselCard[] = [
   { id: '22', title: 'Resetar Trilha', content: 'discipleship_reset' },
   { id: '9', title: 'Informações Financeiras', content: 'financials' },
   { id: '16', title: 'Modelo Preditivo', content: 'predictive_insights' },
+  { id: '30', title: 'Assistente IA', content: 'ai_assistant' },
   { id: '17', title: 'Relatórios', content: 'relatorios' },
   { id: '18', title: 'Sugestões e Melhorias', content: 'suggestions_improvements' },
   { id: '4', title: 'Lista de Presença', content: 'quorum_presence' },
@@ -1110,6 +1113,7 @@ export default function MaintenanceDashboard() {
             !isMinimalPresentation && item.content === 'visitor_followup' && styles.panelCardInnerPadding,
             !isMinimalPresentation && item.content === 'financials' && styles.panelCardInnerPadding,
             !isMinimalPresentation && item.content === 'predictive_insights' && styles.panelCardInnerPadding,
+            !isMinimalPresentation && item.content === 'ai_assistant' && styles.panelCardInnerPadding,
             !isMinimalPresentation && item.content === 'relatorios' && styles.panelCardInnerPadding,
             !isMinimalPresentation && item.content === 'suggestions_improvements' && styles.panelCardInnerPadding,
             !isMinimalPresentation && item.content === 'access_control' && styles.panelCardInnerPadding,
@@ -1369,6 +1373,19 @@ export default function MaintenanceDashboard() {
               ]}
             >
               <MaintenancePredictiveInsightsCard
+                isActive
+                panelHeight={cardHeight}
+                minimal={isMinimalPresentation}
+              />
+            </View>
+          ) : item.content === 'ai_assistant' ? (
+            <View
+              style={[
+                styles.predictivePanel,
+                isMinimalPresentation && styles.predictivePanelMinimal,
+              ]}
+            >
+              <MaintenanceAiAssistantCard
                 isActive
                 panelHeight={cardHeight}
                 minimal={isMinimalPresentation}

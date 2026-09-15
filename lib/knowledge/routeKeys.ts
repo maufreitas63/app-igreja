@@ -55,6 +55,7 @@ export const KNOWLEDGE_ROUTE = {
   campaigns: maintenancePanel('campaigns_management'),
   primicias: maintenancePanel('primicias_management'),
   predictive: maintenancePanel('predictive_insights'),
+  aiAssistant: maintenancePanel('ai_assistant'),
   scaleTypes: maintenancePanel('scale_types'),
   scaleVolunteers: maintenancePanel('scale_volunteers'),
   scalesAdmin: maintenancePanel('scales'),

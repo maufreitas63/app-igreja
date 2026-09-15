@@ -72,6 +72,7 @@ export type AppDrawerModuleKey =
   | 'discipleship_reset'
   | 'financials'
   | 'predictive_insights'
+  | 'ai_assistant'
   | 'relatorios'
   | 'suggestions_improvements'
   | 'quorum_presence'
@@ -314,6 +315,13 @@ export const APP_DRAWER_SETTINGS_ITEMS: AppDrawerSettingsItem[] = [
     group: 'financas',
   },
   {
+    letter: 'f4',
+    label: 'Assistente IA',
+    moduleKey: 'ai_assistant',
+    group: 'financas',
+    hint: 'Somente liderança',
+  },
+  {
     letter: 'g1',
     label: 'Temas da Trilha',
     moduleKey: 'discipleship_themes',
@@ -437,6 +445,7 @@ const MAINTENANCE_PANEL_BY_MODULE: Partial<Record<AppDrawerModuleKey, string>> =
   discipleship_reset: 'discipleship_reset',
   financials: 'financials',
   predictive_insights: 'predictive_insights',
+  ai_assistant: 'ai_assistant',
   relatorios: 'relatorios',
   suggestions_improvements: 'suggestions_improvements',
   quorum_presence: 'quorum_presence',
