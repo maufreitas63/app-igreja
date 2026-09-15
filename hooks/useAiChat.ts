@@ -11,6 +11,16 @@ export type AiChatMessage = {
 
 const createMessageId = () => `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
+const QUOTA_COOLDOWN_MS = 5 * 60 * 1000;
+
+const isGeminiQuotaError = (message: string) =>
+  /cota da chave gemini|cota da api gemini|quota|resource_exhausted|excedida/i.test(message);
+
+const remainingCooldownLabel = (untilMs: number) => {
+  const remainingMinutes = Math.max(1, Math.ceil((untilMs - Date.now()) / 60_000));
+  return remainingMinutes === 1 ? '1 minuto' : `${remainingMinutes} minutos`;
+};
+
 const createGreetingMessage = (): AiChatMessage => ({
   id: createMessageId(),
   role: 'assistant',
@@ -24,11 +34,19 @@ export function useAiChat() {
   const [streaming, setStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
+  const quotaUntilRef = useRef(0);
 
   const sendMessage = useCallback(async () => {
     const question = draft.trim();
 
     if (!question || streaming) {
+      return;
+    }
+
+    if (Date.now() < quotaUntilRef.current) {
+      setError(
+        `A cota da chave Gemini ainda está esgotada. Aguarde ${remainingCooldownLabel(quotaUntilRef.current)} e evite reenviar a mesma pergunta.`
+      );
       return;
     }
 
@@ -78,6 +96,10 @@ export function useAiChat() {
         sendError instanceof Error
           ? sendError.message
           : 'Não foi possível falar com a Abigail.';
+
+      if (isGeminiQuotaError(message)) {
+        quotaUntilRef.current = Date.now() + QUOTA_COOLDOWN_MS;
+      }
 
       setError(message);
       setMessages((current) =>

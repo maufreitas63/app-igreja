@@ -28,11 +28,29 @@ const ISOLATION_PROMPT = [
   '- Responda a pergunta por completo, em português do Brasil.',
 ].join('\n');
 
-const MAX_CONTEXT_CHARS = 14_000;
+const MAX_CONTEXT_CHARS = 8_000;
 
 const compactInstanceSnapshot = (snapshot) => {
   if (!snapshot || typeof snapshot !== 'object') {
     return snapshot;
+  }
+
+  const eventos =
+    snapshot.eventos && typeof snapshot.eventos === 'object' ? { ...snapshot.eventos } : null;
+
+  if (eventos) {
+    if (Array.isArray(eventos.recentes)) {
+      eventos.recentes = eventos.recentes.slice(0, 6);
+    }
+    if (Array.isArray(eventos.proximos)) {
+      eventos.proximos = eventos.proximos.slice(0, 6);
+    }
+  }
+
+  let finance = snapshot.financas;
+  if (finance && typeof finance === 'object') {
+    finance = { ...finance };
+    delete finance.meses_realizado;
   }
 
   const payload = {
@@ -40,25 +58,10 @@ const compactInstanceSnapshot = (snapshot) => {
     igreja: snapshot.igreja,
     operador: snapshot.operador,
     pessoas: snapshot.pessoas,
-    financas: snapshot.financas,
-    relatorios_despesa: snapshot.relatorios_despesa,
-    eventos: snapshot.eventos,
-    proximos_eventos: snapshot.proximos_eventos,
-    pequenos_grupos: snapshot.pequenos_grupos,
+    financas: finance,
+    eventos,
     cuidado_pastoral: snapshot.cuidado_pastoral,
   };
-
-  if (JSON.stringify(payload).length <= MAX_CONTEXT_CHARS) {
-    return payload;
-  }
-
-  delete payload.pequenos_grupos;
-
-  if (payload.financas && typeof payload.financas === 'object') {
-    const finance = { ...payload.financas };
-    delete finance.meses_realizado;
-    payload.financas = finance;
-  }
 
   if (JSON.stringify(payload).length <= MAX_CONTEXT_CHARS) {
     return payload;
@@ -68,8 +71,10 @@ const compactInstanceSnapshot = (snapshot) => {
     isolamento: snapshot.isolamento,
     igreja: snapshot.igreja,
     pessoas: snapshot.pessoas,
-    financas: payload.financas,
-    cuidado_pastoral: snapshot.cuidado_pastoral,
+    financas: finance,
+    eventos: eventos
+      ? { totais: eventos.totais, recentes: (eventos.recentes || []).slice(0, 3), proximos: (eventos.proximos || []).slice(0, 3) }
+      : undefined,
   };
 };
 
@@ -88,11 +93,7 @@ const buildSystemPrompt = (snapshot) => {
   return parts.join('\n\n');
 };
 
-const GEMINI_MODELS = [
-  'gemini-3.8-flash',
-  'gemini-flash-latest',
-  'gemini-3.6-flash',
-];
+const GEMINI_MODELS = ['gemini-flash-latest', 'gemini-3.8-flash'];
 
 const jsonResponse = (body, status = 200) =>
   new Response(JSON.stringify(body), {
@@ -341,7 +342,7 @@ const resolveGeminiApiKey = async (env, auth) => {
 const buildGeminiContents = (question, history) => {
   const contents = history
     .filter((item) => item?.content?.trim())
-    .slice(-8)
+    .slice(-4)
     .map((item) => ({
       role: item.role === 'assistant' ? 'model' : 'user',
       parts: [{ text: item.content.trim() }],
@@ -387,7 +388,7 @@ const describeGeminiError = (status, errorText) => {
   }
 
   if (status === 429 || text.includes('quota') || text.includes('resource_exhausted')) {
-    return 'A cota da API Gemini foi excedida. Tente novamente mais tarde.';
+    return 'A cota da chave Gemini acabou por agora. Espere um pouco (no plano gratuito o limite reseta no Google AI Studio) e evite reenviar a mesma pergunta várias vezes.';
   }
 
   if (isGeminiModelUnavailable(status, errorText)) {
@@ -429,87 +430,72 @@ const fetchInstanceContext = async (env, auth) => {
 };
 
 const fetchGeminiText = async (apiKey, question, history, systemPrompt) => {
-  const generationConfig = {
-    temperature: 0.3,
-    maxOutputTokens: 8192,
-    thinkingConfig: {
-      thinkingBudget: 0,
-      thinkingLevel: 'MINIMAL',
-    },
-  };
-
-  const bodyWithThinkingOff = JSON.stringify({
-    systemInstruction: { parts: [{ text: systemPrompt || BASE_SYSTEM_PROMPT }] },
-    contents: buildGeminiContents(question, history),
-    generationConfig,
-  });
-
-  const bodyPlain = JSON.stringify({
+  const body = JSON.stringify({
     systemInstruction: { parts: [{ text: systemPrompt || BASE_SYSTEM_PROMPT }] },
     contents: buildGeminiContents(question, history),
     generationConfig: {
-      temperature: 0.3,
-      maxOutputTokens: 8192,
+      temperature: 0.4,
+      maxOutputTokens: 1536,
     },
   });
 
   let lastStatus = 0;
   let lastText = '';
 
-  modelLoop: for (const model of GEMINI_MODELS) {
-    for (const body of [bodyWithThinkingOff, bodyPlain]) {
-      const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), 18_000);
+  for (const model of GEMINI_MODELS) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 20_000);
 
-      try {
-        const response = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'x-goog-api-key': apiKey,
-            },
-            body,
-            signal: controller.signal,
-          }
-        );
+    try {
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-goog-api-key': apiKey,
+          },
+          body,
+          signal: controller.signal,
+        }
+      );
 
-        lastStatus = response.status;
-        lastText = await response.text();
+      lastStatus = response.status;
+      lastText = await response.text();
 
-        if (response.ok) {
-          let payload = null;
-          try {
-            payload = JSON.parse(lastText);
-          } catch {
-            continue;
-          }
-
-          const text = extractGeminiText(payload).trim();
-
-          if (text) {
-            return { ok: true, text };
-          }
-
-          lastText = 'empty_candidates';
-          continue;
+      if (response.ok) {
+        let payload = null;
+        try {
+          payload = JSON.parse(lastText);
+        } catch {
+          break;
         }
 
-        console.error('Gemini API error:', model, lastStatus, lastText);
+        const text = extractGeminiText(payload).trim();
 
-        if (lastStatus === 400 || isGeminiModelUnavailable(lastStatus, lastText)) {
-          continue;
+        if (text) {
+          return { ok: true, text };
         }
 
-        break modelLoop;
-      } catch (error) {
-        lastStatus = 0;
-        lastText = String(error?.message || error);
-        console.error('Gemini fetch error:', model, lastText);
-      } finally {
-        clearTimeout(timer);
+        lastText = 'empty_candidates';
+        break;
       }
+
+      console.error('Gemini API error:', model, lastStatus, lastText);
+
+      if (lastStatus === 429 || lastStatus === 401 || lastStatus === 403) {
+        break;
+      }
+
+      if (!isGeminiModelUnavailable(lastStatus, lastText) && lastStatus !== 400) {
+        break;
+      }
+    } catch (error) {
+      lastStatus = 0;
+      lastText = String(error?.message || error);
+      console.error('Gemini fetch error:', model, lastText);
+    } finally {
+      clearTimeout(timer);
     }
   }
 

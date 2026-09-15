@@ -27,34 +27,37 @@ const ISOLATION_PROMPT = [
   '- Responda a pergunta por completo, em português do Brasil.',
 ].join('\n');
 
-const MAX_CONTEXT_CHARS = 14_000;
+const MAX_CONTEXT_CHARS = 8_000;
 
 const compactInstanceSnapshot = (snapshot: Record<string, unknown>) => {
+  const sourceEventos =
+    snapshot.eventos && typeof snapshot.eventos === 'object' && !Array.isArray(snapshot.eventos)
+      ? (snapshot.eventos as Record<string, unknown>)
+      : null;
+
+  const eventos = sourceEventos
+    ? {
+        ...sourceEventos,
+        recentes: Array.isArray(sourceEventos.recentes) ? sourceEventos.recentes.slice(0, 6) : sourceEventos.recentes,
+        proximos: Array.isArray(sourceEventos.proximos) ? sourceEventos.proximos.slice(0, 6) : sourceEventos.proximos,
+      }
+    : undefined;
+
+  let finance = snapshot.financas;
+  if (finance && typeof finance === 'object' && !Array.isArray(finance)) {
+    finance = { ...(finance as Record<string, unknown>) };
+    delete (finance as Record<string, unknown>).meses_realizado;
+  }
+
   const payload: Record<string, unknown> = {
     isolamento: snapshot.isolamento,
     igreja: snapshot.igreja,
     operador: snapshot.operador,
     pessoas: snapshot.pessoas,
-    financas: snapshot.financas,
-    relatorios_despesa: snapshot.relatorios_despesa,
-    eventos: snapshot.eventos,
-    proximos_eventos: snapshot.proximos_eventos,
-    pequenos_grupos: snapshot.pequenos_grupos,
+    financas: finance,
+    eventos,
     cuidado_pastoral: snapshot.cuidado_pastoral,
   };
-
-  if (JSON.stringify(payload).length <= MAX_CONTEXT_CHARS) {
-    return payload;
-  }
-
-  delete payload.pequenos_grupos;
-
-  const finance = payload.financas;
-  if (finance && typeof finance === 'object' && !Array.isArray(finance)) {
-    const nextFinance = { ...(finance as Record<string, unknown>) };
-    delete nextFinance.meses_realizado;
-    payload.financas = nextFinance;
-  }
 
   if (JSON.stringify(payload).length <= MAX_CONTEXT_CHARS) {
     return payload;
@@ -64,9 +67,18 @@ const compactInstanceSnapshot = (snapshot: Record<string, unknown>) => {
     isolamento: snapshot.isolamento,
     igreja: snapshot.igreja,
     pessoas: snapshot.pessoas,
-    financas: payload.financas,
-    eventos: snapshot.eventos,
-    cuidado_pastoral: snapshot.cuidado_pastoral,
+    financas: finance,
+    eventos: eventos
+      ? {
+          totais: (eventos as Record<string, unknown>).totais,
+          recentes: Array.isArray((eventos as Record<string, unknown>).recentes)
+            ? ((eventos as Record<string, unknown>).recentes as unknown[]).slice(0, 3)
+            : [],
+          proximos: Array.isArray((eventos as Record<string, unknown>).proximos)
+            ? ((eventos as Record<string, unknown>).proximos as unknown[]).slice(0, 3)
+            : [],
+        }
+      : undefined,
   };
 };
 
@@ -85,11 +97,7 @@ const buildSystemPrompt = (snapshot: Record<string, unknown> | null) => {
   return parts.join('\n\n');
 };
 
-const GEMINI_MODELS = [
-  'gemini-3.8-flash',
-  'gemini-flash-latest',
-  'gemini-3.6-flash',
-];
+const GEMINI_MODELS = ['gemini-flash-latest', 'gemini-3.8-flash'];
 
 type ChatHistoryItem = {
   role: 'user' | 'assistant';
@@ -113,7 +121,7 @@ const jsonResponse = (body: Record<string, unknown>, status = 200) =>
 const buildGeminiContents = (question: string, history: ChatHistoryItem[]) => {
   const contents = history
     .filter((item) => item.content?.trim())
-    .slice(-8)
+    .slice(-4)
     .map((item) => ({
       role: item.role === 'assistant' ? 'model' : 'user',
       parts: [{ text: item.content.trim() }],
@@ -177,7 +185,7 @@ const describeGeminiError = (status: number, errorText: string) => {
   }
 
   if (status === 429 || text.includes('quota') || text.includes('resource_exhausted')) {
-    return 'A cota da API Gemini foi excedida. Tente novamente mais tarde.';
+    return 'A cota da chave Gemini acabou por agora. Espere um pouco (no plano gratuito o limite reseta no Google AI Studio) e evite reenviar a mesma pergunta várias vezes.';
   }
 
   if (isGeminiModelUnavailable(status, errorText)) {
@@ -201,12 +209,8 @@ const fetchGeminiText = async (
     systemInstruction: { parts: [{ text: systemPrompt || BASE_SYSTEM_PROMPT }] },
     contents: buildGeminiContents(question, history),
     generationConfig: {
-      temperature: 0.3,
-      maxOutputTokens: 8192,
-      thinkingConfig: {
-        thinkingBudget: 0,
-        thinkingLevel: 'MINIMAL',
-      },
+      temperature: 0.4,
+      maxOutputTokens: 1536,
     },
   });
 
@@ -215,7 +219,7 @@ const fetchGeminiText = async (
 
   for (const model of GEMINI_MODELS) {
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 18_000);
+    const timer = setTimeout(() => controller.abort(), 20_000);
 
     try {
       const response = await fetch(
@@ -239,7 +243,7 @@ const fetchGeminiText = async (
         try {
           payload = JSON.parse(lastText);
         } catch {
-          continue;
+          break;
         }
 
         const text = extractGeminiText(payload).trim();
@@ -249,10 +253,14 @@ const fetchGeminiText = async (
         }
 
         lastText = 'empty_candidates';
-        continue;
+        break;
       }
 
       console.error('Gemini API error:', model, lastStatus, lastText);
+
+      if (lastStatus === 429 || lastStatus === 401 || lastStatus === 403) {
+        break;
+      }
 
       if (!isGeminiModelUnavailable(lastStatus, lastText) && lastStatus !== 400) {
         break;
