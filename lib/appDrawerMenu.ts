@@ -289,6 +289,13 @@ export const APP_DRAWER_SETTINGS_ITEMS: AppDrawerSettingsItem[] = [
     group: 'culto',
   },
   {
+    letter: 'f0',
+    label: 'Assistente IA',
+    moduleKey: 'ai_assistant',
+    group: 'financas',
+    hint: 'Chat e chave Gemini — somente liderança',
+  },
+  {
     letter: 'f1',
     label: 'Informações Financeiras',
     moduleKey: 'financials',
@@ -313,13 +320,6 @@ export const APP_DRAWER_SETTINGS_ITEMS: AppDrawerSettingsItem[] = [
     label: 'Modelo Preditivo',
     moduleKey: 'predictive_insights',
     group: 'financas',
-  },
-  {
-    letter: 'f4',
-    label: 'Assistente IA',
-    moduleKey: 'ai_assistant',
-    group: 'financas',
-    hint: 'Somente liderança',
   },
   {
     letter: 'g1',
