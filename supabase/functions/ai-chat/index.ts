@@ -14,10 +14,9 @@ const SYSTEM_PROMPT = [
 ].join('\n');
 
 const GEMINI_MODELS = [
-  'gemini-3.8-flash',
-  'gemini-3.7-flash',
-  'gemini-2.5-flash',
+  'gemini-3.6-flash',
   'gemini-flash-latest',
+  'gemini-3.8-flash',
 ];
 
 type ChatHistoryItem = {
@@ -107,10 +106,14 @@ const describeGeminiError = (status: number, errorText: string) => {
     return 'O modelo de IA não está disponível para esta chave. Tente novamente após a atualização do aplicativo.';
   }
 
+  if (errorText.toLowerCase().includes('abort')) {
+    return 'O modelo de IA demorou demais para responder. Tente de novo em instantes.';
+  }
+
   return 'Falha ao consultar o modelo de IA.';
 };
 
-const fetchGeminiStream = async (apiKey: string, question: string, history: ChatHistoryItem[]) => {
+const fetchGeminiText = async (apiKey: string, question: string, history: ChatHistoryItem[]) => {
   const body = JSON.stringify({
     systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
     contents: buildGeminiContents(question, history),
@@ -124,28 +127,55 @@ const fetchGeminiStream = async (apiKey: string, question: string, history: Chat
   let lastText = '';
 
   for (const model of GEMINI_MODELS) {
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent?alt=sse`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-goog-api-key': apiKey,
-        },
-        body,
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 12_000);
+
+    try {
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-goog-api-key': apiKey,
+          },
+          body,
+          signal: controller.signal,
+        }
+      );
+
+      lastStatus = response.status;
+      lastText = await response.text();
+
+      if (response.ok) {
+        let payload: unknown = null;
+        try {
+          payload = JSON.parse(lastText);
+        } catch {
+          continue;
+        }
+
+        const text = extractGeminiText(payload).trim();
+
+        if (text) {
+          return { ok: true as const, text };
+        }
+
+        lastText = 'empty_candidates';
+        continue;
       }
-    );
 
-    if (response.ok) {
-      return { ok: true as const, response };
-    }
+      console.error('Gemini API error:', model, lastStatus, lastText);
 
-    lastStatus = response.status;
-    lastText = await response.text();
-    console.error('Gemini API error:', model, lastStatus, lastText);
-
-    if (!isGeminiModelUnavailable(lastStatus, lastText)) {
-      break;
+      if (!isGeminiModelUnavailable(lastStatus, lastText) && lastStatus !== 400) {
+        break;
+      }
+    } catch (error) {
+      lastStatus = 0;
+      lastText = error instanceof Error ? error.message : String(error);
+      console.error('Gemini fetch error:', model, lastText);
+    } finally {
+      clearTimeout(timer);
     }
   }
 
@@ -217,7 +247,7 @@ serve(async (req) => {
         };
 
         try {
-          const gemini = await fetchGeminiStream(geminiApiKey, question, history);
+          const gemini = await fetchGeminiText(geminiApiKey, question, history);
 
           if (!gemini.ok) {
             pushEvent({ error: describeGeminiError(gemini.status, gemini.errorText) });
@@ -225,55 +255,8 @@ serve(async (req) => {
             return;
           }
 
-          const geminiResponse = gemini.response;
-
-          if (!geminiResponse.body) {
-            pushEvent({ error: 'Resposta vazia do modelo de IA.' });
-            controller.close();
-            return;
-          }
-
-          const reader = geminiResponse.body.getReader();
-          const decoder = new TextDecoder();
-          let buffer = '';
-
-          while (true) {
-            const { done, value } = await reader.read();
-
-            if (done) {
-              break;
-            }
-
-            buffer += decoder.decode(value, { stream: true });
-            const lines = buffer.split('\n');
-            buffer = lines.pop() ?? '';
-
-            for (const line of lines) {
-              const trimmed = line.trim();
-
-              if (!trimmed.startsWith('data:')) {
-                continue;
-              }
-
-              const payloadText = trimmed.slice(5).trim();
-
-              if (!payloadText || payloadText === '[DONE]') {
-                continue;
-              }
-
-              try {
-                const parsed = JSON.parse(payloadText) as unknown;
-                const chunk = extractGeminiText(parsed);
-
-                if (chunk) {
-                  fullResponse += chunk;
-                  pushEvent({ text: chunk });
-                }
-              } catch {
-                // Ignora linhas SSE malformadas.
-              }
-            }
-          }
+          fullResponse = gemini.text;
+          pushEvent({ text: gemini.text });
 
           const auditResponse = fullResponse.trim() || '(resposta vazia)';
 
