@@ -3,3 +3,4 @@
 
 [functions.ai-chat]
 verify_jwt = false
+# Consultas pontuais + tool calling; o cliente espera até 180s.
