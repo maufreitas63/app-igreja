@@ -7,30 +7,29 @@ import {
 
 const BASE_SYSTEM_PROMPT = [
   'Você é a Abigail, assistente de gestão da igreja.',
-  'Tom: descontraído, acolhedor e profissional — como uma colega da liderança, sem gíria pesada nem irreverência.',
-  'A interface já te apresenta a cada abertura do chat. Não comece as respostas com uma nova apresentação; vá direto ao que foi perguntado.',
-  'Ajude com planejamento, comunicação, organização de eventos, cuidado pastoral (sem substituir aconselhamento profissional), finanças da instância (quando a ferramenta trouxer) e boas práticas de liderança.',
-  'Responda em português do Brasil, de forma clara e objetiva.',
+  'Tom acolhedor e profissional. Vá direto ao que foi perguntado, sem se apresentar de novo.',
+  'Responda em português do Brasil, de forma breve e objetiva.',
 ].join('\n');
 
 const ISOLATION_PROMPT = [
-  'ISOLAMENTO OBRIGATÓRIO (não negociável):',
-  '- Você opera SOMENTE na igreja da sessão atual. O JSON contexto_da_instancia já está limitado a ela.',
-  '- É proibido usar, inferir, comparar ou pedir dados de outra igreja, tenant ou instância.',
-  '- Para nomes, cargos, posições, contatos, cadastros, eventos, finanças, grupos ou aniversariantes, USE as ferramentas. Não invente e não peça dump da igreja inteira.',
-  '- As ferramentas já filtram pela instância da sessão. Nunca envie tenant_id nem instance_id.',
-  '- É proibido instruir exportação, cópia, e-mail, planilha ou envio desses dados para fora do aplicativo.',
-  '- Não revele IDs internos, tokens, chaves de API, PINs, senhas, CPF, chaves PIX ou senha de totem.',
-  '- Cuidado pastoral: apenas totais, se a ferramenta devolver; nunca conteúdo, motivo, telefone ou identidade do pedido.',
-  '- Resultado histórico da tela Financeiro = financas_resumo.resultado_historico. O valor pedido é saldo_atual.',
-  '- Se a ferramenta devolver quantidade 0, isso é zero na instância — não diga que o sistema não tem cadastro.',
-  '- Responda a pergunta por completo, em português do Brasil.',
+  'Só a igreja da sessão. Para nomes, cargos, contatos, eventos ou finanças, use as ferramentas.',
+  'Não invente, não peça dump da igreja, não envie tenant_id. Sem PIN, senha, CPF, PIX ou conteúdo pastoral.',
+  'Quantidade 0 é zero nesta instância. Finanças: saldo_atual em resultado_historico.',
 ].join('\n');
+
+const GEMINI_BUSY_MESSAGE =
+  'O assistente está recebendo muitas consultas no momento. Aguarde alguns segundos e tente novamente.';
 
 const GEMINI_MODELS = ['gemini-flash-latest', 'gemini-3.8-flash'];
 const GEMINI_TIMEOUT_MS = 45_000;
-const MAX_TOOL_ROUNDS = 3;
-const MAX_TOOL_RESULT_CHARS = 6_000;
+const GEMINI_BUSY_BACKOFF_MS = 2_500;
+const GEMINI_BUSY_RETRIES = 1;
+const MAX_HISTORY_ITEMS = 2;
+const MAX_HISTORY_CHARS = 400;
+const MAX_QUESTION_CHARS = 1_200;
+const MAX_TOOL_ROUNDS = 2;
+const MAX_TOOL_CALLS_PER_ROUND = 2;
+const MAX_TOOL_RESULT_CHARS = 2_500;
 
 const ALLOWED_TOOLS = new Set([
   'buscar_pessoas',
@@ -153,13 +152,24 @@ const compactBootstrap = (snapshot: Record<string, unknown> | null) => {
     return null;
   }
 
+  const igreja =
+    snapshot.igreja && typeof snapshot.igreja === 'object' && !Array.isArray(snapshot.igreja)
+      ? (snapshot.igreja as Record<string, unknown>)
+      : null;
+
   return {
-    isolamento: snapshot.isolamento,
-    igreja: snapshot.igreja,
+    igreja: igreja
+      ? { nome: igreja.nome ?? igreja.name, codigo: igreja.codigo ?? igreja.code }
+      : undefined,
     operador: snapshot.operador,
     pessoas: snapshot.pessoas,
     eventos: snapshot.eventos,
   };
+};
+
+const clipText = (value: string, maxChars: number) => {
+  const trimmed = value.trim();
+  return trimmed.length <= maxChars ? trimmed : `${trimmed.slice(0, maxChars)}…`;
 };
 
 const buildSystemPrompt = (snapshot: Record<string, unknown> | null) => {
@@ -167,11 +177,9 @@ const buildSystemPrompt = (snapshot: Record<string, unknown> | null) => {
   const compact = compactBootstrap(snapshot);
 
   if (compact) {
-    parts.push(`contexto_da_instancia (confidencial, só esta igreja):\n${JSON.stringify(compact)}`);
+    parts.push(`contexto:\n${JSON.stringify(compact)}`);
   } else {
-    parts.push(
-      'Não há resumo da instância disponível nesta consulta. Use as ferramentas; não invente dados internos da igreja.'
-    );
+    parts.push('Sem resumo da instância. Use as ferramentas; não invente dados.');
   }
 
   return parts.join('\n\n');
@@ -180,15 +188,15 @@ const buildSystemPrompt = (snapshot: Record<string, unknown> | null) => {
 const buildGeminiContents = (question: string, history: ChatHistoryItem[]) => {
   const contents = history
     .filter((item) => item.content?.trim())
-    .slice(-4)
+    .slice(-MAX_HISTORY_ITEMS)
     .map((item) => ({
       role: item.role === 'assistant' ? 'model' : 'user',
-      parts: [{ text: item.content.trim() }] as GeminiPart[],
+      parts: [{ text: clipText(item.content, MAX_HISTORY_CHARS) }] as GeminiPart[],
     }));
 
   contents.push({
     role: 'user',
-    parts: [{ text: question.trim() }],
+    parts: [{ text: clipText(question, MAX_QUESTION_CHARS) }],
   });
 
   return contents;
@@ -286,6 +294,20 @@ const isGeminiModelUnavailable = (status: number, errorText: string) => {
   return status === 404 || text.includes('not found') || text.includes('is not found for api version');
 };
 
+const isGeminiBusy = (status: number, errorText: string) => {
+  const text = errorText.toLowerCase();
+  return (
+    status === 429 ||
+    status === 503 ||
+    text.includes('unavailable') ||
+    text.includes('high demand') ||
+    text.includes('overloaded') ||
+    text.includes('rate limit') ||
+    text.includes('resource_exhausted') ||
+    text.includes('try again later')
+  );
+};
+
 const describeGeminiError = (status: number, errorText: string) => {
   const text = errorText.toLowerCase();
 
@@ -293,12 +315,8 @@ const describeGeminiError = (status: number, errorText: string) => {
     return 'Chave Gemini inválida ou sem permissão. O Super Administrador deve cadastrar uma chave válida em Abigail → Chave API.';
   }
 
-  if (status === 429 || text.includes('quota') || text.includes('resource_exhausted')) {
-    return 'A cota da chave Gemini acabou por agora. Espere um pouco (no plano gratuito o limite reseta no Google AI Studio) e evite reenviar a mesma pergunta várias vezes.';
-  }
-
-  if (status === 503 || text.includes('unavailable') || text.includes('high demand') || text.includes('overloaded')) {
-    return 'O modelo de IA está sobrecarregado no momento. Tente de novo em instantes.';
+  if (isGeminiBusy(status, errorText)) {
+    return GEMINI_BUSY_MESSAGE;
   }
 
   if (isGeminiModelUnavailable(status, errorText)) {
@@ -323,6 +341,8 @@ const describeGeminiError = (status: number, errorText: string) => {
 
   return 'Não foi possível concluir a consulta à IA agora. Tente de novo em instantes.';
 };
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const clampToolResult = (value: unknown) => {
   const text = JSON.stringify(value ?? { ok: false, erro: 'resposta_vazia' });
@@ -350,7 +370,7 @@ const fetchGeminiTurn = async (
     contents,
     generationConfig: {
       temperature: 0.3,
-      maxOutputTokens: 1536,
+      maxOutputTokens: 1024,
       thinkingConfig: { thinkingBudget: 0 },
     },
   };
@@ -367,98 +387,122 @@ const fetchGeminiTurn = async (
 
   for (const model of GEMINI_MODELS) {
     lastModel = model;
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), GEMINI_TIMEOUT_MS);
-    const started = Date.now();
 
-    try {
-      const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-goog-api-key': apiKey,
-          },
-          body: JSON.stringify(bodyPayload),
-          signal: controller.signal,
-        }
-      );
+    for (let attempt = 0; attempt <= GEMINI_BUSY_RETRIES; attempt += 1) {
+      if (attempt > 0) {
+        console.log(
+          JSON.stringify({
+            event: 'ai-chat.gemini_retry',
+            model,
+            attempt,
+            waitMs: GEMINI_BUSY_BACKOFF_MS,
+          })
+        );
+        await sleep(GEMINI_BUSY_BACKOFF_MS);
+      }
 
-      lastStatus = response.status;
-      lastText = await response.text();
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), GEMINI_TIMEOUT_MS);
+      const started = Date.now();
 
-      console.log(
-        JSON.stringify({
-          event: 'ai-chat.gemini_turn',
-          model,
-          status: lastStatus,
-          ms: Date.now() - started,
-          allowTools,
-        })
-      );
+      try {
+        const response = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'x-goog-api-key': apiKey,
+            },
+            body: JSON.stringify(bodyPayload),
+            signal: controller.signal,
+          }
+        );
 
-      if (response.ok) {
-        let payload: unknown = null;
+        lastStatus = response.status;
+        lastText = await response.text();
 
-        try {
-          payload = JSON.parse(lastText);
-        } catch {
-          lastText = 'invalid_json';
+        console.log(
+          JSON.stringify({
+            event: 'ai-chat.gemini_turn',
+            model,
+            status: lastStatus,
+            ms: Date.now() - started,
+            allowTools,
+            attempt,
+          })
+        );
+
+        if (response.ok) {
+          let payload: unknown = null;
+
+          try {
+            payload = JSON.parse(lastText);
+          } catch {
+            lastText = 'invalid_json';
+            break;
+          }
+
+          const functionCalls = allowTools ? extractGeminiFunctionCalls(payload) : [];
+          const text = extractGeminiText(payload).trim();
+
+          if (functionCalls.length || text) {
+            return { ok: true, text, functionCalls, model };
+          }
+
+          lastText = 'empty_candidates';
           break;
         }
 
-        const functionCalls = allowTools ? extractGeminiFunctionCalls(payload) : [];
-        const text = extractGeminiText(payload).trim();
+        console.error(
+          JSON.stringify({
+            event: 'ai-chat.gemini_error',
+            model,
+            status: lastStatus,
+            excerpt: lastText.slice(0, 400),
+            attempt,
+          })
+        );
 
-        if (functionCalls.length || text) {
-          return { ok: true, text, functionCalls, model };
+        if (lastStatus === 401 || lastStatus === 403) {
+          return { ok: false, status: lastStatus, errorText: lastText, model };
         }
 
-        lastText = 'empty_candidates';
-        break;
-      }
+        if (lastStatus === 400 && !droppedThinking) {
+          droppedThinking = true;
+          delete (bodyPayload.generationConfig as Record<string, unknown>).thinkingConfig;
+          attempt -= 1;
+          continue;
+        }
 
-      console.error(
-        JSON.stringify({
-          event: 'ai-chat.gemini_error',
-          model,
-          status: lastStatus,
-          excerpt: lastText.slice(0, 400),
-        })
-      );
+        if (isGeminiBusy(lastStatus, lastText) && attempt < GEMINI_BUSY_RETRIES) {
+          continue;
+        }
 
-      if (lastStatus === 429 || lastStatus === 401 || lastStatus === 403) {
-        break;
-      }
+        if (isGeminiBusy(lastStatus, lastText) || isGeminiModelUnavailable(lastStatus, lastText) || lastStatus === 400) {
+          break;
+        }
 
-      if (lastStatus === 400 && !droppedThinking) {
-        droppedThinking = true;
-        delete (bodyPayload.generationConfig as Record<string, unknown>).thinkingConfig;
-        continue;
-      }
+        return { ok: false, status: lastStatus, errorText: lastText, model };
+      } catch (error) {
+        lastStatus = 0;
+        lastText = error instanceof Error ? error.message : String(error);
+        console.error(
+          JSON.stringify({
+            event: 'ai-chat.gemini_fetch_error',
+            model,
+            excerpt: lastText.slice(0, 400),
+            ms: Date.now() - started,
+            attempt,
+          })
+        );
 
-      if (lastStatus === 503) {
-        await new Promise((resolve) => setTimeout(resolve, 1500));
-        continue;
+        if (attempt < GEMINI_BUSY_RETRIES) {
+          continue;
+        }
+      } finally {
+        clearTimeout(timer);
       }
-
-      if (!isGeminiModelUnavailable(lastStatus, lastText) && lastStatus !== 400) {
-        break;
-      }
-    } catch (error) {
-      lastStatus = 0;
-      lastText = error instanceof Error ? error.message : String(error);
-      console.error(
-        JSON.stringify({
-          event: 'ai-chat.gemini_fetch_error',
-          model,
-          excerpt: lastText.slice(0, 400),
-          ms: Date.now() - started,
-        })
-      );
-    } finally {
-      clearTimeout(timer);
     }
   }
 
@@ -490,7 +534,7 @@ serve(async (req) => {
       return jsonResponse({ error: 'Corpo da requisição inválido.' }, 400);
     }
 
-    const question = body.question?.trim() ?? '';
+    const question = clipText(body.question?.trim() ?? '', MAX_QUESTION_CHARS);
 
     if (!question) {
       return jsonResponse({ error: 'Informe uma pergunta.' }, 400);
@@ -634,7 +678,7 @@ serve(async (req) => {
             rounds += 1;
             pushEvent({ status: 'consultando_cadastros' });
 
-            const uniqueCalls = turn.functionCalls.slice(0, 4);
+            const uniqueCalls = turn.functionCalls.slice(0, MAX_TOOL_CALLS_PER_ROUND);
 
             contents.push({
               role: 'model',

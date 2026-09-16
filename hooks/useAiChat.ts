@@ -14,7 +14,8 @@ const createMessageId = () => `${Date.now()}-${Math.random().toString(36).slice(
 const QUOTA_COOLDOWN_MS = 5 * 60 * 1000;
 
 const isGeminiQuotaError = (message: string) =>
-  /cota da chave gemini|cota da api gemini|quota|resource_exhausted|excedida/i.test(message);
+  /cota da chave gemini|cota da api gemini|quota|resource_exhausted|excedida/i.test(message) &&
+  !/muitas consultas/i.test(message);
 
 const remainingCooldownLabel = (untilMs: number) => {
   const remainingMinutes = Math.max(1, Math.ceil((untilMs - Date.now()) / 60_000));
@@ -59,9 +60,11 @@ export function useAiChat() {
 
     const history: AiChatHistoryItem[] = messages
       .filter((message) => !message.localOnly)
+      .slice(-2)
       .map((message) => ({
         role: message.role,
-        content: message.content,
+        content:
+          message.content.length > 400 ? `${message.content.slice(0, 400)}…` : message.content,
       }));
 
     setMessages((current) => [
