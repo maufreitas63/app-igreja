@@ -1,6 +1,8 @@
 import { pickAbigailGreeting } from '@/lib/abigailPersona';
+import { loadEffectiveSessionProfile } from '@/lib/loadSessionProfile';
+import { resolveGreetingFirstName } from '@/lib/sessionGreetingName';
 import { streamAiChatMessage, type AiChatHistoryItem } from '@/lib/aiChatApi';
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 export type AiChatMessage = {
   id: string;
@@ -22,20 +24,45 @@ const remainingCooldownLabel = (untilMs: number) => {
   return remainingMinutes === 1 ? '1 minuto' : `${remainingMinutes} minutos`;
 };
 
-const createGreetingMessage = (): AiChatMessage => ({
+const createGreetingMessage = (firstName?: string | null): AiChatMessage => ({
   id: createMessageId(),
   role: 'assistant',
-  content: pickAbigailGreeting(),
+  content: pickAbigailGreeting(firstName),
   localOnly: true,
 });
 
 export function useAiChat() {
+  const greetingNameRef = useRef('usuário');
   const [messages, setMessages] = useState<AiChatMessage[]>(() => [createGreetingMessage()]);
   const [draft, setDraft] = useState('');
   const [streaming, setStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const quotaUntilRef = useRef(0);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    void (async () => {
+      const profile = await loadEffectiveSessionProfile();
+      if (cancelled) {
+        return;
+      }
+
+      const firstName = resolveGreetingFirstName(profile?.full_name, profile?.id);
+      greetingNameRef.current = firstName;
+      setMessages((current) => {
+        if (current.length === 1 && current[0].localOnly && current[0].role === 'assistant') {
+          return [{ ...current[0], content: pickAbigailGreeting(firstName) }];
+        }
+        return current;
+      });
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const sendMessage = useCallback(async () => {
     const question = draft.trim();
@@ -117,7 +144,7 @@ export function useAiChat() {
   const clearConversation = useCallback(() => {
     abortRef.current?.abort();
     abortRef.current = null;
-    setMessages([createGreetingMessage()]);
+    setMessages([createGreetingMessage(greetingNameRef.current)]);
     setDraft('');
     setError(null);
     setStreaming(false);

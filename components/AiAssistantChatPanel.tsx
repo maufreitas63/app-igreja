@@ -1,7 +1,9 @@
 import { useAiChat } from '@/hooks/useAiChat';
+import { useKeyboardOverlap } from '@/hooks/useKeyboardOverlap';
 import { ABIGAIL_NAME } from '@/lib/abigailPersona';
+import { CLOSE_FOOTER_DOCK_HEIGHT } from '@/components/minimal/CloseFooterBar';
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -15,54 +17,31 @@ import {
 } from 'react-native';
 
 const ACCENT = MINIMAL_UI.accent;
+const FLOAT_COMPOSER = Platform.OS === 'web';
 
 export function AiAssistantChatPanel() {
   const { messages, draft, setDraft, streaming, error, sendMessage, clearConversation } = useAiChat();
   const scrollRef = useRef<ScrollView>(null);
+  const overlap = useKeyboardOverlap();
+  const [dockHeight, setDockHeight] = useState(96);
+  const dockBottom = overlap > 12 ? overlap : CLOSE_FOOTER_DOCK_HEIGHT;
 
   useEffect(() => {
     scrollRef.current?.scrollToEnd({ animated: true });
-  }, [messages, streaming]);
+  }, [messages, streaming, overlap]);
 
-  return (
-    <KeyboardAvoidingView
-      style={styles.panel}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
-      <Text style={styles.helpText}>
-        {ABIGAIL_NAME} ajuda a liderança com a gestão da instância. Não substitui aconselhamento
-        pastoral confidencial.
-      </Text>
+  const keepViewportStill = () => {
+    if (Platform.OS !== 'web' || typeof window === 'undefined') {
+      return;
+    }
 
-      {error ? <Text style={styles.errorText}>{error}</Text> : null}
+    window.scrollTo(0, 0);
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+  };
 
-      <ScrollView
-        ref={scrollRef}
-        style={styles.scroll}
-        contentContainerStyle={styles.chatContent}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
-      >
-        {messages.map((message) => (
-            <View
-              key={message.id}
-              style={[
-                styles.messageBubble,
-                message.role === 'user' ? styles.userBubble : styles.assistantBubble,
-              ]}
-            >
-              <Text style={styles.messageRole}>
-                {message.role === 'user' ? 'Você' : ABIGAIL_NAME}
-              </Text>
-              <Text style={styles.messageText}>
-                {message.content}
-                {message.role === 'assistant' && streaming && !message.content ? '…' : ''}
-              </Text>
-            </View>
-          ))
-        }
-      </ScrollView>
-
+  const composer = (
+    <>
       <View style={styles.composerRow}>
         <TextInput
           style={styles.input}
@@ -73,6 +52,8 @@ export function AiAssistantChatPanel() {
           editable={!streaming}
           multiline
           maxLength={2000}
+          onFocus={keepViewportStill}
+          scrollEnabled
         />
         <TouchableOpacity
           style={[styles.sendButton, (streaming || !draft.trim()) && styles.sendButtonDisabled]}
@@ -96,8 +77,70 @@ export function AiAssistantChatPanel() {
       >
         <Text style={styles.secondaryButtonText}>Limpar conversa</Text>
       </TouchableOpacity>
-    </KeyboardAvoidingView>
+    </>
   );
+
+  const body = (
+    <>
+      <Text style={styles.helpText}>
+        {ABIGAIL_NAME} ajuda a liderança com a gestão da instância. Não substitui aconselhamento
+        pastoral confidencial.
+      </Text>
+
+      {error ? <Text style={styles.errorText}>{error}</Text> : null}
+
+      <ScrollView
+        ref={scrollRef}
+        style={styles.scroll}
+        contentContainerStyle={styles.chatContent}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="none"
+        showsVerticalScrollIndicator={false}
+      >
+        {messages.map((message) => (
+          <View
+            key={message.id}
+            style={[
+              styles.messageBubble,
+              message.role === 'user' ? styles.userBubble : styles.assistantBubble,
+            ]}
+          >
+            <Text style={styles.messageRole}>
+              {message.role === 'user' ? 'Você' : ABIGAIL_NAME}
+            </Text>
+            <Text style={styles.messageText}>
+              {message.content}
+              {message.role === 'assistant' && streaming && !message.content ? '…' : ''}
+            </Text>
+          </View>
+        ))}
+      </ScrollView>
+
+      {FLOAT_COMPOSER ? (
+        <>
+          <View style={{ height: dockHeight }} pointerEvents="none" />
+          <View
+            onLayout={(event) => setDockHeight(event.nativeEvent.layout.height)}
+            style={[styles.composerDock, { bottom: dockBottom }]}
+          >
+            {composer}
+          </View>
+        </>
+      ) : (
+        <View style={styles.composerDockFlow}>{composer}</View>
+      )}
+    </>
+  );
+
+  if (Platform.OS === 'ios') {
+    return (
+      <KeyboardAvoidingView style={styles.panel} behavior="padding">
+        {body}
+      </KeyboardAvoidingView>
+    );
+  }
+
+  return <View style={styles.panel}>{body}</View>;
 }
 
 const styles = StyleSheet.create({
@@ -110,16 +153,13 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 18,
     marginBottom: 8,
-  },
-  metaText: {
-    color: MINIMAL_UI.textMuted,
-    fontSize: 13,
-    lineHeight: 18,
+    flexShrink: 0,
   },
   errorText: {
     color: '#B91C1C',
     fontSize: 13,
     marginBottom: 8,
+    flexShrink: 0,
   },
   scroll: {
     flex: 1,
@@ -160,11 +200,23 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
   },
+  composerDock: {
+    position: Platform.OS === 'web' ? 'fixed' : 'absolute',
+    left: 16,
+    right: 16,
+    zIndex: 50,
+    backgroundColor: MINIMAL_UI.background,
+    paddingTop: 8,
+    paddingBottom: 4,
+  },
+  composerDockFlow: {
+    backgroundColor: MINIMAL_UI.background,
+    paddingTop: 8,
+  },
   composerRow: {
     flexDirection: 'row',
     alignItems: 'flex-end',
     gap: 8,
-    marginTop: 8,
   },
   input: {
     flex: 1,

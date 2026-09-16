@@ -1,5 +1,6 @@
 import { serve } from 'https://deno.land/std@0.224.0/http/server.ts';
 import { corsHeaders } from '../_shared/cors.ts';
+import { lookupBiblePassage } from '../_shared/bibleLookup.ts';
 import {
   authenticateAiLeadershipRequest,
   createServiceSupabaseClient,
@@ -16,6 +17,8 @@ const ISOLATION_PROMPT = [
   'Para recortes (crianças com menos de 10 anos, aniversariantes, bairro, papel), use consultar_cadastros ou buscar_pessoas. Nunca diga que não tem acesso a dados cadastrais desta igreja.',
   'Não invente. Não envie tenant_id. Recuse só PIN, senha, CPF, PIX e conteúdo pastoral confidencial.',
   'Quantidade 0 é zero nesta instância. Finanças: saldo_atual em resultado_historico.',
+  'Bíblia: texto externo, sem cruzar igrejas. Se o pedido for só "bíblia" ou faltar livro/capítulo, pergunte versão (ARA, ARC, ACF, NVI), livro, capítulo e se quer versículo. Não invente o texto.',
+  'Com livro e capítulo, use consultar_biblia. Sem versículo, devolva o capítulo inteiro. Com versículo, só aquele trecho. Sempre cite a tradução (ex.: Texto conforme a tradução Almeida Revista e Atualizada - ARA). Sem versão, use ARA e deixe explícito.',
 ].join('\n');
 
 const GEMINI_BUSY_MESSAGE =
@@ -43,6 +46,7 @@ const ALLOWED_TOOLS = new Set([
   'cuidado_pastoral_totais',
   'pequenos_grupos',
   'aniversariantes',
+  'consultar_biblia',
 ]);
 
 const GEMINI_TOOLS = [
@@ -146,6 +150,22 @@ const GEMINI_TOOLS = [
           type: 'object',
           properties: {
             mes_nascimento: { type: 'string', description: 'Mês (1-12). Se omitido, usa o mês atual.' },
+          },
+        },
+      },
+      {
+        name: 'consultar_biblia',
+        description:
+          'Busca texto bíblico externo (não usa dados da igreja). Informe livro e capítulo. Versículo opcional. Versões: ARA, ARC, ACF, NVI. Sem versículo devolve o capítulo inteiro.',
+        parameters: {
+          type: 'object',
+          properties: {
+            versao: { type: 'string', description: 'Sigla da tradução: ARA, ARC, ACF, NVI, NTLH ou NAA. Padrão ARA.' },
+            livro: { type: 'string', description: 'Nome do livro em português (ex.: João, Salmos, 1 Coríntios).' },
+            capitulo: { type: 'string', description: 'Número do capítulo.' },
+            versiculo: { type: 'string', description: 'Versículo (opcional). Se omitido, devolve o capítulo inteiro.' },
+            versiculo_fim: { type: 'string', description: 'Fim do intervalo de versículos (opcional).' },
+            referencia: { type: 'string', description: 'Referência completa opcional, ex.: ARA João 3:16 ou João 3,16.' },
           },
         },
       },
@@ -434,10 +454,10 @@ const describeGeminiError = (status: number, errorText: string) => {
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-const clampToolResult = (value: unknown) => {
+const clampToolResult = (value: unknown, maxChars = MAX_TOOL_RESULT_CHARS) => {
   const text = JSON.stringify(value ?? { ok: false, erro: 'resposta_vazia' });
 
-  if (text.length <= MAX_TOOL_RESULT_CHARS) {
+  if (text.length <= maxChars) {
     return JSON.parse(text);
   }
 
@@ -445,7 +465,7 @@ const clampToolResult = (value: unknown) => {
     ok: true,
     truncado: true,
     aviso: 'Resultado limitado para caber no contexto. Refine a busca.',
-    recorte: text.slice(0, MAX_TOOL_RESULT_CHARS),
+    recorte: text.slice(0, maxChars),
   };
 };
 
@@ -704,6 +724,18 @@ serve(async (req) => {
       }
 
       try {
+        if (name === 'consultar_biblia') {
+          const passage = await lookupBiblePassage(call.args);
+          console.log(
+            JSON.stringify({
+              event: 'ai-chat.tool_ok',
+              name,
+              ms: Date.now() - started,
+            })
+          );
+          return clampToolResult(passage, 8_000);
+        }
+
         const { data, error } = await supabase.rpc('consultar_ferramenta_ia_lideranca', {
           p_actor_profile_id: auth.profileId,
           p_ferramenta: name,

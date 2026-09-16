@@ -6,9 +6,10 @@ import { sessionCanUseAiAssistant } from '@/lib/aiLeadershipAccess';
 import { MINIMAL_ICON, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { FontAwesome } from '@expo/vector-icons';
 import { useFocusEffect } from 'expo-router';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   Modal,
+  Platform,
   Pressable,
   StyleSheet,
   Text,
@@ -51,6 +52,28 @@ export function LeadershipAiFab({ variant = 'overlay' }: Props) {
   const handleClose = () => {
     setOpen(false);
   };
+
+  useEffect(() => {
+    if (Platform.OS !== 'web' || !open || typeof document === 'undefined') {
+      return;
+    }
+
+    const html = document.documentElement;
+    const body = document.body;
+    const previousHtmlOverflow = html.style.overflow;
+    const previousBodyOverflow = body.style.overflow;
+    const previousHtmlOverscroll = html.style.overscrollBehavior;
+    html.style.overflow = 'hidden';
+    body.style.overflow = 'hidden';
+    html.style.overscrollBehavior = 'none';
+    window.scrollTo(0, 0);
+
+    return () => {
+      html.style.overflow = previousHtmlOverflow;
+      body.style.overflow = previousBodyOverflow;
+      html.style.overscrollBehavior = previousHtmlOverscroll;
+    };
+  }, [open]);
 
   if (!allowed) {
     return null;

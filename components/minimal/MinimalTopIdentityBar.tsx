@@ -5,33 +5,13 @@ import {
   MINIMAL_UI,
 } from '@/lib/minimalUiTheme';
 import {
-  applyIbsManualDisplayName,
   ensureIbsManualDisplayMaskStarted,
-  IBS_MANUAL_DISPLAY_NAME,
   refreshIbsManualDisplayMask,
 } from '@/lib/ibsManualDisplayMask';
 import { loadEffectiveSessionProfile } from '@/lib/loadSessionProfile';
+import { resolveGreetingFirstName } from '@/lib/sessionGreetingName';
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-
-function resolveGreetingName(
-  fullName: string | null | undefined,
-  profileId?: string | null
-): string {
-  const masked = applyIbsManualDisplayName(fullName, profileId);
-  if (masked === IBS_MANUAL_DISPLAY_NAME) {
-    return masked;
-  }
-
-  const trimmed = fullName?.trim();
-
-  if (!trimmed) {
-    return 'usuário';
-  }
-
-  const firstName = trimmed.split(/\s+/)[0]?.trim();
-  return firstName || 'usuário';
-}
 
 /**
  * Faixa superior esquerda: saudação.
@@ -54,7 +34,7 @@ export function MinimalTopIdentityBar({ showGreeting = false }: { showGreeting?:
         return;
       }
 
-      setGreetingName(resolveGreetingName(profile?.full_name, profile?.id));
+      setGreetingName(resolveGreetingFirstName(profile?.full_name, profile?.id));
     })();
 
     return () => {
