@@ -12,8 +12,9 @@ const BASE_SYSTEM_PROMPT = [
 ].join('\n');
 
 const ISOLATION_PROMPT = [
-  'Só a igreja da sessão. Para nomes, cargos, contatos, eventos ou finanças, use as ferramentas.',
-  'Não invente, não peça dump da igreja, não envie tenant_id. Sem PIN, senha, CPF, PIX ou conteúdo pastoral.',
+  'Só a igreja da sessão. Você tem acesso pleno aos cadastros desta instância: nome, nascimento, idade, papel, família, endereço, cargo, eventos e grupos.',
+  'Para recortes (crianças com menos de 10 anos, aniversariantes, bairro, papel), use consultar_cadastros ou buscar_pessoas. Nunca diga que não tem acesso a dados cadastrais desta igreja.',
+  'Não invente. Não envie tenant_id. Recuse só PIN, senha, CPF, PIX e conteúdo pastoral confidencial.',
   'Quantidade 0 é zero nesta instância. Finanças: saldo_atual em resultado_historico.',
 ].join('\n');
 
@@ -28,12 +29,13 @@ const GEMINI_BUSY_RETRIES = 1;
 const MAX_HISTORY_ITEMS = 2;
 const MAX_HISTORY_CHARS = 400;
 const MAX_QUESTION_CHARS = 1_200;
-const MAX_TOOL_ROUNDS = 2;
+const MAX_TOOL_ROUNDS = 3;
 const MAX_TOOL_CALLS_PER_ROUND = 2;
-const MAX_TOOL_RESULT_CHARS = 2_500;
+const MAX_TOOL_RESULT_CHARS = 4_000;
 
 const ALLOWED_TOOLS = new Set([
   'buscar_pessoas',
+  'consultar_cadastros',
   'buscar_lideranca',
   'cadastro_detalhe',
   'buscar_eventos',
@@ -49,14 +51,45 @@ const GEMINI_TOOLS = [
       {
         name: 'buscar_pessoas',
         description:
-          'Busca cadastros desta instância por nome, telefone, código ou cargo. Não lista a igreja inteira.',
+          'Consulta cadastros desta instância por nome ou filtros (idade, nascimento, papel, bairro, cidade, cargo, família). Use para contar crianças ou listar pessoas. busca é opcional se houver outro filtro.',
         parameters: {
           type: 'object',
           properties: {
-            busca: { type: 'string', description: 'Trecho do nome, telefone, código ou cargo (mínimo 2 caracteres).' },
+            busca: { type: 'string', description: 'Trecho do nome, telefone, código ou cargo (opcional).' },
             papel: { type: 'string', description: 'Filtro opcional: member, congregado ou visitante.' },
+            menos_de_anos: { type: 'string', description: 'Idade máxima exclusiva. Ex.: 10 para menores de 10 anos.' },
+            idade_min: { type: 'string', description: 'Idade mínima inclusive.' },
+            idade_max: { type: 'string', description: 'Idade máxima inclusive.' },
+            mes_nascimento: { type: 'string', description: 'Mês de nascimento (1-12).' },
+            ano_nascimento: { type: 'string', description: 'Ano de nascimento (YYYY).' },
+            bairro: { type: 'string', description: 'Filtro por bairro.' },
+            cidade: { type: 'string', description: 'Filtro por cidade.' },
+            cargo: { type: 'string', description: 'Filtro por cargo/função na igreja.' },
+            familia: { type: 'string', description: 'Filtro por família.' },
+            listar: { type: 'string', description: 'true para nomes; false só para contar.' },
           },
-          required: ['busca'],
+        },
+      },
+      {
+        name: 'consultar_cadastros',
+        description:
+          'Conta e lista cadastros desta instância com nascimento e idade. Prefira esta ferramenta para faixas etárias (ex.: crianças com menos de 10 anos: menos_de_anos=10). Sem PIN, senha, CPF ou PIX.',
+        parameters: {
+          type: 'object',
+          properties: {
+            busca: { type: 'string', description: 'Nome, telefone, código ou cargo (opcional).' },
+            papel: { type: 'string', description: 'member, congregado ou visitante.' },
+            menos_de_anos: { type: 'string', description: 'Idade máxima exclusiva. Ex.: 10 para menores de 10 anos.' },
+            idade_min: { type: 'string', description: 'Idade mínima inclusive.' },
+            idade_max: { type: 'string', description: 'Idade máxima inclusive.' },
+            mes_nascimento: { type: 'string', description: 'Mês de nascimento (1-12).' },
+            ano_nascimento: { type: 'string', description: 'Ano de nascimento (YYYY).' },
+            bairro: { type: 'string', description: 'Filtro por bairro.' },
+            cidade: { type: 'string', description: 'Filtro por cidade.' },
+            cargo: { type: 'string', description: 'Filtro por cargo/função na igreja.' },
+            familia: { type: 'string', description: 'Filtro por família.' },
+            listar: { type: 'string', description: 'true para nomes; false só para contar.' },
+          },
         },
       },
       {
@@ -73,7 +106,7 @@ const GEMINI_TOOLS = [
       {
         name: 'cadastro_detalhe',
         description:
-          'Dados cadastrais de uma pessoa desta instância (nome, cargo, contato, endereço). Sem PIN, senha, CPF ou PIX.',
+          'Dados cadastrais de uma pessoa desta instância (nome, idade, nascimento, cargo, contato, endereço). Sem PIN, senha, CPF ou PIX.',
         parameters: {
           type: 'object',
           properties: {
@@ -108,7 +141,13 @@ const GEMINI_TOOLS = [
       },
       {
         name: 'aniversariantes',
-        description: 'Aniversariantes do mês corrente nesta instância.',
+        description: 'Aniversariantes desta instância no mês informado (padrão: mês corrente).',
+        parameters: {
+          type: 'object',
+          properties: {
+            mes_nascimento: { type: 'string', description: 'Mês (1-12). Se omitido, usa o mês atual.' },
+          },
+        },
       },
     ],
   },
