@@ -17,8 +17,14 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 const FAB_SIZE = 56;
+const FAB_INLINE_SIZE = 40;
 
-export function LeadershipAiFab() {
+type Props = {
+  /** `inline` alinha o botão na linha do título (Eu quero…). */
+  variant?: 'overlay' | 'inline';
+};
+
+export function LeadershipAiFab({ variant = 'overlay' }: Props) {
   const { allowed, refresh } = useSessionCanUseAiAssistant();
   const [open, setOpen] = useState(false);
   const [chatKey, setChatKey] = useState(0);
@@ -56,9 +62,16 @@ export function LeadershipAiFab() {
         accessibilityRole="button"
         accessibilityLabel={`Abrir ${ABIGAIL_NAME}`}
         onPress={() => void handleOpen()}
-        style={({ pressed }) => [styles.fab, pressed && styles.fabPressed]}
+        style={({ pressed }) => [
+          variant === 'inline' ? styles.fabInline : styles.fab,
+          pressed && styles.fabPressed,
+        ]}
       >
-        <FontAwesome name="comments" size={MINIMAL_ICON.menu} color="#FFFFFF" />
+        <FontAwesome
+          name="comments"
+          size={variant === 'inline' ? 18 : MINIMAL_ICON.menu}
+          color="#FFFFFF"
+        />
       </Pressable>
 
       <Modal animationType="slide" visible={open} onRequestClose={handleClose}>
@@ -94,6 +107,20 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     shadowOffset: { width: 0, height: 3 },
     zIndex: 40,
+  },
+  fabInline: {
+    width: FAB_INLINE_SIZE,
+    height: FAB_INLINE_SIZE,
+    borderRadius: FAB_INLINE_SIZE / 2,
+    backgroundColor: MINIMAL_UI.blueDark,
+    alignItems: 'center',
+    justifyContent: 'center',
+    elevation: 4,
+    shadowColor: '#00008B',
+    shadowOpacity: 0.22,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+    flexShrink: 0,
   },
   fabPressed: {
     opacity: 0.85,

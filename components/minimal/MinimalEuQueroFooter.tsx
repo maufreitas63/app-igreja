@@ -1,3 +1,4 @@
+import { LeadershipAiFab } from '@/components/LeadershipAiFab';
 import { useMinimalHome } from '@/context/MinimalHomeContext';
 import { ACCESS_SCREEN } from '@/lib/accessControl';
 import { fetchActiveCampaignProjects } from '@/lib/campaignProjectsApi';
@@ -131,7 +132,10 @@ export function MinimalEuQueroFooter() {
 
   return (
     <View style={[styles.wrap, { paddingBottom: Math.max(insets.bottom, 8) }]}>
-      <Text style={styles.heading}>Eu quero…</Text>
+      <View style={styles.headingRow}>
+        <Text style={styles.heading}>Eu quero…</Text>
+        <LeadershipAiFab variant="inline" />
+      </View>
       <View style={styles.list}>
         <Pressable
           accessibilityRole="button"
@@ -198,7 +202,16 @@ const styles = StyleSheet.create({
     width: '100%',
     alignSelf: 'stretch',
   },
+  headingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+    minHeight: 40,
+  },
   heading: {
+    flex: 1,
+    minWidth: 0,
     fontSize: 18,
     fontWeight: '700',
     fontStyle: 'italic',
