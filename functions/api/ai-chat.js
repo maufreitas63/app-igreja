@@ -469,6 +469,10 @@ const describeGeminiError = (status, errorText) => {
     return 'A cota da chave Gemini acabou por agora. Espere um pouco (no plano gratuito o limite reseta no Google AI Studio) e evite reenviar a mesma pergunta várias vezes.';
   }
 
+  if (status === 503 || text.includes('unavailable') || text.includes('high demand') || text.includes('overloaded')) {
+    return 'O modelo de IA está sobrecarregado no momento. Tente de novo em instantes.';
+  }
+
   if (isGeminiModelUnavailable(status, errorText)) {
     return 'O modelo de IA não está disponível para esta chave. Tente novamente após a atualização do aplicativo.';
   }
@@ -667,6 +671,11 @@ const fetchGeminiTurn = async (apiKey, contents, systemPrompt, allowTools) => {
       if (lastStatus === 400 && !droppedThinking) {
         droppedThinking = true;
         delete bodyPayload.generationConfig.thinkingConfig;
+        continue;
+      }
+
+      if (lastStatus === 503) {
+        await new Promise((resolve) => setTimeout(resolve, 1500));
         continue;
       }
 
