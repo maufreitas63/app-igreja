@@ -21,7 +21,8 @@ const ISOLATION_PROMPT = [
 const GEMINI_BUSY_MESSAGE =
   'O assistente está recebendo muitas consultas no momento. Aguarde alguns segundos e tente novamente.';
 
-const GEMINI_MODELS = ['gemini-flash-latest', 'gemini-3.8-flash'];
+const GEMINI_API_BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
+const GEMINI_MODELS = ['gemini-3.6-flash', 'gemini-flash-latest'];
 const GEMINI_TIMEOUT_MS = 45_000;
 const GEMINI_BUSY_BACKOFF_MS = 2_500;
 const GEMINI_BUSY_RETRIES = 1;
@@ -51,10 +52,10 @@ const GEMINI_TOOLS = [
         description:
           'Busca cadastros desta instância por nome, telefone, código ou cargo. Não lista a igreja inteira.',
         parameters: {
-          type: 'OBJECT',
+          type: 'object',
           properties: {
-            busca: { type: 'STRING', description: 'Trecho do nome, telefone, código ou cargo (mínimo 2 caracteres).' },
-            papel: { type: 'STRING', description: 'Filtro opcional: member, congregado ou visitante.' },
+            busca: { type: 'string', description: 'Trecho do nome, telefone, código ou cargo (mínimo 2 caracteres).' },
+            papel: { type: 'string', description: 'Filtro opcional: member, congregado ou visitante.' },
           },
           required: ['busca'],
         },
@@ -64,9 +65,9 @@ const GEMINI_TOOLS = [
         description:
           'Lista pessoas com papéis de liderança nesta instância (secretaria, tesoureiro, pastoral, líder, etc.).',
         parameters: {
-          type: 'OBJECT',
+          type: 'object',
           properties: {
-            busca: { type: 'STRING', description: 'Filtro opcional por nome, cargo ou papel.' },
+            busca: { type: 'string', description: 'Filtro opcional por nome, cargo ou papel.' },
           },
         },
       },
@@ -75,9 +76,9 @@ const GEMINI_TOOLS = [
         description:
           'Dados cadastrais de uma pessoa desta instância (nome, cargo, contato, endereço). Sem PIN, senha, CPF ou PIX.',
         parameters: {
-          type: 'OBJECT',
+          type: 'object',
           properties: {
-            busca: { type: 'STRING', description: 'Nome, telefone ou código do cadastro.' },
+            busca: { type: 'string', description: 'Nome, telefone ou código do cadastro.' },
           },
           required: ['busca'],
         },
@@ -86,10 +87,10 @@ const GEMINI_TOOLS = [
         name: 'buscar_eventos',
         description: 'Consulta eventos desta instância (recentes, próximos ou busca por nome).',
         parameters: {
-          type: 'OBJECT',
+          type: 'object',
           properties: {
-            recorte: { type: 'STRING', description: 'recentes, proximos ou todos.' },
-            busca: { type: 'STRING', description: 'Filtro opcional pelo nome do evento.' },
+            recorte: { type: 'string', description: 'recentes, proximos ou todos.' },
+            busca: { type: 'string', description: 'Filtro opcional pelo nome do evento.' },
           },
         },
       },
@@ -97,22 +98,18 @@ const GEMINI_TOOLS = [
         name: 'financas_resumo',
         description:
           'Resumo financeiro desta instância (saldo e totais). Só funciona se o operador tiver permissão.',
-        parameters: { type: 'OBJECT', properties: {} },
       },
       {
         name: 'cuidado_pastoral_totais',
         description: 'Totais de pedidos de cuidado pastoral por status, sem conteúdo nem identidade.',
-        parameters: { type: 'OBJECT', properties: {} },
       },
       {
         name: 'pequenos_grupos',
         description: 'Lista os pequenos grupos/células desta instância.',
-        parameters: { type: 'OBJECT', properties: {} },
       },
       {
         name: 'aniversariantes',
         description: 'Aniversariantes do mês corrente nesta instância.',
-        parameters: { type: 'OBJECT', properties: {} },
       },
     ],
   },
@@ -450,10 +447,37 @@ const extractGeminiFunctionCalls = (payload) => {
     calls.push({
       name: String(raw.name).trim(),
       args: raw.args && typeof raw.args === 'object' && !Array.isArray(raw.args) ? raw.args : {},
+      ...(raw.id ? { id: String(raw.id) } : {}),
     });
   }
 
   return calls;
+};
+
+const extractGeminiModelContent = (payload) => {
+  const parts = payload?.candidates?.[0]?.content?.parts;
+
+  if (!Array.isArray(parts) || !parts.length) {
+    return null;
+  }
+
+  return {
+    role: 'model',
+    parts: parts.filter((part) => part && typeof part === 'object'),
+  };
+};
+
+const logGoogleRefusal = (model, status, body, extra = {}) => {
+  console.error('Gemini recusou a requisição. Corpo exato do Google:', body);
+  console.error(
+    JSON.stringify({
+      event: 'ai-chat.gemini_http_error',
+      model,
+      status,
+      googleBody: body,
+      ...extra,
+    })
+  );
 };
 
 const isGeminiModelUnavailable = (status, errorText) => {
@@ -636,18 +660,15 @@ const fetchGeminiTurn = async (apiKey, contents, systemPrompt, allowTools) => {
       const started = Date.now();
 
       try {
-        const response = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'x-goog-api-key': apiKey,
-            },
-            body: JSON.stringify(bodyPayload),
-            signal: controller.signal,
-          }
-        );
+        const response = await fetch(`${GEMINI_API_BASE}/${model}:generateContent`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-goog-api-key': apiKey,
+          },
+          body: JSON.stringify(bodyPayload),
+          signal: controller.signal,
+        });
 
         lastStatus = response.status;
         lastText = await response.text();
@@ -677,22 +698,20 @@ const fetchGeminiTurn = async (apiKey, contents, systemPrompt, allowTools) => {
           const text = extractGeminiText(payload).trim();
 
           if (functionCalls.length || text) {
-            return { ok: true, text, functionCalls, model };
+            return {
+              ok: true,
+              text,
+              functionCalls,
+              model,
+              modelContent: extractGeminiModelContent(payload),
+            };
           }
 
           lastText = 'empty_candidates';
           break;
         }
 
-        console.error(
-          JSON.stringify({
-            event: 'ai-chat.gemini_error',
-            model,
-            status: lastStatus,
-            excerpt: lastText.slice(0, 400),
-            attempt,
-          })
-        );
+        logGoogleRefusal(model, lastStatus, lastText, { allowTools, attempt });
 
         if (lastStatus === 401 || lastStatus === 403) {
           return { ok: false, status: lastStatus, errorText: lastText };
@@ -865,12 +884,18 @@ const handlePost = async (request, env) => {
 
           const uniqueCalls = turn.functionCalls.slice(0, MAX_TOOL_CALLS_PER_ROUND);
 
-          contents.push({
-            role: 'model',
-            parts: uniqueCalls.map((call) => ({
-              functionCall: { name: call.name, args: call.args },
-            })),
-          });
+          contents.push(
+            turn.modelContent || {
+              role: 'model',
+              parts: uniqueCalls.map((call) => ({
+                functionCall: {
+                  name: call.name,
+                  args: call.args,
+                  ...(call.id ? { id: call.id } : {}),
+                },
+              })),
+            }
+          );
 
           const toolParts = [];
 
@@ -880,6 +905,7 @@ const handlePost = async (request, env) => {
               functionResponse: {
                 name: call.name,
                 response: result,
+                ...(call.id ? { id: call.id } : {}),
               },
             });
           }
