@@ -1,4 +1,5 @@
 import { CardLoadingState } from '@/components/ui/CardLoadingState';
+import { EnxergarSearchModal } from '@/components/ui/EnxergarSearchModal';
 import { MaintenanceHelpInfoTitle } from '@/components/ui/MaintenanceHelpInfoTitle';
 import { SectionLabel } from '@/components/ui/SectionLabel';
 import {
@@ -7,6 +8,7 @@ import {
 } from '@/hooks/useMaintenancePastoralRoleChange';
 import { isProfileVisibleInApp } from '@/lib/activeMemberProfile';
 import { formatShortName } from '@/lib/formatShortName';
+import { formatIbsManualUiPhone } from '@/lib/ibsManualDisplayMask';
 import { computeMaintenanceContentHeight, maintenancePanelStyles } from '@/lib/maintenanceCardStyles';
 import {
   formatMembershipDateFromIso,
@@ -80,6 +82,7 @@ export function MaintenancePastoralRoleChangeCard({
     reloadProfiles,
   } = useMaintenancePastoralRoleChange(isActive);
 
+  const [enxergarOpen, setEnxergarOpen] = useState(false);
   const contentHeight = computeMaintenanceContentHeight(panelHeight);
   const hasActiveFilters = searchQuery.trim().length > 0 || roleFilter !== null;
   const isSavingMembershipDate =
@@ -236,16 +239,79 @@ export function MaintenancePastoralRoleChangeCard({
       ) : (
         <SectionLabel variant="maintenance">Filtrar lista</SectionLabel>
       )}
-      <TextInput
+      <Pressable
+        onPress={() => setEnxergarOpen(true)}
         style={[styles.searchInput, minimal && styles.searchInputMinimal]}
-        placeholder="Nome, telefone ou código"
-        placeholderTextColor={minimal ? MINIMAL_UI.textMuted : '#64748B'}
-        value={searchQuery}
-        onChangeText={setSearchQuery}
-        autoCapitalize="words"
-        autoCorrect={false}
-        returnKeyType="search"
-      />
+        accessibilityRole="button"
+        accessibilityLabel="Filtrar por nome, telefone ou código"
+      >
+        <Text
+          style={[
+            minimal ? styles.shortNameMinimal : styles.shortName,
+            !searchQuery.trim() && (minimal ? styles.emptyFilterTextMinimal : styles.emptyFilterText),
+          ]}
+          numberOfLines={1}
+        >
+          {searchQuery.trim() || 'Nome, telefone ou código'}
+        </Text>
+      </Pressable>
+      <EnxergarSearchModal
+        visible={enxergarOpen}
+        title="Filtrar lista"
+        searchQuery={searchQuery}
+        onSearchQueryChange={setSearchQuery}
+        searchPlaceholder="Nome, telefone ou código"
+        countLabel={
+          loading
+            ? 'Carregando...'
+            : hasActiveFilters
+              ? `${profiles.length} de ${allProfiles.length} perfis`
+              : `${allProfiles.length} perfis`
+        }
+        onClose={() => setEnxergarOpen(false)}
+        variant={minimal ? 'minimal' : 'default'}
+      >
+        {loading ? (
+          <CardLoadingState lines={2} compact minimal={minimal} />
+        ) : profiles.length === 0 ? (
+          <Text style={[styles.emptyFilterText, minimal && styles.emptyFilterTextMinimal]}>
+            {allProfiles.length === 0
+              ? 'Nenhum perfil elegível encontrado nesta instância.'
+              : 'Nenhum perfil corresponde aos filtros.'}
+          </Text>
+        ) : (
+          profiles.map((profile) => {
+            const roleLabel =
+              PASTORAL_BASIC_ROLE_OPTIONS.find((option) => option.code === profile.currentRoleCode)
+                ?.label ?? profile.currentRoleCode;
+            const meta = [
+              profile.phone ? formatIbsManualUiPhone(profile.phone, profile.id) : null,
+              profile.memberCode,
+              roleLabel,
+            ].filter(Boolean);
+
+            return (
+              <TouchableOpacity
+                key={profile.id}
+                style={[styles.enxergarRow, minimal && styles.enxergarRowMinimal]}
+                onPress={() => setEnxergarOpen(false)}
+                activeOpacity={0.85}
+                accessibilityRole="button"
+                accessibilityLabel={`Ver ${formatShortName(profile.fullName, { profileId: profile.id })} na lista`}
+              >
+                <Text style={[styles.shortName, minimal && styles.shortNameMinimal]} numberOfLines={2}>
+                  {formatShortName(profile.fullName, { profileId: profile.id })}
+                </Text>
+                {meta.length > 0 ? (
+                  <Text style={[styles.enxergarMeta, minimal && styles.enxergarMetaMinimal]} numberOfLines={1}>
+                    {meta.join(' · ')}
+                  </Text>
+                ) : null}
+              </TouchableOpacity>
+            );
+          })
+        )}
+      </EnxergarSearchModal>
 
       {loading ? <CardLoadingState lines={2} compact minimal={minimal} /> : null}
 
@@ -637,6 +703,17 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 4,
   },
+  enxergarRow: {
+    paddingVertical: 10,
+    width: '100%',
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: 'rgba(148, 163, 184, 0.15)',
+    gap: 2,
+  },
+  enxergarMeta: {
+    color: 'rgba(58, 150, 221, 0.82)',
+    fontSize: 12,
+  },
   headerCell: {
     color: '#3A96DD',
     fontSize: 12,
@@ -880,6 +957,12 @@ const styles = StyleSheet.create({
     ...CONTAIN_WIDTH,
   },
   emptyFilterTextMinimal: {
+    color: MINIMAL_UI.textMuted,
+  },
+  enxergarRowMinimal: {
+    borderBottomColor: MINIMAL_UI.divider,
+  },
+  enxergarMetaMinimal: {
     color: MINIMAL_UI.textMuted,
   },
   tableRowMinimal: {
