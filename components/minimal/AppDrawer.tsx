@@ -109,7 +109,10 @@ export function AppDrawer() {
     void navigateDrawerMenuItem(router, item.moduleKey);
   };
 
-  const handleSettingsNavigate = useCallback((moduleKey: AppDrawerModuleKey, label: string) => {
+  const handleSettingsNavigate = useCallback((moduleKey: AppDrawerModuleKey, label: string, blocked?: boolean) => {
+    if (blocked) {
+      return;
+    }
     traceClick('drawer', 'settings-item-navigate', { moduleKey, label });
     setSettingsOpen(false);
     closeDrawer();
@@ -128,7 +131,7 @@ export function AppDrawer() {
       label: item.label,
       hint: item.hint,
       icon: SETTINGS_ICONS[item.moduleKey] ?? 'cog',
-      onPress: () => handleSettingsNavigate(item.moduleKey, item.label),
+      onPress: () => handleSettingsNavigate(item.moduleKey, item.label, item.commerciallyBlocked),
       blocked: item.commerciallyBlocked === true,
     });
 

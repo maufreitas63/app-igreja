@@ -8,7 +8,7 @@ const normalizePathname = (pathname: string) => {
   return trimmed || '/';
 };
 
-/** Rotas exclusivas da engrenagem — bloqueadas sem contrato pago / liberação do Superadmin. */
+/** Rotas exclusivas da engrenagem — bloqueadas com gestão da instância fechada. */
 const LOCKED_MANAGEMENT_PATHS = new Set([
   '/maintenance-dashboard',
   '/configuracao-salas',
@@ -27,9 +27,9 @@ export function hasValidPaidSaasContract(
 }
 
 export function isTenantManagementOpen(
-  status: Pick<TenantBillingStatus, 'accessAllowed' | 'hasSignedContract' | 'managementUnlocked'>
+  status: Pick<TenantBillingStatus, 'managementUnlocked'>
 ): boolean {
-  return status.managementUnlocked === true || hasValidPaidSaasContract(status);
+  return status.managementUnlocked === true;
 }
 
 export function isCommercialLockedManagementPath(pathname: string): boolean {

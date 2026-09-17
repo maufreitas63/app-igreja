@@ -29,7 +29,6 @@ import {
 import { getTenantBillingStatus } from '@/lib/billing/billingApi';
 import {
   COMMERCIAL_LOCK_ALLOWED_MODULE,
-  isTenantManagementOpen,
 } from '@/lib/billing/commercialLock';
 import { getGhostModeState, isGhostModeActive, subscribeGhostMode } from '@/lib/ghostMode';
 import { loadMaintenanceDashboardAccess } from '@/lib/maintenanceDashboardAccess';
@@ -259,8 +258,7 @@ export function useAppDrawerMenu() {
       const superAdmin = maintenanceAccess.isSuperAdmin === true;
       const canManageRooms = superAdmin || roomAccess === true;
       setIsSuperAdmin(superAdmin);
-      const managementOpen =
-        superAdmin || (billingStatus != null && isTenantManagementOpen(billingStatus));
+      const managementOpen = superAdmin || billingStatus?.managementUnlocked === true;
 
       const context: DrawerEnableContext = {
         dashboardCardAccess,
@@ -310,21 +308,16 @@ export function useAppDrawerMenu() {
           ...item,
           pendingRoute,
           enabled: false,
-          commerciallyBlocked: aclEnabled,
+          commerciallyBlocked: true,
         };
       });
-      const canOpenGear = nextSettings.some(
-        (item) =>
-          (item.enabled || item.commerciallyBlocked)
-          && item.moduleKey !== 'menu_como_faco_manutencao'
-      );
       setSettingsItems(
         nextSettings.map((item) =>
           item.moduleKey === 'menu_como_faco_manutencao'
             ? {
                 ...item,
-                enabled: canOpenGear && managementOpen,
-                commerciallyBlocked: canOpenGear && !managementOpen,
+                enabled: managementOpen,
+                commerciallyBlocked: !managementOpen,
               }
             : item
         )

@@ -48,27 +48,14 @@ function SettingsRowView({
   nested?: boolean;
 }) {
   const blocked = item.blocked === true;
-
-  return (
-    <TouchableOpacity
-      style={[
-        styles.item,
-        pinned && styles.itemPinned,
-        nested && styles.itemNested,
-        blocked && styles.itemBlocked,
-      ]}
-      onPress={() => {
-        if (blocked) {
-          return;
-        }
-        traceClick('drawer-settings', 'item-press', { id: item.id, label: item.label });
-        item.onPress();
-      }}
-      disabled={blocked}
-      accessibilityRole="button"
-      accessibilityState={{ disabled: blocked }}
-      accessibilityLabel={blocked ? `${item.label} (bloqueado)` : item.label}
-    >
+  const rowStyle = [
+    styles.item,
+    pinned && styles.itemPinned,
+    nested && styles.itemNested,
+    blocked && styles.itemBlocked,
+  ];
+  const rowBody = (
+    <>
       <View style={[styles.itemIconWrap, blocked && styles.itemIconWrapBlocked]}>
         <FontAwesome
           name={item.icon}
@@ -80,7 +67,7 @@ function SettingsRowView({
         <Text style={[styles.itemLabel, blocked && styles.itemLabelBlocked]}>{item.label}</Text>
         {blocked || item.hint ? (
           <Text style={[styles.itemHint, blocked && styles.itemHintBlocked]}>
-            {blocked ? 'Bloqueado — regularize a assinatura' : item.hint}
+            {blocked ? 'Inativo — gestão da instância bloqueada' : item.hint}
           </Text>
         ) : null}
       </View>
@@ -89,6 +76,34 @@ function SettingsRowView({
         size={12}
         color={MINIMAL_UI.textMuted}
       />
+    </>
+  );
+
+  if (blocked) {
+    return (
+      <View
+        style={rowStyle}
+        pointerEvents="none"
+        accessibilityRole="text"
+        accessibilityState={{ disabled: true }}
+        accessibilityLabel={`${item.label} (inativo)`}
+      >
+        {rowBody}
+      </View>
+    );
+  }
+
+  return (
+    <TouchableOpacity
+      style={rowStyle}
+      onPress={() => {
+        traceClick('drawer-settings', 'item-press', { id: item.id, label: item.label });
+        item.onPress();
+      }}
+      accessibilityRole="button"
+      accessibilityLabel={item.label}
+    >
+      {rowBody}
     </TouchableOpacity>
   );
 }
@@ -180,8 +195,8 @@ export function AppDrawerSettings({
 
       {commercialLockActive ? (
         <Text style={styles.lockBanner}>
-          Gestão bloqueada até haver contrato assinado com pagamento confirmado. Use Assinaturas
-          em Governança e TI para regularizar.
+          Gestão da instância bloqueada. Os módulos permanecem visíveis e inativos. Use
+          Assinaturas em Governança e TI para regularizar.
         </Text>
       ) : null}
 
