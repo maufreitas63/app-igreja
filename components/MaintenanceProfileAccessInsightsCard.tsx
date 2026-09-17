@@ -2,6 +2,7 @@ import { KnowledgeSectionTitle } from '@/components/knowledge/KnowledgeSectionTi
 import { KNOWLEDGE_ROUTE } from '@/lib/knowledge/routeKeys';
 import { CloseFooterBar, CLOSE_FOOTER_DOCK_HEIGHT } from '@/components/minimal/CloseFooterBar';
 import { CardLoadingState } from '@/components/ui/CardLoadingState';
+import { EnxergarSearchModal } from '@/components/ui/EnxergarSearchModal';
 import { SectionLabel } from '@/components/ui/SectionLabel';
 import { useMaintenanceProfileAccessInsights } from '@/hooks/useMaintenanceProfileAccessInsights';
 import { boxShadowStyle, NO_BOX_SHADOW } from '@/lib/boxShadow';
@@ -183,6 +184,7 @@ export function MaintenanceProfileAccessInsightsCard({
   const [historyError, setHistoryError] = useState<string | null>(null);
   const [historyRpcMissing, setHistoryRpcMissing] = useState(false);
   const [historyVisible, setHistoryVisible] = useState(false);
+  const [enxergarOpen, setEnxergarOpen] = useState(false);
 
   const handleClearHistory = async () => {
     const result = await clearHistory();
@@ -276,16 +278,69 @@ export function MaintenanceProfileAccessInsightsCard({
       ) : (
         <SectionLabel variant="maintenance">Filtrar lista</SectionLabel>
       )}
-      <TextInput
+      <Pressable
+        onPress={() => setEnxergarOpen(true)}
         style={[styles.searchInput, minimal && styles.searchInputMinimal]}
-        placeholder="Buscar por nome"
-        placeholderTextColor={minimal ? MINIMAL_UI.textMuted : '#64748B'}
-        value={searchQuery}
-        onChangeText={setSearchQuery}
-        autoCapitalize="words"
-        autoCorrect={false}
-        returnKeyType="search"
-      />
+        accessibilityRole="button"
+        accessibilityLabel="Buscar por nome"
+      >
+        <Text
+          style={[
+            minimal ? styles.shortNameMinimal : styles.shortName,
+            !searchQuery.trim() && (minimal ? styles.emptyFilterTextMinimal : styles.emptyFilterText),
+          ]}
+          numberOfLines={1}
+        >
+          {searchQuery.trim() || 'Buscar por nome'}
+        </Text>
+      </Pressable>
+      <EnxergarSearchModal
+        visible={enxergarOpen}
+        title="Filtrar lista"
+        searchQuery={searchQuery}
+        onSearchQueryChange={setSearchQuery}
+        searchPlaceholder="Buscar por nome"
+        countLabel={
+          loading
+            ? 'Carregando...'
+            : hasSearch
+              ? `${profiles.length} de ${allProfiles.length} usuários com acesso`
+              : `${allProfiles.length} usuários com acesso registrado`
+        }
+        onClose={() => setEnxergarOpen(false)}
+        variant={minimal ? 'minimal' : 'default'}
+      >
+        {loading ? (
+          <CardLoadingState lines={2} compact minimal={minimal} />
+        ) : profiles.length === 0 ? (
+          <Text style={[styles.emptyFilterText, minimal && styles.emptyFilterTextMinimal]}>
+            {allProfiles.length === 0
+              ? 'Nenhum acesso registrado ainda.'
+              : 'Nenhum usuário corresponde à busca.'}
+          </Text>
+        ) : (
+          profiles.map((profile) => (
+            <TouchableOpacity
+              key={profile.id}
+              style={[styles.tableRow, minimal && styles.tableRowMinimal]}
+              onPress={() => {
+                setEnxergarOpen(false);
+                void openScreenHistory(profile);
+              }}
+              activeOpacity={0.85}
+              accessibilityRole="button"
+              accessibilityLabel={`Ver telas visitadas por ${formatShortName(profile.fullName)}`}
+            >
+              <Text style={[styles.shortName, minimal && styles.shortNameMinimal]} numberOfLines={2}>
+                {formatShortName(profile.fullName)}
+              </Text>
+              <Text style={[styles.lastAccess, minimal && styles.lastAccessMinimal]} numberOfLines={2}>
+                {formatLastAccessLabel(profile.lastAccessAt)} · {profile.accessCount}
+              </Text>
+            </TouchableOpacity>
+          ))
+        )}
+      </EnxergarSearchModal>
 
       {loading ? <CardLoadingState lines={2} compact minimal={minimal} /> : null}
 

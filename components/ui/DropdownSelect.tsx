@@ -1,14 +1,12 @@
 import { CloseFooterBar, CLOSE_FOOTER_DOCK_HEIGHT } from '@/components/minimal/CloseFooterBar';
+import { EnxergarSearchModal } from '@/components/ui/EnxergarSearchModal';
 import { VIGILANCE_SCALES_UI } from '@/lib/dashboardCardThemes';
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { FontAwesome } from '@expo/vector-icons';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
-  Dimensions,
-  KeyboardAvoidingView,
   Modal,
-  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -20,7 +18,6 @@ import {
   type TextStyle,
   type ViewStyle,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export type DropdownOption = {
   value: string;
@@ -90,10 +87,6 @@ export function DropdownSelect({
   const isCompact = size === 'compact';
   const isVigilance = variant === 'vigilance';
   const isMinimal = variant === 'minimal';
-  const insets = useSafeAreaInsets();
-  const windowHeight = Dimensions.get('window').height;
-  const enxergarListMaxHeight = Math.max(180, Math.round(windowHeight * 0.58));
-  const enxergarInputRef = useRef<TextInput>(null);
   const resolvedTriggerIconColor =
     triggerIconColor
     ?? (isMinimal ? MINIMAL_UI.icon : isVigilance ? '#FFFFFF' : '#94A3B8');
@@ -130,18 +123,6 @@ export function DropdownSelect({
   };
 
   useEffect(() => () => clearBlurTimer(), []);
-
-  useEffect(() => {
-    if (!enxergar || !open) {
-      return;
-    }
-
-    const timer = setTimeout(() => {
-      enxergarInputRef.current?.focus();
-    }, 80);
-
-    return () => clearTimeout(timer);
-  }, [enxergar, open]);
 
   const handleSelect = (value: string) => {
     clearBlurTimer();
@@ -376,111 +357,23 @@ export function DropdownSelect({
         ) : null}
 
         {enxergar ? (
-          <Modal
+          <EnxergarSearchModal
             visible={open}
-            transparent
-            animationType="fade"
-            onRequestClose={handleCloseSearch}
-            statusBarTranslucent
+            title={modalTitle}
+            searchQuery={searchQuery}
+            onSearchQueryChange={(text) => {
+              setSearchQuery(text);
+              onSearchQueryChange?.(text);
+            }}
+            searchPlaceholder={inputPlaceholder}
+            countLabel={
+              listLoading ? 'Buscando...' : `${filteredOptions.length} de ${options.length}`
+            }
+            onClose={handleCloseSearch}
+            variant={variant}
           >
-            <View style={styles.enxergarRoot}>
-              <Pressable
-                style={styles.enxergarBackdropFill}
-                onPress={handleCloseSearch}
-                accessibilityRole="button"
-                accessibilityLabel="Fechar busca"
-              />
-              <KeyboardAvoidingView
-                style={[
-                  styles.enxergarShell,
-                  { paddingTop: insets.top + 8, paddingBottom: CLOSE_FOOTER_DOCK_HEIGHT },
-                ]}
-                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-                pointerEvents="box-none"
-              >
-                <View
-                  style={[
-                    styles.enxergarCard,
-                    isVigilance && styles.modalCardVigilance,
-                    isMinimal && styles.modalCardMinimal,
-                  ]}
-                >
-                  <Text
-                    style={[
-                      styles.modalTitle,
-                      isVigilance && styles.modalTitleVigilance,
-                      isMinimal && styles.modalTitleMinimal,
-                    ]}
-                  >
-                    {modalTitle}
-                  </Text>
-                  <View
-                    style={[
-                      styles.searchableTrigger,
-                      isVigilance && styles.searchableTriggerVigilance,
-                      isMinimal && styles.searchableTriggerMinimal,
-                      styles.enxergarSearchRow,
-                    ]}
-                  >
-                    <TextInput
-                      ref={enxergarInputRef}
-                      style={[
-                        styles.searchableInput,
-                        isVigilance && styles.searchableInputVigilance,
-                        isMinimal && styles.searchableInputMinimal,
-                        styles.enxergarInput,
-                      ]}
-                      value={searchQuery}
-                      onChangeText={(text) => {
-                        setSearchQuery(text);
-                        onSearchQueryChange?.(text);
-                      }}
-                      placeholder={inputPlaceholder}
-                      placeholderTextColor={placeholderColor}
-                      autoCapitalize="words"
-                      autoCorrect={false}
-                      accessibilityLabel={modalTitle}
-                    />
-                    {searchQuery.trim().length > 0 ? (
-                      <TouchableOpacity
-                        style={styles.searchableClearButton}
-                        onPress={() => {
-                          setSearchQuery('');
-                          onSearchQueryChange?.('');
-                        }}
-                        activeOpacity={0.85}
-                        accessibilityRole="button"
-                        accessibilityLabel="Limpar busca"
-                        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                      >
-                        <FontAwesome name="times-circle" size={18} color={iconColor} />
-                      </TouchableOpacity>
-                    ) : null}
-                  </View>
-                  <Text
-                    style={[
-                      styles.enxergarCount,
-                      isVigilance && styles.emptySearchTextVigilance,
-                      isMinimal && styles.emptySearchTextMinimal,
-                    ]}
-                  >
-                    {listLoading
-                      ? 'Buscando...'
-                      : `${filteredOptions.length} de ${options.length}`}
-                  </Text>
-                  <ScrollView
-                    style={[styles.enxergarScroll, { maxHeight: enxergarListMaxHeight }]}
-                    contentContainerStyle={styles.optionsContent}
-                    keyboardShouldPersistTaps="handled"
-                    showsVerticalScrollIndicator
-                  >
-                    {renderFilteredList()}
-                  </ScrollView>
-                </View>
-              </KeyboardAvoidingView>
-              <CloseFooterBar onPress={handleCloseSearch} />
-            </View>
-          </Modal>
+            {renderFilteredList()}
+          </EnxergarSearchModal>
         ) : null}
       </View>
     );
@@ -677,62 +570,6 @@ const styles = StyleSheet.create({
   },
   searchableScroll: {
     maxHeight: 240,
-  },
-  enxergarRoot: Platform.select({
-    web: {
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      zIndex: 999998,
-    },
-    default: {
-      flex: 1,
-    },
-  }),
-  enxergarBackdropFill: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(2, 6, 23, 0.72)',
-    zIndex: 0,
-  },
-  enxergarShell: {
-    ...StyleSheet.absoluteFillObject,
-    justifyContent: 'flex-start',
-    paddingHorizontal: 16,
-    zIndex: 1,
-    pointerEvents: 'box-none',
-  },
-  enxergarCard: {
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: '#334155',
-    backgroundColor: '#0f172a',
-    overflow: 'hidden',
-    gap: 8,
-    paddingTop: 12,
-  },
-  enxergarSearchRow: {
-    marginHorizontal: 12,
-    borderWidth: 0,
-    borderColor: 'transparent',
-  },
-  enxergarInput: {
-    borderWidth: 0,
-    borderColor: 'transparent',
-    ...(Platform.OS === 'web'
-      ? ({ outlineStyle: 'none', outlineWidth: 0, boxShadow: 'none' } as object)
-      : null),
-  },
-  enxergarCount: {
-    color: '#94A3B8',
-    fontSize: 12,
-    fontWeight: '700',
-    textAlign: 'center',
-    paddingHorizontal: 16,
-  },
-  enxergarScroll: {
-    paddingHorizontal: 10,
   },
   searchableLoadingRow: {
     alignItems: 'center',

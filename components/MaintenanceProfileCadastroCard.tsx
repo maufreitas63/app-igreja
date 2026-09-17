@@ -1,6 +1,7 @@
 import { KnowledgeSectionTitle } from '@/components/knowledge/KnowledgeSectionTitle';
 import { KNOWLEDGE_ROUTE } from '@/lib/knowledge/routeKeys';
 import { CardLoadingState } from '@/components/ui/CardLoadingState';
+import { DropdownSelect } from '@/components/ui/DropdownSelect';
 import { SectionLabel } from '@/components/ui/SectionLabel';
 import { PROFILE_CADASTRO_FIELD_META } from '@/lib/maintenanceProfileCadastroApi';
 import {
@@ -103,7 +104,6 @@ export function MaintenanceProfileCadastroCard({
     selectProfile,
     saveCepAndAddress,
     deleteSelectedUser,
-    clearSearchQuery,
   } = useMaintenanceProfileCadastro(isActive);
 
   const contentHeight = computeMaintenanceContentHeight(panelHeight);
@@ -160,6 +160,23 @@ export function MaintenanceProfileCadastroCard({
     });
   };
 
+  const cadastroSearchOptions = useMemo(
+    () =>
+      (searchResults ?? []).map((option) => {
+        const meta = [
+          option.phone ? formatIbsManualUiPhone(option.phone, option.id) : null,
+          option.memberCode,
+        ].filter(Boolean).join(' · ');
+        const shortName = formatShortName(option.fullName, { profileId: option.id });
+
+        return {
+          value: option.id,
+          label: meta ? `${shortName} · ${meta}` : shortName,
+        };
+      }),
+    [searchResults]
+  );
+
   return (
     <View style={[styles.panel, minimal && styles.panelMinimal, { height: contentHeight }]}>
       <KnowledgeSectionTitle
@@ -179,88 +196,26 @@ export function MaintenanceProfileCadastroCard({
       ) : null}
 
       <SectionHeading minimal={minimal}>Buscar usuário</SectionHeading>
-      <View style={[styles.searchRow, minimal && styles.searchRowMinimal]}>
-        <TextInput
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-          placeholder="Nome (mín. 2 letras)"
-          placeholderTextColor={minimal ? MINIMAL_UI.textMuted : '#64748B'}
-          style={[styles.searchInput, minimal && styles.searchInputMinimal]}
-          autoCapitalize="words"
-          autoCorrect={false}
-        />
-        <TouchableOpacity
-          style={[
-            styles.searchClearButton,
-            minimal && styles.searchClearButtonMinimal,
-            searchQuery.length === 0 && styles.searchClearButtonDisabled,
-          ]}
-          onPress={clearSearchQuery}
-          disabled={searchQuery.length === 0 || deletingUser || savingCep}
-          activeOpacity={0.8}
-          accessibilityRole="button"
-          accessibilityLabel="Limpar busca de usuário"
-        >
-          <MaterialIcons name="close" size={20} color={minimal ? MINIMAL_UI.icon : '#94A3B8'} />
-        </TouchableOpacity>
-      </View>
-
-      {searching ? <CardLoadingState lines={2} compact minimal={minimal} /> : null}
-
-      {searchQuery.trim().length >= 2 && !searching ? (
-        <ScrollView
-          horizontal={false}
-          style={[styles.resultsScroll, minimal && styles.resultsScrollMinimal]}
-          nestedScrollEnabled
-          keyboardShouldPersistTaps="handled"
-        >
-          {(searchResults ?? []).length ? (
-            (searchResults ?? []).map((option) => {
-              const isSelected = option.id === selectedProfileId;
-
-              return (
-                <TouchableOpacity
-                  key={option.id}
-                  style={[
-                    styles.resultRow,
-                    minimal && styles.resultRowMinimal,
-                    isSelected && styles.resultRowSelected,
-                    minimal && isSelected && styles.resultRowSelectedMinimal,
-                  ]}
-                  onPress={() => void selectProfile(option.id)}
-                  activeOpacity={0.85}
-                  accessibilityRole="button"
-                  accessibilityState={{ expanded: isSelected }}
-                  accessibilityLabel={
-                    isSelected
-                      ? `Ocultar dados de ${formatShortName(option.fullName, { profileId: option.id })}`
-                      : `Exibir dados de ${formatShortName(option.fullName, { profileId: option.id })}`
-                  }
-                >
-                  <Text style={[styles.resultName, minimal && styles.resultNameMinimal]}>
-                    {formatShortName(option.fullName, { profileId: option.id })}
-                  </Text>
-                  <Text style={[styles.resultMeta, minimal && styles.resultMetaMinimal]}>
-                    {[
-                      option.phone ? formatIbsManualUiPhone(option.phone, option.id) : null,
-                      option.memberCode,
-                    ].filter(Boolean).join(' · ') ||
-                      applyIbsManualDisplayName(option.fullName, option.id)}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })
-          ) : (
-            <Text style={[styles.hintText, minimal && styles.hintTextMinimal]}>
-              Nenhum perfil encontrado.
-            </Text>
-          )}
-        </ScrollView>
-      ) : (
-        <Text style={[styles.hintText, minimal && styles.hintTextMinimal]}>
-          Digite pelo menos 2 letras para buscar.
-        </Text>
-      )}
+      <DropdownSelect
+        options={cadastroSearchOptions}
+        selectedValue={selectedProfileId ?? ''}
+        onValueChange={(value) => void selectProfile(value || null)}
+        onSearchQueryChange={setSearchQuery}
+        filterOptionsLocally={false}
+        listLoading={searching}
+        emptyListHint={
+          searchQuery.trim().length < 2
+            ? 'Digite pelo menos 2 letras para buscar.'
+            : 'Nenhum perfil encontrado.'
+        }
+        modalTitle="Buscar usuário"
+        placeholder="Nome (mín. 2 letras)"
+        searchPlaceholder="Nome (mín. 2 letras)"
+        searchable
+        enxergar
+        variant={minimal ? 'minimal' : 'default'}
+        disabled={deletingUser || savingCep}
+      />
 
       {loadingProfile ? (
         <CardLoadingState lines={4} minimal={minimal} />

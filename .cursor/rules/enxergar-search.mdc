@@ -7,15 +7,22 @@ alwaysApply: true
 
 Quando o usuário pedir **aplicar enxergar** em um campo de busca/seleção:
 
-1. Use `DropdownSelect` com `searchable` **e** `enxergar`.
-2. **Não mude** o critério de pesquisa daquela tela (nome, telefone, código, etc.). Só muda a apresentação: a lista filtrada abre em **modal no topo**, para ver o recorte enquanto digita.
-3. Não ligue `enxergar` em todos os dropdowns — só no elemento indicado.
+1. **Picker** (`DropdownSelect`): ligue `searchable` **e** `enxergar`.
+2. **Lista/filtro próprio**: use `EnxergarSearchModal` e mantenha o critério e o conteúdo daquela tela.
+3. **Não mude** o critério de pesquisa (nome, telefone, código, mínimo de letras, etc.). Só muda a apresentação: a lista filtrada abre em **modal no topo**.
+4. Não ligue Enxergar em todos os campos — só no elemento indicado.
 
 ```tsx
-<DropdownSelect
-  searchable
-  enxergar
-  searchPlaceholder="Digite nome, telefone ou código..."
-  options={options}
-/>
+<DropdownSelect searchable enxergar searchPlaceholder="..." options={options} />
+
+<EnxergarSearchModal
+  visible={open}
+  title="Filtrar lista"
+  searchQuery={query}
+  onSearchQueryChange={setQuery}
+  searchPlaceholder="..."
+  onClose={() => setOpen(false)}
+>
+  {listaFiltrada}
+</EnxergarSearchModal>
 ```

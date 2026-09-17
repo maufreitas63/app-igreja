@@ -6,14 +6,15 @@ import type {
   MembersListsClassEntry,
 } from '@/lib/membersListsClassTypes';
 import { normalizeMembersListsSearchQuery } from '@/lib/membersListsClassUtils';
+import { EnxergarSearchModal } from '@/components/ui/EnxergarSearchModal';
 import { FontAwesome } from '@expo/vector-icons';
-import React from 'react';
+import React, { useState } from 'react';
 import {
   ActivityIndicator,
+  Pressable,
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -115,6 +116,7 @@ export function MembersListsClass({
   onOpenWhatsapp,
   onOpenEntryMap,
 }: MembersListsClassProps) {
+  const [enxergarOpen, setEnxergarOpen] = useState(false);
   const audienceLabel = audienceNoun(audience);
   const hasSearchQuery = Boolean(normalizeMembersListsSearchQuery(searchQuery));
   const screenTitle = audienceTitle(audience, title);
@@ -184,16 +186,24 @@ export function MembersListsClass({
                   ? 'Procurar congregado'
                   : 'Procurar membro'}
             </Text>
-            <View style={styles.searchRow}>
-              <TextInput
-                style={styles.searchInput}
-                placeholder="Digite o nome..."
-                placeholderTextColor={MINIMAL_UI.textMuted}
-                value={searchQuery}
-                onChangeText={onSearchQueryChange}
-                autoCapitalize="words"
-                autoCorrect={false}
-              />
+            <Pressable
+              style={styles.searchRow}
+              onPress={() => setEnxergarOpen(true)}
+              accessibilityRole="button"
+              accessibilityLabel={
+                audience === 'visitors'
+                  ? 'Procurar visitante'
+                  : audience === 'congregados'
+                    ? 'Procurar congregado'
+                    : 'Procurar membro'
+              }
+            >
+              <Text
+                style={[styles.searchInput, !hasSearchQuery && styles.searchPlaceholder]}
+                numberOfLines={1}
+              >
+                {hasSearchQuery ? searchQuery : 'Digite o nome...'}
+              </Text>
               {hasSearchQuery ? (
                 <TouchableOpacity
                   style={styles.searchClearButton}
@@ -205,7 +215,78 @@ export function MembersListsClass({
                   <FontAwesome name="times-circle" size={22} color={MINIMAL_UI.accent} />
                 </TouchableOpacity>
               ) : null}
-            </View>
+            </Pressable>
+            <EnxergarSearchModal
+              visible={enxergarOpen}
+              title={
+                audience === 'visitors'
+                  ? 'Procurar visitante'
+                  : audience === 'congregados'
+                    ? 'Procurar congregado'
+                    : 'Procurar membro'
+              }
+              searchQuery={searchQuery}
+              onSearchQueryChange={onSearchQueryChange}
+              searchPlaceholder="Digite o nome..."
+              countLabel={summaryText}
+              onClose={() => setEnxergarOpen(false)}
+              variant="minimal"
+            >
+              {entries.length ? (
+                entries.map((entry) => {
+                  const canOpenMemberOnMap =
+                    mapEnabled && canViewMapPinDetails && Boolean(entry.cep?.trim());
+
+                  return (
+                    <View key={entry.id} style={styles.row}>
+                      <Text style={styles.nameText} numberOfLines={1}>
+                        {entry.short_name}
+                      </Text>
+                      <View style={styles.actionsRow}>
+                        <TouchableOpacity
+                          style={styles.actionCell}
+                          onPress={() => onOpenFamily?.(entry)}
+                          activeOpacity={0.85}
+                          accessibilityLabel={`Ver família de ${entry.short_name}`}
+                        >
+                          <FontAwesome name="users" size={18} color={MINIMAL_UI.icon} />
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          style={[styles.actionCell, !entry.phone && styles.actionCellDisabled]}
+                          onPress={() => onOpenWhatsapp?.(entry)}
+                          disabled={!entry.phone}
+                          activeOpacity={0.85}
+                        >
+                          <FontAwesome
+                            name="whatsapp"
+                            size={18}
+                            color={entry.phone ? '#25D366' : MINIMAL_UI.textMuted}
+                          />
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          style={[styles.actionCell, !canOpenMemberOnMap && styles.actionCellDisabled]}
+                          onPress={() => onOpenEntryMap?.(entry)}
+                          disabled={!canOpenMemberOnMap}
+                          activeOpacity={0.85}
+                          accessibilityRole="button"
+                          accessibilityLabel={`Abrir mapa com localização de ${entry.short_name}`}
+                        >
+                          <FontAwesome
+                            name="map-marker"
+                            size={18}
+                            color={canOpenMemberOnMap ? MINIMAL_UI.icon : MINIMAL_UI.textMuted}
+                          />
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                  );
+                })
+              ) : (
+                <Text style={styles.errorText}>
+                  {hasSearchQuery ? emptySearchMessage(audience) : emptyListMessage(audience)}
+                </Text>
+              )}
+            </EnxergarSearchModal>
           </View>
         ) : null}
 
@@ -412,6 +493,9 @@ const styles = StyleSheet.create({
     fontSize: 15,
     paddingHorizontal: 14,
     paddingVertical: 10,
+  },
+  searchPlaceholder: {
+    color: MINIMAL_UI.textMuted,
   },
   searchClearButton: {
     width: 40,

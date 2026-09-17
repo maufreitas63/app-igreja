@@ -599,6 +599,7 @@ export function MaintenanceGhostModeCard({
         placeholder="Selecione um usuário..."
         searchPlaceholder="Digite nome ou telefone..."
         searchable
+        enxergar
         variant={minimal ? 'minimal' : 'default'}
         disabled={starting}
       />

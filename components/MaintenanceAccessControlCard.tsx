@@ -3,6 +3,7 @@ import { KNOWLEDGE_ROUTE } from '@/lib/knowledge/routeKeys';
 import { CardLoadingState } from '@/components/ui/CardLoadingState';
 import { AppSwitch } from '@/components/ui/AppSwitch';
 import { DropdownSelect } from '@/components/ui/DropdownSelect';
+import { EnxergarSearchModal } from '@/components/ui/EnxergarSearchModal';
 import { SectionLabel } from '@/components/ui/SectionLabel';
 import { formatShortName } from '@/lib/formatShortName';
 import { formatIbsManualUiPhone } from '@/lib/ibsManualDisplayMask';
@@ -45,6 +46,7 @@ import { FontAwesome } from '@expo/vector-icons';
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
+  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -321,6 +323,7 @@ export function MaintenanceAccessControlCard({
   const { showTechnicalKeys } = useShowAclTechnicalKeys(isActive);
   const [activeTab, setActiveTab] = useState<AdminTab>('profiles');
   const [peopleSearchQuery, setPeopleSearchQuery] = useState('');
+  const [peopleEnxergarOpen, setPeopleEnxergarOpen] = useState(false);
   const [expandedPeopleRoleIds, setExpandedPeopleRoleIds] = useState<string[]>([]);
   const [grantSearchQuery, setGrantSearchQuery] = useState('');
   const [focusedResourceGrant, setFocusedResourceGrant] = useState<RoleGrantRecord | null>(null);
@@ -1266,19 +1269,82 @@ export function MaintenanceAccessControlCard({
               : ''}
             . Uma pessoa pode aparecer em mais de um papel.
           </Text>
-          <TextInput
-            value={peopleSearchQuery}
-            onChangeText={setPeopleSearchQuery}
-            placeholder="Filtrar por nome, telefone ou código"
-            placeholderTextColor={minimal ? MINIMAL_UI.textMuted : 'rgba(58, 150, 221, 0.55)'}
-            autoCorrect={false}
-            autoComplete="off"
+          <Pressable
+            onPress={() => setPeopleEnxergarOpen(true)}
             style={[
               styles.input,
               styles.searchInput,
               minimal && styles.grantSearchInputMinimal,
             ]}
-          />
+            accessibilityRole="button"
+            accessibilityLabel="Filtrar por nome, telefone ou código"
+          >
+            <Text
+              style={[
+                styles.searchHintText,
+                minimal && styles.searchHintTextMinimal,
+                peopleSearchQuery ? (minimal ? styles.peopleNameMinimal : styles.peopleName) : null,
+              ]}
+              numberOfLines={1}
+            >
+              {peopleSearchQuery || 'Filtrar por nome, telefone ou código'}
+            </Text>
+          </Pressable>
+          <EnxergarSearchModal
+            visible={peopleEnxergarOpen}
+            title="Pessoas por papel"
+            searchQuery={peopleSearchQuery}
+            onSearchQueryChange={setPeopleSearchQuery}
+            searchPlaceholder="Filtrar por nome, telefone ou código"
+            countLabel={
+              loadingPeopleByRole
+                ? 'Carregando...'
+                : `${filteredPeopleByRole.reduce((sum, group) => sum + group.people.length, 0)} pessoas`
+            }
+            onClose={() => setPeopleEnxergarOpen(false)}
+            variant={minimal ? 'minimal' : 'default'}
+          >
+            {loadingPeopleByRole ? (
+              <CardLoadingState label="Carregando relatório..." minimal={minimal} />
+            ) : filteredPeopleByRole.length === 0 ? (
+              <Text style={[styles.panelHint, minimal && styles.panelHintMinimal]}>
+                {peopleSearchNeedle
+                  ? 'Nenhuma pessoa encontrada com esse filtro.'
+                  : 'Nenhuma pessoa atribuída aos papéis visíveis.'}
+              </Text>
+            ) : (
+              filteredPeopleByRole.flatMap((group) =>
+                group.people.map((person) => (
+                  <TouchableOpacity
+                    key={`${group.roleId}-${person.profileId}`}
+                    style={[styles.peopleRow, minimal && styles.peopleRowMinimal]}
+                    onPress={() => {
+                      setPeopleEnxergarOpen(false);
+                      setActiveTab('profiles');
+                      void selectProfileById(person.profileId);
+                    }}
+                    activeOpacity={0.85}
+                  >
+                    <Text style={[styles.peopleName, minimal && styles.peopleNameMinimal]}>
+                      {formatShortName(person.fullName, { profileId: person.profileId })}
+                      {person.desligado ? ' · desligado' : ''}
+                      {` · ${group.roleName}`}
+                    </Text>
+                    {person.phone || person.memberCode ? (
+                      <Text style={[styles.peopleMeta, minimal && styles.peopleMetaMinimal]}>
+                        {[
+                          person.phone
+                            ? formatIbsManualUiPhone(person.phone, person.profileId)
+                            : null,
+                          person.memberCode,
+                        ].filter(Boolean).join(' · ')}
+                      </Text>
+                    ) : null}
+                  </TouchableOpacity>
+                ))
+              )
+            )}
+          </EnxergarSearchModal>
           {loadingPeopleByRole ? (
             <CardLoadingState label="Carregando relatório..." minimal={minimal} />
           ) : filteredPeopleByRole.length === 0 ? (
