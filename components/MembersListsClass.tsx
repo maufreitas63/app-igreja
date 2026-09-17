@@ -121,6 +121,11 @@ export function MembersListsClass({
   const hasSearchQuery = Boolean(normalizeMembersListsSearchQuery(searchQuery));
   const screenTitle = audienceTitle(audience, title);
 
+  const selectEntryFromEnxergar = (entry: MembersListsClassEntry) => {
+    onSearchQueryChange(entry.short_name);
+    setEnxergarOpen(false);
+  };
+
   const summaryText = hasSearchQuery
     ? `${entries.length} de ${totalCount} ${audienceLabel}${totalCount === 1 ? '' : 's'}`
     : `${totalCount} ${audienceLabel}${totalCount === 1 ? '' : 's'} em ordem alfabética`;
@@ -239,9 +244,16 @@ export function MembersListsClass({
 
                   return (
                     <View key={entry.id} style={styles.row}>
-                      <Text style={styles.nameText} numberOfLines={1}>
-                        {entry.short_name}
-                      </Text>
+                      <Pressable
+                        style={styles.nameSelect}
+                        onPress={() => selectEntryFromEnxergar(entry)}
+                        accessibilityRole="button"
+                        accessibilityLabel={`Filtrar por ${entry.short_name}`}
+                      >
+                        <Text style={styles.nameText} numberOfLines={1}>
+                          {entry.short_name}
+                        </Text>
+                      </Pressable>
                       <View style={styles.actionsRow}>
                         <TouchableOpacity
                           style={styles.actionCell}
@@ -593,6 +605,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
     gap: 8,
     minHeight: ACTION_CELL_HEIGHT + 16,
+  },
+  nameSelect: {
+    flex: 1,
+    minWidth: 0,
+    justifyContent: 'center',
   },
   nameText: {
     flex: 1,
