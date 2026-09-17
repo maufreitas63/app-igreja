@@ -1,5 +1,13 @@
 /** Helpers compartilhados das Pages Functions de billing (Stripe + Supabase). */
 
+/** Product IDs do catálogo Stripe de produção (checkout live resolve o price_ trimestral). */
+export const STRIPE_PRODUCTION_PRODUCT_IDS: Record<string, string> = {
+  semente: 'prod_VHJyIji7BiDXMN',
+  crescimento: 'prod_VHK0NV797cK5v2',
+  expansao: 'prod_VHK1R5xL6SKUm5',
+  ministerio: 'prod_VHK29Q00ifpUrw',
+};
+
 export type BillingEnv = {
   STRIPE_SECRET_KEY?: string;
   STRIPE_WEBHOOK_SECRET?: string;
@@ -11,6 +19,15 @@ export type BillingEnv = {
   STRIPE_PRICE_CRESCIMENTO?: string;
   STRIPE_PRICE_EXPANSAO?: string;
   STRIPE_PRICE_MINISTERIO?: string;
+  STRIPE_PRODUCT_SEMENTE?: string;
+  STRIPE_PRODUCT_CRESCIMENTO?: string;
+  STRIPE_PRODUCT_EXPANSAO?: string;
+  STRIPE_PRODUCT_MINISTERIO?: string;
+};
+
+export const isStripeSecretKey = (value: string | undefined): value is string => {
+  const secret = value?.trim() ?? '';
+  return secret.startsWith('sk_test_') || secret.startsWith('sk_live_');
 };
 
 export const billingCorsHeaders: Record<string, string> = {
@@ -61,9 +78,64 @@ export const planCodeFromPriceEnv = (env: BillingEnv, planCode: string): string 
   return price || null;
 };
 
+export const planCodeFromProductEnv = (env: BillingEnv, planCode: string): string | null => {
+  const code = planCode.trim().toLowerCase();
+  const map: Record<string, string | undefined> = {
+    semente: env.STRIPE_PRODUCT_SEMENTE,
+    crescimento: env.STRIPE_PRODUCT_CRESCIMENTO,
+    expansao: env.STRIPE_PRODUCT_EXPANSAO,
+    ministerio: env.STRIPE_PRODUCT_MINISTERIO,
+  };
+  const productId = map[code]?.trim() || STRIPE_PRODUCTION_PRODUCT_IDS[code];
+  return productId?.startsWith('prod_') ? productId : null;
+};
+
 function stripePriceIdFromPlanRow(row: Record<string, unknown> | null): string | null {
   const id = String(row?.stripe_price_id ?? '').trim();
   return id.startsWith('price_') ? id : null;
+}
+
+function stripeProductIdFromPlanRow(row: Record<string, unknown> | null): string | null {
+  const id = String(row?.stripe_product_id ?? '').trim();
+  return id.startsWith('prod_') ? id : null;
+}
+
+function isQuarterlyStripePrice(row: Record<string, unknown> | null): boolean {
+  const recurring = asRecord(row?.recurring);
+  return recurring?.interval === 'month' && Number(recurring?.interval_count) === 3;
+}
+
+async function resolveQuarterlyPriceFromProduct(
+  secret: string,
+  productId: string
+): Promise<string | null> {
+  const listed = await stripeGet(secret, `prices?product=${encodeURIComponent(productId)}&active=true&limit=100`);
+  if (!listed.ok) return null;
+
+  const rows = Array.isArray(listed.data.data) ? listed.data.data : [];
+  const asPriceRows = rows
+    .map((item) => asRecord(item))
+    .filter((row): row is Record<string, unknown> => row != null);
+
+  const quarterly = asPriceRows.find(
+    (row) => isQuarterlyStripePrice(row) && typeof row.id === 'string' && row.id.startsWith('price_')
+  );
+  if (typeof quarterly?.id === 'string') return quarterly.id;
+
+  const product = await stripeGet(secret, `products/${encodeURIComponent(productId)}`);
+  if (product.ok) {
+    const defaultPrice = product.data.default_price;
+    if (typeof defaultPrice === 'string' && defaultPrice.startsWith('price_')) {
+      return defaultPrice;
+    }
+    const nested = asRecord(defaultPrice);
+    if (typeof nested?.id === 'string' && nested.id.startsWith('price_')) {
+      return nested.id;
+    }
+  }
+
+  const first = asPriceRows.find((row) => typeof row.id === 'string' && row.id.startsWith('price_'));
+  return typeof first?.id === 'string' ? first.id : null;
 }
 
 function planRowFromList(data: unknown, planCode: string): Record<string, unknown> | null {
@@ -78,16 +150,25 @@ function planRowFromList(data: unknown, planCode: string): Record<string, unknow
   return null;
 }
 
-/** Price ID do plano: Supabase primeiro, env do Cloudflare como fallback. */
+/** Price ID do plano: em live, a partir do product_id; em test, stripe_price_id / env. */
 export async function resolveCheckoutPriceId(
   env: BillingEnv,
   planCode: string
 ): Promise<string | null> {
   const listed = await supabaseServiceRpc(env, 'list_billing_plans', {});
-  if (listed.ok) {
-    const fromDb = stripePriceIdFromPlanRow(planRowFromList(listed.data, planCode));
-    if (fromDb) return fromDb;
+  const row = listed.ok ? planRowFromList(listed.data, planCode) : null;
+  const secret = env.STRIPE_SECRET_KEY?.trim() || '';
+  const productId =
+    stripeProductIdFromPlanRow(row)
+    || planCodeFromProductEnv(env, planCode);
+
+  if (secret.startsWith('sk_live_') && productId) {
+    const fromProduct = await resolveQuarterlyPriceFromProduct(secret, productId);
+    if (fromProduct) return fromProduct;
   }
+
+  const fromDb = stripePriceIdFromPlanRow(row);
+  if (fromDb) return fromDb;
   return planCodeFromPriceEnv(env, planCode);
 }
 

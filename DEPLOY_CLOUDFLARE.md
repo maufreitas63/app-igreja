@@ -66,27 +66,36 @@ Em **Settings → Variables and Secrets** (ambiente **Production**), cadastre:
 
 | Nome | Tipo | Onde obter |
 |------|------|------------|
-| `STRIPE_SECRET_KEY` | **Secret** | Stripe → Developers → API keys → Secret key **test** (`sk_test_…`) |
+| `STRIPE_SECRET_KEY` | **Secret** | Stripe → Developers → API keys → Secret key **live** (`sk_live_…`) em produção; `sk_test_…` só em teste |
 | `STRIPE_WEBHOOK_SECRET` | **Secret** | Stripe → Developers → Webhooks → endpoint → Signing secret (`whsec_…`) |
 | `SUPABASE_URL` | Secret ou texto | URL do projeto Supabase (ex.: `https://bldbrsuiwctoaxzcrjoc.supabase.co`) |
 | `SUPABASE_SERVICE_ROLE_KEY` | **Secret** | Supabase → Settings → API → `service_role` |
-| `STRIPE_PRICE_SEMENTE` | Texto | Price ID **trimestral** do produto Semente (`price_…`, `interval_count` 3) |
-| `STRIPE_PRICE_CRESCIMENTO` | Texto | Price ID trimestral do plano Crescimento |
-| `STRIPE_PRICE_EXPANSAO` | Texto | Price ID trimestral do plano Expansão |
-| `STRIPE_PRICE_MINISTERIO` | Texto | Price ID trimestral do plano Ministério |
+| `STRIPE_PRICE_SEMENTE` | Texto | Fallback de teste: Price ID trimestral (`price_…`) |
+| `STRIPE_PRICE_CRESCIMENTO` | Texto | Fallback de teste: Price ID trimestral |
+| `STRIPE_PRICE_EXPANSAO` | Texto | Fallback de teste: Price ID trimestral |
+| `STRIPE_PRICE_MINISTERIO` | Texto | Fallback de teste: Price ID trimestral |
 | `EXPO_PUBLIC_APP_URL` | Texto | `https://app.conectamais.api.br` |
 
-Webhook Stripe (modo **Test**):
+Webhook Stripe (modo **Live** em produção):
 
 ```
 https://app.conectamais.api.br/api/stripe-webhook
 ```
 
-Os Prices precisam ser **trimestrais** (`recurring.interval = month` e `interval_count = 3`). O Stripe não deixa mudar um Price mensal para trimestral: crie um Price novo no mesmo produto. Com `STRIPE_SECRET_KEY` no `.env.local`, rode `npm run stripe:quarterly-prices` e cole os `price_…` nas variáveis acima.
+Os Prices precisam ser **trimestrais** (`recurring.interval = month` e `interval_count = 3`). O Stripe não deixa mudar um Price mensal para trimestral: crie um Price novo no mesmo produto. Com `STRIPE_SECRET_KEY` live no `.env.local`, rode `npm run stripe:quarterly-prices` se precisar gerar o Price trimestral.
 
-O checkout usa primeiro `billing_plans.stripe_price_id` no Supabase. As variáveis abaixo ficam como fallback.
+O checkout **live** resolve o `price_…` a partir de `billing_plans.stripe_product_id`. Os `STRIPE_PRICE_*` ficam como fallback de teste.
 
-Price IDs atuais (modo Test, trimestral):
+Product IDs de produção:
+
+| Plano | Product ID |
+|-------|------------|
+| Semente | `prod_VHJyIji7BiDXMN` |
+| Crescimento | `prod_VHK0NV797cK5v2` |
+| Expansão | `prod_VHK1R5xL6SKUm5` |
+| Ministério | `prod_VHK29Q00ifpUrw` |
+
+Price IDs de fallback (modo Test, trimestral):
 
 | Variável | Price ID | Valor |
 |----------|----------|--------|

@@ -25,6 +25,7 @@ returns table (
   max_members integer,
   sort_order integer,
   stripe_price_id text,
+  stripe_product_id text,
   quarterly_amount_cents integer
 )
 language sql
@@ -40,6 +41,7 @@ as $$
     bp.max_members,
     bp.sort_order,
     bp.stripe_price_id,
+    bp.stripe_product_id,
     bp.quarterly_amount_cents
   from public.billing_plans bp
   where bp.is_active = true

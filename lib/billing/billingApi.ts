@@ -23,6 +23,12 @@ const mapPlan = (row: Record<string, unknown>): BillingPlan | null => {
         : row.stripePriceId != null
           ? String(row.stripePriceId)
           : null,
+    stripeProductId:
+      row.stripe_product_id != null
+        ? String(row.stripe_product_id)
+        : row.stripeProductId != null
+          ? String(row.stripeProductId)
+          : null,
     quarterlyAmountCents: (() => {
       const raw = row.quarterly_amount_cents ?? row.quarterlyAmountCents;
       const n = raw == null || raw === '' ? NaN : Number(raw);

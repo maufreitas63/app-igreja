@@ -46,10 +46,10 @@ if (!secret || !secret.startsWith('sk_')) {
 }
 
 const PLANS = [
-  { code: 'semente', name: 'Semente', env: 'STRIPE_PRICE_SEMENTE' },
-  { code: 'crescimento', name: 'Crescimento', env: 'STRIPE_PRICE_CRESCIMENTO' },
-  { code: 'expansao', name: 'Expansão', env: 'STRIPE_PRICE_EXPANSAO' },
-  { code: 'ministerio', name: 'Ministério', env: 'STRIPE_PRICE_MINISTERIO' },
+  { code: 'semente', name: 'Semente', env: 'STRIPE_PRICE_SEMENTE', productId: 'prod_VHJyIji7BiDXMN' },
+  { code: 'crescimento', name: 'Crescimento', env: 'STRIPE_PRICE_CRESCIMENTO', productId: 'prod_VHK0NV797cK5v2' },
+  { code: 'expansao', name: 'Expansão', env: 'STRIPE_PRICE_EXPANSAO', productId: 'prod_VHK1R5xL6SKUm5' },
+  { code: 'ministerio', name: 'Ministério', env: 'STRIPE_PRICE_MINISTERIO', productId: 'prod_VHK29Q00ifpUrw' },
 ];
 
 const stripeGet = async (path) => {
@@ -102,10 +102,12 @@ const productList = Array.isArray(products.data) ? products.data : [];
 const results = [];
 
 for (const plan of PLANS) {
-  const product = productList.find((item) => normalize(item.name) === normalize(plan.name));
+  const product =
+    productList.find((item) => item.id === plan.productId)
+    || productList.find((item) => normalize(item.name) === normalize(plan.name));
   if (!product) {
     throw new Error(
-      `Produto Stripe "${plan.name}" não encontrado. Crie o produto no catálogo (modo Test) e rode de novo.`
+      `Produto Stripe "${plan.name}" (${plan.productId}) não encontrado neste modo da chave. Use sk_live_ para produção.`
     );
   }
 

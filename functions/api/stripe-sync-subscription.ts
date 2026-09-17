@@ -10,6 +10,7 @@
 import {
   asRecord,
   billingCorsHeaders,
+  isStripeSecretKey,
   jsonResponse,
   persistStripeSubscription,
   readStripeMeta,
@@ -41,9 +42,9 @@ function subscriptionScore(sub: Record<string, unknown>) {
 export const onRequestPost = async (context: PagesContext) => {
   try {
     const secret = context.env.STRIPE_SECRET_KEY?.trim();
-    if (!secret || !secret.startsWith('sk_test_')) {
+    if (!isStripeSecretKey(secret)) {
       return jsonResponse(
-        { success: false, message: 'Stripe Test Key ausente no Cloudflare.' },
+        { success: false, message: 'Stripe Secret Key ausente no Cloudflare.' },
         503
       );
     }

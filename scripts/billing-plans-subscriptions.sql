@@ -14,6 +14,7 @@ create table if not exists public.billing_plans (
   max_members integer not null default 50,
   sort_order integer not null default 100,
   stripe_price_id text null,
+  stripe_product_id text null,
   quarterly_amount_cents integer null,
   is_active boolean not null default true,
   created_at timestamptz not null default now(),
@@ -23,6 +24,9 @@ create table if not exists public.billing_plans (
 
 alter table public.billing_plans
   add column if not exists quarterly_amount_cents integer;
+
+alter table public.billing_plans
+  add column if not exists stripe_product_id text;
 
 comment on column public.billing_plans.max_members is
   'Limite de membros do tenant; -1 = ilimitado.';
@@ -291,8 +295,9 @@ returns table (
   description text,
   max_members integer,
   sort_order integer,
-  stripe_price_id text,
-  quarterly_amount_cents integer
+    stripe_price_id text,
+    stripe_product_id text,
+    quarterly_amount_cents integer
 )
 language sql
 stable
@@ -307,6 +312,7 @@ as $$
     bp.max_members,
     bp.sort_order,
     bp.stripe_price_id,
+    bp.stripe_product_id,
     bp.quarterly_amount_cents
   from public.billing_plans bp
   where bp.is_active = true

@@ -1,11 +1,12 @@
 /**
- * Cloudflare Pages Function — cria Stripe Checkout Session (Test Keys).
+ * Cloudflare Pages Function — cria Stripe Checkout Session.
  * POST /api/stripe-create-checkout
  * body: { tenant_id, plan_code, success_url?, cancel_url? }
  */
 
 import {
   billingCorsHeaders,
+  isStripeSecretKey,
   jsonResponse,
   resolveCheckoutPriceId,
   stripeFormPost,
@@ -24,12 +25,12 @@ export const onRequestOptions = async () =>
 export const onRequestPost = async (context: PagesContext) => {
   try {
     const secret = context.env.STRIPE_SECRET_KEY?.trim();
-    if (!secret || !secret.startsWith('sk_test_')) {
+    if (!isStripeSecretKey(secret)) {
       return jsonResponse(
         {
           success: false,
           message:
-            'Stripe Test Key ausente. Defina STRIPE_SECRET_KEY=sk_test_... nas variáveis do Cloudflare Pages.',
+            'Stripe Secret Key ausente. Defina STRIPE_SECRET_KEY (sk_live_… em produção ou sk_test_… em teste) no Cloudflare Pages.',
         },
         503
       );
@@ -79,7 +80,7 @@ export const onRequestPost = async (context: PagesContext) => {
       return jsonResponse(
         {
           success: false,
-          message: `Price ID de teste não configurado para o plano "${planCode}".`,
+          message: `Price ID não configurado para o plano "${planCode}".`,
         },
         400
       );

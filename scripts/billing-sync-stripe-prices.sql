@@ -1,7 +1,8 @@
 -- =============================================================================
--- Sincroniza vitrine e Price IDs com o catálogo Stripe Test (set/2026)
+-- Sincroniza vitrine e Price IDs com o catálogo Stripe Test (fallback local)
 -- =============================================================================
--- Valores lidos dos Prices trimestrais ativos:
+-- Em produção o checkout usa billing_plans.stripe_product_id (prod_…).
+-- Os price_ abaixo são só do modo Test. Produção: scripts/billing-stripe-production-product-ids.sql
 --   Semente     price_1UDseeRexYTA7BZiEJhl4ikh  R$ 104,99
 --   Crescimento price_1UDsfkRexYTA7BZiYgfpNg55  R$ 252,99
 --   Expansão    price_1UDsiHRexYTA7BZipBCdbRCb  R$ 815,99

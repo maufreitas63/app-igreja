@@ -6,6 +6,7 @@
 
 import {
   asRecord,
+  isStripeSecretKey,
   jsonResponse,
   persistStripeSubscription,
   readStripeMeta,
@@ -163,9 +164,9 @@ export const onRequestPost = async (context: PagesContext) => {
   try {
     const secret = context.env.STRIPE_WEBHOOK_SECRET?.trim();
     const stripeKey = context.env.STRIPE_SECRET_KEY?.trim();
-    if (!secret || !stripeKey?.startsWith('sk_test_')) {
+    if (!secret || !isStripeSecretKey(stripeKey)) {
       return jsonResponse(
-        { received: false, message: 'Webhook Stripe (test) não configurado.' },
+        { received: false, message: 'Webhook Stripe não configurado.' },
         503
       );
     }
