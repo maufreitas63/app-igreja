@@ -417,9 +417,9 @@ export function DropdownSelect({
                   <View
                     style={[
                       styles.searchableTrigger,
-                      styles.enxergarSearchRow,
                       isVigilance && styles.searchableTriggerVigilance,
                       isMinimal && styles.searchableTriggerMinimal,
+                      styles.enxergarSearchRow,
                     ]}
                   >
                     <TextInput
@@ -428,6 +428,7 @@ export function DropdownSelect({
                         styles.searchableInput,
                         isVigilance && styles.searchableInputVigilance,
                         isMinimal && styles.searchableInputMinimal,
+                        styles.enxergarInput,
                       ]}
                       value={searchQuery}
                       onChangeText={(text) => {
@@ -713,6 +714,15 @@ const styles = StyleSheet.create({
   },
   enxergarSearchRow: {
     marginHorizontal: 12,
+    borderWidth: 0,
+    borderColor: 'transparent',
+  },
+  enxergarInput: {
+    borderWidth: 0,
+    borderColor: 'transparent',
+    ...(Platform.OS === 'web'
+      ? ({ outlineStyle: 'none', outlineWidth: 0, boxShadow: 'none' } as object)
+      : null),
   },
   enxergarCount: {
     color: '#94A3B8',
