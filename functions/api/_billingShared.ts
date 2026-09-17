@@ -236,9 +236,9 @@ export function normalizeStripeSubscriptionStatus(raw: unknown): StripeSubscript
     : 'inactive';
 }
 
-export function stripeStatusGrantsAccess(status: unknown): boolean {
-  const normalized = normalizeStripeSubscriptionStatus(status);
-  return normalized === 'active' || normalized === 'trialing';
+export function isRealStripeSubscriptionId(value: unknown): boolean {
+  const id = String(value || '').trim();
+  return /^sub_[A-Za-z0-9]+$/.test(id) && !id.toLowerCase().startsWith('sub_test');
 }
 
 export function isPaidCheckoutSession(session: Record<string, unknown> | null): boolean {
@@ -274,11 +274,21 @@ export async function persistStripeSubscription(
     tenantId?: string;
     planCode?: string;
     checkoutSessionId?: string | null;
+    emitContract?: boolean;
   }
 ): Promise<PersistStripeResult> {
   const tenantId = (options?.tenantId || readStripeMeta(subscription, 'tenant_id')).trim();
   if (!tenantId) {
     return { ok: false, message: 'Assinatura Stripe sem tenant_id.', retry: false };
+  }
+
+  const subscriptionId = typeof subscription.id === 'string' ? subscription.id.trim() : '';
+  if (!isRealStripeSubscriptionId(subscriptionId)) {
+    return {
+      ok: false,
+      message: 'Assinatura Stripe inválida. Contrato e acesso não foram liberados.',
+      retry: false,
+    };
   }
 
   const items = asRecord(subscription.items);
@@ -301,13 +311,13 @@ export async function persistStripeSubscription(
     p_status: status,
     p_stripe_customer_id:
       typeof subscription.customer === 'string' ? subscription.customer : null,
-    p_stripe_subscription_id:
-      typeof subscription.id === 'string' ? subscription.id : null,
+    p_stripe_subscription_id: subscriptionId,
     p_stripe_checkout_session_id: options?.checkoutSessionId ?? null,
     p_current_period_start: period.start,
     p_current_period_end: period.end,
     p_cancel_at_period_end: subscription.cancel_at_period_end === true,
     p_raw_stripe: subscription,
+    p_emit_contract: options?.emitContract === true,
   });
   if (!result.ok) {
     return result;
@@ -340,39 +350,6 @@ export type PersistCheckoutSessionResult =
       retry?: boolean;
       message: string;
     };
-
-async function persistCheckoutWithoutSubscription(
-  env: BillingEnv,
-  session: Record<string, unknown>,
-  tenantId: string,
-  status: StripeSubscriptionStatus
-): Promise<PersistStripeResult> {
-  const planCode = readStripeMeta(session, 'plan_code') || 'semente';
-  const sessionId = typeof session.id === 'string' ? session.id : null;
-  const customerId = typeof session.customer === 'string' ? session.customer : null;
-  const result = await supabaseServiceRpc(env, 'upsert_tenant_subscription_from_stripe', {
-    p_tenant_id: tenantId,
-    p_plan_code: planCode,
-    p_status: status,
-    p_stripe_customer_id: customerId,
-    p_stripe_subscription_id: null,
-    p_stripe_checkout_session_id: sessionId,
-    p_current_period_start: null,
-    p_current_period_end: null,
-    p_cancel_at_period_end: false,
-    p_raw_stripe: session,
-  });
-  if (!result.ok) {
-    return result;
-  }
-  const storedStatus = persistStatusFromRpc(result.data, status);
-  return {
-    ok: true,
-    data: result.data,
-    status: storedStatus,
-    accessAllowed: stripeStatusGrantsAccess(storedStatus),
-  };
-}
 
 /**
  * Grava assinatura só a partir de uma Checkout Session real da API Stripe.
@@ -425,7 +402,20 @@ export async function persistFromCheckoutSession(
   }
 
   const paymentConfirmed = isPaidCheckoutSession(session);
-  const sessionStatus = String(session.status || '').trim().toLowerCase();
+  if (!paymentConfirmed) {
+    return {
+      ok: true,
+      persisted: false,
+      paymentConfirmed: false,
+      accessAllowed: false,
+      status: String(session.status || '').trim().toLowerCase() === 'expired'
+        ? 'incomplete_expired'
+        : 'incomplete',
+      message:
+        'Pagamento não confirmado no Stripe. Nenhum contrato foi emitido e o acesso não foi liberado.',
+    };
+  }
+
   const planCode = readStripeMeta(session, 'plan_code') || undefined;
   const sessionId = typeof session.id === 'string' ? session.id : null;
   const subId = checkoutSessionSubscriptionId(session);
@@ -445,6 +435,7 @@ export async function persistFromCheckoutSession(
       tenantId,
       planCode,
       checkoutSessionId: sessionId,
+      emitContract: true,
     });
     if (!result.ok) {
       return {
@@ -471,39 +462,14 @@ export async function persistFromCheckoutSession(
     };
   }
 
-  if (paymentConfirmed) {
-    return {
-      ok: false,
-      persisted: false,
-      paymentConfirmed: true,
-      accessAllowed: false,
-      status: 'incomplete',
-      retry: true,
-      message: 'Pagamento Stripe ok, mas a assinatura ainda não veio. Sem liberar acesso.',
-    };
-  }
-
-  const unpaidStatus: StripeSubscriptionStatus =
-    sessionStatus === 'expired' ? 'incomplete_expired' : 'incomplete';
-  const stored = await persistCheckoutWithoutSubscription(env, session, tenantId, unpaidStatus);
-  if (!stored.ok) {
-    return {
-      ok: false,
-      persisted: false,
-      paymentConfirmed: false,
-      accessAllowed: false,
-      status: unpaidStatus,
-      retry: stored.retry,
-      message: stored.message,
-    };
-  }
   return {
-    ok: true,
-    persisted: true,
-    paymentConfirmed: false,
+    ok: false,
+    persisted: false,
+    paymentConfirmed: true,
     accessAllowed: false,
-    status: stored.status,
-    message: 'Pagamento não confirmado no Stripe. O acesso não foi liberado.',
+    status: 'incomplete',
+    retry: true,
+    message: 'Pagamento Stripe ok, mas a assinatura ainda não veio. Sem emitir contrato nem liberar acesso.',
   };
 }
 

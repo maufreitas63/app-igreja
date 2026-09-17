@@ -132,7 +132,8 @@ export function BillingClass({
   const members = activeMembers ?? 0;
   const congregados = activeCongregados ?? 0;
   const showStatus = activeUsers != null || activeMembers != null || activeCongregados != null;
-  const hasContract = contract?.accessAllowed === true;
+  const hasContract =
+    contract?.hasSubscription === true && contract?.accessAllowed === true;
   const statusHint = billingStatusHint(contract?.status, contract?.accessAllowed);
 
   return (

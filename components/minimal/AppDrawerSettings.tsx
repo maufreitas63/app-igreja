@@ -20,6 +20,7 @@ export type AppDrawerSettingsRow = {
   hint?: string;
   icon: React.ComponentProps<typeof FontAwesome>['name'];
   onPress: () => void;
+  blocked?: boolean;
 };
 
 export type AppDrawerSettingsSection = {
@@ -34,6 +35,7 @@ type Props = {
   trailItems?: AppDrawerSettingsRow[];
   pinnedItem?: AppDrawerSettingsRow | null;
   helpItem?: AppDrawerSettingsRow | null;
+  commercialLockActive?: boolean;
 };
 
 function SettingsRowView({
@@ -45,24 +47,48 @@ function SettingsRowView({
   pinned?: boolean;
   nested?: boolean;
 }) {
+  const blocked = item.blocked === true;
+
   return (
     <TouchableOpacity
-      style={[styles.item, pinned && styles.itemPinned, nested && styles.itemNested]}
+      style={[
+        styles.item,
+        pinned && styles.itemPinned,
+        nested && styles.itemNested,
+        blocked && styles.itemBlocked,
+      ]}
       onPress={() => {
+        if (blocked) {
+          return;
+        }
         traceClick('drawer-settings', 'item-press', { id: item.id, label: item.label });
         item.onPress();
       }}
+      disabled={blocked}
       accessibilityRole="button"
-      accessibilityLabel={item.label}
+      accessibilityState={{ disabled: blocked }}
+      accessibilityLabel={blocked ? `${item.label} (bloqueado)` : item.label}
     >
-      <View style={styles.itemIconWrap}>
-        <FontAwesome name={item.icon} size={MINIMAL_ICON.action} color={MINIMAL_UI.icon} />
+      <View style={[styles.itemIconWrap, blocked && styles.itemIconWrapBlocked]}>
+        <FontAwesome
+          name={item.icon}
+          size={MINIMAL_ICON.action}
+          color={blocked ? MINIMAL_UI.textMuted : MINIMAL_UI.icon}
+        />
       </View>
       <View style={styles.itemCopy}>
-        <Text style={styles.itemLabel}>{item.label}</Text>
-        {item.hint ? <Text style={styles.itemHint}>{item.hint}</Text> : null}
+        <Text style={[styles.itemLabel, blocked && styles.itemLabelBlocked]}>{item.label}</Text>
+        {blocked || item.hint ? (
+          <Text style={[styles.itemHint, blocked && styles.itemHintBlocked]}>
+            {blocked ? 'Bloqueado — regularize a assinatura' : item.hint}
+          </Text>
+        ) : null}
       </View>
-      <FontAwesome name="chevron-right" size={12} color={MINIMAL_UI.textMuted} />
+      <FontAwesome
+        name={blocked ? 'lock' : 'chevron-right'}
+        size={12}
+        color={MINIMAL_UI.textMuted}
+      />
     </TouchableOpacity>
   );
 }
@@ -112,6 +138,7 @@ export function AppDrawerSettings({
   trailItems = [],
   pinnedItem = null,
   helpItem = null,
+  commercialLockActive = false,
 }: Props) {
   const insets = useSafeAreaInsets();
   const [expandedSectionId, setExpandedSectionId] = useState<string | null>(null);
@@ -150,6 +177,13 @@ export function AppDrawerSettings({
         </View>
         <Text style={styles.title}>Configurações</Text>
       </View>
+
+      {commercialLockActive ? (
+        <Text style={styles.lockBanner}>
+          Gestão bloqueada até haver contrato assinado com pagamento confirmado. Use Assinaturas
+          em Governança e TI para regularizar.
+        </Text>
+      ) : null}
 
       {helpItem ? (
         <View style={styles.helpCall}>
@@ -285,6 +319,18 @@ const styles = StyleSheet.create({
     ...MINIMAL_TYPO.screenTitle,
     flex: 1,
   },
+  lockBanner: {
+    marginHorizontal: 16,
+    marginBottom: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: 10,
+    backgroundColor: '#FFF7ED',
+    color: '#9A3412',
+    fontSize: 12,
+    lineHeight: 16,
+    fontWeight: '600',
+  },
   closeButton: {
     padding: 4,
   },
@@ -348,9 +394,15 @@ const styles = StyleSheet.create({
   itemPinned: {
     borderBottomWidth: 0,
   },
+  itemBlocked: {
+    opacity: 0.72,
+  },
   itemIconWrap: {
     width: 28,
     alignItems: 'center',
+  },
+  itemIconWrapBlocked: {
+    opacity: 0.7,
   },
   itemCopy: {
     flex: 1,
@@ -361,9 +413,15 @@ const styles = StyleSheet.create({
     ...MINIMAL_TYPO.menuItem,
     fontWeight: '600',
   },
+  itemLabelBlocked: {
+    color: MINIMAL_UI.textMuted,
+  },
   itemHint: {
     fontSize: 12,
     color: MINIMAL_UI.textMuted,
     lineHeight: 16,
+  },
+  itemHintBlocked: {
+    color: '#B45309',
   },
 });

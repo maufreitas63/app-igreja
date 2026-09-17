@@ -138,7 +138,8 @@ async function upsertFromSubscription(
   subscription: Record<string, unknown>,
   fallbackTenantId?: string,
   fallbackPlanCode?: string,
-  checkoutSessionId?: string | null
+  checkoutSessionId?: string | null,
+  emitContract = false
 ): Promise<PersistResult> {
   const tenantId = readEventTenantId(subscription) || fallbackTenantId || '';
   if (!tenantId) {
@@ -156,6 +157,7 @@ async function upsertFromSubscription(
     tenantId,
     planCode: fallbackPlanCode,
     checkoutSessionId: checkoutSessionId ?? null,
+    emitContract,
   });
 }
 
@@ -228,8 +230,18 @@ export const onRequestPost = async (context: PagesContext) => {
       let persistResult: PersistResult | null = null;
       let tenantId = readEventTenantId(object);
 
+      const emitContract = type === 'invoice.paid';
+
       if (subscription) {
-        persistResult = await upsertFromSubscription(context.env, stripeKey, subscription, tenantId);
+        persistResult = await upsertFromSubscription(
+          context.env,
+          stripeKey,
+          subscription,
+          tenantId,
+          undefined,
+          null,
+          emitContract
+        );
         if (persistResult.ok) {
           tenantId = tenantId || readEventTenantId(subscription);
         }
@@ -239,7 +251,10 @@ export const onRequestPost = async (context: PagesContext) => {
           `subscriptions/${subscriptionId}?expand[]=items.data.price`
         );
         if (subRes.ok) {
-          persistResult = await persistStripeSubscription(context.env, subRes.data, { tenantId });
+          persistResult = await persistStripeSubscription(context.env, subRes.data, {
+            tenantId,
+            emitContract,
+          });
           if (persistResult.ok) {
             tenantId = tenantId || readEventTenantId(subRes.data);
           }

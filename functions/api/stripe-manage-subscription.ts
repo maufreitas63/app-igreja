@@ -96,6 +96,7 @@ export const onRequestPost = async (context: PagesContext) => {
       p_current_period_end: period.end,
       p_cancel_at_period_end: cancelAtEnd,
       p_raw_stripe: sub,
+      p_emit_contract: false,
     });
     if (!persist.ok) {
       return jsonResponse({ success: false, message: persist.message }, 500);

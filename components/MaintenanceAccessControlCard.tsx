@@ -41,6 +41,11 @@ import {
   maintenancePanelStyles,
 } from '@/lib/maintenanceCardStyles';
 import { CONTAIN_WIDTH } from '@/lib/minimalPresentation';
+import {
+  getTenantBillingStatus,
+  setTenantManagementUnlocked,
+} from '@/lib/billing/billingApi';
+import { clearAppBillingGateCache } from '@/components/AppBillingGate';
 import { MINIMAL_SECTION_TITLE, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { FontAwesome } from '@expo/vector-icons';
 import React, { useEffect, useMemo, useState } from 'react';
@@ -81,9 +86,14 @@ type AccessControlPanelHeaderProps = {
   appAtivo: boolean;
   loadingAppAtivo: boolean;
   savingAppAtivo: boolean;
+  managementUnlocked: boolean;
+  loadingManagement: boolean;
+  savingManagement: boolean;
+  showManagementToggle: boolean;
   canEdit: boolean;
   onToggleLgpdAtivo: () => void;
   onToggleAppAtivo: () => void;
+  onToggleManagement: () => void;
   minimal?: boolean;
 };
 
@@ -94,13 +104,19 @@ function AccessControlPanelHeader({
   appAtivo,
   loadingAppAtivo,
   savingAppAtivo,
+  managementUnlocked,
+  loadingManagement,
+  savingManagement,
+  showManagementToggle,
   canEdit,
   onToggleLgpdAtivo,
   onToggleAppAtivo,
+  onToggleManagement,
   minimal = false,
 }: AccessControlPanelHeaderProps) {
   const lgpdDisabled = !canEdit || loadingLgpdAtivo || savingLgpdAtivo;
   const appDisabled = !canEdit || loadingAppAtivo || savingAppAtivo;
+  const managementDisabled = !showManagementToggle || loadingManagement || savingManagement;
 
   const lgpdToggle = (
     <TouchableOpacity
@@ -212,6 +228,65 @@ function AccessControlPanelHeader({
     </TouchableOpacity>
   );
 
+  const managementToggle = showManagementToggle ? (
+    <TouchableOpacity
+      style={[
+        styles.lgpdRadioToggle,
+        minimal && styles.lgpdRadioToggleMinimal,
+        managementUnlocked ? styles.appAtivoToggleActive : styles.managementToggleLocked,
+        minimal && managementUnlocked && styles.appAtivoToggleActiveMinimal,
+        minimal && !managementUnlocked && styles.managementToggleLockedMinimal,
+        managementDisabled && styles.lgpdRadioToggleDisabled,
+      ]}
+      onPress={() => {
+        if (!managementDisabled) {
+          onToggleManagement();
+        }
+      }}
+      disabled={managementDisabled}
+      activeOpacity={0.85}
+      accessibilityRole="switch"
+      accessibilityState={{ checked: managementUnlocked, disabled: managementDisabled }}
+      accessibilityLabel={
+        managementUnlocked ? 'Gestão da instância liberada' : 'Gestão da instância bloqueada'
+      }
+    >
+      {savingManagement ? (
+        <ActivityIndicator size="small" color={minimal ? MINIMAL_UI.accent : '#F8FAFC'} />
+      ) : (
+        <>
+          <View
+            style={[
+              styles.lgpdRadioOuter,
+              managementUnlocked
+                ? styles.appAtivoRadioOuterActive
+                : styles.managementRadioOuterLocked,
+            ]}
+          >
+            <View
+              style={[
+                styles.lgpdRadioInner,
+                managementUnlocked
+                  ? styles.appAtivoRadioInnerActive
+                  : styles.managementRadioInnerLocked,
+              ]}
+            />
+          </View>
+          <Text
+            style={[
+              styles.lgpdRadioLabel,
+              managementUnlocked ? styles.appAtivoLabelActive : styles.managementLabelLocked,
+              minimal && managementUnlocked && styles.appAtivoLabelActiveMinimal,
+              minimal && !managementUnlocked && styles.managementLabelLockedMinimal,
+            ]}
+          >
+            {managementUnlocked ? 'Gestão Liberada' : 'Gestão Bloqueada'}
+          </Text>
+        </>
+      )}
+    </TouchableOpacity>
+  ) : null;
+
   if (minimal) {
     return (
       <View style={styles.panelHeaderMinimal}>
@@ -222,6 +297,7 @@ function AccessControlPanelHeader({
         />
         <View style={styles.panelHeaderControlsMinimal}>
           {appToggle}
+          {managementToggle}
           {lgpdToggle}
         </View>
       </View>
@@ -237,6 +313,7 @@ function AccessControlPanelHeader({
       />
       <View style={styles.panelHeaderControls}>
         {appToggle}
+        {managementToggle}
         {lgpdToggle}
       </View>
     </View>
@@ -340,6 +417,9 @@ export function MaintenanceAccessControlCard({
   const [loadingAppAtivo, setLoadingAppAtivo] = useState(false);
   const [savingAppAtivo, setSavingAppAtivo] = useState(false);
   const [savingAppInativoMsg, setSavingAppInativoMsg] = useState(false);
+  const [managementUnlocked, setManagementUnlocked] = useState(false);
+  const [loadingManagement, setLoadingManagement] = useState(false);
+  const [savingManagement, setSavingManagement] = useState(false);
   const {
     isSuperAdmin,
     roles,
@@ -460,19 +540,22 @@ export function MaintenanceAccessControlCard({
     let active = true;
     setLoadingLgpdAtivo(true);
     setLoadingAppAtivo(true);
+    setLoadingManagement(true);
 
     void (async () => {
       try {
-        const [lgpdValue, appAtivoValue, appInativoMsgValue] = await Promise.all([
+        const [lgpdValue, appAtivoValue, appInativoMsgValue, billingStatus] = await Promise.all([
           getAppParameterValue(LGPD_ATIVO_PARAMETER),
           getAppParameterValue(APP_ATIVO_PARAMETER),
           getAppParameterValue(APP_INATIVO_MSG_PARAMETER),
+          getTenantBillingStatus().catch(() => null),
         ]);
 
         if (active) {
           setLgpdAtivo(resolveLgpdAtivoFromParameter(lgpdValue));
           setAppAtivo(resolveAppActiveFromParameter(appAtivoValue));
           setAppInativoMsg(resolveAppInactiveMessage(appInativoMsgValue));
+          setManagementUnlocked(billingStatus?.managementUnlocked === true);
         }
       } catch (loadError) {
         console.error('Erro ao carregar parâmetros globais:', loadError);
@@ -480,6 +563,7 @@ export function MaintenanceAccessControlCard({
         if (active) {
           setLoadingLgpdAtivo(false);
           setLoadingAppAtivo(false);
+          setLoadingManagement(false);
         }
       }
     })();
@@ -562,6 +646,42 @@ export function MaintenanceAccessControlCard({
         });
       } finally {
         setSavingAppAtivo(false);
+      }
+    })();
+  };
+
+  const handleToggleManagement = () => {
+    if (isSuperAdmin !== true || busy || savingManagement || loadingManagement) {
+      return;
+    }
+
+    const nextValue = !managementUnlocked;
+    setSavingManagement(true);
+
+    void (async () => {
+      try {
+        const result = await setTenantManagementUnlocked(nextValue);
+        setManagementUnlocked(result.managementUnlocked);
+        clearAppBillingGateCache();
+        Toast.show({
+          type: 'success',
+          text1: result.managementUnlocked ? 'Gestão liberada' : 'Gestão bloqueada',
+          text2: result.message,
+          visibilityTime: 4500,
+        });
+      } catch (toggleError) {
+        console.error('Erro ao alterar gestão da instância:', toggleError);
+        Toast.show({
+          type: 'error',
+          text1: 'Gestão da instância',
+          text2:
+            toggleError instanceof Error
+              ? toggleError.message
+              : 'Não foi possível alterar a gestão da instância.',
+          visibilityTime: 6000,
+        });
+      } finally {
+        setSavingManagement(false);
       }
     })();
   };
@@ -915,9 +1035,14 @@ export function MaintenanceAccessControlCard({
           appAtivo={appAtivo}
           loadingAppAtivo={loadingAppAtivo}
           savingAppAtivo={savingAppAtivo}
+          managementUnlocked={managementUnlocked}
+          loadingManagement={loadingManagement}
+          savingManagement={savingManagement}
+          showManagementToggle={false}
           canEdit={false}
           onToggleLgpdAtivo={handleToggleLgpdAtivo}
           onToggleAppAtivo={handleToggleAppAtivo}
+          onToggleManagement={handleToggleManagement}
           minimal={minimal}
         />
         <AppAtivoParameterControls
@@ -953,9 +1078,14 @@ export function MaintenanceAccessControlCard({
         appAtivo={appAtivo}
         loadingAppAtivo={loadingAppAtivo}
         savingAppAtivo={savingAppAtivo}
+        managementUnlocked={managementUnlocked}
+        loadingManagement={loadingManagement}
+        savingManagement={savingManagement}
+        showManagementToggle={isSuperAdmin === true}
         canEdit={isSuperAdmin === true && !rpcMissing && !busy}
         onToggleLgpdAtivo={handleToggleLgpdAtivo}
         onToggleAppAtivo={handleToggleAppAtivo}
+        onToggleManagement={handleToggleManagement}
         minimal={minimal}
       />
       <AppAtivoParameterControls
@@ -1831,6 +1961,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    flexWrap: 'wrap',
     gap: 10,
     alignSelf: 'stretch',
   },
@@ -1929,6 +2060,19 @@ const styles = StyleSheet.create({
   },
   appAtivoLabelInactive: {
     color: '#FDE68A',
+  },
+  managementToggleLocked: {
+    borderColor: '#F87171',
+    backgroundColor: 'rgba(220, 38, 38, 0.16)',
+  },
+  managementRadioOuterLocked: {
+    borderColor: '#FECACA',
+  },
+  managementRadioInnerLocked: {
+    backgroundColor: '#F87171',
+  },
+  managementLabelLocked: {
+    color: '#FECACA',
   },
   appInativoMsgBlock: {
     gap: 8,
@@ -2482,6 +2626,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    flexWrap: 'wrap',
     width: '100%',
     maxWidth: '100%',
     minWidth: 0,
@@ -2539,6 +2684,13 @@ const styles = StyleSheet.create({
   },
   appAtivoLabelInactiveMinimal: {
     color: '#B45309',
+  },
+  managementToggleLockedMinimal: {
+    backgroundColor: '#FEF2F2',
+    borderColor: '#DC2626',
+  },
+  managementLabelLockedMinimal: {
+    color: '#B91C1C',
   },
   appInativoMsgBlockMinimal: {
     width: '100%',

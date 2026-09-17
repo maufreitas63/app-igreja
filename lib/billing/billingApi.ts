@@ -45,6 +45,8 @@ const emptyStatus = (message?: string): TenantBillingStatus => ({
   status: 'inactive',
   accessAllowed: true,
   instanceActive: true,
+  hasSignedContract: false,
+  managementUnlocked: false,
   memberCount: 0,
   activeMembers: 0,
   activeCongregados: 0,
@@ -104,6 +106,8 @@ export async function getTenantBillingStatus(
     hasSubscription: record.has_subscription === true,
     status: String(record.status ?? 'inactive'),
     accessAllowed: record.access_allowed === true,
+    hasSignedContract: record.has_signed_contract === true,
+    managementUnlocked: record.management_unlocked === true,
     memberCount: Number(record.member_count ?? 0) || 0,
     activeMembers: Number(record.active_members ?? 0) || 0,
     activeCongregados: Number(record.active_congregados ?? 0) || 0,
@@ -121,6 +125,49 @@ export async function getTenantBillingStatus(
       record.current_period_end != null ? String(record.current_period_end) : null,
     plan: planRaw,
     message: typeof record.message === 'string' ? record.message : undefined,
+  };
+}
+
+export async function setTenantManagementUnlocked(
+  unlocked: boolean,
+  tenantId?: string | null
+): Promise<{ success: boolean; managementUnlocked: boolean; message: string }> {
+  const resolvedTenant = tenantId?.trim() || (await getStoredTenantId());
+  const { data, error } = await supabase.rpc('set_tenant_management_unlocked', {
+    p_unlocked: unlocked,
+    p_tenant_id: resolvedTenant,
+  });
+
+  if (error) {
+    if (isSupabaseRpcMissingError(error, 'set_tenant_management_unlocked')) {
+      throw new Error(
+        'Interruptor de gestão ainda não instalado no Supabase. Execute scripts/billing-commercial-management-lock.sql.'
+      );
+    }
+    throw new Error(error.message || 'Não foi possível alterar a gestão da instância.');
+  }
+
+  const record = (
+    Array.isArray(data) ? data[0] : data ?? {}
+  ) as Record<string, unknown>;
+
+  if (record.success === false) {
+    throw new Error(
+      typeof record.message === 'string'
+        ? record.message
+        : 'Não foi possível alterar a gestão da instância.'
+    );
+  }
+
+  return {
+    success: record.success !== false,
+    managementUnlocked: record.management_unlocked === true,
+    message:
+      typeof record.message === 'string'
+        ? record.message
+        : unlocked
+          ? 'Gestão da instância liberada.'
+          : 'Gestão da instância bloqueada.',
   };
 }
 

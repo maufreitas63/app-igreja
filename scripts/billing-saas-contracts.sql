@@ -225,6 +225,11 @@ begin
     return null;
   end if;
 
+  if coalesce(nullif(btrim(p_stripe_subscription_id), ''), '') !~ '^sub_[A-Za-z0-9]+$'
+     or lower(coalesce(p_stripe_subscription_id, '')) like 'sub_test%' then
+    return null;
+  end if;
+
   select c.id
     into v_id
     from public.billing_saas_contracts c
@@ -394,7 +399,9 @@ begin
 end;
 $$;
 
--- Gera o contrato sempre que a assinatura ativa ganha (ou confirma) um ciclo.
+-- Gera o contrato só quando o caller confirma pagamento (p_emit_contract).
+drop function if exists public.upsert_tenant_subscription_from_stripe(uuid, text, text, text, text, text, timestamptz, timestamptz, boolean, jsonb);
+
 create or replace function public.upsert_tenant_subscription_from_stripe(
   p_tenant_id uuid,
   p_plan_code text,
@@ -405,7 +412,8 @@ create or replace function public.upsert_tenant_subscription_from_stripe(
   p_current_period_start timestamptz default null,
   p_current_period_end timestamptz default null,
   p_cancel_at_period_end boolean default false,
-  p_raw_stripe jsonb default '{}'::jsonb
+  p_raw_stripe jsonb default '{}'::jsonb,
+  p_emit_contract boolean default false
 )
 returns jsonb
 language plpgsql
@@ -489,8 +497,11 @@ begin
         updated_at = now()
   returning * into v_row;
 
-  if public.tenant_subscription_is_access_allowed(v_row.status)
-     and v_row.current_period_start is not null then
+  if coalesce(p_emit_contract, false)
+     and public.tenant_subscription_is_access_allowed(v_row.status)
+     and v_row.current_period_start is not null
+     and coalesce(v_row.stripe_subscription_id, '') ~ '^sub_[A-Za-z0-9]+$'
+     and lower(coalesce(v_row.stripe_subscription_id, '')) not like 'sub_test%' then
     perform public.ensure_billing_saas_contract(
       v_row.tenant_id,
       v_row.plan_id,
@@ -564,7 +575,7 @@ revoke all on function public.list_billing_saas_contracts(uuid) from public, ano
 
 grant execute on function public.list_billing_saas_contracts(uuid) to anon, authenticated, service_role;
 grant execute on function public.ensure_billing_saas_contract(uuid, uuid, text, timestamptz, timestamptz, text, text) to service_role;
-grant execute on function public.upsert_tenant_subscription_from_stripe(uuid, text, text, text, text, text, timestamptz, timestamptz, boolean, jsonb) to service_role;
+grant execute on function public.upsert_tenant_subscription_from_stripe(uuid, text, text, text, text, text, timestamptz, timestamptz, boolean, jsonb, boolean) to service_role;
 
 commit;
 

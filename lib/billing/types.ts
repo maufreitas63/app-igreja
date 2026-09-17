@@ -21,6 +21,10 @@ export type TenantBillingStatus = {
   status: string;
   accessAllowed: boolean;
   instanceActive: boolean;
+  /** Contrato SaaS emitido após pagamento Stripe confirmado. */
+  hasSignedContract?: boolean;
+  /** Interruptor mestre do Superadmin — não altera papéis/grants. */
+  managementUnlocked?: boolean;
   memberCount: number;
   /** Membros ativos (papel member). */
   activeMembers: number;

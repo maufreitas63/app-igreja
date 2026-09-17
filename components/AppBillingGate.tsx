@@ -1,4 +1,8 @@
 import { getTenantBillingStatus } from '@/lib/billing/billingApi';
+import {
+  isCommercialLockedManagementPath,
+  isTenantManagementOpen,
+} from '@/lib/billing/commercialLock';
 import type { TenantBillingStatus } from '@/lib/billing/types';
 import { checkSessionIsSuperAdmin } from '@/lib/maintenanceAccessControlApi';
 import {
@@ -17,11 +21,16 @@ type CacheEntry = {
   tenantId: string;
   billingAllow: boolean;
   instanceActive: boolean;
+  managementAllow: boolean;
   checkedAt: number;
 };
 
 const CACHE_TTL_MS = 60_000;
 let statusCache: CacheEntry | null = null;
+
+export function clearAppBillingGateCache() {
+  statusCache = null;
+}
 
 const normalizePathname = (pathname: string) => {
   const trimmed = pathname.replace(/\/+$/, '');
@@ -44,6 +53,7 @@ const isBillingExemptRoute = (pathname: string) => {
     || normalized === '/lgpd'
     || normalized === '/cadastro-familia'
     || normalized === '/maintenance-dashboard'
+    || isCommercialLockedManagementPath(normalized)
     || normalized.startsWith('/autorizacao-midia')
   );
 };
@@ -95,6 +105,10 @@ const applyGateRedirect = (
 ) => {
   if (!cache.instanceActive && !isInstanceInactiveExemptRoute(pathname)) {
     router.replace('/selecionar-igreja');
+    return;
+  }
+  if (!cache.managementAllow && isCommercialLockedManagementPath(pathname)) {
+    router.replace('/billing');
     return;
   }
   if (!cache.billingAllow && !isBillingExemptRoute(pathname)) {
@@ -149,6 +163,7 @@ export function AppBillingGate({ children }: Props) {
             tenantId,
             billingAllow: true,
             instanceActive: true,
+            managementAllow: true,
             checkedAt: Date.now(),
           };
           return;
@@ -159,6 +174,7 @@ export function AppBillingGate({ children }: Props) {
             tenantId,
             billingAllow: true,
             instanceActive: true,
+            managementAllow: true,
             checkedAt: Date.now(),
           };
           return;
@@ -172,6 +188,7 @@ export function AppBillingGate({ children }: Props) {
           tenantId,
           billingAllow: !shouldBlockForBilling(billing, branding?.code ?? null),
           instanceActive: billing.success ? billing.instanceActive !== false : true,
+          managementAllow: isTenantManagementOpen(billing),
           checkedAt: Date.now(),
         };
         statusCache = cache;

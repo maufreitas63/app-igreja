@@ -130,7 +130,7 @@ export function isDrawerOperatorToolAllowed(
   }
 
   if (moduleKey === 'menu_billing') {
-    return context.isSuperAdmin;
+    return context.isSuperAdmin || context.canAccessMaintenance;
   }
 
   if (moduleKey === 'menu_alianca') {

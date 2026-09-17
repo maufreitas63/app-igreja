@@ -26,6 +26,11 @@ import {
   sessionHasAccess,
   type DashboardCardViewAccess,
 } from '@/lib/accessControl';
+import { getTenantBillingStatus } from '@/lib/billing/billingApi';
+import {
+  COMMERCIAL_LOCK_ALLOWED_MODULE,
+  isTenantManagementOpen,
+} from '@/lib/billing/commercialLock';
 import { getGhostModeState, isGhostModeActive, subscribeGhostMode } from '@/lib/ghostMode';
 import { loadMaintenanceDashboardAccess } from '@/lib/maintenanceDashboardAccess';
 import { fetchProfileHasActiveMembership } from '@/lib/profileMembershipStatus';
@@ -40,6 +45,7 @@ export type AppDrawerMenuItemResolved = AppDrawerMenuItem & {
 export type AppDrawerSettingsItemResolved = AppDrawerSettingsItem & {
   enabled: boolean;
   pendingRoute: boolean;
+  commerciallyBlocked?: boolean;
 };
 
 type DrawerEnableContext = {
@@ -214,7 +220,7 @@ export function useAppDrawerMenu() {
         ?? (await loadEffectiveSessionProfile())?.id?.trim()
         ?? null;
 
-      const [dashboardCardAccess, dashboardScreenAccess, maintenanceAccess, hasActiveMembership, roomAccess, mediaAuthAccess] =
+      const [dashboardCardAccess, dashboardScreenAccess, maintenanceAccess, hasActiveMembership, roomAccess, mediaAuthAccess, billingStatus] =
         await Promise.all([
           profileId
             ? loadDashboardCardViewAccess(profileId, { forceRefresh: ghostActive })
@@ -226,6 +232,7 @@ export function useAppDrawerMenu() {
           profileId ? fetchProfileHasActiveMembership(profileId) : Promise.resolve(false),
           sessionHasAccess('screen', ACCESS_SCREEN.configuracaoSalas, 'view'),
           sessionHasAccess('screen', ACCESS_SCREEN.autorizacaoMidia, 'view'),
+          getTenantBillingStatus().catch(() => null),
         ]);
 
       const extraScreenEntries = await Promise.all(
@@ -252,6 +259,8 @@ export function useAppDrawerMenu() {
       const superAdmin = maintenanceAccess.isSuperAdmin === true;
       const canManageRooms = superAdmin || roomAccess === true;
       setIsSuperAdmin(superAdmin);
+      const managementOpen =
+        superAdmin || (billingStatus != null && isTenantManagementOpen(billingStatus));
 
       const context: DrawerEnableContext = {
         dashboardCardAccess,
@@ -274,18 +283,49 @@ export function useAppDrawerMenu() {
           enabled: isDrawerModuleEnabled(item.moduleKey, context, 'member'),
         }))
       );
-      const nextSettings = APP_DRAWER_SETTINGS_ITEMS.map((item) => ({
-        ...item,
-        pendingRoute: isDrawerMenuPlaceholder(item.moduleKey),
-        enabled: isDrawerModuleEnabled(item.moduleKey, context, 'settings'),
-      }));
+      const nextSettings = APP_DRAWER_SETTINGS_ITEMS.map((item) => {
+        const aclEnabled = isDrawerModuleEnabled(item.moduleKey, context, 'settings');
+        const pendingRoute = isDrawerMenuPlaceholder(item.moduleKey);
+        const isBilling = item.moduleKey === COMMERCIAL_LOCK_ALLOWED_MODULE;
+
+        if (isBilling) {
+          return {
+            ...item,
+            pendingRoute,
+            enabled: superAdmin || context.canAccessMaintenance,
+            commerciallyBlocked: false,
+          };
+        }
+
+        if (managementOpen) {
+          return {
+            ...item,
+            pendingRoute,
+            enabled: aclEnabled,
+            commerciallyBlocked: false,
+          };
+        }
+
+        return {
+          ...item,
+          pendingRoute,
+          enabled: false,
+          commerciallyBlocked: aclEnabled,
+        };
+      });
       const canOpenGear = nextSettings.some(
-        (item) => item.enabled && item.moduleKey !== 'menu_como_faco_manutencao'
+        (item) =>
+          (item.enabled || item.commerciallyBlocked)
+          && item.moduleKey !== 'menu_como_faco_manutencao'
       );
       setSettingsItems(
         nextSettings.map((item) =>
           item.moduleKey === 'menu_como_faco_manutencao'
-            ? { ...item, enabled: canOpenGear }
+            ? {
+                ...item,
+                enabled: canOpenGear && managementOpen,
+                commerciallyBlocked: canOpenGear && !managementOpen,
+              }
             : item
         )
       );
@@ -305,6 +345,7 @@ export function useAppDrawerMenu() {
           ...item,
           pendingRoute: isDrawerMenuPlaceholder(item.moduleKey),
           enabled: false,
+          commerciallyBlocked: false,
         }))
       );
     } finally {
@@ -324,7 +365,9 @@ export function useAppDrawerMenu() {
     });
   }, [refresh]);
 
-  const canAccessSettings = settingsItems.some((item) => item.enabled);
+  const canAccessSettings = settingsItems.some(
+    (item) => item.enabled || item.commerciallyBlocked
+  );
 
   return {
     items,

@@ -16,6 +16,9 @@ declare
   v_allowed boolean := false;
   v_can_add boolean := false;
   v_instance_active boolean := true;
+  v_management_unlocked boolean := false;
+  v_has_contract boolean := false;
+  v_commercially_ok boolean := false;
 begin
   v_tenant := coalesce(p_tenant_id, public.current_session_tenant_id());
 
@@ -38,10 +41,12 @@ begin
     );
   end if;
 
-  select coalesce(i.is_active, true)
-    into v_instance_active
+  select coalesce(i.is_active, true), coalesce(i.management_unlocked, false)
+    into v_instance_active, v_management_unlocked
     from public.igrejas i
    where i.id = v_tenant;
+
+  v_has_contract := public.tenant_has_signed_saas_contract(v_tenant);
 
   select *
     into v_sub
@@ -60,6 +65,9 @@ begin
       'status', 'inactive',
       'access_allowed', false,
       'instance_active', coalesce(v_instance_active, true),
+      'management_unlocked', coalesce(v_management_unlocked, false),
+      'has_signed_contract', v_has_contract,
+      'commercially_ok', false,
       'member_count', v_members,
       'active_members', coalesce((v_breakdown ->> 'active_members')::integer, 0),
       'active_congregados', coalesce((v_breakdown ->> 'active_congregados')::integer, 0),
@@ -75,6 +83,7 @@ begin
    where bp.id = v_sub.plan_id;
 
   v_allowed := public.tenant_subscription_is_access_allowed(v_sub.status);
+  v_commercially_ok := v_allowed and v_has_contract;
   v_can_add :=
     v_allowed
     and coalesce(v_instance_active, true)
@@ -91,6 +100,9 @@ begin
     'status', v_sub.status,
     'access_allowed', v_allowed,
     'instance_active', coalesce(v_instance_active, true),
+    'management_unlocked', coalesce(v_management_unlocked, false),
+    'has_signed_contract', v_has_contract,
+    'commercially_ok', v_commercially_ok,
     'member_count', v_members,
     'active_members', coalesce((v_breakdown ->> 'active_members')::integer, 0),
     'active_congregados', coalesce((v_breakdown ->> 'active_congregados')::integer, 0),
@@ -114,6 +126,8 @@ begin
 end;
 $$;
 
+drop function if exists public.upsert_tenant_subscription_from_stripe(uuid, text, text, text, text, text, timestamptz, timestamptz, boolean, jsonb);
+
 create or replace function public.upsert_tenant_subscription_from_stripe(
   p_tenant_id uuid,
   p_plan_code text,
@@ -124,7 +138,8 @@ create or replace function public.upsert_tenant_subscription_from_stripe(
   p_current_period_start timestamptz default null,
   p_current_period_end timestamptz default null,
   p_cancel_at_period_end boolean default false,
-  p_raw_stripe jsonb default '{}'::jsonb
+  p_raw_stripe jsonb default '{}'::jsonb,
+  p_emit_contract boolean default false
 )
 returns jsonb
 language plpgsql
@@ -224,9 +239,12 @@ begin
      where id = p_tenant_id;
   end if;
 
-  if to_regprocedure('public.ensure_billing_saas_contract(uuid, uuid, text, timestamptz, timestamptz, text, text)') is not null
+  if coalesce(p_emit_contract, false)
+     and to_regprocedure('public.ensure_billing_saas_contract(uuid, uuid, text, timestamptz, timestamptz, text, text)') is not null
      and public.tenant_subscription_is_access_allowed(v_row.status)
-     and v_row.current_period_start is not null then
+     and v_row.current_period_start is not null
+     and coalesce(v_row.stripe_subscription_id, '') ~ '^sub_[A-Za-z0-9]+$'
+     and lower(coalesce(v_row.stripe_subscription_id, '')) not like 'sub_test%' then
     perform public.ensure_billing_saas_contract(
       v_row.tenant_id,
       v_row.plan_id,
@@ -279,7 +297,7 @@ as $$
 $$;
 
 grant execute on function public.get_tenant_billing_status(uuid) to anon, authenticated, service_role;
-grant execute on function public.upsert_tenant_subscription_from_stripe(uuid, text, text, text, text, text, timestamptz, timestamptz, boolean, jsonb) to service_role;
+grant execute on function public.upsert_tenant_subscription_from_stripe(uuid, text, text, text, text, text, timestamptz, timestamptz, boolean, jsonb, boolean) to service_role;
 grant execute on function public.profile_can_use_tenant(uuid, uuid) to anon, authenticated;
 
 notify pgrst, 'reload schema';

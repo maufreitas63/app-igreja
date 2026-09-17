@@ -117,21 +117,25 @@ export function AppDrawer() {
   }, [closeDrawer, router]);
 
   const visibleItems = items.filter((item) => item.enabled);
-  const enabledSettings = settingsItems.filter((item) => item.enabled);
+  const visibleSettings = settingsItems.filter(
+    (item) => item.enabled || item.commerciallyBlocked
+  );
+  const commercialLockActive = visibleSettings.some((item) => item.commerciallyBlocked);
 
   const { sections, trailItems, pinnedItem, helpItem } = useMemo(() => {
-    const toRow = (item: (typeof enabledSettings)[number]): AppDrawerSettingsRow => ({
+    const toRow = (item: (typeof visibleSettings)[number]): AppDrawerSettingsRow => ({
       id: item.moduleKey,
       label: item.label,
       hint: item.hint,
       icon: SETTINGS_ICONS[item.moduleKey] ?? 'cog',
       onPress: () => handleSettingsNavigate(item.moduleKey, item.label),
+      blocked: item.commerciallyBlocked === true,
     });
 
-    const trail = enabledSettings.filter((item) => DISCIPLESHIP_SETTINGS_MODULE_KEYS.has(item.moduleKey));
-    const igrejas = enabledSettings.find((item) => item.moduleKey === 'menu_igrejas') ?? null;
-    const help = enabledSettings.find((item) => item.moduleKey === 'menu_como_faco_manutencao') ?? null;
-    const rest = enabledSettings.filter(
+    const trail = visibleSettings.filter((item) => DISCIPLESHIP_SETTINGS_MODULE_KEYS.has(item.moduleKey));
+    const igrejas = visibleSettings.find((item) => item.moduleKey === 'menu_igrejas') ?? null;
+    const help = visibleSettings.find((item) => item.moduleKey === 'menu_como_faco_manutencao') ?? null;
+    const rest = visibleSettings.filter(
       (item) =>
         !DISCIPLESHIP_SETTINGS_MODULE_KEYS.has(item.moduleKey)
         && item.moduleKey !== 'menu_igrejas'
@@ -150,7 +154,7 @@ export function AppDrawer() {
       pinnedItem: igrejas ? toRow(igrejas) : null,
       helpItem: help ? toRow(help) : null,
     };
-  }, [enabledSettings, handleSettingsNavigate]);
+  }, [visibleSettings, handleSettingsNavigate]);
 
   const handleBackdropPress = () => {
     traceClick('drawer', 'backdrop-press', { settingsOpen });
@@ -183,6 +187,7 @@ export function AppDrawer() {
               trailItems={trailItems}
               pinnedItem={pinnedItem}
               helpItem={helpItem}
+              commercialLockActive={commercialLockActive}
             />
           ) : (
             <View style={styles.panel}>
