@@ -1,7 +1,5 @@
 import { CardLoadingState } from '@/components/ui/CardLoadingState';
 import { SectionLabel } from '@/components/ui/SectionLabel';
-import { useAiChat } from '@/hooks/useAiChat';
-import { ABIGAIL_NAME } from '@/lib/abigailPersona';
 import { AI_CHAT_SQL_HINT } from '@/lib/aiChatApi';
 import { fetchAiAuditLogs, type AiAuditLogRow } from '@/lib/aiAuditLogsApi';
 import {
@@ -55,10 +53,9 @@ export function MaintenanceAiAssistantCard({
   minimal = false,
 }: Props) {
   const contentHeight = computeMaintenanceContentHeight(panelHeight);
-  const { messages, draft, setDraft, streaming, error, sendMessage, clearConversation } = useAiChat();
   const [canUseAssistant, setCanUseAssistant] = useState<boolean | null>(null);
   const [canViewAudit, setCanViewAudit] = useState(false);
-  const [activeTab, setActiveTab] = useState<'chat' | 'audit' | 'config'>('chat');
+  const [activeTab, setActiveTab] = useState<'audit' | 'config'>('config');
   const [auditLogs, setAuditLogs] = useState<AiAuditLogRow[]>([]);
   const [auditLoading, setAuditLoading] = useState(false);
   const [auditError, setAuditError] = useState<string | null>(null);
@@ -88,10 +85,7 @@ export function MaintenanceAiAssistantCard({
 
         setCanUseAssistant(assistantAccess);
         setCanViewAudit(auditAccess);
-
-        if (!assistantAccess && auditAccess) {
-          setActiveTab('config');
-        }
+        setActiveTab('config');
       } catch {
         if (!cancelled) {
           setCanUseAssistant(false);
@@ -197,10 +191,11 @@ export function MaintenanceAiAssistantCard({
   if (!canUseAssistant && !canViewAudit) {
     return (
       <View style={[styles.panel, { height: contentHeight }]}>
-        <Text style={maintenancePanelStyles.panelTitle}>Abigail</Text>
+        <Text style={maintenancePanelStyles.panelTitle}>Chave Gemini</Text>
         <View style={maintenancePanelStyles.panelSubtitleSpacer} />
         <Text style={styles.helpText}>
-          Você não possui um papel de liderança para usar este módulo.
+          A Abigail está na tela inicial, ao lado de “Eu quero…”. A chave da API fica só com o Super
+          Administrador.
         </Text>
         <Text style={styles.metaText}>{AI_CHAT_SQL_HINT}</Text>
       </View>
@@ -209,21 +204,14 @@ export function MaintenanceAiAssistantCard({
 
   return (
     <View style={[styles.panel, { height: contentHeight }]}>
-      <Text style={maintenancePanelStyles.panelTitle}>Abigail</Text>
+      <Text style={maintenancePanelStyles.panelTitle}>Chave Gemini</Text>
       <View style={maintenancePanelStyles.panelSubtitleSpacer} />
+      <Text style={styles.helpText}>
+        O chat da Abigail fica na tela inicial, ao lado de “Eu quero…”.
+      </Text>
 
       {canViewAudit ? (
         <View style={styles.tabRow}>
-          {canUseAssistant ? (
-            <TouchableOpacity
-              style={[styles.tabChip, activeTab === 'chat' && styles.tabChipActive]}
-              onPress={() => setActiveTab('chat')}
-            >
-              <Text style={[styles.tabChipText, activeTab === 'chat' && styles.tabChipTextActive]}>
-                Chat
-              </Text>
-            </TouchableOpacity>
-          ) : null}
           <TouchableOpacity
             style={[styles.tabChip, activeTab === 'audit' && styles.tabChipActive]}
             onPress={() => setActiveTab('audit')}
@@ -343,72 +331,7 @@ export function MaintenanceAiAssistantCard({
             </ScrollView>
           ) : null}
         </>
-      ) : (
-        <>
-          <Text style={styles.helpText}>
-            {ABIGAIL_NAME} (Gemini). Respostas em tempo real; cada consulta é
-            registrada para auditoria.
-          </Text>
-
-          {error ? <Text style={styles.errorText}>{error}</Text> : null}
-
-          <ScrollView
-            style={styles.scroll}
-            contentContainerStyle={styles.chatContent}
-            nestedScrollEnabled
-            showsVerticalScrollIndicator={false}
-          >
-            {messages.map((message) => (
-              <View
-                key={message.id}
-                style={[
-                  styles.messageBubble,
-                  message.role === 'user' ? styles.userBubble : styles.assistantBubble,
-                ]}
-              >
-                <Text style={styles.messageRole}>
-                  {message.role === 'user' ? 'Você' : ABIGAIL_NAME}
-                </Text>
-                <Text style={styles.messageText}>
-                  {message.content}
-                  {message.role === 'assistant' && streaming && !message.content
-                    ? '…'
-                    : ''}
-                </Text>
-              </View>
-            ))}
-          </ScrollView>
-
-          <View style={styles.composerRow}>
-            <TextInput
-              style={styles.input}
-              placeholder={`Pergunte à ${ABIGAIL_NAME}...`}
-              placeholderTextColor="#64748B"
-              value={draft}
-              onChangeText={setDraft}
-              editable={!streaming}
-              multiline
-              maxLength={2000}
-              onSubmitEditing={() => void sendMessage()}
-            />
-            <TouchableOpacity
-              style={[styles.sendButton, streaming && styles.sendButtonDisabled]}
-              onPress={() => void sendMessage()}
-              disabled={streaming || !draft.trim()}
-            >
-              <Text style={styles.sendButtonText}>{streaming ? '...' : 'Enviar'}</Text>
-            </TouchableOpacity>
-          </View>
-
-          <TouchableOpacity
-            style={styles.secondaryButton}
-            onPress={clearConversation}
-            disabled={streaming || messages.every((message) => message.localOnly)}
-          >
-            <Text style={styles.secondaryButtonText}>Limpar conversa</Text>
-          </TouchableOpacity>
-        </>
-      )}
+      ) : null}
     </View>
   );
 }

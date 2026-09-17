@@ -1087,6 +1087,7 @@ export function MaintenanceAccessControlCard({
                 placeholder="Selecionar usuário"
                 searchPlaceholder="Digite nome, telefone ou código..."
                 searchable
+                enxergar
                 variant={minimal ? 'minimal' : 'default'}
                 style={[styles.profileDropdown, minimal && styles.profileDropdownMinimal]}
                 disabled={rpcMissing || busy}

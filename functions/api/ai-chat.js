@@ -563,7 +563,7 @@ const describeGeminiError = (status, errorText) => {
   const text = String(errorText || '').toLowerCase();
 
   if (status === 401 || status === 403 || text.includes('api key not valid') || text.includes('api_key_invalid')) {
-    return 'Chave Gemini inválida ou sem permissão. O Super Administrador deve cadastrar uma chave válida em Abigail → Chave API.';
+    return 'Chave Gemini inválida ou sem permissão. O Super Administrador deve cadastrar uma chave válida em Engrenagem → Chave Gemini.';
   }
 
   if (isGeminiBusy(status, errorText)) {

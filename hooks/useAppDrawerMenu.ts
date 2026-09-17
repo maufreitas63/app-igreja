@@ -112,23 +112,8 @@ function isDrawerModuleEnabled(
   }
 
   if (moduleKey === 'ai_assistant') {
-    if (context.isSuperAdmin) {
-      return true;
-    }
-
-    return isDrawerMaintenanceModuleAllowed(
-      moduleKey,
-      resolveDrawerMaintenancePanel(moduleKey),
-      {
-        canAccessMaintenance: context.canAccessMaintenance,
-        maintenancePanelAccess: context.maintenancePanelAccess,
-        canOperateGhostMode: context.canOperateGhostMode,
-        canOpenAccessControl: context.canOpenAccessControl,
-        canManageRooms: context.canManageRooms,
-        canManageMediaAuthorization: context.canManageMediaAuthorization,
-        isSuperAdmin: context.isSuperAdmin,
-      }
-    );
+    // Chat da Abigail fica na home (Eu quero…). Na engrenagem só a chave API.
+    return context.isSuperAdmin;
   }
 
   if (catalog === 'settings' && SETTINGS_PEOPLE_OPS_KEYS.has(moduleKey)) {

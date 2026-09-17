@@ -289,13 +289,6 @@ export const APP_DRAWER_SETTINGS_ITEMS: AppDrawerSettingsItem[] = [
     group: 'culto',
   },
   {
-    letter: 'f0',
-    label: 'Abigail',
-    moduleKey: 'ai_assistant',
-    group: 'financas',
-    hint: 'Assistente da liderança — chat e chave Gemini',
-  },
-  {
     letter: 'f1',
     label: 'Informações Financeiras',
     moduleKey: 'financials',
@@ -419,6 +412,13 @@ export const APP_DRAWER_SETTINGS_ITEMS: AppDrawerSettingsItem[] = [
     moduleKey: 'menu_igrejas',
     group: 'governanca',
     hint: 'Criar e alternar ambientes de igreja',
+  },
+  {
+    letter: 'g12',
+    label: 'Chave Gemini',
+    moduleKey: 'ai_assistant',
+    group: 'governanca',
+    hint: 'API da Abigail — somente Super Administrador',
   },
 ];
 

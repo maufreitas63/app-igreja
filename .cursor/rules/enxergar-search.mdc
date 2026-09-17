@@ -1,0 +1,21 @@
+---
+description: Padrão Enxergar — busca em modal no topo para ver o recorte enquanto digita
+alwaysApply: true
+---
+
+# Enxergar
+
+Quando o usuário pedir **aplicar enxergar** em um campo de busca/seleção:
+
+1. Use `DropdownSelect` com `searchable` **e** `enxergar`.
+2. **Não mude** o critério de pesquisa daquela tela (nome, telefone, código, etc.). Só muda a apresentação: a lista filtrada abre em **modal no topo**, para ver o recorte enquanto digita.
+3. Não ligue `enxergar` em todos os dropdowns — só no elemento indicado.
+
+```tsx
+<DropdownSelect
+  searchable
+  enxergar
+  searchPlaceholder="Digite nome, telefone ou código..."
+  options={options}
+/>
+```

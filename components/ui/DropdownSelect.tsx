@@ -5,7 +5,10 @@ import { FontAwesome } from '@expo/vector-icons';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  Dimensions,
+  KeyboardAvoidingView,
   Modal,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -17,6 +20,7 @@ import {
   type TextStyle,
   type ViewStyle,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export type DropdownOption = {
   value: string;
@@ -31,6 +35,12 @@ type DropdownSelectProps = {
   placeholder?: string;
   searchPlaceholder?: string;
   searchable?: boolean;
+  /**
+   * Padrão Enxergar: ao focar a busca, a lista filtrada abre em modal no topo
+   * da tela para o usuário ver o recorte enquanto digita. Não altera o critério
+   * de pesquisa (label local ou `onSearchQueryChange` remoto).
+   */
+  enxergar?: boolean;
   /** Dispara a cada alteração da busca (para pesquisa remota). */
   onSearchQueryChange?: (query: string) => void;
   /** Quando false, não filtra `options` no cliente — o pai já entregou o recorte. */
@@ -64,6 +74,7 @@ export function DropdownSelect({
   placeholder = 'Selecionar',
   searchPlaceholder,
   searchable = false,
+  enxergar = false,
   onSearchQueryChange,
   filterOptionsLocally = true,
   listLoading = false,
@@ -79,6 +90,10 @@ export function DropdownSelect({
   const isCompact = size === 'compact';
   const isVigilance = variant === 'vigilance';
   const isMinimal = variant === 'minimal';
+  const insets = useSafeAreaInsets();
+  const windowHeight = Dimensions.get('window').height;
+  const enxergarListMaxHeight = Math.max(180, Math.round(windowHeight * 0.58));
+  const enxergarInputRef = useRef<TextInput>(null);
   const resolvedTriggerIconColor =
     triggerIconColor
     ?? (isMinimal ? MINIMAL_UI.icon : isVigilance ? '#FFFFFF' : '#94A3B8');
@@ -116,6 +131,18 @@ export function DropdownSelect({
 
   useEffect(() => () => clearBlurTimer(), []);
 
+  useEffect(() => {
+    if (!enxergar || !open) {
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      enxergarInputRef.current?.focus();
+    }, 80);
+
+    return () => clearTimeout(timer);
+  }, [enxergar, open]);
+
   const handleSelect = (value: string) => {
     clearBlurTimer();
     onValueChange(value);
@@ -135,6 +162,10 @@ export function DropdownSelect({
   };
 
   const scheduleCloseSearch = () => {
+    if (enxergar) {
+      return;
+    }
+
     clearBlurTimer();
     blurCloseTimerRef.current = setTimeout(() => {
       setOpen(false);
@@ -145,8 +176,11 @@ export function DropdownSelect({
 
   if (searchable) {
     const inputPlaceholder = searchPlaceholder ?? placeholder;
-    const inputValue = open ? searchQuery : selectedValue ? selectedLabel : '';
-    const hasInputValue = inputValue.trim().length > 0;
+    const triggerValue = selectedValue ? selectedLabel : '';
+    const inputValue = open && !enxergar ? searchQuery : triggerValue;
+    const hasTriggerValue = triggerValue.trim().length > 0;
+    const placeholderColor = isMinimal ? MINIMAL_UI.textMuted : isVigilance ? '#FFFFFF' : '#64748B';
+    const iconColor = isMinimal ? MINIMAL_UI.icon : isVigilance ? '#FFFFFF' : '#94A3B8';
 
     const handleClearInput = () => {
       clearBlurTimer();
@@ -160,6 +194,81 @@ export function DropdownSelect({
       setOpen(true);
     };
 
+    const handleCloseSearch = () => {
+      clearBlurTimer();
+      setOpen(false);
+      setSearchQuery('');
+    };
+
+    const renderFilteredList = () => {
+      if (listLoading) {
+        return (
+          <View style={styles.searchableLoadingRow}>
+            <ActivityIndicator size="small" color={iconColor} />
+            <Text
+              style={[
+                styles.emptySearchText,
+                isVigilance && styles.emptySearchTextVigilance,
+                isMinimal && styles.emptySearchTextMinimal,
+              ]}
+            >
+              Buscando...
+            </Text>
+          </View>
+        );
+      }
+
+      if (!filteredOptions.length) {
+        return (
+          <Text
+            style={[
+              styles.emptySearchText,
+              isVigilance && styles.emptySearchTextVigilance,
+              isMinimal && styles.emptySearchTextMinimal,
+            ]}
+          >
+            {emptyListHint ?? 'Nenhum resultado para a busca.'}
+          </Text>
+        );
+      }
+
+      return filteredOptions.map((option) => {
+        const isSelected = option.value === selectedValue;
+
+        return (
+          <TouchableOpacity
+            key={option.value}
+            style={[
+              styles.optionButton,
+              isVigilance && styles.optionButtonVigilance,
+              isMinimal && styles.optionButtonMinimal,
+              isSelected && styles.optionButtonSelected,
+              isSelected && isVigilance && styles.optionButtonSelectedVigilance,
+              isSelected && isMinimal && styles.optionButtonSelectedMinimal,
+            ]}
+            onPress={() => handleSelect(option.value)}
+            onPressIn={clearBlurTimer}
+            activeOpacity={0.85}
+          >
+            <Text
+              style={[
+                styles.optionText,
+                isVigilance && styles.optionTextVigilance,
+                isMinimal && styles.optionTextMinimal,
+                isSelected && styles.optionTextSelected,
+                isSelected && isVigilance && styles.optionTextSelectedVigilance,
+                isSelected && isMinimal && styles.optionTextSelectedMinimal,
+              ]}
+              numberOfLines={2}
+            >
+              {option.label}
+            </Text>
+            {isSelected ? <FontAwesome name="check" size={14} color={selectedCheckColor} /> : null}
+          </TouchableOpacity>
+        );
+      });
+    };
+
     return (
       <View style={[styles.searchableRoot, style]}>
         <View
@@ -170,30 +279,51 @@ export function DropdownSelect({
             disabled && styles.triggerDisabled,
           ]}
         >
-          <TextInput
-            style={[
-              styles.searchableInput,
-              isVigilance && styles.searchableInputVigilance,
-              isMinimal && styles.searchableInputMinimal,
-            ]}
-            value={inputValue}
-            onChangeText={(text) => {
-              setSearchQuery(text);
-              setOpen(true);
-              onSearchQueryChange?.(text);
-            }}
-            onFocus={handleOpenSearch}
-            onBlur={scheduleCloseSearch}
-            placeholder={inputPlaceholder}
-            placeholderTextColor={
-              isMinimal ? MINIMAL_UI.textMuted : isVigilance ? '#FFFFFF' : '#64748B'
-            }
-            editable={!disabled}
-            autoCapitalize="words"
-            autoCorrect={false}
-            accessibilityLabel={modalTitle}
-          />
-          {hasInputValue ? (
+          {enxergar ? (
+            <Pressable
+              style={styles.searchableEnxergarTrigger}
+              onPress={handleOpenSearch}
+              disabled={disabled}
+              accessibilityRole="button"
+              accessibilityLabel={modalTitle}
+            >
+              <Text
+                style={[
+                  styles.searchableInput,
+                  isVigilance && styles.searchableInputVigilance,
+                  isMinimal && styles.searchableInputMinimal,
+                  !hasTriggerValue && styles.searchablePlaceholder,
+                  !hasTriggerValue && isMinimal && styles.searchablePlaceholderMinimal,
+                ]}
+                numberOfLines={1}
+              >
+                {hasTriggerValue ? triggerValue : inputPlaceholder}
+              </Text>
+            </Pressable>
+          ) : (
+            <TextInput
+              style={[
+                styles.searchableInput,
+                isVigilance && styles.searchableInputVigilance,
+                isMinimal && styles.searchableInputMinimal,
+              ]}
+              value={inputValue}
+              onChangeText={(text) => {
+                setSearchQuery(text);
+                setOpen(true);
+                onSearchQueryChange?.(text);
+              }}
+              onFocus={handleOpenSearch}
+              onBlur={scheduleCloseSearch}
+              placeholder={inputPlaceholder}
+              placeholderTextColor={placeholderColor}
+              editable={!disabled}
+              autoCapitalize="words"
+              autoCorrect={false}
+              accessibilityLabel={modalTitle}
+            />
+          )}
+          {hasTriggerValue ? (
             <TouchableOpacity
               style={styles.searchableClearButton}
               onPress={handleClearInput}
@@ -201,24 +331,16 @@ export function DropdownSelect({
               activeOpacity={0.85}
               disabled={disabled}
               accessibilityRole="button"
-              accessibilityLabel="Limpar usuário selecionado"
+              accessibilityLabel="Limpar seleção"
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             >
-              <FontAwesome
-                name="times-circle"
-                size={18}
-                color={
-                  isMinimal ? MINIMAL_UI.icon : isVigilance ? '#FFFFFF' : '#94A3B8'
-                }
-              />
+              <FontAwesome name="times-circle" size={18} color={iconColor} />
             </TouchableOpacity>
           ) : null}
           <TouchableOpacity
             onPress={() => {
               if (open) {
-                clearBlurTimer();
-                setOpen(false);
-                setSearchQuery('');
+                handleCloseSearch();
                 return;
               }
 
@@ -229,17 +351,11 @@ export function DropdownSelect({
             accessibilityRole="button"
             accessibilityLabel={open ? 'Fechar lista' : 'Abrir lista'}
           >
-            <FontAwesome
-              name={open ? 'chevron-up' : 'chevron-down'}
-              size={12}
-              color={
-                isMinimal ? MINIMAL_UI.icon : isVigilance ? '#FFFFFF' : '#94A3B8'
-              }
-            />
+            <FontAwesome name={open ? 'chevron-up' : 'chevron-down'} size={12} color={iconColor} />
           </TouchableOpacity>
         </View>
 
-        {open ? (
+        {open && !enxergar ? (
           <View
             style={[
               styles.searchablePanel,
@@ -254,73 +370,116 @@ export function DropdownSelect({
               keyboardShouldPersistTaps="handled"
               showsVerticalScrollIndicator
             >
-              {listLoading ? (
-                <View style={styles.searchableLoadingRow}>
-                  <ActivityIndicator
-                    size="small"
-                    color={isMinimal ? MINIMAL_UI.icon : isVigilance ? '#FFFFFF' : '#64748B'}
-                  />
+              {renderFilteredList()}
+            </ScrollView>
+          </View>
+        ) : null}
+
+        {enxergar ? (
+          <Modal
+            visible={open}
+            transparent
+            animationType="fade"
+            onRequestClose={handleCloseSearch}
+            statusBarTranslucent
+          >
+            <View style={styles.enxergarRoot}>
+              <Pressable
+                style={styles.enxergarBackdropFill}
+                onPress={handleCloseSearch}
+                accessibilityRole="button"
+                accessibilityLabel="Fechar busca"
+              />
+              <KeyboardAvoidingView
+                style={[
+                  styles.enxergarShell,
+                  { paddingTop: insets.top + 8, paddingBottom: CLOSE_FOOTER_DOCK_HEIGHT },
+                ]}
+                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+                pointerEvents="box-none"
+              >
+                <View
+                  style={[
+                    styles.enxergarCard,
+                    isVigilance && styles.modalCardVigilance,
+                    isMinimal && styles.modalCardMinimal,
+                  ]}
+                >
                   <Text
                     style={[
-                      styles.emptySearchText,
+                      styles.modalTitle,
+                      isVigilance && styles.modalTitleVigilance,
+                      isMinimal && styles.modalTitleMinimal,
+                    ]}
+                  >
+                    {modalTitle}
+                  </Text>
+                  <View
+                    style={[
+                      styles.searchableTrigger,
+                      styles.enxergarSearchRow,
+                      isVigilance && styles.searchableTriggerVigilance,
+                      isMinimal && styles.searchableTriggerMinimal,
+                    ]}
+                  >
+                    <TextInput
+                      ref={enxergarInputRef}
+                      style={[
+                        styles.searchableInput,
+                        isVigilance && styles.searchableInputVigilance,
+                        isMinimal && styles.searchableInputMinimal,
+                      ]}
+                      value={searchQuery}
+                      onChangeText={(text) => {
+                        setSearchQuery(text);
+                        onSearchQueryChange?.(text);
+                      }}
+                      placeholder={inputPlaceholder}
+                      placeholderTextColor={placeholderColor}
+                      autoCapitalize="words"
+                      autoCorrect={false}
+                      accessibilityLabel={modalTitle}
+                    />
+                    {searchQuery.trim().length > 0 ? (
+                      <TouchableOpacity
+                        style={styles.searchableClearButton}
+                        onPress={() => {
+                          setSearchQuery('');
+                          onSearchQueryChange?.('');
+                        }}
+                        activeOpacity={0.85}
+                        accessibilityRole="button"
+                        accessibilityLabel="Limpar busca"
+                        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                      >
+                        <FontAwesome name="times-circle" size={18} color={iconColor} />
+                      </TouchableOpacity>
+                    ) : null}
+                  </View>
+                  <Text
+                    style={[
+                      styles.enxergarCount,
                       isVigilance && styles.emptySearchTextVigilance,
                       isMinimal && styles.emptySearchTextMinimal,
                     ]}
                   >
-                    Buscando...
+                    {listLoading
+                      ? 'Buscando...'
+                      : `${filteredOptions.length} de ${options.length}`}
                   </Text>
+                  <ScrollView
+                    style={[styles.enxergarScroll, { maxHeight: enxergarListMaxHeight }]}
+                    contentContainerStyle={styles.optionsContent}
+                    keyboardShouldPersistTaps="handled"
+                    showsVerticalScrollIndicator
+                  >
+                    {renderFilteredList()}
+                  </ScrollView>
                 </View>
-              ) : filteredOptions.length ? (
-                filteredOptions.map((option) => {
-                  const isSelected = option.value === selectedValue;
-
-                  return (
-                    <TouchableOpacity
-                      key={option.value}
-                      style={[
-                        styles.optionButton,
-                        isVigilance && styles.optionButtonVigilance,
-                        isMinimal && styles.optionButtonMinimal,
-                        isSelected && styles.optionButtonSelected,
-                        isSelected && isVigilance && styles.optionButtonSelectedVigilance,
-                        isSelected && isMinimal && styles.optionButtonSelectedMinimal,
-                      ]}
-                      onPress={() => handleSelect(option.value)}
-                      onPressIn={clearBlurTimer}
-                      activeOpacity={0.85}
-                    >
-                      <Text
-                        style={[
-                          styles.optionText,
-                          isVigilance && styles.optionTextVigilance,
-                          isMinimal && styles.optionTextMinimal,
-                          isSelected && styles.optionTextSelected,
-                          isSelected && isVigilance && styles.optionTextSelectedVigilance,
-                          isSelected && isMinimal && styles.optionTextSelectedMinimal,
-                        ]}
-                        numberOfLines={2}
-                      >
-                        {option.label}
-                      </Text>
-                      {isSelected ? (
-                        <FontAwesome name="check" size={14} color={selectedCheckColor} />
-                      ) : null}
-                    </TouchableOpacity>
-                  );
-                })
-              ) : (
-                <Text
-                  style={[
-                    styles.emptySearchText,
-                    isVigilance && styles.emptySearchTextVigilance,
-                    isMinimal && styles.emptySearchTextMinimal,
-                  ]}
-                >
-                  {emptyListHint ?? 'Nenhum resultado para a busca.'}
-                </Text>
-              )}
-            </ScrollView>
-          </View>
+              </KeyboardAvoidingView>
+              <CloseFooterBar onPress={handleCloseSearch} />
+            </View>
+          </Modal>
         ) : null}
       </View>
     );
@@ -446,6 +605,17 @@ const styles = StyleSheet.create({
     position: 'relative',
     zIndex: 20,
   },
+  searchableEnxergarTrigger: {
+    flex: 1,
+    minWidth: 0,
+  },
+  searchablePlaceholder: {
+    color: '#64748B',
+    fontWeight: '600',
+  },
+  searchablePlaceholderMinimal: {
+    color: MINIMAL_UI.textMuted,
+  },
   searchableTrigger: {
     width: '100%',
     maxWidth: '100%',
@@ -506,6 +676,53 @@ const styles = StyleSheet.create({
   },
   searchableScroll: {
     maxHeight: 240,
+  },
+  enxergarRoot: Platform.select({
+    web: {
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      zIndex: 999998,
+    },
+    default: {
+      flex: 1,
+    },
+  }),
+  enxergarBackdropFill: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(2, 6, 23, 0.72)',
+    zIndex: 0,
+  },
+  enxergarShell: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: 'flex-start',
+    paddingHorizontal: 16,
+    zIndex: 1,
+    pointerEvents: 'box-none',
+  },
+  enxergarCard: {
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#334155',
+    backgroundColor: '#0f172a',
+    overflow: 'hidden',
+    gap: 8,
+    paddingTop: 12,
+  },
+  enxergarSearchRow: {
+    marginHorizontal: 12,
+  },
+  enxergarCount: {
+    color: '#94A3B8',
+    fontSize: 12,
+    fontWeight: '700',
+    textAlign: 'center',
+    paddingHorizontal: 16,
+  },
+  enxergarScroll: {
+    paddingHorizontal: 10,
   },
   searchableLoadingRow: {
     alignItems: 'center',
