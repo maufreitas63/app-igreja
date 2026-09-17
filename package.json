@@ -13,6 +13,7 @@
     "metro:watch:uninstall": "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/uninstall-metro-watchdog-task.ps1",
     "reset-project": "node ./scripts/reset-project.js",
     "web": "expo start --web --port 8081",
+    "web:ensure": "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/start-web-8081-if-down.ps1",
     "web:8083": "expo start --web --port 8083",
     "build": "npm run build:web",
     "build:family-form": "vite build --config standalone/cadastro-familia/vite.config.ts",

@@ -2,6 +2,32 @@
   "version": "2.0.0",
   "tasks": [
     {
+      "label": "Expo: web 8081 (ao abrir o Cursor)",
+      "type": "npm",
+      "script": "web:ensure",
+      "isBackground": true,
+      "problemMatcher": {
+        "owner": "expo-web",
+        "pattern": {
+          "regexp": "^$"
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": ".",
+          "endsPattern": "Waiting on http://localhost:8081"
+        }
+      },
+      "presentation": {
+        "reveal": "silent",
+        "panel": "dedicated",
+        "showReuseMessage": false,
+        "focus": false
+      },
+      "runOptions": {
+        "runOn": "folderOpen"
+      }
+    },
+    {
       "label": "Expo: iniciar Metro (LAN / 8081)",
       "type": "npm",
       "script": "start:lan",

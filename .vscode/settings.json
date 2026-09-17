@@ -31,5 +31,6 @@
 
   "typescript.tsserver.maxTsServerMemory": 2048,
   "git.autorefresh": false,
-  "npm.autoDetect": "off"
+  "npm.autoDetect": "off",
+  "task.allowAutomaticTasks": "on"
 }
