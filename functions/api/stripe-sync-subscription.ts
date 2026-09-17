@@ -1,10 +1,10 @@
 /**
- * Cloudflare Pages Function — grava no banco a assinatura Stripe já paga.
+ * Cloudflare Pages Function — confirma no Stripe e grava a assinatura paga.
  * POST /api/stripe-sync-subscription
  * body: { tenant_id, session_id? }
  *
- * Usado na volta do Checkout (session_id) e ao abrir Assinaturas, porque o
- * webhook pode falhar sem o card da contratação atualizar.
+ * Com session_id (volta do Checkout): só libera se a sessão Stripe estiver
+ * complete + paid. Nunca usa query string nem lista antiga como prova de pagamento.
  */
 
 import {
@@ -12,9 +12,11 @@ import {
   billingCorsHeaders,
   isStripeSecretKey,
   jsonResponse,
+  persistFromCheckoutSession,
   persistStripeSubscription,
   readStripeMeta,
   stripeGet,
+  stripeStatusGrantsAccess,
   type BillingEnv,
 } from './_billingShared';
 
@@ -59,78 +61,117 @@ export const onRequestPost = async (context: PagesContext) => {
       return jsonResponse({ success: false, message: 'tenant_id é obrigatório.' }, 400);
     }
 
-    let persisted = false;
-    let source = 'none';
-
     if (sessionId.startsWith('cs_')) {
       const sessionRes = await stripeGet(
         secret,
         `checkout/sessions/${sessionId}?expand[]=subscription`
       );
-      if (sessionRes.ok) {
-        const session = sessionRes.data;
-        const sessionTenant =
-          readStripeMeta(session, 'tenant_id') || String(session.client_reference_id || '').trim();
-        const planCode = readStripeMeta(session, 'plan_code');
-        const subRaw = session.subscription;
-        let subscription = asRecord(typeof subRaw === 'object' ? subRaw : null);
-        const subId = typeof subRaw === 'string' ? subRaw : typeof subscription?.id === 'string' ? subscription.id : '';
-        if (subId.startsWith('sub_')) {
-          const full = await loadSubscription(secret, subId);
-          if (full.ok) subscription = full.data;
-        }
-        const targetTenant = sessionTenant || tenantId;
-        if (subscription && targetTenant === tenantId) {
-          const result = await persistStripeSubscription(context.env, subscription, {
-            tenantId,
-            planCode: planCode || undefined,
-            checkoutSessionId: sessionId,
-          });
-          if (!result.ok) {
-            return jsonResponse({ success: false, message: result.message }, 500);
-          }
-          persisted = true;
-          source = 'checkout_session';
-        }
+      if (!sessionRes.ok) {
+        return jsonResponse({
+          success: true,
+          synced: false,
+          payment_confirmed: false,
+          access_allowed: false,
+          status: 'inactive',
+          source: 'checkout_session',
+          message:
+            'Não foi possível confirmar a sessão no Stripe. O acesso não foi liberado.',
+        });
       }
+
+      const checkout = await persistFromCheckoutSession(context.env, secret, sessionRes.data, {
+        expectedTenantId: tenantId,
+      });
+      if (!checkout.ok && checkout.retry) {
+        return jsonResponse(
+          {
+            success: false,
+            synced: false,
+            payment_confirmed: checkout.paymentConfirmed,
+            access_allowed: false,
+            status: checkout.status,
+            source: 'checkout_session',
+            message: checkout.message,
+          },
+          503
+        );
+      }
+      if (!checkout.ok) {
+        return jsonResponse(
+          {
+            success: false,
+            synced: false,
+            payment_confirmed: false,
+            access_allowed: false,
+            status: checkout.status,
+            source: 'checkout_session',
+            message: checkout.message,
+          },
+          checkout.message.includes('não pertence') ? 403 : 400
+        );
+      }
+
+      return jsonResponse({
+        success: true,
+        synced: checkout.persisted,
+        payment_confirmed: checkout.paymentConfirmed,
+        access_allowed: checkout.accessAllowed,
+        status: checkout.status,
+        source: 'checkout_session',
+        message: checkout.message,
+      });
     }
 
-    if (!persisted) {
-      const listed = await stripeGet(secret, `subscriptions?status=all&limit=30&${SUB_EXPAND}`);
-      if (listed.ok) {
-        const rows = Array.isArray(listed.data.data) ? listed.data.data : [];
-        const matches = rows
-          .map((row) => asRecord(row))
-          .filter((row): row is Record<string, unknown> => {
-            if (!row) return false;
-            return readStripeMeta(row, 'tenant_id') === tenantId;
-          })
-          .sort((a, b) => subscriptionScore(b) - subscriptionScore(a));
-        const best = matches[0];
-        if (best) {
-          const subId = typeof best.id === 'string' ? best.id : '';
-          const full = subId.startsWith('sub_') ? await loadSubscription(secret, subId) : null;
-          const subscription = full?.ok ? full.data : best;
-          const result = await persistStripeSubscription(context.env, subscription, {
-            tenantId,
-            checkoutSessionId: sessionId.startsWith('cs_') ? sessionId : null,
-          });
-          if (!result.ok) {
-            return jsonResponse({ success: false, message: result.message }, 500);
-          }
-          persisted = true;
-          source = 'subscription_list';
-        }
-      }
+    const listed = await stripeGet(secret, `subscriptions?status=all&limit=30&${SUB_EXPAND}`);
+    if (!listed.ok) {
+      return jsonResponse({
+        success: true,
+        synced: false,
+        payment_confirmed: false,
+        access_allowed: false,
+        status: 'inactive',
+        source: 'none',
+        message: 'Nenhuma assinatura Stripe encontrada para esta igreja.',
+      });
+    }
+
+    const rows = Array.isArray(listed.data.data) ? listed.data.data : [];
+    const matches = rows
+      .map((row) => asRecord(row))
+      .filter((row): row is Record<string, unknown> => {
+        if (!row) return false;
+        return readStripeMeta(row, 'tenant_id') === tenantId;
+      })
+      .sort((a, b) => subscriptionScore(b) - subscriptionScore(a));
+    const best = matches[0];
+    if (!best) {
+      return jsonResponse({
+        success: true,
+        synced: false,
+        payment_confirmed: false,
+        access_allowed: false,
+        status: 'inactive',
+        source: 'none',
+        message: 'Nenhuma assinatura Stripe encontrada para esta igreja.',
+      });
+    }
+
+    const subId = typeof best.id === 'string' ? best.id : '';
+    const full = subId.startsWith('sub_') ? await loadSubscription(secret, subId) : null;
+    const subscription = full?.ok ? full.data : best;
+    const result = await persistStripeSubscription(context.env, subscription, { tenantId });
+    if (!result.ok) {
+      return jsonResponse({ success: false, message: result.message }, 500);
     }
 
     return jsonResponse({
       success: true,
-      synced: persisted,
-      source,
-      message: persisted
-        ? 'Contratação sincronizada com o Stripe.'
-        : 'Nenhuma assinatura Stripe encontrada para esta igreja.',
+      synced: true,
+      payment_confirmed: result.accessAllowed,
+      access_allowed: stripeStatusGrantsAccess(result.status),
+      status: result.status,
+      source: 'subscription_list',
+      message: 'Contratação sincronizada com o Stripe.',
     });
   } catch (error) {
     return jsonResponse(

@@ -167,6 +167,9 @@ async function readBillingApiPayload(response: Response): Promise<{
   cancel_at_period_end?: boolean;
   action?: string;
   synced?: boolean;
+  payment_confirmed?: boolean;
+  access_allowed?: boolean;
+  status?: string;
 }> {
   const text = await response.text();
   try {
@@ -209,7 +212,13 @@ export async function createStripeCheckoutSession(input: {
 export async function syncTenantSubscriptionFromStripe(input: {
   tenantId: string;
   sessionId?: string | null;
-}): Promise<{ synced: boolean; message: string }> {
+}): Promise<{
+  synced: boolean;
+  paymentConfirmed: boolean;
+  accessAllowed: boolean;
+  status: string;
+  message: string;
+}> {
   const response = await fetch(resolveBillingApiEndpoint('/api/stripe-sync-subscription'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -224,6 +233,9 @@ export async function syncTenantSubscriptionFromStripe(input: {
   }
   return {
     synced: payload.synced === true,
+    paymentConfirmed: payload.payment_confirmed === true,
+    accessAllowed: payload.access_allowed === true,
+    status: typeof payload.status === 'string' ? payload.status : 'inactive',
     message: payload.message || 'Contratação sincronizada.',
   };
 }

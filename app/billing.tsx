@@ -1,4 +1,4 @@
-import { BillingClass } from '@/components/billing/BillingClass';
+import { BillingClass, type BillingCheckoutFeedback } from '@/components/billing/BillingClass';
 import { CloseFooterBar } from '@/components/minimal/CloseFooterBar';
 import { ScreenAccessGate } from '@/components/ScreenAccessGate';
 import { planCoversActiveUsers } from '@/lib/billing/planCapacity';
@@ -13,11 +13,11 @@ import {
 import type { BillingPlan, BillingSaasContract } from '@/lib/billing/types';
 import { confirmDialog } from '@/lib/confirmDialog';
 import { MEMBER_HOME_PATH } from '@/lib/failClosedNavigation';
-import { getStoredTenantId } from '@/lib/tenantSession';
+import { getStoredActiveIgrejaBranding, getStoredTenantId } from '@/lib/tenantSession';
 import { useLeadershipRouteGuard } from '@/hooks/useLeadershipRouteGuard';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Toast from 'react-native-toast-message';
@@ -53,6 +53,10 @@ export default function BillingScreen() {
   const [checkoutLoadingPlanCode, setCheckoutLoadingPlanCode] = useState<string | null>(null);
   const [contractBusy, setContractBusy] = useState(false);
   const [contracts, setContracts] = useState<BillingSaasContract[]>([]);
+  const [accessAllowed, setAccessAllowed] = useState(false);
+  const [subscriptionStatus, setSubscriptionStatus] = useState<string>('inactive');
+  const [checkoutFeedback, setCheckoutFeedback] = useState<BillingCheckoutFeedback | null>(null);
+  const checkoutHandledRef = useRef('');
 
   const fetchBilling = useCallback(async () => {
     const tenantId = await getStoredTenantId();
@@ -65,6 +69,8 @@ export default function BillingScreen() {
     setCurrentPlanCode(billing.plan?.code ?? null);
     setCurrentPlanName(billing.plan?.name ?? null);
     setHasSubscription(billing.hasSubscription);
+    setAccessAllowed(billing.accessAllowed === true);
+    setSubscriptionStatus(billing.status || 'inactive');
     setSignedAt(billing.signedAt ?? billing.currentPeriodStart ?? null);
     setCurrentPeriodEnd(billing.currentPeriodEnd ?? null);
     setCancelAtPeriodEnd(billing.cancelAtPeriodEnd === true);
@@ -78,39 +84,74 @@ export default function BillingScreen() {
     let cancelled = false;
     const checkoutState = firstQueryParam(params.checkout);
     const sessionId = firstQueryParam(params.session_id);
+    const handleKey = `${checkoutState}:${sessionId}`;
+
+    const showCheckoutFeedback = (feedback: BillingCheckoutFeedback) => {
+      if (checkoutHandledRef.current === handleKey) return;
+      checkoutHandledRef.current = handleKey;
+      setCheckoutFeedback(feedback);
+      Toast.show({
+        type: feedback.type === 'success' ? 'success' : 'error',
+        text1: feedback.title,
+        text2: feedback.message,
+        visibilityTime: 7000,
+      });
+    };
 
     void (async () => {
       setLoading(true);
       try {
         const tenantId = await getStoredTenantId();
-        if (tenantId) {
-          try {
-            const sync = await syncTenantSubscriptionFromStripe({
-              tenantId,
-              sessionId: sessionId || null,
+
+        if (checkoutState === 'cancel') {
+          showCheckoutFeedback({
+            type: 'error',
+            title: 'Pagamento não concluído',
+            message:
+              'O checkout foi cancelado ou o cartão foi recusado. Nenhum acesso foi liberado.',
+          });
+        } else if (checkoutState === 'success') {
+          if (!sessionId.startsWith('cs_') || !tenantId) {
+            showCheckoutFeedback({
+              type: 'error',
+              title: 'Pagamento não confirmado',
+              message:
+                'A volta do checkout não prova pagamento. Confirme a sessão no Stripe antes de liberar o plano.',
             });
-            if (!cancelled && checkoutState === 'success' && sync.synced) {
-              Toast.show({
-                type: 'success',
-                text1: 'Contratação confirmada',
-                text2: 'O pacote e as datas de renovação foram atualizados.',
-                visibilityTime: 5000,
+          } else {
+            try {
+              const sync = await syncTenantSubscriptionFromStripe({
+                tenantId,
+                sessionId,
               });
-            }
-          } catch (error) {
-            if (!cancelled && checkoutState === 'success') {
-              Toast.show({
+              if (sync.paymentConfirmed && sync.accessAllowed) {
+                showCheckoutFeedback({
+                  type: 'success',
+                  title: 'Contratação confirmada',
+                  message: 'O Stripe confirmou o pagamento e o pacote foi atualizado.',
+                });
+              } else {
+                showCheckoutFeedback({
+                  type: 'error',
+                  title: 'Pagamento não confirmado',
+                  message:
+                    sync.message
+                    || 'O Stripe não confirmou o pagamento. O acesso não foi liberado.',
+                });
+              }
+            } catch (error) {
+              showCheckoutFeedback({
                 type: 'error',
-                text1: 'Contratação',
-                text2:
+                title: 'Pagamento não confirmado',
+                message:
                   error instanceof Error
                     ? error.message
-                    : 'Pagamento ok, mas a contratação ainda não apareceu. Recarregue a tela.',
-                visibilityTime: 7000,
+                    : 'Não foi possível confirmar o pagamento no Stripe. O acesso não foi liberado.',
               });
             }
           }
         }
+
         if (!cancelled) {
           await fetchBilling();
         }
@@ -131,7 +172,7 @@ export default function BillingScreen() {
         Toast.show({
           type: 'error',
           text1: 'Assinaturas',
-          text2: 'Selecione a igreja (tenant) antes de assinar. Use ?igreja=IBEP.',
+          text2: 'Selecione a igreja (tenant) antes de assinar.',
         });
         return;
       }
@@ -148,18 +189,22 @@ export default function BillingScreen() {
       }
 
       setCheckoutLoadingPlanCode(plan.code);
+      setCheckoutFeedback(null);
       const origin =
         Platform.OS === 'web' && typeof window !== 'undefined'
           ? window.location.origin
           : undefined;
+      const branding = await getStoredActiveIgrejaBranding();
+      const igreja = branding?.code?.trim().toUpperCase();
+      const igrejaQuery = igreja ? `&igreja=${encodeURIComponent(igreja)}` : '';
       const successUrl = origin
-        ? `${origin}/billing?checkout=success&igreja=IBEP`
+        ? `${origin}/billing?checkout=success${igrejaQuery}`
         : undefined;
       const cancelUrl = origin
-        ? `${origin}/billing?checkout=cancel&igreja=IBEP`
+        ? `${origin}/billing?checkout=cancel${igrejaQuery}`
         : undefined;
 
-      const { url } = await createStripeCheckoutSession({
+      const { url, sessionId } = await createStripeCheckoutSession({
         tenantId,
         planCode: plan.code,
         successUrl,
@@ -173,15 +218,45 @@ export default function BillingScreen() {
 
       await WebBrowser.openBrowserAsync(url);
       const tenantIdAfter = await getStoredTenantId();
-      if (tenantIdAfter) {
-        await syncTenantSubscriptionFromStripe({ tenantId: tenantIdAfter });
+      if (tenantIdAfter && sessionId) {
+        const sync = await syncTenantSubscriptionFromStripe({
+          tenantId: tenantIdAfter,
+          sessionId,
+        });
+        if (sync.paymentConfirmed && sync.accessAllowed) {
+          setCheckoutFeedback({
+            type: 'success',
+            title: 'Contratação confirmada',
+            message: 'O Stripe confirmou o pagamento e o pacote foi atualizado.',
+          });
+        } else {
+          setCheckoutFeedback({
+            type: 'error',
+            title: 'Pagamento não confirmado',
+            message:
+              'O cartão pode ter sido recusado ou o checkout foi fechado. O acesso não foi liberado.',
+          });
+        }
+      } else {
+        setCheckoutFeedback({
+          type: 'error',
+          title: 'Pagamento não confirmado',
+          message:
+            'Não foi possível conferir a sessão no Stripe. O acesso não foi liberado.',
+        });
       }
       await fetchBilling();
     } catch (error) {
+      const message = error instanceof Error ? error.message : 'Falha ao iniciar assinatura.';
+      setCheckoutFeedback({
+        type: 'error',
+        title: 'Checkout Stripe',
+        message,
+      });
       Toast.show({
         type: 'error',
         text1: 'Checkout Stripe',
-        text2: error instanceof Error ? error.message : 'Falha ao iniciar assinatura.',
+        text2: message,
         visibilityTime: 6000,
       });
     } finally {
@@ -201,11 +276,11 @@ export default function BillingScreen() {
         return;
       }
 
-      if (!hasSubscription) {
+      if (!accessAllowed) {
         Toast.show({
           type: 'info',
           text1: 'Assinaturas',
-          text2: 'Escolha um pacote abaixo para assinar.',
+          text2: 'Escolha um pacote abaixo para assinar. O plano só libera após o pagamento confirmado.',
         });
         return;
       }
@@ -246,7 +321,7 @@ export default function BillingScreen() {
 
   const handleRescindContract = async () => {
     const tenantId = await getStoredTenantId();
-    if (!tenantId || !hasSubscription) {
+    if (!tenantId || !accessAllowed) {
       Toast.show({
         type: 'error',
         text1: 'Assinaturas',
@@ -303,6 +378,8 @@ export default function BillingScreen() {
         contractBusy={contractBusy}
         contract={{
           hasSubscription,
+          accessAllowed,
+          status: subscriptionStatus,
           planName: currentPlanName,
           signedAt,
           currentPeriodEnd,
@@ -312,6 +389,7 @@ export default function BillingScreen() {
         onRenewContract={() => void handleRenewContract()}
         onRescindContract={() => void handleRescindContract()}
         contracts={contracts}
+        checkoutFeedback={checkoutFeedback}
       />
       <CloseFooterBar onPress={() => router.replace(MEMBER_HOME_PATH)} includeScreenPadding />
     </View>

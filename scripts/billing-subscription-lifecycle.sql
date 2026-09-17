@@ -155,7 +155,17 @@ begin
   end if;
 
   v_status := lower(trim(coalesce(p_status, 'inactive')));
-  if v_status = '' then
+  if v_status not in (
+    'inactive',
+    'incomplete',
+    'incomplete_expired',
+    'trialing',
+    'active',
+    'past_due',
+    'canceled',
+    'unpaid',
+    'paused'
+  ) then
     v_status := 'inactive';
   end if;
 
@@ -212,6 +222,20 @@ begin
        set is_active = true,
            updated_at = now()
      where id = p_tenant_id;
+  end if;
+
+  if to_regprocedure('public.ensure_billing_saas_contract(uuid, uuid, text, timestamptz, timestamptz, text, text)') is not null
+     and public.tenant_subscription_is_access_allowed(v_row.status)
+     and v_row.current_period_start is not null then
+    perform public.ensure_billing_saas_contract(
+      v_row.tenant_id,
+      v_row.plan_id,
+      v_row.status,
+      v_row.current_period_start,
+      v_row.current_period_end,
+      v_row.stripe_subscription_id,
+      v_row.stripe_checkout_session_id
+    );
   end if;
 
   return jsonb_build_object(

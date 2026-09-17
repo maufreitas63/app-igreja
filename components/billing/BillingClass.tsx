@@ -27,10 +27,18 @@ import {
 
 export type BillingContractInfo = {
   hasSubscription: boolean;
+  accessAllowed?: boolean;
+  status?: string | null;
   planName: string | null;
   signedAt: string | null;
   currentPeriodEnd: string | null;
   cancelAtPeriodEnd: boolean;
+};
+
+export type BillingCheckoutFeedback = {
+  type: 'success' | 'error' | 'info';
+  title: string;
+  message: string;
 };
 
 export type BillingClassProps = {
@@ -47,9 +55,30 @@ export type BillingClassProps = {
   onRenewContract?: () => void;
   onRescindContract?: () => void;
   contracts?: BillingSaasContract[];
+  checkoutFeedback?: BillingCheckoutFeedback | null;
   title?: string;
   subtitle?: string;
 };
+
+function billingStatusHint(status?: string | null, accessAllowed?: boolean): string | null {
+  if (accessAllowed) return null;
+  switch (String(status || '').trim().toLowerCase()) {
+    case 'incomplete':
+      return 'Pagamento não confirmado. O acesso não foi liberado.';
+    case 'incomplete_expired':
+      return 'O checkout expirou sem pagamento. Nenhuma assinatura foi ativada.';
+    case 'past_due':
+      return 'Pagamento em atraso. O acesso permanece bloqueado até a confirmação no Stripe.';
+    case 'unpaid':
+      return 'Fatura não paga. O acesso não está liberado.';
+    case 'canceled':
+      return 'Contratação encerrada.';
+    case 'paused':
+      return 'Contratação pausada. O acesso não está liberado.';
+    default:
+      return null;
+  }
+}
 
 const PLAN_ICONS: Record<string, React.ComponentProps<typeof FontAwesome>['name']> = {
   semente: 'leaf',
@@ -87,6 +116,7 @@ export function BillingClass({
   onRenewContract,
   onRescindContract,
   contracts = [],
+  checkoutFeedback = null,
   title = 'Assinaturas',
   subtitle = BILLING_SCREEN_SUBTITLE,
 }: BillingClassProps) {
@@ -102,7 +132,8 @@ export function BillingClass({
   const members = activeMembers ?? 0;
   const congregados = activeCongregados ?? 0;
   const showStatus = activeUsers != null || activeMembers != null || activeCongregados != null;
-  const hasContract = contract?.hasSubscription === true;
+  const hasContract = contract?.accessAllowed === true;
+  const statusHint = billingStatusHint(contract?.status, contract?.accessAllowed);
 
   return (
     <ScrollView
@@ -116,6 +147,18 @@ export function BillingClass({
         titleStyle={styles.title}
       />
       <Text style={styles.subtitle}>{subtitle}</Text>
+
+      {checkoutFeedback ? (
+        <View
+          style={[
+            styles.feedbackCard,
+            checkoutFeedback.type === 'success' ? styles.feedbackSuccess : styles.feedbackError,
+          ]}
+        >
+          <Text style={styles.feedbackTitle}>{checkoutFeedback.title}</Text>
+          <Text style={styles.feedbackMessage}>{checkoutFeedback.message}</Text>
+        </View>
+      ) : null}
 
       {showStatus ? (
         <Text style={styles.statusLine}>
@@ -138,6 +181,7 @@ export function BillingClass({
         <Text style={styles.contractLine}>
           Pacote atual assinado: {hasContract ? contract?.planName || '—' : 'Nenhum pacote assinado'}
         </Text>
+        {statusHint ? <Text style={styles.contractWarning}>{statusHint}</Text> : null}
         <Text style={styles.contractLine}>
           Data da assinatura: {formatPtDate(contract?.signedAt)}
         </Text>
@@ -198,7 +242,8 @@ export function BillingClass({
 
       <View style={styles.list}>
         {plans.map((plan) => {
-          const isCurrent = currentPlanCode?.toLowerCase() === plan.code.toLowerCase();
+          const isCurrent =
+            hasContract && currentPlanCode?.toLowerCase() === plan.code.toLowerCase();
           const busy = checkoutLoadingPlanCode === plan.code;
           const icon = PLAN_ICONS[plan.code] || 'circle-o';
           const fits = planCoversActiveUsers(plan.maxMembers, users);
@@ -286,6 +331,31 @@ const styles = StyleSheet.create({
     color: MINIMAL_UI.textMuted,
     fontSize: 12,
     lineHeight: 18,
+  },
+  feedbackCard: {
+    borderWidth: StyleSheet.hairlineWidth,
+    padding: 12,
+    gap: 4,
+    borderRadius: 8,
+  },
+  feedbackSuccess: {
+    backgroundColor: '#ECFDF5',
+    borderColor: '#059669',
+  },
+  feedbackError: {
+    backgroundColor: '#FEF2F2',
+    borderColor: '#B91C1C',
+  },
+  feedbackTitle: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: MINIMAL_UI.blueDark,
+  },
+  feedbackMessage: {
+    fontSize: 13,
+    lineHeight: 18,
+    color: MINIMAL_UI.blueDark,
+    fontWeight: '600',
   },
   unavailable: {
     color: '#B91C1C',

@@ -90,11 +90,8 @@ export const onRequestPost = async (context: PagesContext) => {
       /\/$/,
       ''
     );
-    const successUrl =
-      body.success_url?.trim()
-      || `${appUrl}/billing?checkout=success&igreja=IBEP`;
-    const cancelUrl =
-      body.cancel_url?.trim() || `${appUrl}/billing?checkout=cancel&igreja=IBEP`;
+    const successUrl = body.success_url?.trim() || `${appUrl}/billing?checkout=success`;
+    const cancelUrl = body.cancel_url?.trim() || `${appUrl}/billing?checkout=cancel`;
 
     const params: Record<string, string> = {
       mode: 'subscription',

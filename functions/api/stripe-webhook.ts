@@ -8,6 +8,7 @@ import {
   asRecord,
   isStripeSecretKey,
   jsonResponse,
+  persistFromCheckoutSession,
   persistStripeSubscription,
   readStripeMeta,
   stripeGet,
@@ -15,6 +16,7 @@ import {
   unixToIso,
   verifyStripeWebhookSignature,
   type BillingEnv,
+  type PersistStripeResult,
 } from './_billingShared';
 
 type PagesContext = {
@@ -22,7 +24,7 @@ type PagesContext = {
   env: BillingEnv;
 };
 
-type PersistResult = { ok: true; data: unknown } | { ok: false; message: string; retry?: boolean };
+type PersistResult = PersistStripeResult;
 
 function invoiceParentDetails(invoice: Record<string, unknown>): Record<string, unknown> | null {
   return asRecord(asRecord(invoice.parent)?.subscription_details);
@@ -185,51 +187,30 @@ export const onRequestPost = async (context: PagesContext) => {
     const type = event.type || '';
     const object = asRecord(event.data?.object) || {};
 
-    if (type === 'checkout.session.completed') {
-      const tenantId = readEventTenantId(object);
-      const planCode = readStripeMeta(object, 'plan_code') || 'semente';
-      const subscriptionId =
-        typeof object.subscription === 'string'
-          ? object.subscription
-          : typeof asRecord(object.subscription)?.id === 'string'
-            ? String(asRecord(object.subscription)?.id)
-            : null;
-      const customerId = typeof object.customer === 'string' ? object.customer : null;
-      const sessionId = typeof object.id === 'string' ? object.id : null;
-
-      if (subscriptionId) {
-        const subRes = await stripeGet(
-          stripeKey,
-          `subscriptions/${subscriptionId}?expand[]=items.data.price`
-        );
-        if (subRes.ok) {
-          return persistHttpResponse(
-            await persistStripeSubscription(context.env, subRes.data, {
-              tenantId,
-              planCode,
-              checkoutSessionId: sessionId,
-            })
-          );
-        }
+    if (
+      type === 'checkout.session.completed'
+      || type === 'checkout.session.async_payment_succeeded'
+      || type === 'checkout.session.async_payment_failed'
+      || type === 'checkout.session.expired'
+    ) {
+      const checkout = await persistFromCheckoutSession(context.env, stripeKey, object);
+      if (!checkout.ok && checkout.retry) {
+        return jsonResponse({ received: false, message: checkout.message }, 500);
       }
-
-      if (!tenantId) {
-        return jsonResponse({ received: true, skipped: true, message: 'Checkout sem tenant_id.' });
+      if (!checkout.ok) {
+        return persistHttpResponse({
+          ok: false,
+          message: checkout.message,
+          retry: checkout.retry,
+        });
       }
-
-      const result = await supabaseServiceRpc(context.env, 'upsert_tenant_subscription_from_stripe', {
-        p_tenant_id: tenantId,
-        p_plan_code: planCode,
-        p_status: 'active',
-        p_stripe_customer_id: customerId,
-        p_stripe_subscription_id: subscriptionId,
-        p_stripe_checkout_session_id: sessionId,
-        p_current_period_start: new Date().toISOString(),
-        p_current_period_end: null,
-        p_cancel_at_period_end: false,
-        p_raw_stripe: object,
+      return jsonResponse({
+        received: true,
+        updated: checkout.persisted,
+        payment_confirmed: checkout.paymentConfirmed,
+        access_allowed: checkout.accessAllowed,
+        status: checkout.status,
       });
-      return persistHttpResponse(result);
     }
 
     if (

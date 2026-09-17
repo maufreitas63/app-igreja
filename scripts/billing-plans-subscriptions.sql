@@ -416,7 +416,17 @@ begin
   end if;
 
   v_status := lower(trim(coalesce(p_status, 'inactive')));
-  if v_status = '' then
+  if v_status not in (
+    'inactive',
+    'incomplete',
+    'incomplete_expired',
+    'trialing',
+    'active',
+    'past_due',
+    'canceled',
+    'unpaid',
+    'paused'
+  ) then
     v_status := 'inactive';
   end if;
 
