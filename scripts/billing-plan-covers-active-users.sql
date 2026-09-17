@@ -41,9 +41,13 @@ begin
     return jsonb_build_object('ok', false, 'message', 'Plano não encontrado.');
   end if;
 
+  if v_plan.max_members < 0 then
+    return jsonb_build_object('ok', true, 'active_users', null, 'max_members', v_plan.max_members);
+  end if;
+
   v_users := public.count_tenant_billable_members(p_tenant_id);
 
-  if v_plan.max_members >= 0 and v_users > v_plan.max_members then
+  if v_users > v_plan.max_members then
     return jsonb_build_object(
       'ok', false,
       'message', format(

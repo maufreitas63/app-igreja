@@ -140,12 +140,27 @@ stable
 security definer
 set search_path = public
 as $$
+  with role_codes as (
+    select
+      par.profile_id,
+      case
+        when bool_or(ar.code = 'member') then 'member'
+        when bool_or(ar.code = 'congregado') then 'congregado'
+        else 'visitante'
+      end as role_code
+    from public.profile_access_roles par
+    join public.access_roles ar on ar.id = par.role_id
+    join public.profiles p on p.id = par.profile_id
+    where p.tenant_id = p_tenant_id
+      and ar.code in ('member', 'congregado')
+    group by par.profile_id
+  )
   select count(*)::integer
     from public.profiles p
-    cross join lateral public.resolve_effective_membership_dates_for_profile(p.id) eff
+    join role_codes rc on rc.profile_id = p.id
    where p.tenant_id = p_tenant_id
-     and public.resolve_basic_role_code_for_profile(p.id) in ('member', 'congregado')
-     and coalesce(eff.membership_out::text, '') = '';
+     and rc.role_code in ('member', 'congregado')
+     and coalesce(p.membership_out::text, '') = '';
 $$;
 
 comment on function public.count_tenant_billable_members(uuid) is
@@ -158,13 +173,28 @@ stable
 security definer
 set search_path = public
 as $$
-  with eligible as (
-    select public.resolve_basic_role_code_for_profile(p.id) as role_code
+  with role_codes as (
+    select
+      par.profile_id,
+      case
+        when bool_or(ar.code = 'member') then 'member'
+        when bool_or(ar.code = 'congregado') then 'congregado'
+        else 'visitante'
+      end as role_code
+    from public.profile_access_roles par
+    join public.access_roles ar on ar.id = par.role_id
+    join public.profiles p on p.id = par.profile_id
+    where p.tenant_id = p_tenant_id
+      and ar.code in ('member', 'congregado')
+    group by par.profile_id
+  ),
+  eligible as (
+    select rc.role_code
       from public.profiles p
-      cross join lateral public.resolve_effective_membership_dates_for_profile(p.id) eff
+      join role_codes rc on rc.profile_id = p.id
      where p.tenant_id = p_tenant_id
-       and public.resolve_basic_role_code_for_profile(p.id) in ('member', 'congregado')
-       and coalesce(eff.membership_out::text, '') = ''
+       and rc.role_code in ('member', 'congregado')
+       and coalesce(p.membership_out::text, '') = ''
   )
   select jsonb_build_object(
     'active_members', (select count(*)::integer from eligible where role_code = 'member'),
