@@ -13,7 +13,6 @@ const LOCKED_MANAGEMENT_PATHS = new Set([
   '/maintenance-dashboard',
   '/configuracao-salas',
   '/admin/orquestrador',
-  '/igrejas',
   '/alianca-conecta-reino',
   '/alianca-indicados',
   '/conhecimento',

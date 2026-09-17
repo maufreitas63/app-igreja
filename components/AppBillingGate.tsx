@@ -5,6 +5,7 @@ import {
 } from '@/lib/billing/commercialLock';
 import type { TenantBillingStatus } from '@/lib/billing/types';
 import { checkSessionIsSuperAdmin } from '@/lib/maintenanceAccessControlApi';
+import { resolveEffectiveProfileId } from '@/lib/sessionProfile';
 import {
   getStoredActiveIgrejaBranding,
   getStoredTenantId,
@@ -22,6 +23,7 @@ type CacheEntry = {
   billingAllow: boolean;
   instanceActive: boolean;
   managementAllow: boolean;
+  isSuperAdmin: boolean;
   checkedAt: number;
 };
 
@@ -103,6 +105,9 @@ const applyGateRedirect = (
   cache: CacheEntry,
   router: { replace: (href: Href) => void }
 ) => {
+  if (cache.isSuperAdmin) {
+    return;
+  }
   if (!cache.instanceActive && !isInstanceInactiveExemptRoute(pathname)) {
     router.replace('/selecionar-igreja');
     return;
@@ -136,50 +141,52 @@ export function AppBillingGate({ children }: Props) {
     let cancelled = false;
 
     const run = async () => {
-      if (inflightRef.current) {
+      const tenantId = await getStoredTenantId();
+      if (!tenantId || cancelled) return;
+
+      const profileId = await resolveEffectiveProfileId().catch(() => null);
+      if (!profileId || cancelled) {
         return;
       }
 
-      const tenantId = await getStoredTenantId();
-      if (!tenantId || cancelled) return;
+      let isSa = false;
+      try {
+        isSa = await checkSessionIsSuperAdmin();
+      } catch {
+        return;
+      }
+
+      if (cancelled) return;
+
+      if (isSa) {
+        statusCache = {
+          tenantId,
+          billingAllow: true,
+          instanceActive: true,
+          managementAllow: true,
+          isSuperAdmin: true,
+          checkedAt: Date.now(),
+        };
+        return;
+      }
 
       const now = Date.now();
       if (
         statusCache
         && statusCache.tenantId === tenantId
+        && statusCache.isSuperAdmin !== true
         && now - statusCache.checkedAt < CACHE_TTL_MS
       ) {
         applyGateRedirect(pathname, statusCache, router);
         return;
       }
 
+      if (inflightRef.current) {
+        return;
+      }
+
       inflightRef.current = true;
       try {
-        let isSa = false;
-        try {
-          isSa = await checkSessionIsSuperAdmin();
-        } catch {
-          statusCache = {
-            tenantId,
-            billingAllow: true,
-            instanceActive: true,
-            managementAllow: true,
-            checkedAt: Date.now(),
-          };
-          return;
-        }
-
-        if (isSa) {
-          statusCache = {
-            tenantId,
-            billingAllow: true,
-            instanceActive: true,
-            managementAllow: true,
-            checkedAt: Date.now(),
-          };
-          return;
-        }
-
         const branding = await getStoredActiveIgrejaBranding();
         const billing = await getTenantBillingStatus(tenantId);
         if (cancelled) return;
@@ -189,6 +196,7 @@ export function AppBillingGate({ children }: Props) {
           billingAllow: !shouldBlockForBilling(billing, branding?.code ?? null),
           instanceActive: billing.success ? billing.instanceActive !== false : true,
           managementAllow: isTenantManagementOpen(billing),
+          isSuperAdmin: false,
           checkedAt: Date.now(),
         };
         statusCache = cache;
