@@ -122,6 +122,7 @@ function AccessControlPanelHeader({
     <TouchableOpacity
       style={[
         styles.lgpdRadioToggle,
+        styles.headerStatusToggle,
         minimal && styles.lgpdRadioToggleMinimal,
         lgpdAtivo ? styles.lgpdRadioToggleActive : styles.lgpdRadioToggleInactive,
         minimal && lgpdAtivo && styles.lgpdRadioToggleActiveMinimal,
@@ -146,6 +147,7 @@ function AccessControlPanelHeader({
           <View
             style={[
               styles.lgpdRadioOuter,
+              styles.headerStatusRadioOuter,
               lgpdAtivo ? styles.lgpdRadioOuterActive : styles.lgpdRadioOuterInactive,
               minimal && lgpdAtivo && styles.lgpdRadioOuterActiveMinimal,
               minimal && !lgpdAtivo && styles.lgpdRadioOuterInactiveMinimal,
@@ -154,6 +156,7 @@ function AccessControlPanelHeader({
             <View
               style={[
                 styles.lgpdRadioInner,
+                styles.headerStatusRadioInner,
                 lgpdAtivo ? styles.lgpdRadioInnerActive : styles.lgpdRadioInnerInactive,
                 minimal && lgpdAtivo && styles.lgpdRadioInnerActiveMinimal,
                 minimal && !lgpdAtivo && styles.lgpdRadioInnerInactiveMinimal,
@@ -161,8 +164,10 @@ function AccessControlPanelHeader({
             />
           </View>
           <Text
+            numberOfLines={1}
             style={[
               styles.lgpdRadioLabel,
+              styles.headerStatusLabel,
               lgpdAtivo ? styles.lgpdRadioLabelActive : styles.lgpdRadioLabelInactive,
               minimal && lgpdAtivo && styles.lgpdRadioLabelActiveMinimal,
               minimal && !lgpdAtivo && styles.lgpdRadioLabelInactiveMinimal,
@@ -179,6 +184,7 @@ function AccessControlPanelHeader({
     <TouchableOpacity
       style={[
         styles.lgpdRadioToggle,
+        styles.headerStatusToggle,
         minimal && styles.lgpdRadioToggleMinimal,
         appAtivo ? styles.appAtivoToggleActive : styles.appAtivoToggleInactive,
         minimal && appAtivo && styles.appAtivoToggleActiveMinimal,
@@ -203,19 +209,23 @@ function AccessControlPanelHeader({
           <View
             style={[
               styles.lgpdRadioOuter,
+              styles.headerStatusRadioOuter,
               appAtivo ? styles.appAtivoRadioOuterActive : styles.appAtivoRadioOuterInactive,
             ]}
           >
             <View
               style={[
                 styles.lgpdRadioInner,
+                styles.headerStatusRadioInner,
                 appAtivo ? styles.appAtivoRadioInnerActive : styles.appAtivoRadioInnerInactive,
               ]}
             />
           </View>
           <Text
+            numberOfLines={1}
             style={[
               styles.lgpdRadioLabel,
+              styles.headerStatusLabel,
               appAtivo ? styles.appAtivoLabelActive : styles.appAtivoLabelInactive,
               minimal && appAtivo && styles.appAtivoLabelActiveMinimal,
               minimal && !appAtivo && styles.appAtivoLabelInactiveMinimal,
@@ -232,6 +242,7 @@ function AccessControlPanelHeader({
     <TouchableOpacity
       style={[
         styles.lgpdRadioToggle,
+        styles.headerStatusToggle,
         minimal && styles.lgpdRadioToggleMinimal,
         managementUnlocked ? styles.appAtivoToggleActive : styles.managementToggleLocked,
         minimal && managementUnlocked && styles.appAtivoToggleActiveMinimal,
@@ -258,6 +269,7 @@ function AccessControlPanelHeader({
           <View
             style={[
               styles.lgpdRadioOuter,
+              styles.headerStatusRadioOuter,
               managementUnlocked
                 ? styles.appAtivoRadioOuterActive
                 : styles.managementRadioOuterLocked,
@@ -266,6 +278,7 @@ function AccessControlPanelHeader({
             <View
               style={[
                 styles.lgpdRadioInner,
+                styles.headerStatusRadioInner,
                 managementUnlocked
                   ? styles.appAtivoRadioInnerActive
                   : styles.managementRadioInnerLocked,
@@ -273,8 +286,10 @@ function AccessControlPanelHeader({
             />
           </View>
           <Text
+            numberOfLines={1}
             style={[
               styles.lgpdRadioLabel,
+              styles.headerStatusLabel,
               managementUnlocked ? styles.appAtivoLabelActive : styles.managementLabelLocked,
               minimal && managementUnlocked && styles.appAtivoLabelActiveMinimal,
               minimal && !managementUnlocked && styles.managementLabelLockedMinimal,
@@ -1961,9 +1976,33 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    flexWrap: 'wrap',
-    gap: 10,
+    flexWrap: 'nowrap',
+    gap: 6,
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
     alignSelf: 'stretch',
+  },
+  headerStatusToggle: {
+    flexGrow: 0,
+    flexShrink: 1,
+    minWidth: 0,
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+    gap: 4,
+    justifyContent: 'center',
+  },
+  headerStatusLabel: {
+    flexShrink: 1,
+    fontSize: 11,
+  },
+  headerStatusRadioOuter: {
+    width: 12,
+    height: 12,
+  },
+  headerStatusRadioInner: {
+    width: 6,
+    height: 6,
   },
   panelTitleCompact: {
     flexShrink: 1,
@@ -1981,7 +2020,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     paddingHorizontal: 12,
     paddingVertical: 8,
-    flexShrink: 0,
+    flexShrink: 1,
     alignSelf: 'flex-start',
     minHeight: 36,
   },
@@ -2626,11 +2665,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    flexWrap: 'wrap',
+    flexWrap: 'nowrap',
     width: '100%',
     maxWidth: '100%',
     minWidth: 0,
-    gap: 8,
+    gap: 6,
   },
   panelHintMinimal: {
     color: MINIMAL_UI.textMuted,
