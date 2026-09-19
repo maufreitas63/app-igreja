@@ -11,7 +11,7 @@ import {
   withFailClosedReturn,
   withMemberCardReturn,
 } from '@/lib/failClosedNavigation';
-import { markDrawerNavigation } from '@/lib/drawerNavigationIntent';
+import { markDrawerNavigation, pinDrawerDestinationFromLocation } from '@/lib/drawerNavigationIntent';
 import type { Href, Router } from 'expo-router';
 
 /** Itens do menu reservados para futura associação de rota (sem navegação ativa). */
@@ -465,18 +465,31 @@ export function resolveDrawerMaintenancePanel(moduleKey: AppDrawerModuleKey) {
   return MAINTENANCE_PANEL_BY_MODULE[moduleKey] ?? null;
 }
 
+function pinDestinationAfterPush() {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  const pin = () => pinDrawerDestinationFromLocation();
+  pin();
+  window.setTimeout(pin, 0);
+  window.setTimeout(pin, 80);
+  window.setTimeout(pin, 250);
+}
+
 function openScreen(
   router: Router,
   pathname: Href,
   params?: Record<string, string>
 ) {
-  router.navigate({
+  router.push({
     pathname,
     params: params ?? withFailClosedReturn(),
   } as Href);
+  pinDestinationAfterPush();
 }
 
-const DRAWER_NAVIGATE = { method: 'navigate' as const };
+const DRAWER_NAVIGATE = { method: 'push' as const };
 
 export async function navigateDrawerMenuItem(
   router: Router,
@@ -484,6 +497,17 @@ export async function navigateDrawerMenuItem(
 ) {
   markDrawerNavigation();
 
+  try {
+    await navigateDrawerMenuItemBody(router, moduleKey);
+  } finally {
+    pinDestinationAfterPush();
+  }
+}
+
+async function navigateDrawerMenuItemBody(
+  router: Router,
+  moduleKey: AppDrawerModuleKey
+) {
   if (isDrawerMenuPlaceholder(moduleKey)) {
     return;
   }

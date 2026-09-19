@@ -1,5 +1,5 @@
 import { runAppBackInterceptor } from '@/lib/appBackIntercept';
-import { isDrawerNavigationPending } from '@/lib/drawerNavigationIntent';
+import { isDrawerNavigationPending, installDrawerNavigationCapture } from '@/lib/drawerNavigationIntent';
 import { confirmExitApplication } from '@/lib/userSession';
 import { usePathname, useRouter, useSegments } from 'expo-router';
 import { useEffect, useRef } from 'react';
@@ -139,14 +139,13 @@ export function AppBackHandler() {
       const currentSegments = segmentsRef.current;
       const onHome = isAppIndexScreen(currentPath, currentSegments);
 
-      // Reempilha imediatamente para o próximo "voltar" continuar interceptável.
-      pushTrap();
-
-      // Fechar o menu / troca de rota do Expo Router também dispara popstate.
-      // Sem isto, Perfil e o restante do drawer voltam ao Início (pior no Ghost).
+      // Menu / Expo Router também disparam popstate. Não reempilhar nem ir ao Início.
       if (isDrawerNavigationPending()) {
         return;
       }
+
+      // Reempilha imediatamente para o próximo "voltar" continuar interceptável.
+      pushTrap();
 
       if (runAppBackInterceptor()) {
         return;
@@ -170,6 +169,7 @@ export function AppBackHandler() {
     };
 
     pushTrap();
+    installDrawerNavigationCapture();
     window.addEventListener('popstate', onPopState);
 
     return () => {
@@ -178,22 +178,8 @@ export function AppBackHandler() {
      
   }, [router]);
 
-  // Em cada troca de rota autenticada, garante um trap fresco (expo-router mexe no history).
-  useEffect(() => {
-    if (Platform.OS !== 'web' || typeof window === 'undefined') {
-      return;
-    }
-
-    if (isPublicLoginScreen(pathname, segments)) {
-      return;
-    }
-
-    try {
-      window.history.pushState({ appBackHandler: true }, '', window.location.href);
-    } catch {
-      // ignore
-    }
-  }, [pathname, segments]);
+  // Trap só no Índice (Encerrar sessão). Empilhar pushState em toda rota
+  // fazia o fechar do menu / Expo Router “voltar” e cair no Início.
 
   useEffect(() => {
     if (Platform.OS === 'web') {
