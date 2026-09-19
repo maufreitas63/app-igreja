@@ -48,9 +48,9 @@ export function useReturnToCallerOnLeave({
         (event.data as { action?: { type?: string } } | undefined)?.action?.type ?? ''
       );
 
-      // Menu, deep link e replace para outra tela devem seguir. Só o voltar
-      // do aparelho/histórico é desviado para o Índice.
-      if (actionType && !BACK_ACTION_TYPES.has(actionType)) {
+      // Só o voltar explícito do aparelho/histórico vai ao Índice.
+      // Ação vazia, NAVIGATE, PUSH e REPLACE (menu, Ghost, deep link) seguem.
+      if (!BACK_ACTION_TYPES.has(actionType)) {
         return;
       }
 

@@ -1,4 +1,5 @@
 import { runAppBackInterceptor } from '@/lib/appBackIntercept';
+import { isDrawerNavigationPending } from '@/lib/drawerNavigationIntent';
 import { confirmExitApplication } from '@/lib/userSession';
 import { usePathname, useRouter, useSegments } from 'expo-router';
 import { useEffect, useRef } from 'react';
@@ -140,6 +141,12 @@ export function AppBackHandler() {
 
       // Reempilha imediatamente para o próximo "voltar" continuar interceptável.
       pushTrap();
+
+      // Fechar o menu / troca de rota do Expo Router também dispara popstate.
+      // Sem isto, Perfil e o restante do drawer voltam ao Início (pior no Ghost).
+      if (isDrawerNavigationPending()) {
+        return;
+      }
 
       if (runAppBackInterceptor()) {
         return;

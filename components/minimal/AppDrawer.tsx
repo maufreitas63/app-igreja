@@ -7,6 +7,7 @@ import {
   navigateDrawerMenuItem,
   type AppDrawerModuleKey,
 } from '@/lib/appDrawerMenu';
+import { markDrawerNavigation } from '@/lib/drawerNavigationIntent';
 import { traceClick } from '@/lib/devClickTrace';
 import { MINIMAL_ICON, MINIMAL_TOP_CHROME_MIN_HEIGHT, MINIMAL_UI, MINIMAL_TYPO } from '@/lib/minimalUiTheme';
 import { FontAwesome } from '@expo/vector-icons';
@@ -105,6 +106,7 @@ export function AppDrawer() {
     }
 
     traceClick('drawer', 'menu-item-navigate', { moduleKey: item.moduleKey });
+    markDrawerNavigation();
     closeDrawer();
     void navigateDrawerMenuItem(router, item.moduleKey);
   };
@@ -114,6 +116,7 @@ export function AppDrawer() {
       return;
     }
     traceClick('drawer', 'settings-item-navigate', { moduleKey, label });
+    markDrawerNavigation();
     setSettingsOpen(false);
     closeDrawer();
     void navigateDrawerMenuItem(router, moduleKey);

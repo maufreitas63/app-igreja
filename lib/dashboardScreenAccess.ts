@@ -7,6 +7,7 @@ import {
 } from '@/lib/accessControl';
 import { getCachedOrFetch } from '@/lib/asyncResultCache';
 import { DASHBOARD_CARD_LINKED_SCREEN } from '@/lib/dashboardCardScreenLinks';
+import { isGhostModeActive } from '@/lib/ghostMode';
 
 export type DashboardScreenAccess = Record<string, boolean>;
 
@@ -46,7 +47,8 @@ export async function loadDashboardLinkedScreenAccess(
 ): Promise<DashboardScreenAccess> {
   const screenKeys = loadDashboardLinkedScreenKeys();
 
-  if (await checkOperatorIsSuperAdmin(options)) {
+  // Proteção aplicada: no Ghost as telas seguem o alvo, não o Super Admin operador
+  if (!isGhostModeActive() && (await checkOperatorIsSuperAdmin(options))) {
     return Object.fromEntries(screenKeys.map((resourceKey) => [resourceKey, true] as const));
   }
 
