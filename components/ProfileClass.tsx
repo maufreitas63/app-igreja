@@ -88,6 +88,7 @@ export type ProfileClassProps = {
   accessPinSectionExpandedForScroll: boolean;
   onLeaveScreen: () => void;
   showOnboardingHint: boolean;
+  extraSections?: React.ReactNode;
 };
 
 /** UI pura de Dados Cadastrais — tema minimal vigilance_scales. */
@@ -152,6 +153,7 @@ export function ProfileClass({
   accessPinSectionExpandedForScroll,
   onLeaveScreen,
   showOnboardingHint,
+  extraSections,
 }: ProfileClassProps) {
   const RootWrapper = embedded ? View : SafeAreaView;
   const rootWrapperProps = embedded
@@ -642,6 +644,8 @@ export function ProfileClass({
                 </>
               ) : null}
             </View>
+
+            {extraSections}
 
             {/* Seção Vincular a Familia — oculta temporariamente
             <View style={profileClassStyles.sectionCard}>
