@@ -182,6 +182,18 @@ export async function deleteMyProfileService() {
   };
 }
 
+const asRpcList = (value: unknown): unknown[] => {
+  if (Array.isArray(value)) {
+    return value;
+  }
+
+  if (value && typeof value === 'object') {
+    return [value];
+  }
+
+  return [];
+};
+
 export async function fetchProfileServicesMural(): Promise<ProfileServiceCard[]> {
   const { data, error } = await supabase.rpc('list_profile_services_mural');
 
@@ -190,8 +202,7 @@ export async function fetchProfileServicesMural(): Promise<ProfileServiceCard[]>
     throw new Error(error.message || 'Não foi possível carregar os serviços do Apoio Mútuo.');
   }
 
-  const rows = Array.isArray(data) ? data : [];
-  return rows.map(mapCard).filter((row): row is ProfileServiceCard => row !== null);
+  return asRpcList(data).map(mapCard).filter((row): row is ProfileServiceCard => row !== null);
 }
 
 export async function fetchProfileServiceMuralDetail(id: string): Promise<ProfileServiceCard> {

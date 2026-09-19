@@ -47,7 +47,6 @@ export const DRAWER_MODULES_REQUIRING_ACTIVE_MEMBERSHIP: ReadonlySet<AppDrawerMo
   'menu_small_group',
   'menu_opportunity_mural',
   'menu_generosity_mural',
-  'menu_apoio_mutuo',
 ]);
 
 export type DrawerMemberAccessContext = {

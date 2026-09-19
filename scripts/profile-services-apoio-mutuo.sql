@@ -10,15 +10,21 @@ set search_path = public
 as $$
 declare
   v_me uuid := public.current_session_profile_id();
+  v_tenant uuid := public.current_session_tenant_id();
 begin
-  if v_me is null then
+  if v_me is null or v_tenant is null then
     return false;
   end if;
   if public.is_super_admin_profile(v_me) then
     return true;
   end if;
-  return public.profile_has_access(v_me, 'screen', '/apoio-mutuo', 'view')
-      or public.profile_has_access(v_me, 'screen', 'dashboard.card.apoio_mutuo', 'view');
+  -- Membro, congregado e visitante da instância atual (sem exigir vínculo formal).
+  return exists (
+    select 1
+      from public.profiles p
+     where p.id = v_me
+       and p.tenant_id = v_tenant
+  );
 end;
 $$;
 
@@ -110,7 +116,6 @@ begin
      and p.tenant_id = v_tenant
      and s.status_ativo = true
      and length(trim(s.titulo_servico)) >= 2
-     and coalesce(p.is_active, true)
    order by s.titulo_servico asc, p.full_name asc;
 end;
 $$;
@@ -203,7 +208,8 @@ select r.id, res.id, true, r.code in ('super_admin', 'member')
    and res.resource_key in ('dashboard.card.apoio_mutuo', '/apoio-mutuo')
  where r.code in (
    'super_admin', 'pastoral', 'lider_geral', 'lider', 'member', 'congregado',
-   'tesoureiro', 'events_admin', 'gestor_controle_acesso', 'family_acceptor'
+   'visitantes', 'tesoureiro', 'events_admin', 'gestor_controle_acesso',
+   'family_acceptor'
  )
 on conflict (role_id, resource_id) where (role_id is not null) do update
   set can_view = excluded.can_view,

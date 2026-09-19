@@ -601,13 +601,7 @@ export async function navigateDrawerMenuItem(
   }
 
   if (moduleKey === 'menu_apoio_mutuo') {
-    await navigateWithScreenAccess(
-      router,
-      '/apoio-mutuo',
-      ACCESS_SCREEN.apoioMutuo,
-      withFailClosedReturn(),
-      DRAWER_NAVIGATE
-    );
+    openScreen(router, '/apoio-mutuo', withFailClosedReturn());
     return;
   }
 
