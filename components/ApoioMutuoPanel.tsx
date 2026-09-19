@@ -1,7 +1,5 @@
 import { KnowledgeSectionTitle } from '@/components/knowledge/KnowledgeSectionTitle';
-import { ServiceBusinessCard } from '@/components/ServiceBusinessCard';
 import { ServiceMuralDetailModal } from '@/components/ServiceMuralDetailModal';
-import { DropdownSelect } from '@/components/ui/DropdownSelect';
 import { KNOWLEDGE_ROUTE } from '@/lib/knowledge/routeKeys';
 import { loadEffectiveSessionProfile } from '@/lib/loadSessionProfile';
 import { computeMaintenanceContentHeight, maintenancePanelStyles } from '@/lib/maintenanceCardStyles';
@@ -10,18 +8,34 @@ import {
   fetchProfileServicesMural,
   SERVICE_CATEGORIA_LABEL,
   SERVICE_CATEGORIES,
+  serviceCardInitials,
   type ProfileServiceCard,
   type ServiceCategoria,
 } from '@/lib/profileServicesApi';
 import { resolveSelfiePreviewUrl } from '@/lib/selfie';
+import { FontAwesome } from '@expo/vector-icons';
+import { Image } from 'expo-image';
 import { useFocusEffect } from 'expo-router';
 import React, { useCallback, useMemo, useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Modal,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 
 type Props = {
   panelHeight: number;
   isActive?: boolean;
 };
+
+const CATEGORIES_AZ = [...SERVICE_CATEGORIES].sort((left, right) =>
+  left.label.localeCompare(right.label, 'pt-BR')
+);
 
 export function ApoioMutuoPanel({ panelHeight, isActive = true }: Props) {
   const contentHeight = computeMaintenanceContentHeight(panelHeight);
@@ -29,7 +43,7 @@ export function ApoioMutuoPanel({ panelHeight, isActive = true }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [services, setServices] = useState<ProfileServiceCard[]>([]);
   const [photos, setPhotos] = useState<Record<string, string>>({});
-  const [categoryFilter, setCategoryFilter] = useState<ServiceCategoria | 'todas'>('todas');
+  const [selectedCategory, setSelectedCategory] = useState<ServiceCategoria | null>(null);
   const [detail, setDetail] = useState<ProfileServiceCard | null>(null);
 
   const load = useCallback(async () => {
@@ -80,27 +94,26 @@ export function ApoioMutuoPanel({ panelHeight, isActive = true }: Props) {
     }, [isActive, load])
   );
 
-  const visibleServices = useMemo(
-    () =>
-      categoryFilter === 'todas'
-        ? services
-        : services.filter((card) => card.categoria === categoryFilter),
-    [categoryFilter, services]
-  );
-  const usedCategories = useMemo(() => {
-    const present = new Set(services.map((card) => card.categoria));
-    return SERVICE_CATEGORIES.filter((item) => present.has(item.value));
+  const offerersByCategory = useMemo(() => {
+    const grouped = new Map<ServiceCategoria, ProfileServiceCard[]>();
+
+    for (const card of services) {
+      const current = grouped.get(card.categoria) ?? [];
+      current.push(card);
+      grouped.set(card.categoria, current);
+    }
+
+    for (const [categoria, rows] of grouped) {
+      grouped.set(
+        categoria,
+        rows.slice().sort((left, right) => left.fullName.localeCompare(right.fullName, 'pt-BR'))
+      );
+    }
+
+    return grouped;
   }, [services]);
-  const categoryOptions = useMemo(
-    () => [
-      { value: 'todas', label: 'Todas as categorias' },
-      ...usedCategories.map((item) => ({
-        value: item.value,
-        label: SERVICE_CATEGORIA_LABEL[item.value],
-      })),
-    ],
-    [usedCategories]
-  );
+
+  const selectedOfferers = selectedCategory ? offerersByCategory.get(selectedCategory) ?? [] : [];
 
   return (
     <View style={[styles.panel, { maxHeight: contentHeight }]}>
@@ -122,41 +135,104 @@ export function ApoioMutuoPanel({ panelHeight, isActive = true }: Props) {
         <ActivityIndicator color="#1E3A5F" style={styles.loader} />
       ) : error ? (
         <Text style={styles.error}>{error}</Text>
-      ) : services.length === 0 ? (
-        <Text style={styles.empty}>
-          Ainda não há serviços publicados nesta igreja. Cadastre o seu em Perfil → Ofereço meus
-          Serviços.
-        </Text>
       ) : (
-        <ScrollView style={styles.list} contentContainerStyle={styles.listContent}>
-          {usedCategories.length > 1 ? (
-            <DropdownSelect
-              options={categoryOptions}
-              selectedValue={categoryFilter}
-              onValueChange={(value) =>
-                setCategoryFilter((value === 'todas' || !value ? 'todas' : value) as ServiceCategoria | 'todas')
-              }
-              modalTitle="Categoria das atividades"
-              placeholder="Categoria"
-              searchPlaceholder="Buscar categoria"
-              searchable
-              variant="minimal"
-            />
-          ) : null}
-          {visibleServices.length === 0 ? (
-            <Text style={styles.empty}>Nenhum serviço nesta categoria.</Text>
-          ) : (
-            visibleServices.map((card) => (
-              <ServiceBusinessCard
-                key={card.id}
-                card={card}
-                photoUrl={photos[card.id]}
-                onOpenDetail={() => setDetail(card)}
-              />
-            ))
-          )}
+        <ScrollView style={styles.list} contentContainerStyle={styles.tagsContent}>
+          {CATEGORIES_AZ.map((item) => {
+            const hasOffer = (offerersByCategory.get(item.value)?.length ?? 0) > 0;
+
+            return (
+              <Pressable
+                key={item.value}
+                onPress={() => {
+                  if (hasOffer) {
+                    setSelectedCategory(item.value);
+                  }
+                }}
+                disabled={!hasOffer}
+                accessibilityRole="button"
+                accessibilityState={{ disabled: !hasOffer }}
+                accessibilityLabel={
+                  hasOffer
+                    ? item.label
+                    : `${item.label}, sem ofertas nesta igreja`
+                }
+                style={({ pressed }) => [
+                  styles.tag,
+                  hasOffer ? styles.tagActive : styles.tagUnused,
+                  hasOffer && pressed && styles.pressed,
+                ]}
+              >
+                <Text style={[styles.tagText, hasOffer ? styles.tagTextActive : styles.tagTextUnused]}>
+                  {item.label}
+                </Text>
+              </Pressable>
+            );
+          })}
         </ScrollView>
       )}
+
+      <Modal
+        visible={Boolean(selectedCategory) && !detail}
+        animationType="fade"
+        transparent
+        onRequestClose={() => setSelectedCategory(null)}
+      >
+        <View style={styles.backdrop}>
+          <Pressable
+            style={StyleSheet.absoluteFill}
+            onPress={() => setSelectedCategory(null)}
+            accessibilityLabel="Fechar lista"
+          />
+          <View style={styles.sheet}>
+            <Text style={styles.sheetTitle}>
+              {selectedCategory ? SERVICE_CATEGORIA_LABEL[selectedCategory] : ''}
+            </Text>
+            <ScrollView contentContainerStyle={styles.sheetList} showsVerticalScrollIndicator={false}>
+              {selectedOfferers.map((card) => {
+                const photoUrl = photos[card.id];
+                const initials = serviceCardInitials(card.fullName);
+
+                return (
+                  <Pressable
+                    key={card.id}
+                    onPress={() => setDetail(card)}
+                    style={({ pressed }) => [styles.nameRow, pressed && styles.pressed]}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Abrir cartão de ${card.fullName}`}
+                  >
+                    {photoUrl ? (
+                      <Image source={{ uri: photoUrl }} style={styles.avatar} contentFit="cover" />
+                    ) : (
+                      <View style={styles.avatarFallback}>
+                        <Text style={styles.initials}>{initials}</Text>
+                      </View>
+                    )}
+                    <View style={styles.nameBlock}>
+                      <Text style={styles.offererName} numberOfLines={1}>
+                        {card.fullName}
+                      </Text>
+                      {card.tituloServico ? (
+                        <Text style={styles.offererTitle} numberOfLines={1}>
+                          {card.tituloServico}
+                        </Text>
+                      ) : null}
+                    </View>
+                    <FontAwesome name="chevron-right" size={12} color={MINIMAL_UI.blueDark} />
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
+            <Pressable
+              onPress={() => setSelectedCategory(null)}
+              style={({ pressed }) => [styles.close, pressed && styles.pressed]}
+              accessibilityRole="button"
+              accessibilityLabel="Fechar"
+            >
+              <Text style={styles.closeText}>Fechar</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
 
       <ServiceMuralDetailModal
         visible={Boolean(detail)}
@@ -201,18 +277,129 @@ const styles = StyleSheet.create({
     color: '#DC2626',
     textAlign: 'center',
   },
-  empty: {
-    color: MINIMAL_UI.textMuted,
-    fontSize: 13,
-    textAlign: 'center',
-    lineHeight: 18,
-  },
   list: {
     flex: 1,
     minHeight: 0,
   },
-  listContent: {
-    gap: 10,
+  tagsContent: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
     paddingBottom: 12,
+  },
+  tag: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 999,
+    borderWidth: 1,
+    ...(Platform.OS === 'web' ? { cursor: 'pointer' as const } : null),
+  },
+  tagActive: {
+    backgroundColor: '#DBEAFE',
+    borderColor: MINIMAL_UI.border,
+  },
+  tagUnused: {
+    backgroundColor: '#E2E8F0',
+    borderColor: '#CBD5E1',
+    ...(Platform.OS === 'web' ? { cursor: 'not-allowed' as const } : null),
+  },
+  tagText: {
+    fontSize: 13,
+    fontWeight: '800',
+  },
+  tagTextActive: {
+    color: MINIMAL_UI.blueDark,
+  },
+  tagTextUnused: {
+    color: '#94A3B8',
+  },
+  backdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(15, 23, 42, 0.45)',
+    justifyContent: 'center',
+    padding: 16,
+  },
+  sheet: {
+    maxHeight: '80%',
+    backgroundColor: MINIMAL_UI.background,
+    borderRadius: 20,
+    overflow: 'hidden',
+  },
+  sheetTitle: {
+    color: MINIMAL_UI.blueDark,
+    fontSize: 16,
+    fontWeight: '800',
+    textAlign: 'center',
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 8,
+  },
+  sheetList: {
+    gap: 8,
+    paddingHorizontal: 16,
+    paddingBottom: 8,
+  },
+  nameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    minHeight: 52,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: MINIMAL_UI.border,
+    backgroundColor: MINIMAL_UI.background,
+  },
+  avatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: MINIMAL_UI.rowHover,
+  },
+  avatarFallback: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#DBEAFE',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  initials: {
+    color: MINIMAL_UI.blueDark,
+    fontSize: 13,
+    fontWeight: '800',
+  },
+  nameBlock: {
+    flex: 1,
+    minWidth: 0,
+    gap: 2,
+  },
+  offererName: {
+    color: MINIMAL_UI.blueDark,
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  offererTitle: {
+    color: MINIMAL_UI.textMuted,
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  close: {
+    minHeight: 48,
+    margin: 12,
+    marginTop: 4,
+    borderRadius: 14,
+    backgroundColor: MINIMAL_UI.blueDark,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  closeText: {
+    color: MINIMAL_UI.onDark,
+    fontWeight: '800',
+    fontSize: 14,
+  },
+  pressed: {
+    opacity: 0.88,
   },
 });
