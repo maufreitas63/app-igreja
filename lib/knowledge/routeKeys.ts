@@ -98,6 +98,7 @@ export const MEMBER_KNOWLEDGE_ROUTE_KEYS: ReadonlySet<string> = new Set([
   KNOWLEDGE_ROUTE.pequenoGrupo,
   KNOWLEDGE_ROUTE.muralOportunidades,
   KNOWLEDGE_ROUTE.muralGenerosidade,
+  KNOWLEDGE_ROUTE.apoioMutuo,
   KNOWLEDGE_ROUTE.suggestions,
   KNOWLEDGE_ROUTE.avisos,
   KNOWLEDGE_ROUTE.primiciasMember,

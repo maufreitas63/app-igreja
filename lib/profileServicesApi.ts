@@ -1,7 +1,8 @@
 import { initialsFromFullName } from '@/lib/digitalIdCard';
+import { formatBrazilPhoneInput } from '@/lib/inputMasks';
+import { type ServiceVCardInput } from '@/lib/serviceVCard';
 import { supabase } from '@/lib/supabase';
 import { isSupabaseRpcMissingError } from '@/lib/supabaseRpc';
-import { formatBrazilPhoneInput } from '@/lib/inputMasks';
 
 export const PROFILE_SERVICES_SQL_HINT =
   'O Apoio Mútuo ainda não está disponível neste ambiente.';
@@ -158,6 +159,19 @@ export function serviceCardInitials(fullName: string) {
 export function formatServicePhoneDisplay(phone: string | null | undefined) {
   const raw = readString(phone);
   return raw ? formatBrazilPhoneInput(raw) : '';
+}
+
+export function serviceVCardInputFromCard(card: ProfileServiceCard): ServiceVCardInput {
+  return {
+    fullName: card.fullName,
+    title: card.tituloServico,
+    organization: SERVICE_CATEGORIA_LABEL[card.categoria],
+    note: card.descricaoServico,
+    phone: card.telefoneContato,
+    email: card.email,
+    website: card.paginaWeb,
+    instagram: card.instagram,
+  };
 }
 
 export async function fetchMyProfileService(): Promise<MyProfileService | null> {

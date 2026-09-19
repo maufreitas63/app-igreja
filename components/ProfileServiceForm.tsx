@@ -43,8 +43,10 @@ export function ProfileServiceForm() {
   const [paginaWeb, setPaginaWeb] = useState('');
   const [instagram, setInstagram] = useState('');
 
-  const load = useCallback(async () => {
-    setLoading(true);
+  const load = useCallback(async (options?: { silent?: boolean }) => {
+    if (!options?.silent) {
+      setLoading(true);
+    }
 
     try {
       const service = await fetchMyProfileService();
@@ -71,34 +73,67 @@ export function ProfileServiceForm() {
     void load();
   }, [load]);
 
+  const persist = async (nextStatusAtivo: boolean) => {
+    const result = await saveMyProfileService({
+      tituloServico: titulo,
+      descricaoServico: descricao,
+      categoria,
+      statusAtivo: nextStatusAtivo,
+      telefoneContato: telefone,
+      paginaWeb,
+      instagram,
+    });
+
+    Toast.show({
+      type: result.success ? 'success' : 'error',
+      text1: 'Ofereço meus Serviços',
+      text2: result.message,
+    });
+
+    if (result.success) {
+      setStatusAtivo(nextStatusAtivo);
+      await load({ silent: true });
+    }
+
+    return result.success;
+  };
+
   const handleSave = async () => {
     setSaving(true);
 
     try {
-      const result = await saveMyProfileService({
-        tituloServico: titulo,
-        descricaoServico: descricao,
-        categoria,
-        statusAtivo,
-        telefoneContato: telefone,
-        paginaWeb,
-        instagram,
-      });
-
-      Toast.show({
-        type: result.success ? 'success' : 'error',
-        text1: 'Ofereço meus Serviços',
-        text2: result.message,
-      });
-
-      if (result.success) {
-        await load();
-      }
+      await persist(statusAtivo);
     } catch (error) {
       Toast.show({
         type: 'error',
         text1: 'Ofereço meus Serviços',
         text2: error instanceof Error ? error.message : 'Não foi possível salvar.',
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleTogglePublish = async (next: boolean) => {
+    if (saving || deleting) {
+      return;
+    }
+
+    const previous = statusAtivo;
+    setStatusAtivo(next);
+    setSaving(true);
+
+    try {
+      const ok = await persist(next);
+      if (!ok) {
+        setStatusAtivo(previous);
+      }
+    } catch (error) {
+      setStatusAtivo(previous);
+      Toast.show({
+        type: 'error',
+        text1: 'Ofereço meus Serviços',
+        text2: error instanceof Error ? error.message : 'Não foi possível publicar.',
       });
     } finally {
       setSaving(false);
@@ -258,12 +293,13 @@ export function ProfileServiceForm() {
               <View style={{ flex: 1 }}>
                 <Text style={profileClassStyles.vehicleFormLabel}>Publicar no Apoio Mútuo</Text>
                 <Text style={profileClassStyles.sectionMeta}>
-                  Só aparece para quem está nesta igreja
+                  Ligada, o cartão entra na vitrine desta igreja; desligada, some na hora
                 </Text>
               </View>
               <Switch
                 value={statusAtivo}
-                onValueChange={setStatusAtivo}
+                onValueChange={(next) => void handleTogglePublish(next)}
+                disabled={busy}
                 trackColor={{ false: MINIMAL_UI.divider, true: MINIMAL_UI.accent }}
                 thumbColor={MINIMAL_UI.background}
               />

@@ -1,5 +1,7 @@
 import { KnowledgeSectionTitle } from '@/components/knowledge/KnowledgeSectionTitle';
+import { ServiceBusinessCard } from '@/components/ServiceBusinessCard';
 import { ServiceMuralDetailModal } from '@/components/ServiceMuralDetailModal';
+import { DropdownSelect } from '@/components/ui/DropdownSelect';
 import { KNOWLEDGE_ROUTE } from '@/lib/knowledge/routeKeys';
 import { loadEffectiveSessionProfile } from '@/lib/loadSessionProfile';
 import { computeMaintenanceContentHeight, maintenancePanelStyles } from '@/lib/maintenanceCardStyles';
@@ -8,15 +10,12 @@ import {
   fetchProfileServicesMural,
   SERVICE_CATEGORIA_LABEL,
   SERVICE_CATEGORIES,
-  serviceCardInitials,
   type ProfileServiceCard,
   type ServiceCategoria,
 } from '@/lib/profileServicesApi';
 import { resolveSelfiePreviewUrl } from '@/lib/selfie';
-import { FontAwesome } from '@expo/vector-icons';
-import { Image } from 'expo-image';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 type Props = {
   panelHeight: number;
@@ -29,7 +28,7 @@ export function ApoioMutuoPanel({ panelHeight, isActive = true }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [services, setServices] = useState<ProfileServiceCard[]>([]);
   const [photos, setPhotos] = useState<Record<string, string>>({});
-  const [selectedCategory, setSelectedCategory] = useState<ServiceCategoria | null>(null);
+  const [categoryFilter, setCategoryFilter] = useState<ServiceCategoria | 'todas'>('todas');
   const [detail, setDetail] = useState<ProfileServiceCard | null>(null);
 
   const load = useCallback(async () => {
@@ -78,16 +77,27 @@ export function ApoioMutuoPanel({ panelHeight, isActive = true }: Props) {
     void load();
   }, [isActive, load]);
 
-  const offerersInCategory = useMemo(() => {
-    if (!selectedCategory) {
-      return [];
-    }
-
-    return services
-      .filter((card) => card.categoria === selectedCategory)
-      .slice()
-      .sort((left, right) => left.fullName.localeCompare(right.fullName, 'pt-BR'));
-  }, [selectedCategory, services]);
+  const visibleServices = useMemo(
+    () =>
+      categoryFilter === 'todas'
+        ? services
+        : services.filter((card) => card.categoria === categoryFilter),
+    [categoryFilter, services]
+  );
+  const usedCategories = useMemo(() => {
+    const present = new Set(services.map((card) => card.categoria));
+    return SERVICE_CATEGORIES.filter((item) => present.has(item.value));
+  }, [services]);
+  const categoryOptions = useMemo(
+    () => [
+      { value: 'todas', label: 'Todas as categorias' },
+      ...usedCategories.map((item) => ({
+        value: item.value,
+        label: SERVICE_CATEGORIA_LABEL[item.value],
+      })),
+    ],
+    [usedCategories]
+  );
 
   return (
     <View style={[styles.panel, { maxHeight: contentHeight }]}>
@@ -96,70 +106,52 @@ export function ApoioMutuoPanel({ panelHeight, isActive = true }: Props) {
         routeKey={KNOWLEDGE_ROUTE.apoioMutuo}
         titleStyle={maintenancePanelStyles.panelTitle}
       />
-      <Text style={styles.subtitle}>
-        Serviços oferecidos pelos membros desta igreja. Cadastre o seu em Perfil → Ofereço meus
-        Serviços.
-      </Text>
+      <View style={styles.hero}>
+        <Text style={styles.heroTitle}>Quem caminha junto, cresce junto.</Text>
+        <Text style={styles.heroSubtitle}>
+          Um espaço seguro para encontrar o trabalho de quem faz parte da nossa comunidade, trocar
+          uma ideia no WhatsApp e salvar o contato direto na sua agenda. Valorize quem está perto de
+          você.
+        </Text>
+      </View>
 
       {loading ? (
         <ActivityIndicator color="#1E3A5F" style={styles.loader} />
       ) : error ? (
         <Text style={styles.error}>{error}</Text>
-      ) : selectedCategory ? (
-        <ScrollView style={styles.list} contentContainerStyle={styles.listContent}>
-          <Pressable
-            onPress={() => setSelectedCategory(null)}
-            style={({ pressed }) => [styles.backRow, pressed && styles.pressed]}
-            accessibilityRole="button"
-            accessibilityLabel="Voltar às categorias"
-          >
-            <FontAwesome name="chevron-left" size={12} color={MINIMAL_UI.blueDark} />
-            <Text style={styles.backText}>{SERVICE_CATEGORIA_LABEL[selectedCategory]}</Text>
-          </Pressable>
-          {offerersInCategory.length === 0 ? (
-            <Text style={styles.empty}>Ainda não há ofertas nesta categoria.</Text>
-          ) : (
-            offerersInCategory.map((card) => {
-              const photoUrl = photos[card.id];
-              const initials = serviceCardInitials(card.fullName);
-
-              return (
-                <Pressable
-                  key={card.id}
-                  onPress={() => setDetail(card)}
-                  style={({ pressed }) => [styles.nameRow, pressed && styles.pressed]}
-                  accessibilityRole="button"
-                  accessibilityLabel={`Abrir cartão de ${card.fullName}`}
-                >
-                  {photoUrl ? (
-                    <Image source={{ uri: photoUrl }} style={styles.avatar} contentFit="cover" />
-                  ) : (
-                    <View style={styles.avatarFallback}>
-                      <Text style={styles.initials}>{initials}</Text>
-                    </View>
-                  )}
-                  <Text style={styles.offererName} numberOfLines={2}>
-                    {card.fullName}
-                  </Text>
-                  <FontAwesome name="qrcode" size={14} color={MINIMAL_UI.blueDark} />
-                </Pressable>
-              );
-            })
-          )}
-        </ScrollView>
+      ) : services.length === 0 ? (
+        <Text style={styles.empty}>
+          Ainda não há serviços publicados nesta igreja. Cadastre o seu em Perfil → Ofereço meus
+          Serviços.
+        </Text>
       ) : (
-        <ScrollView style={styles.list} contentContainerStyle={styles.tagsContent}>
-          {SERVICE_CATEGORIES.map((item) => (
-            <Pressable
-              key={item.value}
-              onPress={() => setSelectedCategory(item.value)}
-              style={({ pressed }) => [styles.tag, pressed && styles.pressed]}
-              accessibilityRole="button"
-              accessibilityLabel={item.label}
-            >
-              <Text style={styles.tagText}>{item.label}</Text>
-            </Pressable>
-          ))}
+        <ScrollView style={styles.list} contentContainerStyle={styles.listContent}>
+          {usedCategories.length > 1 ? (
+            <DropdownSelect
+              options={categoryOptions}
+              selectedValue={categoryFilter}
+              onValueChange={(value) =>
+                setCategoryFilter((value === 'todas' || !value ? 'todas' : value) as ServiceCategoria | 'todas')
+              }
+              modalTitle="Categoria das atividades"
+              placeholder="Categoria"
+              searchPlaceholder="Buscar categoria"
+              searchable
+              variant="minimal"
+            />
+          ) : null}
+          {visibleServices.length === 0 ? (
+            <Text style={styles.empty}>Nenhum serviço nesta categoria.</Text>
+          ) : (
+            visibleServices.map((card) => (
+              <ServiceBusinessCard
+                key={card.id}
+                card={card}
+                photoUrl={photos[card.id]}
+                onOpenDetail={() => setDetail(card)}
+              />
+            ))
+          )}
         </ScrollView>
       )}
 
@@ -180,11 +172,24 @@ const styles = StyleSheet.create({
     minHeight: 0,
     gap: 8,
   },
-  subtitle: {
-    color: MINIMAL_UI.textMuted,
-    fontSize: 12,
+  hero: {
+    gap: 6,
+    paddingHorizontal: 8,
+    paddingBottom: 4,
+  },
+  heroTitle: {
+    color: MINIMAL_UI.blueDark,
+    fontSize: 18,
+    fontWeight: '800',
     textAlign: 'center',
-    lineHeight: 16,
+    lineHeight: 24,
+  },
+  heroSubtitle: {
+    color: MINIMAL_UI.textMuted,
+    fontSize: 13,
+    fontStyle: 'italic',
+    textAlign: 'center',
+    lineHeight: 18,
   },
   loader: {
     marginTop: 24,
@@ -197,85 +202,14 @@ const styles = StyleSheet.create({
     color: MINIMAL_UI.textMuted,
     fontSize: 13,
     textAlign: 'center',
-    marginTop: 16,
+    lineHeight: 18,
   },
   list: {
     flex: 1,
     minHeight: 0,
   },
   listContent: {
-    gap: 8,
+    gap: 10,
     paddingBottom: 12,
-  },
-  tagsContent: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    paddingBottom: 12,
-  },
-  tag: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: MINIMAL_UI.border,
-    backgroundColor: '#DBEAFE',
-  },
-  tagText: {
-    color: MINIMAL_UI.blueDark,
-    fontSize: 13,
-    fontWeight: '800',
-  },
-  backRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    paddingVertical: 4,
-  },
-  backText: {
-    color: MINIMAL_UI.blueDark,
-    fontSize: 15,
-    fontWeight: '800',
-  },
-  nameRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    minHeight: 52,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: MINIMAL_UI.border,
-    backgroundColor: MINIMAL_UI.background,
-  },
-  avatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: MINIMAL_UI.rowHover,
-  },
-  avatarFallback: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#DBEAFE',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  initials: {
-    color: MINIMAL_UI.blueDark,
-    fontSize: 13,
-    fontWeight: '800',
-  },
-  offererName: {
-    flex: 1,
-    minWidth: 0,
-    color: MINIMAL_UI.blueDark,
-    fontSize: 15,
-    fontWeight: '700',
-  },
-  pressed: {
-    opacity: 0.88,
   },
 });

@@ -122,6 +122,7 @@ begin
      and p.tenant_id = v_tenant
      and s.status_ativo = true
      and length(trim(s.titulo_servico)) >= 2
+     and coalesce(p.is_active, true)
    order by s.titulo_servico asc, p.full_name asc;
 end;
 $$;
@@ -164,7 +165,8 @@ begin
    where s.id = p_id
      and s.tenant_id = v_tenant
      and p.tenant_id = v_tenant
-     and s.status_ativo = true;
+     and s.status_ativo = true
+     and coalesce(p.is_active, true);
 
   if not found then
     return jsonb_build_object('success', false, 'message', 'Serviço não encontrado nesta igreja.');

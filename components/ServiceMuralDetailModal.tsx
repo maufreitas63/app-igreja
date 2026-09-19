@@ -5,16 +5,18 @@ import {
   instagramProfileUrl,
   SERVICE_CATEGORIA_LABEL,
   serviceCardInitials,
+  serviceVCardInputFromCard,
   type ProfileServiceCard,
 } from '@/lib/profileServicesApi';
-import { buildServiceVCard } from '@/lib/serviceVCard';
+import { buildServiceVCard, downloadServiceVCard } from '@/lib/serviceVCard';
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { openWhatsAppLikeBirthdays } from '@/lib/whatsapp';
 import { FontAwesome } from '@expo/vector-icons';
 import * as Linking from 'expo-linking';
 import { Image } from 'expo-image';
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
+  ActivityIndicator,
   Modal,
   Pressable,
   ScrollView,
@@ -22,6 +24,7 @@ import {
   Text,
   View,
 } from 'react-native';
+import Toast from 'react-native-toast-message';
 import QRCode from 'react-native-qrcode-svg';
 
 const WHATSAPP_GREEN = '#25D366';
@@ -34,21 +37,13 @@ type Props = {
 };
 
 export function ServiceMuralDetailModal({ visible, card, photoUrl, onClose }: Props) {
+  const [downloading, setDownloading] = useState(false);
   const vcard = useMemo(() => {
     if (!card) {
       return '';
     }
 
-    return buildServiceVCard({
-      fullName: card.fullName,
-      title: card.tituloServico,
-      organization: SERVICE_CATEGORIA_LABEL[card.categoria],
-      note: card.descricaoServico,
-      phone: card.telefoneContato,
-      email: card.email,
-      website: card.paginaWeb,
-      instagram: card.instagram,
-    });
+    return buildServiceVCard(serviceVCardInputFromCard(card));
   }, [card]);
 
   if (!card) {
@@ -169,6 +164,61 @@ export function ServiceMuralDetailModal({ visible, card, photoUrl, onClose }: Pr
                 Aponte a câmera do celular para salvar este contato na agenda, com a atividade nas
                 informações do trabalho.
               </Text>
+            </View>
+
+            <View style={styles.actions}>
+              <Pressable
+                onPress={() => openWhatsAppLikeBirthdays(card.telefoneContato)}
+                disabled={!phone}
+                style={({ pressed }) => [
+                  styles.whatsapp,
+                  !phone && styles.actionDisabled,
+                  pressed && phone && styles.pressed,
+                ]}
+                accessibilityRole="button"
+                accessibilityLabel={`WhatsApp ${phone || card.fullName}`}
+              >
+                <FontAwesome name="whatsapp" size={16} color="#FFFFFF" />
+                <Text style={styles.whatsappText}>WhatsApp</Text>
+              </Pressable>
+              <Pressable
+                onPress={() => {
+                  if (downloading) {
+                    return;
+                  }
+
+                  setDownloading(true);
+                  void downloadServiceVCard(serviceVCardInputFromCard(card))
+                    .then(() => {
+                      Toast.show({
+                        type: 'success',
+                        text1: 'Contato',
+                        text2: 'vCard gerado. Salve na agenda ou compartilhe.',
+                      });
+                    })
+                    .catch((error) => {
+                      Toast.show({
+                        type: 'error',
+                        text1: 'Contato',
+                        text2:
+                          error instanceof Error
+                            ? error.message
+                            : 'Não foi possível baixar o vCard.',
+                      });
+                    })
+                    .finally(() => setDownloading(false));
+                }}
+                style={({ pressed }) => [styles.vcard, pressed && styles.pressed]}
+                accessibilityRole="button"
+                accessibilityLabel="Baixar vCard"
+              >
+                {downloading ? (
+                  <ActivityIndicator size="small" color={MINIMAL_UI.blueDark} />
+                ) : (
+                  <FontAwesome name="download" size={14} color={MINIMAL_UI.blueDark} />
+                )}
+                <Text style={styles.vcardText}>Salvar contato</Text>
+              </Pressable>
             </View>
           </ScrollView>
 
@@ -311,6 +361,45 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 16,
     paddingHorizontal: 12,
+  },
+  actions: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  whatsapp: {
+    flex: 1,
+    minHeight: 44,
+    borderRadius: 12,
+    backgroundColor: WHATSAPP_GREEN,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  whatsappText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '800',
+  },
+  vcard: {
+    flex: 1,
+    minHeight: 44,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: MINIMAL_UI.border,
+    backgroundColor: MINIMAL_UI.background,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  vcardText: {
+    color: MINIMAL_UI.blueDark,
+    fontSize: 13,
+    fontWeight: '800',
+  },
+  actionDisabled: {
+    opacity: 0.45,
   },
   close: {
     minHeight: 48,
