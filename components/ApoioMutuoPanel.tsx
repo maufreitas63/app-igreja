@@ -14,7 +14,8 @@ import {
   type ServiceCategoria,
 } from '@/lib/profileServicesApi';
 import { resolveSelfiePreviewUrl } from '@/lib/selfie';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useFocusEffect } from 'expo-router';
+import React, { useCallback, useMemo, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 type Props = {
@@ -69,13 +70,15 @@ export function ApoioMutuoPanel({ panelHeight, isActive = true }: Props) {
     }
   }, []);
 
-  useEffect(() => {
-    if (!isActive) {
-      return;
-    }
+  useFocusEffect(
+    useCallback(() => {
+      if (!isActive) {
+        return;
+      }
 
-    void load();
-  }, [isActive, load]);
+      void load();
+    }, [isActive, load])
+  );
 
   const visibleServices = useMemo(
     () =>
