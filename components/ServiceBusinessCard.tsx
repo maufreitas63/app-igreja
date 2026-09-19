@@ -31,7 +31,7 @@ export function ServiceBusinessCard({ card, photoUrl, onOpenDetail }: Props) {
       onPress={onOpenDetail}
       style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
       accessibilityRole="button"
-      accessibilityLabel={`Cartão de ${card.fullName}, ${card.tituloServico}`}
+      accessibilityLabel={`${card.tituloServico}, ${SERVICE_CATEGORIA_LABEL[card.categoria]}`}
     >
       <View style={styles.header}>
         {photoUrl ? (
@@ -42,15 +42,14 @@ export function ServiceBusinessCard({ card, photoUrl, onOpenDetail }: Props) {
           </View>
         )}
         <View style={styles.identity}>
-          <Text style={styles.name} numberOfLines={1}>
-            {card.fullName}
-          </Text>
           <Text style={styles.title} numberOfLines={2}>
             {card.tituloServico}
           </Text>
-          <Text style={styles.category} numberOfLines={1}>
-            {SERVICE_CATEGORIA_LABEL[card.categoria]}
-          </Text>
+          {SERVICE_CATEGORIA_LABEL[card.categoria] ? (
+            <View style={styles.tag}>
+              <Text style={styles.tagText}>{SERVICE_CATEGORIA_LABEL[card.categoria]}</Text>
+            </View>
+          ) : null}
         </View>
       </View>
 
@@ -144,24 +143,24 @@ const styles = StyleSheet.create({
   identity: {
     flex: 1,
     minWidth: 0,
-    gap: 2,
+    gap: 6,
   },
-  name: {
+  title: {
     color: MINIMAL_UI.blueDark,
     fontSize: 15,
     fontWeight: '800',
   },
-  title: {
-    color: MINIMAL_UI.blue,
-    fontSize: 14,
-    fontWeight: '700',
+  tag: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 999,
+    backgroundColor: '#DBEAFE',
   },
-  category: {
-    color: MINIMAL_UI.textMuted,
+  tagText: {
+    color: MINIMAL_UI.blueDark,
     fontSize: 11,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-    letterSpacing: 0.3,
+    fontWeight: '800',
   },
   description: {
     color: '#334155',

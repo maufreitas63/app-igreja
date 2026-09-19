@@ -9,6 +9,8 @@ import {
 } from '@/lib/profileServicesApi';
 import { buildServiceVCard } from '@/lib/serviceVCard';
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
+import { openWhatsAppLikeBirthdays } from '@/lib/whatsapp';
+import { FontAwesome } from '@expo/vector-icons';
 import * as Linking from 'expo-linking';
 import { Image } from 'expo-image';
 import React, { useMemo } from 'react';
@@ -21,6 +23,8 @@ import {
   View,
 } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
+
+const WHATSAPP_GREEN = '#25D366';
 
 type Props = {
   visible: boolean;
@@ -52,7 +56,8 @@ export function ServiceMuralDetailModal({ visible, card, photoUrl, onClose }: Pr
   }
 
   const initials = serviceCardInitials(card.fullName);
-  const phoneLabel = formatServicePhoneDisplay(card.telefoneContato) || 'Não informado';
+  const phone = formatServicePhoneDisplay(card.telefoneContato);
+  const email = card.email?.trim() ?? '';
   const website = formatServiceWebsiteDisplay(card.paginaWeb);
   const instagram = formatServiceInstagramHandle(card.instagram);
   const instagramUrl = instagramProfileUrl(card.instagram);
@@ -89,9 +94,33 @@ export function ServiceMuralDetailModal({ visible, card, photoUrl, onClose }: Pr
             <View style={styles.meta}>
               <Text style={styles.sectionTitle}>Informações de contato</Text>
               <Text style={styles.metaLabel}>Telefone</Text>
-              <Text style={styles.metaValue}>{phoneLabel}</Text>
+              {phone ? (
+                <Pressable
+                  onPress={() => openWhatsAppLikeBirthdays(card.telefoneContato)}
+                  style={styles.contactRow}
+                  accessibilityRole="link"
+                  accessibilityLabel={`WhatsApp ${phone}`}
+                >
+                  <FontAwesome name="whatsapp" size={16} color={WHATSAPP_GREEN} />
+                  <Text style={styles.linkValue}>{phone}</Text>
+                </Pressable>
+              ) : (
+                <Text style={styles.metaValue}>Não informado</Text>
+              )}
               <Text style={styles.metaLabel}>E-mail</Text>
-              <Text style={styles.metaValue}>{card.email?.trim() || 'Não informado'}</Text>
+              {email ? (
+                <Pressable
+                  onPress={() => void Linking.openURL(`mailto:${email}`)}
+                  style={styles.contactRow}
+                  accessibilityRole="link"
+                  accessibilityLabel={`Enviar e-mail para ${email}`}
+                >
+                  <FontAwesome name="envelope" size={14} color={MINIMAL_UI.blue} />
+                  <Text style={styles.linkValue}>{email}</Text>
+                </Pressable>
+              ) : (
+                <Text style={styles.metaValue}>Não informado</Text>
+              )}
               <Text style={styles.metaLabel}>Página WEB</Text>
               {website ? (
                 <Pressable
@@ -247,7 +276,14 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '700',
   },
+  contactRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
   linkValue: {
+    flex: 1,
+    minWidth: 0,
     color: MINIMAL_UI.blue,
     fontSize: 14,
     fontWeight: '700',

@@ -1,6 +1,7 @@
 import { KnowledgeSectionTitle } from '@/components/knowledge/KnowledgeSectionTitle';
 import { ServiceBusinessCard } from '@/components/ServiceBusinessCard';
 import { ServiceMuralDetailModal } from '@/components/ServiceMuralDetailModal';
+import { DropdownSelect } from '@/components/ui/DropdownSelect';
 import { KNOWLEDGE_ROUTE } from '@/lib/knowledge/routeKeys';
 import { loadEffectiveSessionProfile } from '@/lib/loadSessionProfile';
 import { computeMaintenanceContentHeight, maintenancePanelStyles } from '@/lib/maintenanceCardStyles';
@@ -14,7 +15,7 @@ import {
 } from '@/lib/profileServicesApi';
 import { resolveSelfiePreviewUrl } from '@/lib/selfie';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 type Props = {
   panelHeight: number;
@@ -87,6 +88,16 @@ export function ApoioMutuoPanel({ panelHeight, isActive = true }: Props) {
     const present = new Set(services.map((card) => card.categoria));
     return SERVICE_CATEGORIES.filter((item) => present.has(item.value));
   }, [services]);
+  const categoryOptions = useMemo(
+    () => [
+      { value: 'todas', label: 'Todas as categorias' },
+      ...usedCategories.map((item) => ({
+        value: item.value,
+        label: SERVICE_CATEGORIA_LABEL[item.value],
+      })),
+    ],
+    [usedCategories]
+  );
 
   return (
     <View style={[styles.panel, { maxHeight: contentHeight }]}>
@@ -109,25 +120,18 @@ export function ApoioMutuoPanel({ panelHeight, isActive = true }: Props) {
       ) : (
         <ScrollView style={styles.list} contentContainerStyle={styles.listContent}>
           {usedCategories.length > 1 ? (
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.chips}
-            >
-              <CategoryChip
-                label="Todas"
-                selected={categoryFilter === 'todas'}
-                onPress={() => setCategoryFilter('todas')}
-              />
-              {usedCategories.map((item) => (
-                <CategoryChip
-                  key={item.value}
-                  label={SERVICE_CATEGORIA_LABEL[item.value]}
-                  selected={categoryFilter === item.value}
-                  onPress={() => setCategoryFilter(item.value)}
-                />
-              ))}
-            </ScrollView>
+            <DropdownSelect
+              options={categoryOptions}
+              selectedValue={categoryFilter}
+              onValueChange={(value) =>
+                setCategoryFilter((value === 'todas' || !value ? 'todas' : value) as ServiceCategoria | 'todas')
+              }
+              modalTitle="Categoria das atividades"
+              placeholder="Categoria"
+              searchPlaceholder="Buscar categoria"
+              searchable
+              variant="minimal"
+            />
           ) : null}
           {visibleServices.length === 0 ? (
             <Text style={styles.empty}>Nenhum serviço nesta categoria.</Text>
@@ -151,27 +155,6 @@ export function ApoioMutuoPanel({ panelHeight, isActive = true }: Props) {
         onClose={() => setDetail(null)}
       />
     </View>
-  );
-}
-
-function CategoryChip({
-  label,
-  selected,
-  onPress,
-}: {
-  label: string;
-  selected: boolean;
-  onPress: () => void;
-}) {
-  return (
-    <TouchableOpacity
-      onPress={onPress}
-      style={[styles.chip, selected && styles.chipSelected]}
-      accessibilityRole="button"
-      accessibilityState={{ selected }}
-    >
-      <Text style={[styles.chipText, selected && styles.chipTextSelected]}>{label}</Text>
-    </TouchableOpacity>
   );
 }
 
@@ -207,29 +190,5 @@ const styles = StyleSheet.create({
   listContent: {
     gap: 10,
     paddingBottom: 12,
-  },
-  chips: {
-    gap: 8,
-    paddingBottom: 2,
-  },
-  chip: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: MINIMAL_UI.border,
-    backgroundColor: MINIMAL_UI.background,
-  },
-  chipSelected: {
-    backgroundColor: MINIMAL_UI.blueDark,
-    borderColor: MINIMAL_UI.blueDark,
-  },
-  chipText: {
-    color: MINIMAL_UI.blueDark,
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  chipTextSelected: {
-    color: MINIMAL_UI.onDark,
   },
 });
