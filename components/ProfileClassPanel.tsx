@@ -1,5 +1,4 @@
 import { ProfileClass } from '@/components/ProfileClass';
-import { ProfileServiceForm } from '@/components/ProfileServiceForm';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useReturnToCallerOnLeave } from '@/hooks/useReturnToCallerOnLeave';
 import { resolveReturnDashboardCardParam, resolveReturnRouteParam, withReturnDashboardCard } from '@/lib/dashboardReturnNavigation';
@@ -1646,7 +1645,6 @@ export function ProfileClassPanel({
       accessPinSectionExpandedForScroll={accessPinSectionExpanded}
       onLeaveScreen={handleLeaveScreen}
       showOnboardingHint={Boolean(isOnboardingFlow && isProfileIncompleteForOnboarding(profile))}
-      extraSections={isOnboardingFlow ? null : <ProfileServiceForm />}
     />
   );
 }

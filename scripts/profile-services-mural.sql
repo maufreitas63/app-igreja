@@ -225,8 +225,8 @@ begin
   return jsonb_build_object(
     'success', true,
     'message', case
-      when v_ativo then 'Serviço publicado no mural desta igreja.'
-      else 'Serviço salvo. Ele não aparece no mural enquanto estiver inativo.'
+      when v_ativo then 'Serviço publicado no Apoio Mútuo desta igreja.'
+      else 'Serviço salvo. Ele não aparece no Apoio Mútuo enquanto estiver inativo.'
     end,
     'id', v_id
   );

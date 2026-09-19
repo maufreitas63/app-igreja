@@ -27,6 +27,7 @@ export const ACCESS_SCREEN = {
   discipleshipTrailLegacy: '/trilha',
   redesSociais: '/redes-sociais',
   generosityMural: '/mural-generosidade',
+  apoioMutuo: '/apoio-mutuo',
   primicias: '/primicias',
   scalesAllowSwap: 'scales.allow_swap',
 } as const;

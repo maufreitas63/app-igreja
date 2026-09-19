@@ -22,6 +22,7 @@ const loadDashboardLinkedScreenKeys = () =>
       ...Object.values(DASHBOARD_CARD_LINKED_SCREEN),
       ...GROUPED_MANAGE_LINKED_SCREENS,
       ACCESS_SCREEN.generosityMural,
+      ACCESS_SCREEN.apoioMutuo,
     ]),
   ];
 

@@ -24,6 +24,7 @@ export const KNOWLEDGE_ROUTE = {
   pequenoGrupo: '/pequeno-grupo',
   muralOportunidades: '/mural-oportunidades',
   muralGenerosidade: '/mural-generosidade',
+  apoioMutuo: '/apoio-mutuo',
   alianca: '/alianca-conecta-reino',
   aliancaIndicados: '/alianca-indicados',
   igrejas: '/igrejas',

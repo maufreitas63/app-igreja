@@ -3,6 +3,7 @@ import { MeusLivrosRetiradosPanel } from '@/components/MeusLivrosRetiradosPanel'
 import { MembersClassPanel } from '@/components/MembersClassPanel';
 import { PerfilClass, type PerfilClassAction } from '@/components/PerfilClass';
 import { ProfileClassPanel } from '@/components/ProfileClassPanel';
+import { ProfileServiceForm } from '@/components/ProfileServiceForm';
 import { DiscipleshipTrailPanel } from '@/components/DiscipleshipTrailPanel';
 import { CloseFooterBar } from '@/components/minimal/CloseFooterBar';
 import { ACCESS_SCREEN, sessionHasAccess } from '@/lib/accessControl';
@@ -42,6 +43,7 @@ export function PerfilClassPanel() {
   const [discipleshipTrailVisible, setDiscipleshipTrailVisible] = useState(false);
   const [digitalIdVisible, setDigitalIdVisible] = useState(false);
   const [myBooksVisible, setMyBooksVisible] = useState(false);
+  const [serviceOfferVisible, setServiceOfferVisible] = useState(false);
   const loadGenerationRef = useRef(0);
 
   const reloadAccess = useCallback(async (options?: { forceRefresh?: boolean }) => {
@@ -114,6 +116,10 @@ export function PerfilClassPanel() {
     setMyBooksVisible(true);
   }, []);
 
+  const openServiceOffer = useCallback(() => {
+    setServiceOfferVisible(true);
+  }, []);
+
   const openManageProfile = useCallback(() => {
     setProfileClassVisible(true);
   }, []);
@@ -172,6 +178,13 @@ export function PerfilClassPanel() {
       });
     }
 
+    items.push({
+      key: 'offer-services',
+      label: 'Ofereço meus Serviços',
+      icon: 'miscellaneous-services',
+      onPress: openServiceOffer,
+    });
+
     if (manageMembers) {
       items.push({
         key: 'manage-members',
@@ -219,12 +232,32 @@ export function PerfilClassPanel() {
     openManageMembers,
     openManageProfile,
     openMyBooks,
+    openServiceOffer,
   ]);
 
   if (myBooksVisible) {
     return (
       <View style={styles.embeddedPanel}>
         <MeusLivrosRetiradosPanel onBack={() => setMyBooksVisible(false)} />
+      </View>
+    );
+  }
+
+  if (serviceOfferVisible) {
+    return (
+      <View style={styles.embeddedPanel}>
+        <View style={styles.embeddedHeader}>
+          <Pressable
+            onPress={() => setServiceOfferVisible(false)}
+            style={styles.backButton}
+            accessibilityRole="button"
+            accessibilityLabel="Voltar ao perfil"
+          >
+            <FontAwesome name="chevron-left" size={14} color={MINIMAL_UI.blueDark} />
+            <Text style={styles.backButtonText}>Perfil</Text>
+          </Pressable>
+        </View>
+        <ProfileServiceForm />
       </View>
     );
   }

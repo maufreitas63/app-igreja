@@ -240,6 +240,7 @@ export function useAppDrawerMenu() {
           ACCESS_SCREEN.expenseReport,
           ACCESS_SCREEN.mapGeolocation,
           ACCESS_SCREEN.generosityMural,
+          ACCESS_SCREEN.apoioMutuo,
           ACCESS_SCREEN.livrosDoados,
         ].map(async (resourceKey) => {
           if (dashboardScreenAccess[resourceKey] === true) {

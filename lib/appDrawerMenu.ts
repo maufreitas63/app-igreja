@@ -33,6 +33,7 @@ export type AppDrawerModuleKey =
   | 'menu_small_group'
   | 'menu_opportunity_mural'
   | 'menu_generosity_mural'
+  | 'menu_apoio_mutuo'
   | 'menu_escalas'
   | 'menu_aniversariantes'
   | 'menu_membros'
@@ -131,6 +132,7 @@ export const APP_DRAWER_MENU_ITEMS: AppDrawerMenuItem[] = [
   { letter: 'e', label: 'Escalas', moduleKey: 'menu_escalas' },
   { letter: 'f', label: 'Mural de Oportunidades', moduleKey: 'menu_opportunity_mural' },
   { letter: 'f2', label: 'Mural de Generosidade', moduleKey: 'menu_generosity_mural' },
+  { letter: 'f3', label: 'Apoio Mútuo', moduleKey: 'menu_apoio_mutuo' },
   { letter: 'g', label: 'Sugestões', moduleKey: 'suggestions_improvements' },
   { letter: 'g2', label: 'Como faço…?', moduleKey: 'menu_como_faco' },
   { letter: 'h', label: 'Redes Sociais', moduleKey: 'menu_redes_sociais' },
@@ -592,6 +594,17 @@ export async function navigateDrawerMenuItem(
       router,
       '/mural-generosidade',
       ACCESS_SCREEN.generosityMural,
+      withFailClosedReturn(),
+      DRAWER_NAVIGATE
+    );
+    return;
+  }
+
+  if (moduleKey === 'menu_apoio_mutuo') {
+    await navigateWithScreenAccess(
+      router,
+      '/apoio-mutuo',
+      ACCESS_SCREEN.apoioMutuo,
       withFailClosedReturn(),
       DRAWER_NAVIGATE
     );

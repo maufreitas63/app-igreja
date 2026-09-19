@@ -4,7 +4,7 @@ import { isSupabaseRpcMissingError } from '@/lib/supabaseRpc';
 import { formatBrazilPhoneInput } from '@/lib/inputMasks';
 
 export const PROFILE_SERVICES_SQL_HINT =
-  'O cartão de serviço ainda não está disponível neste ambiente.';
+  'O Apoio Mútuo ainda não está disponível neste ambiente.';
 
 export const SERVICE_CATEGORIES = [
   { value: 'beleza', label: 'Beleza e estética' },
@@ -166,12 +166,28 @@ export async function saveMyProfileService(input: {
   };
 }
 
+export async function deleteMyProfileService() {
+  const { data, error } = await supabase.rpc('delete_my_profile_service');
+
+  if (error) {
+    throwIfMissing(error, 'delete_my_profile_service');
+    throw new Error(error.message || 'Não foi possível excluir a oferta.');
+  }
+
+  const payload = asRecord(data);
+
+  return {
+    success: payload.success === true,
+    message: readString(payload.message) || (payload.success === true ? 'Oferta excluída.' : 'Falha ao excluir.'),
+  };
+}
+
 export async function fetchProfileServicesMural(): Promise<ProfileServiceCard[]> {
   const { data, error } = await supabase.rpc('list_profile_services_mural');
 
   if (error) {
     throwIfMissing(error, 'list_profile_services_mural');
-    throw new Error(error.message || 'Não foi possível carregar os serviços do mural.');
+    throw new Error(error.message || 'Não foi possível carregar os serviços do Apoio Mútuo.');
   }
 
   const rows = Array.isArray(data) ? data : [];
