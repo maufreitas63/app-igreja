@@ -70,7 +70,9 @@ begin
 end;
 $$;
 
-create or replace function public.list_profile_services_mural()
+drop function if exists public.list_profile_services_mural();
+
+create function public.list_profile_services_mural()
 returns table (
   id uuid,
   profile_id uuid,
@@ -80,6 +82,8 @@ returns table (
   descricao_servico text,
   categoria text,
   telefone_contato text,
+  pagina_web text,
+  instagram text,
   selfie_url text
 )
 language plpgsql
@@ -109,6 +113,8 @@ begin
       nullif(public.normalize_profile_service_phone(s.telefone_contato), ''),
       public.normalize_profile_service_phone(p.phone)
     ) as telefone_contato,
+    coalesce(nullif(trim(s.pagina_web), ''), '') as pagina_web,
+    coalesce(nullif(trim(s.instagram), ''), '') as instagram,
     p.selfie_url
     from public.profile_services s
     join public.profiles p on p.id = s.profile_id
@@ -149,6 +155,8 @@ begin
       nullif(public.normalize_profile_service_phone(s.telefone_contato), ''),
       public.normalize_profile_service_phone(p.phone)
     ) as telefone_contato,
+    coalesce(nullif(trim(s.pagina_web), ''), '') as pagina_web,
+    coalesce(nullif(trim(s.instagram), ''), '') as instagram,
     p.selfie_url
     into v_rec
     from public.profile_services s
@@ -173,6 +181,8 @@ begin
       'descricao_servico', v_rec.descricao_servico,
       'categoria', v_rec.categoria,
       'telefone_contato', v_rec.telefone_contato,
+      'pagina_web', v_rec.pagina_web,
+      'instagram', v_rec.instagram,
       'selfie_url', v_rec.selfie_url
     )
   );
@@ -217,12 +227,59 @@ on conflict (role_id, resource_id) where (role_id is not null) do update
       updated_at = now();
 
 -- Mensagens de publicação passam a citar o Apoio Mútuo (função já existente).
+create or replace function public.normalize_profile_service_url(p_url text)
+returns text
+language plpgsql
+immutable
+as $$
+declare
+  v text := trim(coalesce(p_url, ''));
+begin
+  if v = '' then
+    return '';
+  end if;
+  if v ~* '^(javascript|data|vbscript):' then
+    return '';
+  end if;
+  if v ~* '^https?://' then
+    return left(v, 300);
+  end if;
+  if v ~* '^//' then
+    return left('https:' || v, 300);
+  end if;
+  return left('https://' || ltrim(v, '/'), 300);
+end;
+$$;
+
+create or replace function public.normalize_profile_service_instagram(p_value text)
+returns text
+language plpgsql
+immutable
+as $$
+declare
+  v text := trim(coalesce(p_value, ''));
+begin
+  if v = '' then
+    return '';
+  end if;
+  v := regexp_replace(v, '^https?://(www\.)?instagram\.com/', '', 'i');
+  v := regexp_replace(v, '^@+', '');
+  v := split_part(split_part(v, '/', 1), '?', 1);
+  v := regexp_replace(v, '[^A-Za-z0-9._]', '', 'g');
+  return left(v, 30);
+end;
+$$;
+
+drop function if exists public.upsert_my_profile_service(text, text, text, boolean, text);
+
 create or replace function public.upsert_my_profile_service(
   p_titulo_servico text,
   p_descricao_servico text,
   p_categoria text,
   p_status_ativo boolean,
-  p_telefone_contato text
+  p_telefone_contato text,
+  p_pagina_web text default '',
+  p_instagram text default ''
 )
 returns jsonb
 language plpgsql
@@ -238,6 +295,8 @@ declare
   v_categoria text := lower(trim(coalesce(p_categoria, 'outros')));
   v_ativo boolean := coalesce(p_status_ativo, false);
   v_phone text := public.normalize_profile_service_phone(p_telefone_contato);
+  v_web text := public.normalize_profile_service_url(p_pagina_web);
+  v_instagram text := public.normalize_profile_service_instagram(p_instagram);
   v_id uuid;
 begin
   if v_me is null then
@@ -286,6 +345,8 @@ begin
     categoria,
     status_ativo,
     telefone_contato,
+    pagina_web,
+    instagram,
     updated_at
   )
   values (
@@ -296,6 +357,8 @@ begin
     v_categoria,
     v_ativo,
     coalesce(v_phone, ''),
+    v_web,
+    v_instagram,
     now()
   )
   on conflict (tenant_id, profile_id) do update
@@ -304,6 +367,8 @@ begin
         categoria = excluded.categoria,
         status_ativo = excluded.status_ativo,
         telefone_contato = excluded.telefone_contato,
+        pagina_web = excluded.pagina_web,
+        instagram = excluded.instagram,
         updated_at = now()
   returning id into v_id;
 
@@ -319,7 +384,9 @@ end;
 $$;
 
 grant execute on function public.session_can_view_apoio_mutuo() to anon, authenticated, service_role;
-grant execute on function public.upsert_my_profile_service(text, text, text, boolean, text) to anon, authenticated, service_role;
+grant execute on function public.normalize_profile_service_url(text) to anon, authenticated, service_role;
+grant execute on function public.normalize_profile_service_instagram(text) to anon, authenticated, service_role;
+grant execute on function public.upsert_my_profile_service(text, text, text, boolean, text, text, text) to anon, authenticated, service_role;
 grant execute on function public.delete_my_profile_service() to anon, authenticated, service_role;
 grant execute on function public.list_profile_services_mural() to anon, authenticated, service_role;
 grant execute on function public.get_profile_service_mural(uuid) to anon, authenticated, service_role;

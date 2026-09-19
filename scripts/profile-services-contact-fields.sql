@@ -1,93 +1,56 @@
--- Cartão de serviço no Mural de Oportunidades (tenant = igrejas).
--- Cadastro e listagem só da instância da sessão. Nenhum prestador de outra igreja.
--- Aplica: npx supabase db query --linked -f scripts/profile-services-mural.sql
-
-create table if not exists public.profile_services (
-  id uuid primary key default gen_random_uuid(),
-  tenant_id uuid not null references public.igrejas (id) on delete cascade,
-  profile_id uuid not null references public.profiles (id) on delete cascade,
-  titulo_servico text not null default '',
-  descricao_servico text not null default '',
-  categoria text not null default 'outros'
-    check (categoria in (
-      'beleza',
-      'saude',
-      'educacao',
-      'manutencao',
-      'alimentacao',
-      'tecnologia',
-      'juridico',
-      'artes',
-      'transporte',
-      'outros'
-    )),
-  status_ativo boolean not null default false,
-  telefone_contato text not null default '',
-  pagina_web text not null default '',
-  instagram text not null default '',
-  created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now(),
-  constraint profile_services_tenant_profile_unique unique (tenant_id, profile_id),
-  constraint profile_services_titulo_when_active_check
-    check (status_ativo = false or length(trim(titulo_servico)) >= 2)
-);
-
-comment on table public.profile_services is
-  'Serviço oferecido pelo membro no mural da própria igreja. Isolado por tenant_id.';
-comment on column public.profile_services.titulo_servico is
-  'Título do serviço no cartão digital.';
-comment on column public.profile_services.descricao_servico is
-  'Descrição curta do serviço.';
-comment on column public.profile_services.categoria is
-  'Categoria do serviço no mural local.';
-comment on column public.profile_services.status_ativo is
-  'Se verdadeiro, o cartão entra no mural da instância.';
-comment on column public.profile_services.telefone_contato is
-  'Telefone/WhatsApp de contato do prestador.';
-comment on column public.profile_services.pagina_web is
-  'URL da página web do prestador, incluída no cartão e no vCard.';
-comment on column public.profile_services.instagram is
-  'Usuário do Instagram (sem @), incluído no cartão e no vCard.';
+-- Página WEB e Instagram no cartão de serviço / vCard.
+-- Aplica: npx supabase db query --linked -f scripts/profile-services-contact-fields.sql
 
 alter table public.profile_services
   add column if not exists pagina_web text not null default '',
   add column if not exists instagram text not null default '';
 
-create index if not exists profile_services_tenant_active_idx
-  on public.profile_services (tenant_id, categoria, created_at desc)
-  where status_ativo = true;
+comment on column public.profile_services.pagina_web is
+  'URL da página web do prestador, incluída no cartão e no vCard.';
+comment on column public.profile_services.instagram is
+  'Usuário do Instagram (sem @), incluído no cartão e no vCard.';
 
-alter table public.profile_services enable row level security;
-
-drop policy if exists profile_services_deny_direct on public.profile_services;
-create policy profile_services_deny_direct
-  on public.profile_services for all using (false) with check (false);
-
-create or replace function public.profile_service_categoria_ok(p_categoria text)
-returns boolean
-language sql
+create or replace function public.normalize_profile_service_url(p_url text)
+returns text
+language plpgsql
 immutable
 as $$
-  select lower(trim(coalesce(p_categoria, ''))) in (
-    'beleza',
-    'saude',
-    'educacao',
-    'manutencao',
-    'alimentacao',
-    'tecnologia',
-    'juridico',
-    'artes',
-    'transporte',
-    'outros'
-  );
+declare
+  v text := trim(coalesce(p_url, ''));
+begin
+  if v = '' then
+    return '';
+  end if;
+  if v ~* '^(javascript|data|vbscript):' then
+    return '';
+  end if;
+  if v ~* '^https?://' then
+    return left(v, 300);
+  end if;
+  if v ~* '^//' then
+    return left('https:' || v, 300);
+  end if;
+  return left('https://' || ltrim(v, '/'), 300);
+end;
 $$;
 
-create or replace function public.normalize_profile_service_phone(p_phone text)
+create or replace function public.normalize_profile_service_instagram(p_value text)
 returns text
-language sql
+language plpgsql
 immutable
 as $$
-  select left(regexp_replace(coalesce(p_phone, ''), '\D', '', 'g'), 15);
+declare
+  v text := trim(coalesce(p_value, ''));
+begin
+  if v = '' then
+    return '';
+  end if;
+  v := regexp_replace(v, '^https?://(www\.)?instagram\.com/', '', 'i');
+  v := regexp_replace(v, '^@+', '');
+  v := split_part(split_part(v, '/', 1), '?', 1);
+  v := regexp_replace(v, '[^A-Za-z0-9._]', '', 'g');
+  return left(v, 30);
+end;
 $$;
 
 create or replace function public.get_my_profile_service()
@@ -144,12 +107,16 @@ begin
 end;
 $$;
 
+drop function if exists public.upsert_my_profile_service(text, text, text, boolean, text);
+
 create or replace function public.upsert_my_profile_service(
   p_titulo_servico text,
   p_descricao_servico text,
   p_categoria text,
   p_status_ativo boolean,
-  p_telefone_contato text
+  p_telefone_contato text,
+  p_pagina_web text default '',
+  p_instagram text default ''
 )
 returns jsonb
 language plpgsql
@@ -165,6 +132,8 @@ declare
   v_categoria text := lower(trim(coalesce(p_categoria, 'outros')));
   v_ativo boolean := coalesce(p_status_ativo, false);
   v_phone text := public.normalize_profile_service_phone(p_telefone_contato);
+  v_web text := public.normalize_profile_service_url(p_pagina_web);
+  v_instagram text := public.normalize_profile_service_instagram(p_instagram);
   v_id uuid;
 begin
   if v_me is null then
@@ -194,14 +163,14 @@ begin
   if v_ativo and length(v_titulo) < 2 then
     return jsonb_build_object(
       'success', false,
-      'message', 'Informe o título do serviço para publicar no mural.'
+      'message', 'Informe o título do serviço para publicar no Apoio Mútuo.'
     );
   end if;
 
   if v_ativo and length(v_phone) < 10 then
     return jsonb_build_object(
       'success', false,
-      'message', 'Informe o WhatsApp de contato com DDD para publicar no mural.'
+      'message', 'Informe o WhatsApp de contato com DDD para publicar no Apoio Mútuo.'
     );
   end if;
 
@@ -213,6 +182,8 @@ begin
     categoria,
     status_ativo,
     telefone_contato,
+    pagina_web,
+    instagram,
     updated_at
   )
   values (
@@ -223,6 +194,8 @@ begin
     v_categoria,
     v_ativo,
     coalesce(v_phone, ''),
+    v_web,
+    v_instagram,
     now()
   )
   on conflict (tenant_id, profile_id) do update
@@ -231,6 +204,8 @@ begin
         categoria = excluded.categoria,
         status_ativo = excluded.status_ativo,
         telefone_contato = excluded.telefone_contato,
+        pagina_web = excluded.pagina_web,
+        instagram = excluded.instagram,
         updated_at = now()
   returning id into v_id;
 
@@ -245,7 +220,9 @@ begin
 end;
 $$;
 
-create or replace function public.list_profile_services_mural()
+drop function if exists public.list_profile_services_mural();
+
+create function public.list_profile_services_mural()
 returns table (
   id uuid,
   profile_id uuid,
@@ -255,6 +232,8 @@ returns table (
   descricao_servico text,
   categoria text,
   telefone_contato text,
+  pagina_web text,
+  instagram text,
   selfie_url text
 )
 language plpgsql
@@ -267,7 +246,7 @@ declare
   v_tenant uuid := public.require_session_tenant_id();
   v_me uuid := public.current_session_profile_id();
 begin
-  if v_me is null or not public.session_can_view_volunteer_mural() then
+  if v_me is null or not public.session_can_view_apoio_mutuo() then
     return;
   end if;
 
@@ -284,6 +263,8 @@ begin
       nullif(public.normalize_profile_service_phone(s.telefone_contato), ''),
       public.normalize_profile_service_phone(p.phone)
     ) as telefone_contato,
+    coalesce(nullif(trim(s.pagina_web), ''), '') as pagina_web,
+    coalesce(nullif(trim(s.instagram), ''), '') as instagram,
     p.selfie_url
     from public.profile_services s
     join public.profiles p on p.id = s.profile_id
@@ -291,7 +272,6 @@ begin
      and p.tenant_id = v_tenant
      and s.status_ativo = true
      and length(trim(s.titulo_servico)) >= 2
-     and coalesce(p.is_active, true)
    order by s.titulo_servico asc, p.full_name asc;
 end;
 $$;
@@ -309,8 +289,8 @@ declare
   v_me uuid := public.current_session_profile_id();
   v_rec record;
 begin
-  if v_me is null or not public.session_can_view_volunteer_mural() then
-    return jsonb_build_object('success', false, 'message', 'Sem permissão para o mural.');
+  if v_me is null or not public.session_can_view_apoio_mutuo() then
+    return jsonb_build_object('success', false, 'message', 'Sem permissão para o Apoio Mútuo.');
   end if;
 
   select
@@ -325,6 +305,8 @@ begin
       nullif(public.normalize_profile_service_phone(s.telefone_contato), ''),
       public.normalize_profile_service_phone(p.phone)
     ) as telefone_contato,
+    coalesce(nullif(trim(s.pagina_web), ''), '') as pagina_web,
+    coalesce(nullif(trim(s.instagram), ''), '') as instagram,
     p.selfie_url
     into v_rec
     from public.profile_services s
@@ -349,16 +331,18 @@ begin
       'descricao_servico', v_rec.descricao_servico,
       'categoria', v_rec.categoria,
       'telefone_contato', v_rec.telefone_contato,
+      'pagina_web', v_rec.pagina_web,
+      'instagram', v_rec.instagram,
       'selfie_url', v_rec.selfie_url
     )
   );
 end;
 $$;
 
-grant execute on function public.profile_service_categoria_ok(text) to anon, authenticated, service_role;
-grant execute on function public.normalize_profile_service_phone(text) to anon, authenticated, service_role;
+grant execute on function public.normalize_profile_service_url(text) to anon, authenticated, service_role;
+grant execute on function public.normalize_profile_service_instagram(text) to anon, authenticated, service_role;
 grant execute on function public.get_my_profile_service() to anon, authenticated, service_role;
-grant execute on function public.upsert_my_profile_service(text, text, text, boolean, text) to anon, authenticated, service_role;
+grant execute on function public.upsert_my_profile_service(text, text, text, boolean, text, text, text) to anon, authenticated, service_role;
 grant execute on function public.list_profile_services_mural() to anon, authenticated, service_role;
 grant execute on function public.get_profile_service_mural(uuid) to anon, authenticated, service_role;
 

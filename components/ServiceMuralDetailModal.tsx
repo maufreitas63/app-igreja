@@ -1,8 +1,15 @@
-import { formatServicePhoneDisplay, SERVICE_CATEGORIA_LABEL, serviceCardInitials, type ProfileServiceCard } from '@/lib/profileServicesApi';
+import {
+  formatServiceInstagramHandle,
+  formatServicePhoneDisplay,
+  formatServiceWebsiteDisplay,
+  instagramProfileUrl,
+  SERVICE_CATEGORIA_LABEL,
+  serviceCardInitials,
+  type ProfileServiceCard,
+} from '@/lib/profileServicesApi';
 import { buildServiceVCard } from '@/lib/serviceVCard';
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
-import { openWhatsAppLikeBirthdaysWithText } from '@/lib/whatsapp';
-import { FontAwesome } from '@expo/vector-icons';
+import * as Linking from 'expo-linking';
 import { Image } from 'expo-image';
 import React, { useMemo } from 'react';
 import {
@@ -14,8 +21,6 @@ import {
   View,
 } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
-
-const WHATSAPP_GREEN = '#25D366';
 
 type Props = {
   visible: boolean;
@@ -33,8 +38,12 @@ export function ServiceMuralDetailModal({ visible, card, photoUrl, onClose }: Pr
     return buildServiceVCard({
       fullName: card.fullName,
       title: card.tituloServico,
+      organization: SERVICE_CATEGORIA_LABEL[card.categoria],
+      note: card.descricaoServico,
       phone: card.telefoneContato,
       email: card.email,
+      website: card.paginaWeb,
+      instagram: card.instagram,
     });
   }, [card]);
 
@@ -44,6 +53,9 @@ export function ServiceMuralDetailModal({ visible, card, photoUrl, onClose }: Pr
 
   const initials = serviceCardInitials(card.fullName);
   const phoneLabel = formatServicePhoneDisplay(card.telefoneContato) || 'Não informado';
+  const website = formatServiceWebsiteDisplay(card.paginaWeb);
+  const instagram = formatServiceInstagramHandle(card.instagram);
+  const instagramUrl = instagramProfileUrl(card.instagram);
 
   return (
     <Modal visible={visible} animationType="fade" transparent onRequestClose={onClose}>
@@ -67,31 +79,48 @@ export function ServiceMuralDetailModal({ visible, card, photoUrl, onClose }: Pr
             {card.descricaoServico ? <Text style={styles.description}>{card.descricaoServico}</Text> : null}
 
             <View style={styles.meta}>
-              <Text style={styles.metaLabel}>WhatsApp</Text>
+              <Text style={styles.sectionTitle}>Informações do trabalho</Text>
+              <Text style={styles.metaLabel}>Atividade</Text>
+              <Text style={styles.metaValue}>{card.tituloServico}</Text>
+              <Text style={styles.metaLabel}>Categoria</Text>
+              <Text style={styles.metaValue}>{SERVICE_CATEGORIA_LABEL[card.categoria]}</Text>
+            </View>
+
+            <View style={styles.meta}>
+              <Text style={styles.sectionTitle}>Informações de contato</Text>
+              <Text style={styles.metaLabel}>Telefone</Text>
               <Text style={styles.metaValue}>{phoneLabel}</Text>
               <Text style={styles.metaLabel}>E-mail</Text>
               <Text style={styles.metaValue}>{card.email?.trim() || 'Não informado'}</Text>
+              <Text style={styles.metaLabel}>Página WEB</Text>
+              {website ? (
+                <Pressable
+                  onPress={() => void Linking.openURL(website)}
+                  accessibilityRole="link"
+                  accessibilityLabel="Abrir página web"
+                >
+                  <Text style={styles.linkValue}>{website.replace(/^https?:\/\//i, '')}</Text>
+                </Pressable>
+              ) : (
+                <Text style={styles.metaValue}>Não informado</Text>
+              )}
+              <Text style={styles.metaLabel}>Instagram</Text>
+              {instagram ? (
+                <Pressable
+                  onPress={() => {
+                    if (instagramUrl) {
+                      void Linking.openURL(instagramUrl);
+                    }
+                  }}
+                  accessibilityRole="link"
+                  accessibilityLabel="Abrir Instagram"
+                >
+                  <Text style={styles.linkValue}>@{instagram}</Text>
+                </Pressable>
+              ) : (
+                <Text style={styles.metaValue}>Não informado</Text>
+              )}
             </View>
-
-            <Pressable
-              onPress={() =>
-                openWhatsAppLikeBirthdaysWithText(
-                  card.telefoneContato,
-                  `Olá, ${card.fullName.split(/\s+/)[0] ?? ''}! Vi seu cartão no mural da igreja.`
-                )
-              }
-              disabled={!card.telefoneContato}
-              style={({ pressed }) => [
-                styles.whatsapp,
-                !card.telefoneContato && styles.whatsappDisabled,
-                pressed && Boolean(card.telefoneContato) && styles.pressed,
-              ]}
-              accessibilityRole="button"
-              accessibilityLabel="Falar no WhatsApp"
-            >
-              <FontAwesome name="whatsapp" size={18} color="#FFFFFF" />
-              <Text style={styles.whatsappText}>Falar no WhatsApp</Text>
-            </Pressable>
 
             <View style={styles.qrBlock}>
               <Text style={styles.qrCaption}>QR Code do contato</Text>
@@ -108,7 +137,8 @@ export function ServiceMuralDetailModal({ visible, card, photoUrl, onClose }: Pr
                 </View>
               ) : null}
               <Text style={styles.qrHint}>
-                Aponte a câmera do celular para salvar este contato na agenda.
+                Aponte a câmera do celular para salvar este contato na agenda, com a atividade nas
+                informações do trabalho.
               </Text>
             </View>
           </ScrollView>
@@ -199,6 +229,12 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 12,
   },
+  sectionTitle: {
+    color: MINIMAL_UI.blueDark,
+    fontSize: 13,
+    fontWeight: '800',
+    marginBottom: 4,
+  },
   metaLabel: {
     color: MINIMAL_UI.textMuted,
     fontSize: 11,
@@ -211,22 +247,10 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '700',
   },
-  whatsapp: {
-    minHeight: 48,
-    borderRadius: 14,
-    backgroundColor: WHATSAPP_GREEN,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 10,
-  },
-  whatsappDisabled: {
-    backgroundColor: '#86EFAC',
-  },
-  whatsappText: {
-    color: '#FFFFFF',
-    fontSize: 15,
-    fontWeight: '800',
+  linkValue: {
+    color: MINIMAL_UI.blue,
+    fontSize: 14,
+    fontWeight: '700',
   },
   qrBlock: {
     alignItems: 'center',

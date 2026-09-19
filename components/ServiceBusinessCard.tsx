@@ -1,17 +1,18 @@
 import { boxShadowStyle } from '@/lib/boxShadow';
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
 import {
+  formatServiceInstagramHandle,
+  formatServiceWebsiteDisplay,
+  instagramProfileUrl,
   SERVICE_CATEGORIA_LABEL,
   serviceCardInitials,
   type ProfileServiceCard,
 } from '@/lib/profileServicesApi';
-import { openWhatsAppLikeBirthdaysWithText } from '@/lib/whatsapp';
 import { FontAwesome } from '@expo/vector-icons';
+import * as Linking from 'expo-linking';
 import { Image } from 'expo-image';
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-
-const WHATSAPP_GREEN = '#25D366';
 
 type Props = {
   card: ProfileServiceCard;
@@ -21,18 +22,9 @@ type Props = {
 
 export function ServiceBusinessCard({ card, photoUrl, onOpenDetail }: Props) {
   const initials = serviceCardInitials(card.fullName);
-  const hasWhatsApp = Boolean(card.telefoneContato);
-
-  const handleWhatsApp = () => {
-    const opened = openWhatsAppLikeBirthdaysWithText(
-      card.telefoneContato,
-      `Olá, ${card.fullName.split(/\s+/)[0] ?? ''}! Vi seu cartão no mural da igreja e gostaria de falar sobre ${card.tituloServico}.`
-    );
-
-    if (!opened) {
-      onOpenDetail();
-    }
-  };
+  const website = formatServiceWebsiteDisplay(card.paginaWeb);
+  const instagram = formatServiceInstagramHandle(card.instagram);
+  const instagramUrl = instagramProfileUrl(card.instagram);
 
   return (
     <Pressable
@@ -68,31 +60,46 @@ export function ServiceBusinessCard({ card, photoUrl, onOpenDetail }: Props) {
         </Text>
       ) : null}
 
-      <View style={styles.actions}>
-        <Pressable
-          onPress={handleWhatsApp}
-          disabled={!hasWhatsApp}
-          style={({ pressed }) => [
-            styles.whatsapp,
-            !hasWhatsApp && styles.whatsappDisabled,
-            pressed && hasWhatsApp && styles.whatsappPressed,
-          ]}
-          accessibilityRole="button"
-          accessibilityLabel="Abrir WhatsApp do prestador"
-        >
-          <FontAwesome name="whatsapp" size={16} color="#FFFFFF" />
-          <Text style={styles.whatsappText}>WhatsApp</Text>
-        </Pressable>
-        <Pressable
-          onPress={onOpenDetail}
-          style={({ pressed }) => [styles.detail, pressed && styles.detailPressed]}
-          accessibilityRole="button"
-          accessibilityLabel="Ver cartão e QR Code"
-        >
-          <FontAwesome name="qrcode" size={14} color={MINIMAL_UI.blueDark} />
-          <Text style={styles.detailText}>Cartão e QR</Text>
-        </Pressable>
-      </View>
+      {website || instagram ? (
+        <View style={styles.links}>
+          {website ? (
+            <Pressable
+              onPress={() => void Linking.openURL(website)}
+              accessibilityRole="link"
+              accessibilityLabel="Abrir página web"
+            >
+              <Text style={styles.linkText} numberOfLines={1}>
+                {website.replace(/^https?:\/\//i, '')}
+              </Text>
+            </Pressable>
+          ) : null}
+          {instagram ? (
+            <Pressable
+              onPress={() => {
+                if (instagramUrl) {
+                  void Linking.openURL(instagramUrl);
+                }
+              }}
+              accessibilityRole="link"
+              accessibilityLabel="Abrir Instagram"
+            >
+              <Text style={styles.linkText} numberOfLines={1}>
+                Instagram @{instagram}
+              </Text>
+            </Pressable>
+          ) : null}
+        </View>
+      ) : null}
+
+      <Pressable
+        onPress={onOpenDetail}
+        style={({ pressed }) => [styles.detail, pressed && styles.detailPressed]}
+        accessibilityRole="button"
+        accessibilityLabel="Ver cartão e QR Code"
+      >
+        <FontAwesome name="qrcode" size={14} color={MINIMAL_UI.blueDark} />
+        <Text style={styles.detailText}>Cartão e QR</Text>
+      </Pressable>
     </Pressable>
   );
 }
@@ -161,34 +168,16 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 18,
   },
-  actions: {
-    flexDirection: 'row',
-    gap: 8,
+  links: {
+    gap: 4,
   },
-  whatsapp: {
-    flex: 1,
-    minHeight: 42,
-    borderRadius: 12,
-    backgroundColor: WHATSAPP_GREEN,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-  },
-  whatsappPressed: {
-    opacity: 0.88,
-  },
-  whatsappDisabled: {
-    backgroundColor: '#86EFAC',
-  },
-  whatsappText: {
-    color: '#FFFFFF',
+  linkText: {
+    color: MINIMAL_UI.blue,
     fontSize: 13,
-    fontWeight: '800',
+    fontWeight: '700',
   },
   detail: {
     minHeight: 42,
-    paddingHorizontal: 12,
     borderRadius: 12,
     borderWidth: 1,
     borderColor: MINIMAL_UI.border,

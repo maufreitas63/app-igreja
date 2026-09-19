@@ -34,6 +34,8 @@ export type ProfileServiceCard = {
   descricaoServico: string;
   categoria: ServiceCategoria;
   telefoneContato: string | null;
+  paginaWeb: string | null;
+  instagram: string | null;
   selfieUrl: string | null;
 };
 
@@ -47,6 +49,8 @@ export type MyProfileService = {
   categoria: ServiceCategoria;
   statusAtivo: boolean;
   telefoneContato: string;
+  paginaWeb: string;
+  instagram: string;
 };
 
 const asRecord = (value: unknown): Record<string, unknown> =>
@@ -79,6 +83,8 @@ const mapCard = (item: unknown): ProfileServiceCard | null => {
 
   const email = readString(row.email);
   const phone = readString(row.telefone_contato);
+  const website = normalizeServiceWebsite(readString(row.pagina_web));
+  const instagram = normalizeServiceInstagram(readString(row.instagram));
   const selfie = readString(row.selfie_url);
 
   return {
@@ -90,9 +96,60 @@ const mapCard = (item: unknown): ProfileServiceCard | null => {
     descricaoServico: readString(row.descricao_servico),
     categoria: parseCategoria(row.categoria),
     telefoneContato: phone || null,
+    paginaWeb: website || null,
+    instagram: instagram || null,
     selfieUrl: selfie || null,
   };
 };
+
+export function normalizeServiceWebsite(value: string | null | undefined) {
+  const raw = readString(value);
+
+  if (!raw) {
+    return '';
+  }
+
+  if (/^(javascript|data|vbscript):/i.test(raw)) {
+    return '';
+  }
+
+  if (/^https?:\/\//i.test(raw)) {
+    return raw;
+  }
+
+  if (raw.startsWith('//')) {
+    return `https:${raw}`;
+  }
+
+  return `https://${raw.replace(/^\/+/, '')}`;
+}
+
+export function normalizeServiceInstagram(value: string | null | undefined) {
+  let raw = readString(value);
+
+  if (!raw) {
+    return '';
+  }
+
+  raw = raw.replace(/^https?:\/\/(www\.)?instagram\.com\//i, '');
+  raw = raw.replace(/^@+/, '');
+  raw = raw.split(/[/?#]/)[0]?.trim() ?? '';
+  raw = raw.replace(/[^A-Za-z0-9._]/g, '');
+  return raw.slice(0, 30);
+}
+
+export function formatServiceWebsiteDisplay(url: string | null | undefined) {
+  return normalizeServiceWebsite(url);
+}
+
+export function formatServiceInstagramHandle(value: string | null | undefined) {
+  return normalizeServiceInstagram(value);
+}
+
+export function instagramProfileUrl(value: string | null | undefined) {
+  const handle = normalizeServiceInstagram(value);
+  return handle ? `https://www.instagram.com/${handle}` : '';
+}
 
 export function serviceCardInitials(fullName: string) {
   return initialsFromFullName(fullName);
@@ -134,6 +191,8 @@ export async function fetchMyProfileService(): Promise<MyProfileService | null> 
     categoria: parseCategoria(service.categoria),
     statusAtivo: service.status_ativo === true,
     telefoneContato: readString(service.telefone_contato),
+    paginaWeb: normalizeServiceWebsite(readString(service.pagina_web)),
+    instagram: normalizeServiceInstagram(readString(service.instagram)),
   };
 }
 
@@ -143,6 +202,8 @@ export async function saveMyProfileService(input: {
   categoria: ServiceCategoria;
   statusAtivo: boolean;
   telefoneContato: string;
+  paginaWeb: string;
+  instagram: string;
 }) {
   const { data, error } = await supabase.rpc('upsert_my_profile_service', {
     p_titulo_servico: input.tituloServico,
@@ -150,6 +211,8 @@ export async function saveMyProfileService(input: {
     p_categoria: input.categoria,
     p_status_ativo: input.statusAtivo,
     p_telefone_contato: input.telefoneContato,
+    p_pagina_web: normalizeServiceWebsite(input.paginaWeb),
+    p_instagram: normalizeServiceInstagram(input.instagram),
   });
 
   if (error) {

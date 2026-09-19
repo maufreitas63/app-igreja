@@ -40,6 +40,8 @@ export function ProfileServiceForm() {
   const [categoria, setCategoria] = useState<ServiceCategoria>('outros');
   const [statusAtivo, setStatusAtivo] = useState(false);
   const [telefone, setTelefone] = useState('');
+  const [paginaWeb, setPaginaWeb] = useState('');
+  const [instagram, setInstagram] = useState('');
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -52,6 +54,8 @@ export function ProfileServiceForm() {
       setCategoria(service?.categoria ?? 'outros');
       setStatusAtivo(service?.statusAtivo ?? false);
       setTelefone(formatBrazilPhoneInput(service?.telefoneContato ?? ''));
+      setPaginaWeb(service?.paginaWeb ?? '');
+      setInstagram(service?.instagram ? `@${service.instagram}` : '');
     } catch (error) {
       Toast.show({
         type: 'error',
@@ -77,6 +81,8 @@ export function ProfileServiceForm() {
         categoria,
         statusAtivo,
         telefoneContato: telefone,
+        paginaWeb,
+        instagram,
       });
 
       Toast.show({
@@ -128,6 +134,8 @@ export function ProfileServiceForm() {
         setDescricao('');
         setCategoria('outros');
         setStatusAtivo(false);
+        setPaginaWeb('');
+        setInstagram('');
         await load();
       }
     } catch (error) {
@@ -208,6 +216,34 @@ export function ProfileServiceForm() {
                 onChangeText={(value) => setTelefone(formatBrazilPhoneInput(value))}
                 keyboardType="phone-pad"
                 inputMode="tel"
+              />
+            </View>
+
+            <View>
+              <Text style={profileClassStyles.vehicleFormLabel}>Página WEB</Text>
+              <TextInput
+                style={profileClassStyles.input}
+                placeholder="https://www.seusite.com.br"
+                placeholderTextColor={MINIMAL_UI.textMuted}
+                value={paginaWeb}
+                onChangeText={setPaginaWeb}
+                autoCapitalize="none"
+                autoCorrect={false}
+                keyboardType="url"
+                inputMode="url"
+              />
+            </View>
+
+            <View>
+              <Text style={profileClassStyles.vehicleFormLabel}>Instagram</Text>
+              <TextInput
+                style={profileClassStyles.input}
+                placeholder="@seuusuario"
+                placeholderTextColor={MINIMAL_UI.textMuted}
+                value={instagram}
+                onChangeText={setInstagram}
+                autoCapitalize="none"
+                autoCorrect={false}
               />
             </View>
 
