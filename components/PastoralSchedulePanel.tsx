@@ -23,7 +23,7 @@ import {
   type PastoralAttendant,
 } from '@/lib/pastoralSlotsApi';
 import { loadEffectiveSessionProfile } from '@/lib/loadSessionProfile';
-import { offerConfirmedEventToCalendar } from '@/lib/calendarIcs';
+import { offerCancelledEventFromCalendar, offerConfirmedEventToCalendar } from '@/lib/calendarIcs';
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { openWhatsAppLikeBirthdaysWithText } from '@/lib/whatsapp';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -238,6 +238,7 @@ export function PastoralSchedulePanel({ profileId, vigilance = false }: Props) {
             endsAt,
             tipo,
             reason,
+            slotId: appointment.id,
           })
         );
       }
@@ -248,6 +249,14 @@ export function PastoralSchedulePanel({ profileId, vigilance = false }: Props) {
         return next;
       });
       await load();
+
+      await offerCancelledEventFromCalendar({
+        id: appointment.id,
+        titulo: `Atendimento pastoral · ${pastorName}`,
+        local: tipo === 'online' ? 'Online' : 'Presencial',
+        eventDate: startsAt,
+        eventEndDate: endsAt,
+      });
 
       if (!pastorPhone) {
         await appAlert(

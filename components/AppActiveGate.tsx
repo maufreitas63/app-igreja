@@ -14,6 +14,11 @@ const normalizePathname = (pathname: string) => {
   return trimmed || '/';
 };
 
+const isPublicUtilityRoute = (pathname: string) => {
+  const normalized = normalizePathname(pathname);
+  return normalized === '/agenda-cancelar';
+};
+
 const isLoginRoute = (pathname: string) => {
   const normalized = normalizePathname(pathname);
   return normalized === '/' || normalized === '/index';
@@ -47,7 +52,7 @@ export function AppActiveGate({ children }: Props) {
     }
   }, [status?.active]);
 
-  if (loading && !status && !isLoginRoute(pathname)) {
+  if (loading && !status && !isLoginRoute(pathname) && !isPublicUtilityRoute(pathname)) {
     return (
       <View style={styles.loader}>
         <ActivityIndicator size="large" color="#10b981" />
@@ -59,7 +64,7 @@ export function AppActiveGate({ children }: Props) {
     return <>{children}</>;
   }
 
-  if (status.active || superAdminBypass) {
+  if (status.active || superAdminBypass || isPublicUtilityRoute(pathname)) {
     return <>{children}</>;
   }
 

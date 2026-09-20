@@ -18,6 +18,7 @@ const HIDDEN_PATHS = new Set([
   '/totem-checkin',
   '/cadastro-familia',
   '/autorizacao-midia-confirmar',
+  '/agenda-cancelar',
 ]);
 
 const normalizePath = (pathname: string) => {

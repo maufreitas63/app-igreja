@@ -39,6 +39,7 @@ const isWatermarkExcludedRoute = (pathname: string, segments: string[]) => {
     || normalized === '/forgot-password'
     || normalized === '/sessao-encerrada'
     || normalized === '/configurar'
+    || normalized === '/agenda-cancelar'
   );
 };
 

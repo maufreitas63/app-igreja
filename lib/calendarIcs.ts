@@ -4,6 +4,7 @@ import {
   APP_EVENT_TIMEZONE,
   parseEventDateParts,
 } from '@/lib/eventDate';
+import { resolveShareableAppOrigin } from '@/lib/instancePublicUrl';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as Linking from 'expo-linking';
 import * as Sharing from 'expo-sharing';
@@ -132,23 +133,36 @@ export function buildIcsFileName(titulo: string): string {
  * Google Calendar, Apple Calendar e Outlook interpretam o VTIMEZONE e
  * mostram o horário local do aparelho sem atrasar/adiantar o culto.
  */
-export function buildIcsCalendar(evento: EventoAgenda): string {
-  const uid =
-    (evento.uid?.trim() || `conecta-${evento.dataInicio.getTime()}@app-igreja`)
-      .replace(/[\r\n]/g, '');
+export type IcsCalendarMethod = 'PUBLISH' | 'CANCEL';
+
+export function resolveCalendarEventUid(evento: EventoAgenda): string {
+  return (evento.uid?.trim() || `conecta-${evento.dataInicio.getTime()}@app-igreja`).replace(
+    /[\r\n]/g,
+    ''
+  );
+}
+
+export function buildIcsCalendar(
+  evento: EventoAgenda,
+  options?: { method?: IcsCalendarMethod; sequence?: number }
+): string {
+  const uid = resolveCalendarEventUid(evento);
   const stamp = formatIcsUtcDateTime(new Date());
   const startLocal = formatIcsLocalDateTime(evento.dataInicio);
   const endLocal = formatIcsLocalDateTime(evento.dataFim);
   const summary = evento.titulo.trim() || 'Evento';
   const location = evento.local.trim();
   const description = (evento.descricao ?? '').trim();
+  const method = options?.method ?? 'PUBLISH';
+  const isCancel = method === 'CANCEL';
+  const sequence = options?.sequence ?? (isCancel ? 1 : 0);
 
   const lines = [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
     'PRODID:-//Conecta//Agenda da Familia//PT',
     'CALSCALE:GREGORIAN',
-    'METHOD:PUBLISH',
+    `METHOD:${method}`,
     `X-WR-TIMEZONE:${APP_EVENT_TIMEZONE}`,
     'BEGIN:VTIMEZONE',
     `TZID:${APP_EVENT_TIMEZONE}`,
@@ -163,18 +177,41 @@ export function buildIcsCalendar(evento: EventoAgenda): string {
     'BEGIN:VEVENT',
     icsLine('UID', uid),
     `DTSTAMP:${stamp}`,
+    `SEQUENCE:${sequence}`,
     `DTSTART;TZID=${APP_EVENT_TIMEZONE}:${startLocal}`,
     `DTEND;TZID=${APP_EVENT_TIMEZONE}:${endLocal}`,
-    icsLine('SUMMARY', summary),
+    icsLine('SUMMARY', isCancel ? `Cancelado: ${summary}` : summary),
     location ? icsLine('LOCATION', location) : null,
     description ? icsLine('DESCRIPTION', description) : null,
-    'STATUS:CONFIRMED',
-    'TRANSP:OPAQUE',
+    `STATUS:${isCancel ? 'CANCELLED' : 'CONFIRMED'}`,
+    `TRANSP:${isCancel ? 'TRANSPARENT' : 'OPAQUE'}`,
     'END:VEVENT',
     'END:VCALENDAR',
   ].filter((line): line is string => Boolean(line));
 
   return `${lines.join('\r\n')}\r\n`;
+}
+
+/** Abre o Google Agenda no dia do compromisso (America/Sao_Paulo). */
+export function buildGoogleCalendarDayUrl(instant: Date): string {
+  const parts = ICS_LOCAL_FORMATTER.formatToParts(instant);
+  const year = pickIntlPart(parts, 'year');
+  const month = pickIntlPart(parts, 'month');
+  const day = pickIntlPart(parts, 'day');
+  return `https://calendar.google.com/calendar/r/day/${year}/${month}/${day}?ctz=${encodeURIComponent(APP_EVENT_TIMEZONE)}`;
+}
+
+/** Página pública para o destinatário do WhatsApp remover o compromisso. */
+export function buildCalendarCancelPageUrl(evento: EventoAgenda): string {
+  const origin = resolveShareableAppOrigin();
+  const params = new URLSearchParams({
+    uid: resolveCalendarEventUid(evento),
+    start: evento.dataInicio.toISOString(),
+    end: evento.dataFim.toISOString(),
+    title: evento.titulo,
+    loc: evento.local,
+  });
+  return `${origin}/agenda-cancelar?${params.toString()}`;
 }
 
 export function buildIcsBlob(evento: EventoAgenda): Blob {
@@ -382,6 +419,121 @@ export async function offerConfirmedEventToCalendar(input: {
     {
       onConfirmed: () => {
         openEventOnDeviceCalendar(evento);
+      },
+    }
+  );
+}
+
+export function eventoAgendaFromCancelParams(input: {
+  uid?: string | null;
+  title?: string | null;
+  loc?: string | null;
+  start?: string | null;
+  end?: string | null;
+}): EventoAgenda | null {
+  const startRaw = input.start?.trim() || '';
+  const startDate = startRaw ? new Date(startRaw) : null;
+
+  if (!startDate || Number.isNaN(startDate.getTime())) {
+    return null;
+  }
+
+  const endRaw = input.end?.trim() || '';
+  const endDate = endRaw ? new Date(endRaw) : null;
+  const titulo = input.title?.trim() || 'Atendimento pastoral';
+
+  return {
+    titulo,
+    local: input.loc?.trim() || '',
+    dataInicio: startDate,
+    dataFim:
+      endDate && !Number.isNaN(endDate.getTime())
+        ? endDate
+        : new Date(startDate.getTime() + DEFAULT_ICS_DURATION_MINUTES * 60_000),
+    uid: input.uid?.trim() || undefined,
+    descricao: 'Este atendimento pastoral foi cancelado no Conecta.',
+  };
+}
+
+export function openCancelEventOnDeviceCalendar(evento: EventoAgenda): void {
+  const googleDayUrl = buildGoogleCalendarDayUrl(evento.dataInicio);
+  const ics = buildIcsCalendar(evento, { method: 'CANCEL', sequence: 1 });
+  const fileName = `cancelar-${buildIcsFileName(evento.titulo)}`;
+
+  if (Platform.OS === 'web' && typeof window !== 'undefined') {
+    try {
+      downloadIcsInBrowser(ics, fileName);
+    } catch (error) {
+      console.warn('Download do cancelamento (.ics):', error);
+    }
+    return;
+  }
+
+  void (async () => {
+    try {
+      const cacheDir = FileSystem.cacheDirectory;
+      if (!cacheDir) {
+        throw new Error('Armazenamento temporário indisponível neste dispositivo.');
+      }
+
+      const fileUri = `${cacheDir}${fileName}`;
+      await FileSystem.writeAsStringAsync(fileUri, ics, {
+        encoding: FileSystem.EncodingType.UTF8,
+      });
+
+      const canShare = await Sharing.isAvailableAsync();
+      if (canShare) {
+        await Sharing.shareAsync(fileUri, {
+          mimeType: 'text/calendar',
+          UTI: 'com.apple.ical.ics',
+          dialogTitle: 'Remover da agenda',
+        });
+        return;
+      }
+
+      await Linking.openURL(googleDayUrl);
+    } catch (error) {
+      console.warn('Cancelamento na agenda:', error);
+      try {
+        await Linking.openURL(googleDayUrl);
+      } catch (linkError) {
+        console.warn('Abrir Google Agenda:', linkError);
+      }
+    }
+  })();
+}
+
+export async function offerCancelledEventFromCalendar(input: {
+  id?: string | null;
+  titulo: string;
+  local?: string | null;
+  eventDate: string | Date | null | undefined;
+  eventEndDate?: string | Date | null;
+}): Promise<void> {
+  const evento = eventoAgendaFromChurchEvent({
+    id: input.id,
+    titulo: input.titulo.trim() || 'Atendimento pastoral',
+    local: input.local,
+    eventDate: input.eventDate,
+    eventEndDate: input.eventEndDate,
+    descricao: 'Este atendimento pastoral foi cancelado no Conecta.',
+  });
+
+  if (!evento) {
+    return;
+  }
+
+  await confirmDialog(
+    'Remover da agenda',
+    'Se este horário já estiver na agenda do aparelho, toque em Remover para enviar o cancelamento ao Apple Calendar ou Outlook e abrir o Google Agenda neste dia.',
+    'Remover',
+    'Agora não',
+    {
+      onConfirmed: () => {
+        if (Platform.OS === 'web' && typeof window !== 'undefined') {
+          window.open(buildGoogleCalendarDayUrl(evento.dataInicio), '_blank', 'noopener,noreferrer');
+        }
+        openCancelEventOnDeviceCalendar(evento);
       },
     }
   );

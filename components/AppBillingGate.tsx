@@ -59,6 +59,7 @@ const isBillingExemptRoute = (pathname: string) => {
     || normalized === '/lgpd'
     || normalized === '/cadastro-familia'
     || normalized === '/maintenance-dashboard'
+    || normalized === '/agenda-cancelar'
     || isCommercialLockedManagementPath(normalized)
     || normalized.startsWith('/autorizacao-midia')
   );
@@ -78,6 +79,7 @@ const isInstanceInactiveExemptRoute = (pathname: string) => {
     || normalized === '/sessao-encerrada'
     || normalized === '/lgpd'
     || normalized === '/cadastro-familia'
+    || normalized === '/agenda-cancelar'
   );
 };
 

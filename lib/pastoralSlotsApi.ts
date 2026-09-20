@@ -5,7 +5,11 @@
 
 import { supabase } from '@/lib/supabase';
 import { isSupabaseRpcMissingError } from '@/lib/supabaseRpc';
-import { buildGoogleCalendarUrl, eventoAgendaFromChurchEvent } from '@/lib/calendarIcs';
+import {
+  buildCalendarCancelPageUrl,
+  buildGoogleCalendarUrl,
+  eventoAgendaFromChurchEvent,
+} from '@/lib/calendarIcs';
 
 export const PASTORAL_SLOTS_SQL_HINT =
   'Execute no Supabase: scripts/pastoral-slots-schema.sql';
@@ -289,14 +293,25 @@ export function buildPastoralCancelWhatsAppMessage(input: {
   endsAt: string;
   tipo: PastoralAttendanceType;
   reason: string;
+  slotId?: string | null;
 }) {
   const pastorFirst = input.pastorName.trim().split(/\s+/).filter(Boolean)[0] ?? '';
   const memberName = input.memberName.trim() || 'Um irmão da igreja';
   const when = formatPastoralSlotTimeRange(input.startsAt, input.endsAt);
   const tipo = PASTORAL_ATTENDANCE_TYPE_LABEL[input.tipo];
   const reason = input.reason.trim();
+  const evento = buildPastoralAppointmentCalendarEvent({
+    pastorName: input.pastorName,
+    memberName: input.memberName,
+    startsAt: input.startsAt,
+    endsAt: input.endsAt,
+    tipo: input.tipo,
+    slotId: input.slotId,
+    forAttendant: true,
+  });
+  const cancelUrl = evento ? buildCalendarCancelPageUrl(evento) : null;
 
-  return [
+  const lines = [
     pastorFirst ? `Olá, ${pastorFirst}!` : 'Olá!',
     '',
     `${memberName} cancelou o horário que havia reservado na sua agenda pastoral.`,
@@ -306,7 +321,17 @@ export function buildPastoralCancelWhatsAppMessage(input: {
     `Justificativa: ${reason}`,
     '',
     'O horário voltou a ficar disponível na sua agenda.',
-  ].join('\n');
+  ];
+
+  if (cancelUrl) {
+    lines.push(
+      '',
+      'Se o compromisso já estiver na sua agenda, toque no link para removê-lo:',
+      cancelUrl
+    );
+  }
+
+  return lines.join('\n');
 }
 
 export async function bookPastoralSlot(slotId: string, requestId?: string | null) {
