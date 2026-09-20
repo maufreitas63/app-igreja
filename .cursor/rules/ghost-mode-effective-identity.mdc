@@ -41,6 +41,8 @@ Exceções (únicas):
 
 ACL do alvo sem grant: **permanece na rota e mostra a tela** (dados/RLS da identidade efetiva). Não redireciona e **não** cobre com «Sem acesso nesta simulação».
 
-Bypass de Super Admin do operador fica **desligado** no Ghost; a ACL é a do alvo (`evaluate_profile_resource_access` / `x-ghost-profile-id`).
+Bypass de Super Admin do operador fica **desligado** no Ghost para ACL de telas/dados (`evaluate_profile_resource_access` / `x-ghost-profile-id`).
+
+Paywall e instância (`AppBillingGate`, `/billing`, selecionar igreja) **não** usam o alvo: simular um membro não pode mandar o auditor à tela de assinaturas.
 
 Helpers: `ghostBlocksHomeBounce()` / `ghostPassScreenAccess()` em `lib/ghostNavigation.ts`; `denyScreenAccessAndRedirect` e `ScreenAccessGate` respeitam isso.

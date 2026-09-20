@@ -4,6 +4,8 @@ import {
   isTenantManagementOpen,
 } from '@/lib/billing/commercialLock';
 import type { TenantBillingStatus } from '@/lib/billing/types';
+import { subscribeGhostMode } from '@/lib/ghostMode';
+import { ghostBlocksHomeBounce } from '@/lib/ghostNavigation';
 import { checkSessionIsSuperAdmin } from '@/lib/maintenanceAccessControlApi';
 import { resolveEffectiveProfileId } from '@/lib/sessionProfile';
 import {
@@ -12,7 +14,7 @@ import {
   subscribeActiveTenantChange,
 } from '@/lib/tenantSession';
 import { usePathname, useRouter, type Href } from 'expo-router';
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 type Props = {
   children: React.ReactNode;
@@ -45,6 +47,8 @@ const isBillingExemptRoute = (pathname: string) => {
   return (
     normalized === '/'
     || normalized === '/index'
+    || normalized === '/(tabs)'
+    || normalized === '/(tabs)/index'
     || normalized === '/billing'
     || normalized === '/register'
     || normalized === '/forgot-password'
@@ -105,7 +109,8 @@ const applyGateRedirect = (
   cache: CacheEntry,
   router: { replace: (href: Href) => void }
 ) => {
-  if (cache.isSuperAdmin) {
+  // Ghost: o paywall é da instância do operador, não do alvo da simulação.
+  if (ghostBlocksHomeBounce() || cache.isSuperAdmin) {
     return;
   }
   if (!cache.instanceActive && !isInstanceInactiveExemptRoute(pathname)) {
@@ -130,6 +135,15 @@ export function AppBillingGate({ children }: Props) {
   const pathname = usePathname();
   const router = useRouter();
   const inflightRef = useRef(false);
+  const [ghostActive, setGhostActive] = useState(() => ghostBlocksHomeBounce());
+
+  useEffect(
+    () =>
+      subscribeGhostMode(() => {
+        setGhostActive(ghostBlocksHomeBounce());
+      }),
+    []
+  );
 
   useEffect(() => {
     return subscribeActiveTenantChange(() => {
@@ -141,11 +155,19 @@ export function AppBillingGate({ children }: Props) {
     let cancelled = false;
 
     const run = async () => {
+      if (ghostBlocksHomeBounce()) {
+        return;
+      }
+
       const tenantId = await getStoredTenantId();
       if (!tenantId || cancelled) return;
 
       const profileId = await resolveEffectiveProfileId().catch(() => null);
       if (!profileId || cancelled) {
+        return;
+      }
+
+      if (ghostBlocksHomeBounce()) {
         return;
       }
 
@@ -156,7 +178,7 @@ export function AppBillingGate({ children }: Props) {
         return;
       }
 
-      if (cancelled) return;
+      if (cancelled || ghostBlocksHomeBounce()) return;
 
       if (isSa) {
         statusCache = {
@@ -189,7 +211,7 @@ export function AppBillingGate({ children }: Props) {
       try {
         const branding = await getStoredActiveIgrejaBranding();
         const billing = await getTenantBillingStatus(tenantId);
-        if (cancelled) return;
+        if (cancelled || ghostBlocksHomeBounce()) return;
 
         const cache: CacheEntry = {
           tenantId,
@@ -210,7 +232,7 @@ export function AppBillingGate({ children }: Props) {
     return () => {
       cancelled = true;
     };
-  }, [pathname, router]);
+  }, [ghostActive, pathname, router]);
 
   // Sempre renderiza o app — sem spinner fullscreen.
   return <>{children}</>;
