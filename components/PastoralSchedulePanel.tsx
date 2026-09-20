@@ -14,6 +14,7 @@ import {
   type PastoralAttendant,
 } from '@/lib/pastoralSlotsApi';
 import { loadEffectiveSessionProfile } from '@/lib/loadSessionProfile';
+import { offerConfirmedEventToCalendar } from '@/lib/calendarIcs';
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { openWhatsAppLikeBirthdaysWithText } from '@/lib/whatsapp';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -119,32 +120,46 @@ export function PastoralSchedulePanel({ profileId, vigilance = false }: Props) {
         const startsAt = result.startsAt || slot?.data_hora_inicio || '';
         const endsAt = result.endsAt || slot?.data_hora_fim || '';
         const tipo = result.tipo || slot?.tipo_atendimento || 'presencial';
-        const opened = pastorPhone
-          ? openWhatsAppLikeBirthdaysWithText(
-              pastorPhone,
-              buildPastoralBookingWhatsAppMessage({
-                pastorName,
-                memberName,
-                startsAt,
-                endsAt,
-                tipo,
-              })
-            )
-          : null;
+        const startsDate = startsAt ? new Date(startsAt) : null;
+        const endsDate = endsAt ? new Date(endsAt) : null;
+
+        if (pastorPhone) {
+          openWhatsAppLikeBirthdaysWithText(
+            pastorPhone,
+            buildPastoralBookingWhatsAppMessage({
+              pastorName,
+              memberName,
+              startsAt,
+              endsAt,
+              tipo,
+            })
+          );
+        }
 
         setSlotId('');
         await load();
 
-        if (!opened) {
+        await offerConfirmedEventToCalendar({
+          id: slotId,
+          titulo: `Atendimento pastoral · ${pastorName}`,
+          local: tipo === 'online' ? 'Online' : 'Presencial',
+          eventDate:
+            startsDate && !Number.isNaN(startsDate.getTime()) ? startsDate : startsAt,
+          eventEndDate: endsDate && !Number.isNaN(endsDate.getTime()) ? endsDate : endsAt,
+          descricao: `${memberName} confirmou atendimento ${PASTORAL_ATTENDANCE_TYPE_LABEL[tipo]} com ${pastorName}.`,
+        });
+
+        if (!pastorPhone) {
           await appAlert(
             'Agendado',
-            `${result.message}\n\nNão foi possível avisar ${pastorName} no WhatsApp (telefone não cadastrado).`
+            `Não foi possível avisar ${pastorName} no WhatsApp (telefone não cadastrado).`
           );
-          return;
         }
+
+        return;
       }
 
-      await appAlert(result.success ? 'Agendado' : 'Não foi possível agendar', result.message);
+      await appAlert('Não foi possível agendar', result.message);
     } finally {
       setSaving(false);
     }
