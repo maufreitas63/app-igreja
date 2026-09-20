@@ -4,9 +4,10 @@ import {
   isAclStrictMode,
 } from '@/lib/accessControl';
 import { DASHBOARD_CARD_BLOCKED_MESSAGES } from '@/lib/dashboardCardScreenLinks';
-import { getGhostModeState, subscribeGhostMode } from '@/lib/ghostMode';
+import { getGhostEffectiveProfileId, getGhostModeState, subscribeGhostMode } from '@/lib/ghostMode';
 import { loadEffectiveSessionProfile } from '@/lib/loadSessionProfile';
 import { MEMBER_HOME_PATH } from '@/lib/failClosedNavigation';
+import { ghostPassScreenAccess } from '@/lib/ghostNavigation';
 import { denyScreenAccessAndRedirect } from '@/lib/screenAccessDenyRedirect';
 import { resolveEffectiveProfileId } from '@/lib/sessionProfile';
 import type { ScreenAccessStatus } from '@/hooks/useScreenAccessGuard';
@@ -38,6 +39,12 @@ export function usePerfilScreenAccess(redirectPath: string = MEMBER_HOME_PATH): 
       void (async () => {
         if (!hasAllowedRef.current) {
           setStatus('checking');
+        }
+
+        if (ghostPassScreenAccess() || getGhostEffectiveProfileId()) {
+          hasAllowedRef.current = true;
+          setStatus('allowed');
+          return;
         }
 
         const aclStatus = await getAccessControlRpcStatus();

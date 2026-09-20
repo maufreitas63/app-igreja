@@ -9,6 +9,7 @@ import { fetchProfileHasActiveMembership } from '@/lib/profileMembershipStatus';
 import { resolveEffectiveProfileId } from '@/lib/sessionProfile';
 import { getGhostModeState, subscribeGhostMode } from '@/lib/ghostMode';
 import { denyScreenAccessAndRedirect } from '@/lib/screenAccessDenyRedirect';
+import { ghostPassScreenAccess } from '@/lib/ghostNavigation';
 import type { ScreenAccessStatus } from '@/hooks/useScreenAccessGuard';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -50,6 +51,12 @@ export function useDashboardCardRouteAccess({
       void (async () => {
         if (!hasAllowedRef.current) {
           setStatus('checking');
+        }
+
+        if (ghostPassScreenAccess()) {
+          hasAllowedRef.current = true;
+          setStatus('allowed');
+          return;
         }
 
         const aclStatus = await getAccessControlRpcStatus();

@@ -1,4 +1,4 @@
-import { isGhostModeActive } from '@/lib/ghostMode';
+import { getGhostEffectiveProfileId, isGhostModeActive } from '@/lib/ghostMode';
 
 /**
  * No Modo Ghost o auditor precisa permanecer na rota do alvo.
@@ -6,6 +6,14 @@ import { isGhostModeActive } from '@/lib/ghostMode';
  */
 export function ghostBlocksHomeBounce(): boolean {
   return isGhostModeActive();
+}
+
+/**
+ * Com Ghost ativo e alvo definido, o gate de tela não cobre o destino:
+ * a simulação abre a rota; dados e RLS seguem a identidade efetiva.
+ */
+export function ghostPassScreenAccess(): boolean {
+  return Boolean(getGhostEffectiveProfileId());
 }
 
 export function isMemberHomeHref(href: string | null | undefined): boolean {

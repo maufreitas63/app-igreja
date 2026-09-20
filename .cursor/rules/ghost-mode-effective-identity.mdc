@@ -39,8 +39,8 @@ Exceções (únicas):
 - **Encerrar** Ghost → voltar ao Início na identidade real
 - Toque explícito em Fechar / Voltar ao Início / Sair do Ghost
 
-ACL do alvo sem grant: **permanece na rota** com aviso («Sem acesso nesta simulação»). Não redireciona.
+ACL do alvo sem grant: **permanece na rota e mostra a tela** (dados/RLS da identidade efetiva). Não redireciona e **não** cobre com «Sem acesso nesta simulação».
 
 Bypass de Super Admin do operador fica **desligado** no Ghost; a ACL é a do alvo (`evaluate_profile_resource_access` / `x-ghost-profile-id`).
 
-Helpers: `ghostBlocksHomeBounce()` em `lib/ghostNavigation.ts`; `denyScreenAccessAndRedirect` e `ScreenAccessGate` respeitam isso.
+Helpers: `ghostBlocksHomeBounce()` / `ghostPassScreenAccess()` em `lib/ghostNavigation.ts`; `denyScreenAccessAndRedirect` e `ScreenAccessGate` respeitam isso.

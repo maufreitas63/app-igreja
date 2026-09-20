@@ -6,6 +6,7 @@ import {
 } from '@/lib/accessControl';
 import { getGhostModeState, subscribeGhostMode } from '@/lib/ghostMode';
 import { MEMBER_HOME_PATH } from '@/lib/failClosedNavigation';
+import { ghostPassScreenAccess } from '@/lib/ghostNavigation';
 import { denyScreenAccessAndRedirect } from '@/lib/screenAccessDenyRedirect';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
@@ -56,6 +57,11 @@ export function useScreenAccessGuard({
       let active = true;
 
       void (async () => {
+        if (ghostPassScreenAccess()) {
+          setStatus('allowed');
+          return;
+        }
+
         const [aclStatus, allowed] = await Promise.all([
           getAccessControlRpcStatus(),
           sessionHasAccess('screen', resourceKey, 'view'),

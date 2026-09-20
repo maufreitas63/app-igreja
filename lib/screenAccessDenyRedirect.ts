@@ -1,5 +1,4 @@
-import { ghostBlocksHomeBounce } from '@/lib/ghostNavigation';
-import { showAppToast } from '@/lib/appToast';
+import { ghostPassScreenAccess } from '@/lib/ghostNavigation';
 import { Alert } from 'react-native';
 import type { Href } from 'expo-router';
 
@@ -9,7 +8,7 @@ type RouterLike = {
 
 /**
  * Fora do Ghost: redireciona imediatamente (o Alert da web nem sempre executa onPress).
- * No Ghost: só avisa — o auditor permanece na rota do alvo.
+ * No Ghost: não redireciona e não alerta — a tela do alvo permanece aberta.
  */
 export function denyScreenAccessAndRedirect(
   router: RouterLike,
@@ -17,12 +16,7 @@ export function denyScreenAccessAndRedirect(
   title: string,
   message: string
 ) {
-  if (ghostBlocksHomeBounce()) {
-    showAppToast({
-      type: 'info',
-      text1: title,
-      text2: `${message} Modo Ghost: a pessoa simulada não tem este acesso.`,
-    });
+  if (ghostPassScreenAccess()) {
     return;
   }
 
