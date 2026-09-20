@@ -1,6 +1,7 @@
 import { MEMBER_HOME_PATH } from '@/lib/failClosedNavigation';
 import { withMinimalPresentation } from '@/lib/dashboardReturnNavigation';
 import { isDrawerNavigationPending } from '@/lib/drawerNavigationIntent';
+import { ghostBlocksHomeBounce } from '@/lib/ghostNavigation';
 import { useNavigation, useRouter } from 'expo-router';
 import type { Href } from 'expo-router';
 import { useCallback, useEffect, useRef } from 'react';
@@ -40,7 +41,7 @@ export function useReturnToCallerOnLeave({
     }
 
     const unsubscribe = navigation.addListener('beforeRemove', (event) => {
-      if (allowLeaveRef.current || isDrawerNavigationPending()) {
+      if (allowLeaveRef.current || isDrawerNavigationPending() || ghostBlocksHomeBounce()) {
         return;
       }
 
@@ -67,6 +68,9 @@ export function useReturnToCallerOnLeave({
     }
 
     const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
+      if (ghostBlocksHomeBounce()) {
+        return false;
+      }
       returnToCaller();
       return true;
     });

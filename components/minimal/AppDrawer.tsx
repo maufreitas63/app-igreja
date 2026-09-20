@@ -16,6 +16,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Modal,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -173,6 +174,85 @@ export function AppDrawer() {
 
   const panelTopOffset = insets.top + MINIMAL_TOP_CHROME_MIN_HEIGHT;
 
+  const drawerBody = (
+    <View style={styles.overlay}>
+      <View style={[styles.chromeGap, { height: panelTopOffset }]} />
+      <View style={styles.sheet}>
+        {settingsOpen && canAccessSettings ? (
+          <AppDrawerSettings
+            onClose={() => {
+              traceClick('drawer', 'settings-close-press');
+              setSettingsOpen(false);
+            }}
+            sections={sections}
+            trailItems={trailItems}
+            pinnedItem={pinnedItem}
+            helpItem={helpItem}
+            commercialLockActive={commercialLockActive}
+          />
+        ) : (
+          <View style={styles.panel}>
+            <View style={styles.headerRow}>
+              <Text style={styles.title}>Menu</Text>
+              {canAccessSettings ? (
+                <Pressable
+                  accessibilityLabel="Abrir configurações"
+                  accessibilityRole="button"
+                  onPress={() => {
+                    traceClick('drawer', 'settings-open-press');
+                    setSettingsOpen(true);
+                  }}
+                  style={styles.settingsButton}
+                >
+                  <FontAwesome name="cog" size={MINIMAL_ICON.menu - 2} color={MINIMAL_UI.icon} />
+                </Pressable>
+              ) : null}
+            </View>
+            {loading ? (
+              <View style={styles.loaderWrap}>
+                <ActivityIndicator color={MINIMAL_UI.icon} />
+              </View>
+            ) : (
+              <ScrollView
+                style={styles.scroll}
+                contentContainerStyle={styles.scrollContent}
+                showsVerticalScrollIndicator
+                keyboardShouldPersistTaps="handled"
+              >
+                {visibleItems.map((item) => (
+                  <TouchableOpacity
+                    key={item.moduleKey}
+                    style={[styles.item, item.pendingRoute && styles.itemPendingRoute]}
+                    onPress={() => handlePress(item)}
+                    disabled={item.pendingRoute}
+                    accessibilityState={{ disabled: item.pendingRoute }}
+                  >
+                    {item.dividerBefore ? <View style={styles.divider} /> : null}
+                    <Text style={[styles.itemLabel, item.pendingRoute && styles.itemLabelPendingRoute]}>
+                      {item.label}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            )}
+            <MinimalExitBar variant="drawer" />
+          </View>
+        )}
+        <Pressable style={styles.backdrop} onPress={handleBackdropPress} accessibilityLabel="Fechar menu" />
+      </View>
+    </View>
+  );
+
+  // Web: overlay no AppShell, sem Modal — o Modal do RN dispara history.back()
+  // e o Expo Router desfaz a tela (Ghost / Perfil / qualquer item).
+  if (Platform.OS === 'web') {
+    if (!isOpen) {
+      return null;
+    }
+
+    return <View style={styles.shellOverlay}>{drawerBody}</View>;
+  }
+
   return (
     <Modal
       animationType="slide"
@@ -180,77 +260,17 @@ export function AppDrawer() {
       visible={isOpen}
       onRequestClose={settingsOpen ? () => setSettingsOpen(false) : closeDrawer}
     >
-      <View style={styles.overlay}>
-        <View style={[styles.chromeGap, { height: panelTopOffset }]} />
-        <View style={styles.sheet}>
-          {settingsOpen && canAccessSettings ? (
-            <AppDrawerSettings
-              onClose={() => {
-                traceClick('drawer', 'settings-close-press');
-                setSettingsOpen(false);
-              }}
-              sections={sections}
-              trailItems={trailItems}
-              pinnedItem={pinnedItem}
-              helpItem={helpItem}
-              commercialLockActive={commercialLockActive}
-            />
-          ) : (
-            <View style={styles.panel}>
-              <View style={styles.headerRow}>
-                <Text style={styles.title}>Menu</Text>
-                {canAccessSettings ? (
-                  <Pressable
-                    accessibilityLabel="Abrir configurações"
-                    accessibilityRole="button"
-                    onPress={() => {
-                      traceClick('drawer', 'settings-open-press');
-                      setSettingsOpen(true);
-                    }}
-                    style={styles.settingsButton}
-                  >
-                    <FontAwesome name="cog" size={MINIMAL_ICON.menu - 2} color={MINIMAL_UI.icon} />
-                  </Pressable>
-                ) : null}
-              </View>
-              {loading ? (
-                <View style={styles.loaderWrap}>
-                  <ActivityIndicator color={MINIMAL_UI.icon} />
-                </View>
-              ) : (
-                <ScrollView
-                  style={styles.scroll}
-                  contentContainerStyle={styles.scrollContent}
-                  showsVerticalScrollIndicator
-                  keyboardShouldPersistTaps="handled"
-                >
-                  {visibleItems.map((item) => (
-                    <TouchableOpacity
-                      key={item.moduleKey}
-                      style={[styles.item, item.pendingRoute && styles.itemPendingRoute]}
-                      onPress={() => handlePress(item)}
-                      disabled={item.pendingRoute}
-                      accessibilityState={{ disabled: item.pendingRoute }}
-                    >
-                      {item.dividerBefore ? <View style={styles.divider} /> : null}
-                      <Text style={[styles.itemLabel, item.pendingRoute && styles.itemLabelPendingRoute]}>
-                        {item.label}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </ScrollView>
-              )}
-              <MinimalExitBar variant="drawer" />
-            </View>
-          )}
-          <Pressable style={styles.backdrop} onPress={handleBackdropPress} accessibilityLabel="Fechar menu" />
-        </View>
-      </View>
+      {drawerBody}
     </Modal>
   );
 }
 
 const styles = StyleSheet.create({
+  shellOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 99980,
+    elevation: 99980,
+  },
   overlay: {
     flex: 1,
     flexDirection: 'column',

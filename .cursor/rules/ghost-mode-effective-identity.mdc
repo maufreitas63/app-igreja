@@ -1,11 +1,13 @@
 ---
-description: Modo Ghost deve espelhar 100% a identidade efetiva do alvo
+description: Modo Ghost deve espelhar a identidade efetiva do alvo e nunca bounce ao Início
 alwaysApply: true
 ---
 
-# Modo Ghost — identidade efetiva
+# Modo Ghost — identidade efetiva e navegação
 
-Com Modo Ghost ativo, **toda** tela/lista/permissão deve usar a identidade do alvo (`loadEffectiveSessionProfile` / `resolveEffectiveProfileId` / `getEffectiveUserPhone`).
+Com Modo Ghost ativo, **toda** tela/lista/permissão usa a identidade do alvo (`loadEffectiveSessionProfile` / `resolveEffectiveProfileId` / `getEffectiveUserPhone`).
+
+O auditor precisa **entrar e permanecer** na rota escolhida (menu, Eu quero…, deep link). Simular como outra pessoa **não** é um redirect fail-closed para o Início.
 
 ## Proibido em fluxos de identidade do usuário
 
@@ -21,3 +23,24 @@ Com Modo Ghost ativo, **toda** tela/lista/permissão deve usar a identidade do a
 - Família: `sessionProfile.family_id` (fallback só com o telefone efetivo)
 
 `getStoredUserPhone` / `resolveRealSessionProfileId` só para auditoria, login real, totem e encerrar Ghost.
+
+## Navegação — nunca bounce ao Início
+
+Com Ghost ativo é **proibido**:
+
+- `router.replace('/(tabs)')` ou `MEMBER_HOME_PATH` por ACL negada, gate fail-closed, `beforeRemove` ou trap de `popstate`
+- `history.pushState` extra (AppBackHandler) que o Expo Router desfaz com `history.back()`
+- Restaurar o href atual quando ele ainda é `/` ou `/(tabs)` (isso “cancela” Perfil e qualquer item do menu)
+- Modal do RN Web no menu / diálogos que disparam `history.back()` ao fechar
+
+Exceções (únicas):
+
+- **Iniciar** Ghost → ir ao Início **uma vez**, já como o alvo
+- **Encerrar** Ghost → voltar ao Início na identidade real
+- Toque explícito em Fechar / Voltar ao Início / Sair do Ghost
+
+ACL do alvo sem grant: **permanece na rota** com aviso («Sem acesso nesta simulação»). Não redireciona.
+
+Bypass de Super Admin do operador fica **desligado** no Ghost; a ACL é a do alvo (`evaluate_profile_resource_access` / `x-ghost-profile-id`).
+
+Helpers: `ghostBlocksHomeBounce()` em `lib/ghostNavigation.ts`; `denyScreenAccessAndRedirect` e `ScreenAccessGate` respeitam isso.

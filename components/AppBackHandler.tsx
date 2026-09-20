@@ -1,8 +1,10 @@
 import { runAppBackInterceptor } from '@/lib/appBackIntercept';
 import { isDrawerNavigationPending, installDrawerNavigationCapture } from '@/lib/drawerNavigationIntent';
+import { ghostBlocksHomeBounce } from '@/lib/ghostNavigation';
+import { subscribeGhostMode } from '@/lib/ghostMode';
 import { confirmExitApplication } from '@/lib/userSession';
 import { usePathname, useRouter, useSegments } from 'expo-router';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { BackHandler, Platform } from 'react-native';
 
 const normalizePathname = (pathname: string) => {
@@ -57,7 +59,6 @@ export const isAppIndexScreen = (pathname: string, segments: readonly string[]) 
     return true;
   }
 
-  // Home autenticada reportada como `/` (comum no Expo Router web).
   if ((normalized === '/' || normalized === '/index') && webHasSessionHint()) {
     return true;
   }
@@ -84,13 +85,15 @@ const isPublicLoginScreen = (pathname: string, segments: readonly string[]) => {
 
 /**
  * Botão nativo "voltar" (Android) e voltar do navegador/PWA:
- * - fora do Índice → vai ao Índice;
- * - no Índice → diálogo «Encerrar sessão».
+ * - no Índice → diálogo «Encerrar sessão»;
+ * - fora do Índice → o Expo Router aplica o histórico (não forçar Início);
+ * - Modo Ghost → nunca intercepta rumo ao Início.
  */
 export function AppBackHandler() {
   const router = useRouter();
   const pathname = usePathname();
   const segments = useSegments();
+  const [ghostActive, setGhostActive] = useState(() => ghostBlocksHomeBounce());
 
   const pathnameRef = useRef(pathname);
   const segmentsRef = useRef(segments);
@@ -99,6 +102,14 @@ export function AppBackHandler() {
   pathnameRef.current = pathname;
   segmentsRef.current = segments;
 
+  useEffect(
+    () =>
+      subscribeGhostMode(() => {
+        setGhostActive(ghostBlocksHomeBounce());
+      }),
+    []
+  );
+
   const askExitSession = () => {
     if (exitDialogOpenRef.current) {
       return;
@@ -106,7 +117,6 @@ export function AppBackHandler() {
 
     exitDialogOpenRef.current = true;
 
-    // Deixa o popstate/navegação assentar antes do Modal (evita o host sumir no re-render).
     const open = () => {
       void confirmExitApplication().finally(() => {
         exitDialogOpenRef.current = false;
@@ -120,43 +130,25 @@ export function AppBackHandler() {
     }
   };
 
-  // Listener web montado uma vez — refs carregam a rota atual.
   useEffect(() => {
     if (Platform.OS !== 'web' || typeof window === 'undefined') {
       return undefined;
     }
 
-    const pushTrap = () => {
-      try {
-        window.history.pushState({ appBackHandler: true }, '', window.location.href);
-      } catch {
-        // ignore
-      }
-    };
-
     const onPopState = () => {
-      const currentPath = pathnameRef.current;
-      const currentSegments = segmentsRef.current;
-      const onHome = isAppIndexScreen(currentPath, currentSegments);
-
-      // Menu / Expo Router também disparam popstate. Não reempilhar nem ir ao Início.
-      if (isDrawerNavigationPending()) {
+      if (ghostBlocksHomeBounce() || isDrawerNavigationPending()) {
         return;
       }
 
-      // Reempilha imediatamente para o próximo "voltar" continuar interceptável.
-      pushTrap();
+      const currentPath = pathnameRef.current;
+      const currentSegments = segmentsRef.current;
+      const onHome = isAppIndexScreen(currentPath, currentSegments);
 
       if (runAppBackInterceptor()) {
         return;
       }
 
       if (onHome) {
-        try {
-          router.replace(HOME_HREF);
-        } catch {
-          // ignore
-        }
         askExitSession();
         return;
       }
@@ -164,22 +156,35 @@ export function AppBackHandler() {
       if (isPublicLoginScreen(currentPath, currentSegments)) {
         return;
       }
-
-      router.replace(HOME_HREF);
     };
 
-    pushTrap();
     installDrawerNavigationCapture();
     window.addEventListener('popstate', onPopState);
 
     return () => {
       window.removeEventListener('popstate', onPopState);
     };
-     
   }, [router]);
 
-  // Trap só no Índice (Encerrar sessão). Empilhar pushState em toda rota
-  // fazia o fechar do menu / Expo Router “voltar” e cair no Início.
+  // Trap só no Índice, fora do Ghost. Empilhar pushState em toda rota
+  // (ou no Ghost) faz o Expo Router / menu “voltar” e cair no Início.
+  useEffect(() => {
+    if (Platform.OS !== 'web' || typeof window === 'undefined') {
+      return undefined;
+    }
+
+    if (ghostActive || !isAppIndexScreen(pathname, segments)) {
+      return undefined;
+    }
+
+    try {
+      window.history.pushState({ appBackHandler: true }, '', window.location.href);
+    } catch {
+      // ignore
+    }
+
+    return undefined;
+  }, [ghostActive, pathname, segments]);
 
   useEffect(() => {
     if (Platform.OS === 'web') {
@@ -198,6 +203,10 @@ export function AppBackHandler() {
 
       if (isPublicLoginScreen(pathnameRef.current, segmentsRef.current)) {
         return true;
+      }
+
+      if (ghostBlocksHomeBounce()) {
+        return false;
       }
 
       router.replace(HOME_HREF);

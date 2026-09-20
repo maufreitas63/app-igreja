@@ -4,7 +4,6 @@ import { MINIMAL_SCREEN_PADDING_LEFT, MINIMAL_SCREEN_PADDING_RIGHT, MINIMAL_UI }
 import React from 'react';
 import { ScrollView, StyleSheet, View, type ViewStyle } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { AppDrawer } from './AppDrawer';
 import { MinimalTopLeftChrome } from './MinimalTopLeftChrome';
 
 type Props = {
@@ -35,7 +34,6 @@ function MinimalScreenLayoutBody({
 }: Props) {
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
-      <AppDrawer />
       <View style={styles.shell}>
         <MinimalTopLeftChrome title={title} header={header} showGreeting={showGreeting} />
 

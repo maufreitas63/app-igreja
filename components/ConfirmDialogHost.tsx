@@ -2,7 +2,7 @@ import { settleConfirmDialog, subscribeConfirmDialogHost, type ConfirmDialogRequ
 import { boxShadowStyle } from '@/lib/boxShadow';
 import { MINIMAL_TYPO, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import React, { useEffect, useState } from 'react';
-import { Modal, Platform, Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Platform, Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 function DialogCopy({ request }: { request: ConfirmDialogRequest }) {
   const title = request.title?.trim() ?? '';
@@ -44,56 +44,66 @@ export function ConfirmDialogHost() {
     close(request.alertOnly ? true : false);
   };
 
-  return (
-    <Modal transparent visible animationType="fade" onRequestClose={dismiss}>
-      <View style={styles.modalRoot}>
-        <Pressable style={styles.backdrop} onPress={dismiss} accessibilityRole="button" />
-        <View style={styles.cardShell}>
-          <View style={styles.card}>
-            <DialogCopy request={request} />
-            <View style={[styles.actions, request.alertOnly && styles.actionsSingle]}>
-              {request.alertOnly ? null : (
-                <TouchableOpacity
-                  activeOpacity={0.85}
-                  accessibilityRole="button"
-                  style={styles.button}
-                  onPress={() => close(false)}
-                >
-                  <View style={[styles.buttonInner, styles.cancelButton]}>
-                    <Text style={styles.cancelButtonText}>
-                      {request.cancelLabel}
-                    </Text>
-                  </View>
-                </TouchableOpacity>
-              )}
+  const dialogBody = (
+    <View style={styles.modalRoot}>
+      <Pressable style={styles.backdrop} onPress={dismiss} accessibilityRole="button" />
+      <View style={styles.cardShell}>
+        <View style={styles.card}>
+          <DialogCopy request={request} />
+          <View style={[styles.actions, request.alertOnly && styles.actionsSingle]}>
+            {request.alertOnly ? null : (
               <TouchableOpacity
                 activeOpacity={0.85}
                 accessibilityRole="button"
                 style={styles.button}
-                onPress={() => close(true)}
+                onPress={() => close(false)}
               >
-                <View
-                  style={[
-                    styles.buttonInner,
-                    request.destructive ? styles.destructiveButton : styles.confirmButton,
-                  ]}
-                >
-                  <Text
-                    style={request.destructive ? styles.destructiveButtonText : styles.confirmButtonText}
-                  >
-                    {request.confirmLabel}
+                <View style={[styles.buttonInner, styles.cancelButton]}>
+                  <Text style={styles.cancelButtonText}>
+                    {request.cancelLabel}
                   </Text>
                 </View>
               </TouchableOpacity>
-            </View>
+            )}
+            <TouchableOpacity
+              activeOpacity={0.85}
+              accessibilityRole="button"
+              style={styles.button}
+              onPress={() => close(true)}
+            >
+              <View
+                style={[
+                  styles.buttonInner,
+                  request.destructive ? styles.destructiveButton : styles.confirmButton,
+                ]}
+              >
+                <Text
+                  style={request.destructive ? styles.destructiveButtonText : styles.confirmButtonText}
+                >
+                  {request.confirmLabel}
+                </Text>
+              </View>
+            </TouchableOpacity>
           </View>
         </View>
       </View>
-    </Modal>
+    </View>
   );
+
+  // Web: overlay no root, sem Modal — o Modal do RN dispara history.back()
+  // e o Expo Router desfaz a tela (Ghost / Perfil / qualquer item).
+  return <View style={styles.webOverlay}>{dialogBody}</View>;
 }
 
 const styles = StyleSheet.create({
+  webOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 999998,
+    elevation: 999998,
+    ...(Platform.OS === 'web'
+      ? { position: 'fixed' as unknown as 'absolute' }
+      : null),
+  },
   modalRoot: Platform.select({
     web: {
       position: 'fixed',

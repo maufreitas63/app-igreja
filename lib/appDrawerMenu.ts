@@ -482,6 +482,8 @@ function openScreen(
   pathname: Href,
   params?: Record<string, string>
 ) {
+  const path = typeof pathname === 'string' ? pathname : String(pathname);
+  markDrawerNavigation(path);
   router.push({
     pathname,
     params: params ?? withFailClosedReturn(),

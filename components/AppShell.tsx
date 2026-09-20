@@ -6,6 +6,7 @@ import { EventOrchestrationListener } from '@/components/EventOrchestrationListe
 import { PastoralAppointmentReminderListener } from '@/components/PastoralAppointmentReminderListener';
 import { ScaleSwapNoticesListener } from '@/components/ScaleSwapNoticesListener';
 import { TotemDeviceRouteGuard } from '@/components/TotemDeviceRouteGuard';
+import { AppDrawer } from '@/components/minimal/AppDrawer';
 import { AppDrawerProvider } from '@/context/AppDrawerContext';
 import { EntityPrefixProvider } from '@/context/EntityPrefixContext';
 import { PaletteProvider } from '@/context/PaletteContext';
@@ -80,16 +81,28 @@ function AppShellContent() {
 }
 
 export function AppShell() {
+  const pathname = usePathname();
+  const segments = useSegments();
+  const showDrawer = !isWatermarkExcludedRoute(pathname, segments);
+
   return (
     <PaletteProvider>
       <AppDrawerProvider>
-        <AppShellContent />
+        <View style={styles.shellRoot}>
+          <AppShellContent />
+          {showDrawer ? <AppDrawer /> : null}
+        </View>
       </AppDrawerProvider>
     </PaletteProvider>
   );
 }
 
 const styles = StyleSheet.create({
+  shellRoot: {
+    flex: 1,
+    position: 'relative',
+    overflow: 'visible',
+  },
   app: {
     flex: 1,
   },

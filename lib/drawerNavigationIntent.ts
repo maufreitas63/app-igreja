@@ -1,7 +1,8 @@
+import { ghostBlocksHomeBounce, isMemberHomeHref } from '@/lib/ghostNavigation';
+
 /**
  * Janela em que o menu lateral está navegando.
- * No web o Modal do RN chama history.back() ao fechar; o Expo Router trata isso
- * como voltar e desfaz Perfil/Ghost. Interceptamos o popstate na captura.
+ * Não regrava o histórico para o Início — isso desfaz Perfil/Ghost.
  */
 const DRAWER_NAV_WINDOW_MS = 2500;
 
@@ -18,12 +19,12 @@ function currentHref() {
 }
 
 function restorePendingDestination() {
-  if (typeof window === 'undefined') {
+  if (typeof window === 'undefined' || ghostBlocksHomeBounce()) {
     return;
   }
 
-  const href = pendingDestination || currentHref();
-  if (!href) {
+  const href = pendingDestination;
+  if (!href || isMemberHomeHref(href)) {
     return;
   }
 
@@ -35,7 +36,11 @@ function restorePendingDestination() {
 }
 
 function onPopStateCapture(event: PopStateEvent) {
-  if (!isDrawerNavigationPending()) {
+  if (ghostBlocksHomeBounce() || !isDrawerNavigationPending()) {
+    return;
+  }
+
+  if (!pendingDestination || isMemberHomeHref(pendingDestination)) {
     return;
   }
 
@@ -60,12 +65,10 @@ export function markDrawerNavigation(destinationHref?: string | null) {
   ensureCaptureListener();
   drawerNavUntil = Date.now() + DRAWER_NAV_WINDOW_MS;
 
-  if (destinationHref?.trim()) {
-    pendingDestination = destinationHref.trim();
-    return;
+  const next = destinationHref?.trim() || null;
+  if (next && !isMemberHomeHref(next)) {
+    pendingDestination = next;
   }
-
-  pendingDestination = currentHref();
 }
 
 export function isDrawerNavigationPending() {
@@ -73,5 +76,11 @@ export function isDrawerNavigationPending() {
 }
 
 export function pinDrawerDestinationFromLocation() {
+  const href = currentHref();
+  if (href && !isMemberHomeHref(href)) {
+    markDrawerNavigation(href);
+    return;
+  }
+
   markDrawerNavigation();
 }

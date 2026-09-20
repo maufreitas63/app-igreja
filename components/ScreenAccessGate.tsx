@@ -1,9 +1,10 @@
 import type { ScreenAccessStatus } from '@/hooks/useScreenAccessGuard';
-import { FAIL_CLOSED_REDIRECT_PATH } from '@/lib/failClosedNavigation';
+import { FAIL_CLOSED_REDIRECT_PATH, MEMBER_HOME_PATH } from '@/lib/failClosedNavigation';
+import { ghostBlocksHomeBounce } from '@/lib/ghostNavigation';
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { useRouter, type Href } from 'expo-router';
 import React, { useEffect, useRef } from 'react';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 
 type ScreenAccessGateProps = {
   status: ScreenAccessStatus;
@@ -19,10 +20,15 @@ export function ScreenAccessGate({
 }: ScreenAccessGateProps) {
   const router = useRouter();
   const redirectedRef = useRef(false);
+  const ghostActive = ghostBlocksHomeBounce();
 
   useEffect(() => {
     if (status !== 'denied') {
       redirectedRef.current = false;
+      return;
+    }
+
+    if (ghostActive) {
       return;
     }
 
@@ -32,10 +38,30 @@ export function ScreenAccessGate({
 
     redirectedRef.current = true;
     router.replace(deniedRedirectPath as Href);
-  }, [deniedRedirectPath, router, status]);
+  }, [deniedRedirectPath, ghostActive, router, status]);
 
   if (status === 'allowed' || status === 'skipped' || status === 'checking') {
     return <>{children}</>;
+  }
+
+  if (ghostActive) {
+    return (
+      <View style={styles.gate}>
+        <Text style={styles.gateTitle}>Sem acesso nesta simulação</Text>
+        <Text style={styles.gateText}>
+          A pessoa do Modo Ghost não tem permissão para esta tela. Use o botão abaixo para voltar
+          ao Início sem encerrar a simulação.
+        </Text>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Voltar ao Início"
+          onPress={() => router.replace(MEMBER_HOME_PATH as Href)}
+          style={styles.gateClose}
+        >
+          <Text style={styles.gateCloseText}>Voltar ao Início</Text>
+        </Pressable>
+      </View>
+    );
   }
 
   return (
@@ -55,9 +81,30 @@ const styles = StyleSheet.create({
     padding: 24,
     backgroundColor: MINIMAL_UI.background,
   },
+  gateTitle: {
+    color: MINIMAL_UI.text,
+    fontSize: 16,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
   gateText: {
     color: MINIMAL_UI.textMuted,
     fontSize: 14,
     textAlign: 'center',
+  },
+  gateClose: {
+    marginTop: 8,
+    minHeight: 44,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 12,
+    backgroundColor: MINIMAL_UI.blueDark,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  gateCloseText: {
+    color: MINIMAL_UI.onDark,
+    fontSize: 15,
+    fontWeight: '700',
   },
 });
