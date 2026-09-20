@@ -4,6 +4,7 @@ import { appAlert } from '@/lib/appAlert';
 import { fetchMyPastoralRequests, formatPastoralRequestDate } from '@/lib/pastoralRequest';
 import {
   bookPastoralSlot,
+  buildPastoralBookingWhatsAppMessage,
   fetchAvailablePastoralSlots,
   fetchPastoralAttendants,
   formatPastoralSlotTimeRange,
@@ -12,7 +13,9 @@ import {
   type PastoralAttendanceType,
   type PastoralAttendant,
 } from '@/lib/pastoralSlotsApi';
+import { loadEffectiveSessionProfile } from '@/lib/loadSessionProfile';
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
+import { openWhatsAppLikeBirthdaysWithText } from '@/lib/whatsapp';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
@@ -105,13 +108,43 @@ export function PastoralSchedulePanel({ profileId, vigilance = false }: Props) {
     setSaving(true);
 
     try {
+      const slot = selectedSlot;
       const result = await bookPastoralSlot(slotId, requestId || null);
-      await appAlert(result.success ? 'Agendado' : 'Não foi possível agendar', result.message);
 
       if (result.success) {
+        const profile = await loadEffectiveSessionProfile();
+        const memberName = profile?.full_name?.trim() || 'Um irmão da igreja';
+        const pastorName = result.pastorName || slot?.pastor_name || 'Atendente';
+        const pastorPhone = result.pastorPhone || slot?.pastor_phone || null;
+        const startsAt = result.startsAt || slot?.data_hora_inicio || '';
+        const endsAt = result.endsAt || slot?.data_hora_fim || '';
+        const tipo = result.tipo || slot?.tipo_atendimento || 'presencial';
+        const opened = pastorPhone
+          ? openWhatsAppLikeBirthdaysWithText(
+              pastorPhone,
+              buildPastoralBookingWhatsAppMessage({
+                pastorName,
+                memberName,
+                startsAt,
+                endsAt,
+                tipo,
+              })
+            )
+          : null;
+
         setSlotId('');
         await load();
+
+        if (!opened) {
+          await appAlert(
+            'Agendado',
+            `${result.message}\n\nNão foi possível avisar ${pastorName} no WhatsApp (telefone não cadastrado).`
+          );
+          return;
+        }
       }
+
+      await appAlert(result.success ? 'Agendado' : 'Não foi possível agendar', result.message);
     } finally {
       setSaving(false);
     }

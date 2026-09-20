@@ -35,6 +35,7 @@ export type AvailablePastoralSlot = {
   id: string;
   pastor_id: string;
   pastor_name: string;
+  pastor_phone: string | null;
   data_hora_inicio: string;
   data_hora_fim: string;
   tipo_atendimento: PastoralAttendanceType;
@@ -201,6 +202,7 @@ export async function fetchAvailablePastoralSlots(pastorId?: string | null) {
         id,
         pastor_id: String(row.pastor_id ?? ''),
         pastor_name: String(row.pastor_name ?? 'Atendente'),
+        pastor_phone: String(row.pastor_phone ?? '').trim() || null,
         data_hora_inicio: String(row.data_hora_inicio ?? ''),
         data_hora_fim: String(row.data_hora_fim ?? ''),
         tipo_atendimento: parseTipo(row.tipo_atendimento),
@@ -208,6 +210,30 @@ export async function fetchAvailablePastoralSlots(pastorId?: string | null) {
       } satisfies AvailablePastoralSlot;
     })
     .filter((row): row is AvailablePastoralSlot => row !== null);
+}
+
+export function buildPastoralBookingWhatsAppMessage(input: {
+  pastorName: string;
+  memberName: string;
+  startsAt: string;
+  endsAt: string;
+  tipo: PastoralAttendanceType;
+}) {
+  const pastorFirst = input.pastorName.trim().split(/\s+/).filter(Boolean)[0] ?? '';
+  const memberName = input.memberName.trim() || 'Um irmão da igreja';
+  const when = formatPastoralSlotTimeRange(input.startsAt, input.endsAt);
+  const tipo = PASTORAL_ATTENDANCE_TYPE_LABEL[input.tipo];
+
+  return [
+    pastorFirst ? `Olá, ${pastorFirst}!` : 'Olá!',
+    '',
+    `${memberName} reservou um horário que estava disponível na sua agenda pastoral.`,
+    '',
+    `Quando: ${when}`,
+    `Tipo: ${tipo}`,
+    '',
+    'Esta mensagem confirma a reserva do horário.',
+  ].join('\n');
 }
 
 export async function bookPastoralSlot(slotId: string, requestId?: string | null) {
@@ -219,6 +245,11 @@ export async function bookPastoralSlot(slotId: string, requestId?: string | null
   return {
     success: payload.success === true,
     message: String(payload.message ?? 'Falha ao agendar.'),
+    pastorName: String(payload.pastor_name ?? '').trim() || null,
+    pastorPhone: String(payload.pastor_phone ?? '').trim() || null,
+    startsAt: String(payload.data_hora_inicio ?? '').trim() || null,
+    endsAt: String(payload.data_hora_fim ?? '').trim() || null,
+    tipo: parseTipo(payload.tipo_atendimento),
   };
 }
 
