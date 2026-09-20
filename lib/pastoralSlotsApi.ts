@@ -6,7 +6,7 @@
 import { supabase } from '@/lib/supabase';
 import { isSupabaseRpcMissingError } from '@/lib/supabaseRpc';
 import {
-  buildCalendarCancelPageUrl,
+  buildGoogleCalendarCancelUrl,
   buildGoogleCalendarUrl,
   eventoAgendaFromChurchEvent,
 } from '@/lib/calendarIcs';
@@ -309,7 +309,7 @@ export function buildPastoralCancelWhatsAppMessage(input: {
     slotId: input.slotId,
     forAttendant: true,
   });
-  const cancelUrl = evento ? buildCalendarCancelPageUrl(evento) : null;
+  const cancelUrl = evento ? buildGoogleCalendarCancelUrl(evento) : null;
 
   const lines = [
     pastorFirst ? `Olá, ${pastorFirst}!` : 'Olá!',
@@ -326,7 +326,7 @@ export function buildPastoralCancelWhatsAppMessage(input: {
   if (cancelUrl) {
     lines.push(
       '',
-      'Se o compromisso já estiver na sua agenda, toque no link para removê-lo:',
+      'Para cancelar este compromisso no Google Agenda, toque no link, abra o horário e escolha Excluir:',
       cancelUrl
     );
   }

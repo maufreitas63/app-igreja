@@ -4,7 +4,6 @@ import {
   APP_EVENT_TIMEZONE,
   parseEventDateParts,
 } from '@/lib/eventDate';
-import { resolveShareableAppOrigin } from '@/lib/instancePublicUrl';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as Linking from 'expo-linking';
 import * as Sharing from 'expo-sharing';
@@ -192,7 +191,7 @@ export function buildIcsCalendar(
   return `${lines.join('\r\n')}\r\n`;
 }
 
-/** Abre o Google Agenda no dia do compromisso (America/Sao_Paulo). */
+/** Abre o Google Agenda no dia em que o compromisso foi gravado. */
 export function buildGoogleCalendarDayUrl(instant: Date): string {
   const parts = ICS_LOCAL_FORMATTER.formatToParts(instant);
   const year = pickIntlPart(parts, 'year');
@@ -201,17 +200,8 @@ export function buildGoogleCalendarDayUrl(instant: Date): string {
   return `https://calendar.google.com/calendar/r/day/${year}/${month}/${day}?ctz=${encodeURIComponent(APP_EVENT_TIMEZONE)}`;
 }
 
-/** Página pública para o destinatário do WhatsApp remover o compromisso. */
-export function buildCalendarCancelPageUrl(evento: EventoAgenda): string {
-  const origin = resolveShareableAppOrigin();
-  const params = new URLSearchParams({
-    uid: resolveCalendarEventUid(evento),
-    start: evento.dataInicio.toISOString(),
-    end: evento.dataFim.toISOString(),
-    title: evento.titulo,
-    loc: evento.local,
-  });
-  return `${origin}/agenda-cancelar?${params.toString()}`;
+export function buildGoogleCalendarCancelUrl(evento: EventoAgenda): string {
+  return buildGoogleCalendarDayUrl(evento.dataInicio);
 }
 
 export function buildIcsBlob(evento: EventoAgenda): Blob {
@@ -456,51 +446,14 @@ export function eventoAgendaFromCancelParams(input: {
 }
 
 export function openCancelEventOnDeviceCalendar(evento: EventoAgenda): void {
-  const googleDayUrl = buildGoogleCalendarDayUrl(evento.dataInicio);
-  const ics = buildIcsCalendar(evento, { method: 'CANCEL', sequence: 1 });
-  const fileName = `cancelar-${buildIcsFileName(evento.titulo)}`;
+  const googleUrl = buildGoogleCalendarCancelUrl(evento);
 
   if (Platform.OS === 'web' && typeof window !== 'undefined') {
-    try {
-      downloadIcsInBrowser(ics, fileName);
-    } catch (error) {
-      console.warn('Download do cancelamento (.ics):', error);
-    }
+    window.open(googleUrl, '_blank', 'noopener,noreferrer');
     return;
   }
 
-  void (async () => {
-    try {
-      const cacheDir = FileSystem.cacheDirectory;
-      if (!cacheDir) {
-        throw new Error('Armazenamento temporário indisponível neste dispositivo.');
-      }
-
-      const fileUri = `${cacheDir}${fileName}`;
-      await FileSystem.writeAsStringAsync(fileUri, ics, {
-        encoding: FileSystem.EncodingType.UTF8,
-      });
-
-      const canShare = await Sharing.isAvailableAsync();
-      if (canShare) {
-        await Sharing.shareAsync(fileUri, {
-          mimeType: 'text/calendar',
-          UTI: 'com.apple.ical.ics',
-          dialogTitle: 'Remover da agenda',
-        });
-        return;
-      }
-
-      await Linking.openURL(googleDayUrl);
-    } catch (error) {
-      console.warn('Cancelamento na agenda:', error);
-      try {
-        await Linking.openURL(googleDayUrl);
-      } catch (linkError) {
-        console.warn('Abrir Google Agenda:', linkError);
-      }
-    }
-  })();
+  void Linking.openURL(googleUrl);
 }
 
 export async function offerCancelledEventFromCalendar(input: {
@@ -524,15 +477,12 @@ export async function offerCancelledEventFromCalendar(input: {
   }
 
   await confirmDialog(
-    'Remover da agenda',
-    'Se este horário já estiver na agenda do aparelho, toque em Remover para enviar o cancelamento ao Apple Calendar ou Outlook e abrir o Google Agenda neste dia.',
-    'Remover',
+    'Cancelar no Google Agenda',
+    'O Google Agenda abre no compromisso registrado. Toque no horário e escolha Excluir.',
+    'Abrir Google Agenda',
     'Agora não',
     {
       onConfirmed: () => {
-        if (Platform.OS === 'web' && typeof window !== 'undefined') {
-          window.open(buildGoogleCalendarDayUrl(evento.dataInicio), '_blank', 'noopener,noreferrer');
-        }
         openCancelEventOnDeviceCalendar(evento);
       },
     }

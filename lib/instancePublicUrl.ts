@@ -69,19 +69,6 @@ function firstUsable(candidates: Array<string | null | undefined>): string | nul
   return null;
 }
 
-/** Origin HTTPS público para links de WhatsApp — nunca localhost. */
-export function resolveShareableAppOrigin(): string {
-  let fromOrigin: string | null = null;
-  if (Platform.OS === 'web' && typeof window !== 'undefined') {
-    fromOrigin = window.location?.origin?.trim() || null;
-  }
-
-  return (
-    firstUsable([fromOrigin, process.env.EXPO_PUBLIC_APP_URL, DEFAULT_PRODUCTION_APP_URL])
-    ?? DEFAULT_PRODUCTION_APP_URL
-  );
-}
-
 /**
  * Monta a URL compartilhável da instância (`?igreja=IBEP`).
  * Sempre HTTPS público — nunca localhost nem placeholder.
