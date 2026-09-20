@@ -1,15 +1,24 @@
 import { DropdownSelect } from '@/components/ui/DropdownSelect';
 import { SegmentChipRow } from '@/components/ui/SegmentChipRow';
 import { appAlert } from '@/lib/appAlert';
-import { fetchMyPastoralRequests, formatPastoralRequestDate } from '@/lib/pastoralRequest';
+import { confirmDialog } from '@/lib/confirmDialog';
+import {
+  fetchMyPastoralRequests,
+  formatPastoralRequestDate,
+  MIN_PASTORAL_CANCELLATION_REASON_LENGTH,
+} from '@/lib/pastoralRequest';
 import {
   bookPastoralSlot,
   buildPastoralBookingWhatsAppMessage,
+  buildPastoralCancelWhatsAppMessage,
+  cancelPastoralSlot,
   fetchAvailablePastoralSlots,
+  fetchMyPastoralAppointments,
   fetchPastoralAttendants,
   formatPastoralSlotTimeRange,
   PASTORAL_ATTENDANCE_TYPE_LABEL,
   type AvailablePastoralSlot,
+  type MyPastoralAppointment,
   type PastoralAttendanceType,
   type PastoralAttendant,
 } from '@/lib/pastoralSlotsApi';
@@ -22,6 +31,7 @@ import {
   ActivityIndicator,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -41,6 +51,9 @@ export function PastoralSchedulePanel({ profileId, vigilance = false }: Props) {
   const [slotId, setSlotId] = useState('');
   const [requestId, setRequestId] = useState('');
   const [requestOptions, setRequestOptions] = useState<{ value: string; label: string }[]>([]);
+  const [appointments, setAppointments] = useState<MyPastoralAppointment[]>([]);
+  const [cancelReasons, setCancelReasons] = useState<Record<string, string>>({});
+  const [cancellingId, setCancellingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
@@ -48,13 +61,15 @@ export function PastoralSchedulePanel({ profileId, vigilance = false }: Props) {
     setError(null);
 
     try {
-      const [nextAttendants, nextSlots, requests] = await Promise.all([
+      const [nextAttendants, nextSlots, requests, nextAppointments] = await Promise.all([
         fetchPastoralAttendants(),
         fetchAvailablePastoralSlots(pastorId || null),
         fetchMyPastoralRequests(profileId),
+        fetchMyPastoralAppointments().catch(() => [] as MyPastoralAppointment[]),
       ]);
       setAttendants(nextAttendants);
       setSlots(nextSlots);
+      setAppointments(nextAppointments.filter((item) => item.status === 'reservado'));
       setRequestOptions([
         { value: '', label: 'Sem vincular pedido' },
         ...requests.map((item) => ({
@@ -66,6 +81,12 @@ export function PastoralSchedulePanel({ profileId, vigilance = false }: Props) {
       setError(loadError instanceof Error ? loadError.message : 'Não foi possível carregar horários.');
       setAttendants([]);
       setSlots([]);
+      try {
+        const nextAppointments = await fetchMyPastoralAppointments();
+        setAppointments(nextAppointments.filter((item) => item.status === 'reservado'));
+      } catch {
+        setAppointments([]);
+      }
     } finally {
       setLoading(false);
     }
@@ -132,6 +153,7 @@ export function PastoralSchedulePanel({ profileId, vigilance = false }: Props) {
               startsAt,
               endsAt,
               tipo,
+              slotId,
             })
           );
         }
@@ -162,6 +184,79 @@ export function PastoralSchedulePanel({ profileId, vigilance = false }: Props) {
       await appAlert('Não foi possível agendar', result.message);
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleCancel = async (appointment: MyPastoralAppointment) => {
+    const reason = (cancelReasons[appointment.id] ?? '').trim();
+
+    if (reason.length < MIN_PASTORAL_CANCELLATION_REASON_LENGTH) {
+      await appAlert(
+        'Justificativa obrigatória',
+        `Informe uma justificativa com pelo menos ${MIN_PASTORAL_CANCELLATION_REASON_LENGTH} caracteres.`
+      );
+      return;
+    }
+
+    const confirmed = await confirmDialog(
+      'Cancelar agendamento',
+      'O horário voltará a ficar disponível e o atendente será avisado no WhatsApp.',
+      'Cancelar horário',
+      'Voltar',
+      { destructive: true }
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    setCancellingId(appointment.id);
+
+    try {
+      const profile = await loadEffectiveSessionProfile();
+      const memberName = profile?.full_name?.trim() || 'Um irmão da igreja';
+      const result = await cancelPastoralSlot(appointment.id, reason);
+
+      if (!result.success) {
+        await appAlert('Não foi possível cancelar', result.message);
+        return;
+      }
+
+      const pastorName = result.pastorName || appointment.pastor_name || 'Atendente';
+      const pastorPhone = result.pastorPhone || appointment.pastor_phone || null;
+      const startsAt = result.startsAt || appointment.data_hora_inicio;
+      const endsAt = result.endsAt || appointment.data_hora_fim;
+      const tipo = result.tipo || appointment.tipo_atendimento;
+
+      if (pastorPhone) {
+        openWhatsAppLikeBirthdaysWithText(
+          pastorPhone,
+          buildPastoralCancelWhatsAppMessage({
+            pastorName,
+            memberName,
+            startsAt,
+            endsAt,
+            tipo,
+            reason,
+          })
+        );
+      }
+
+      setCancelReasons((current) => {
+        const next = { ...current };
+        delete next[appointment.id];
+        return next;
+      });
+      await load();
+
+      if (!pastorPhone) {
+        await appAlert(
+          'Cancelado',
+          `Não foi possível avisar ${pastorName} no WhatsApp (telefone não cadastrado).`
+        );
+      }
+    } finally {
+      setCancellingId(null);
     }
   };
 
@@ -276,6 +371,77 @@ export function PastoralSchedulePanel({ profileId, vigilance = false }: Props) {
           </TouchableOpacity>
         </>
       )}
+
+      {appointments.length > 0 ? (
+        <View style={[styles.myBox, vigilance && styles.myBoxVigilance]}>
+          <Text style={[styles.myTitle, vigilance && styles.myTitleVigilance]}>
+            {appointments.length === 1 ? 'Meu agendamento' : 'Meus agendamentos'}
+          </Text>
+          {appointments.map((appointment) => {
+            const busy = cancellingId === appointment.id;
+            const canCancel = appointment.can_cancel;
+
+            return (
+              <View
+                key={appointment.id}
+                style={[styles.appointmentCard, vigilance && styles.appointmentCardVigilance]}
+              >
+                <Text style={[styles.slotTitle, vigilance && styles.slotTitleVigilance]}>
+                  {formatPastoralSlotTimeRange(
+                    appointment.data_hora_inicio,
+                    appointment.data_hora_fim
+                  )}
+                </Text>
+                <Text style={[styles.slotMeta, vigilance && styles.hintVigilance]}>
+                  {appointment.pastor_name} ·{' '}
+                  {PASTORAL_ATTENDANCE_TYPE_LABEL[appointment.tipo_atendimento]}
+                </Text>
+                {canCancel ? (
+                  <>
+                    <Text style={[styles.reasonLabel, vigilance && styles.reasonLabelVigilance]}>
+                      Justificativa do cancelamento
+                    </Text>
+                    <TextInput
+                      accessibilityLabel="Justificativa do cancelamento"
+                      editable={!busy}
+                      multiline
+                      numberOfLines={3}
+                      onChangeText={(value) =>
+                        setCancelReasons((current) => ({
+                          ...current,
+                          [appointment.id]: value,
+                        }))
+                      }
+                      placeholder="Informe o motivo do cancelamento..."
+                      placeholderTextColor={vigilance ? '#94A3B8' : '#64748B'}
+                      style={[styles.reasonInput, vigilance && styles.reasonInputVigilance]}
+                      textAlignVertical="top"
+                      value={cancelReasons[appointment.id] ?? ''}
+                    />
+                    <TouchableOpacity
+                      accessibilityLabel="Cancelar agendamento"
+                      accessibilityRole="button"
+                      disabled={busy || saving}
+                      onPress={() => void handleCancel(appointment)}
+                      style={[styles.cancelButton, (busy || saving) && styles.submitDisabled]}
+                    >
+                      {busy ? (
+                        <ActivityIndicator color="#B91C1C" />
+                      ) : (
+                        <Text style={styles.cancelButtonText}>Cancelar agendamento</Text>
+                      )}
+                    </TouchableOpacity>
+                  </>
+                ) : (
+                  <Text style={[styles.hint, vigilance && styles.hintVigilance]}>
+                    Este horário já começou e não pode ser cancelado por aqui.
+                  </Text>
+                )}
+              </View>
+            );
+          })}
+        </View>
+      ) : null}
     </View>
   );
 }
@@ -375,6 +541,70 @@ const styles = StyleSheet.create({
   },
   submitText: {
     color: '#FFFFFF',
+    fontWeight: '800',
+  },
+  myBox: {
+    marginTop: 6,
+    gap: 10,
+  },
+  myBoxVigilance: {
+    marginTop: 8,
+  },
+  myTitle: {
+    color: '#EDE9FE',
+    fontSize: 16,
+    fontWeight: '800',
+    textAlign: 'center',
+  },
+  myTitleVigilance: {
+    color: '#1E3A5F',
+  },
+  appointmentCard: {
+    borderWidth: 1,
+    borderColor: 'rgba(196, 181, 253, 0.45)',
+    borderRadius: 10,
+    padding: 12,
+    gap: 8,
+    backgroundColor: 'rgba(124, 58, 237, 0.12)',
+  },
+  appointmentCardVigilance: {
+    borderColor: '#3A96DD',
+    backgroundColor: '#F0F7FF',
+  },
+  reasonLabel: {
+    color: '#C4B5FD',
+    fontSize: 11,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+  },
+  reasonLabelVigilance: {
+    color: '#1E3A5F',
+  },
+  reasonInput: {
+    borderWidth: 1,
+    borderColor: 'rgba(196, 181, 253, 0.45)',
+    borderRadius: 10,
+    minHeight: 72,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    color: '#F8FAFC',
+    backgroundColor: 'rgba(15, 23, 42, 0.35)',
+  },
+  reasonInputVigilance: {
+    borderColor: '#CBD5E1',
+    color: '#1E3A5F',
+    backgroundColor: '#FFFFFF',
+  },
+  cancelButton: {
+    borderWidth: 1,
+    borderColor: '#DC2626',
+    backgroundColor: '#FEF2F2',
+    borderRadius: 10,
+    paddingVertical: 11,
+    alignItems: 'center',
+  },
+  cancelButtonText: {
+    color: '#B91C1C',
     fontWeight: '800',
   },
 });

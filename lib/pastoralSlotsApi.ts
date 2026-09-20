@@ -5,6 +5,7 @@
 
 import { supabase } from '@/lib/supabase';
 import { isSupabaseRpcMissingError } from '@/lib/supabaseRpc';
+import { buildGoogleCalendarUrl, eventoAgendaFromChurchEvent } from '@/lib/calendarIcs';
 
 export const PASTORAL_SLOTS_SQL_HINT =
   'Execute no Supabase: scripts/pastoral-slots-schema.sql';
@@ -50,8 +51,10 @@ export type MyPastoralAppointment = {
   tipo_atendimento: PastoralAttendanceType;
   status: PastoralSlotStatus;
   pastor_name: string;
+  pastor_phone: string | null;
   request_status: string | null;
   destination_label: string | null;
+  can_cancel: boolean;
 };
 
 export type PastoralAgendaSlot = {
@@ -212,19 +215,56 @@ export async function fetchAvailablePastoralSlots(pastorId?: string | null) {
     .filter((row): row is AvailablePastoralSlot => row !== null);
 }
 
+export function buildPastoralAppointmentCalendarEvent(input: {
+  slotId?: string | null;
+  memberName: string;
+  pastorName: string;
+  startsAt: string;
+  endsAt: string;
+  tipo: PastoralAttendanceType;
+  forAttendant?: boolean;
+}) {
+  const startsDate = input.startsAt ? new Date(input.startsAt) : null;
+  const endsDate = input.endsAt ? new Date(input.endsAt) : null;
+
+  if (!startsDate || Number.isNaN(startsDate.getTime())) {
+    return null;
+  }
+
+  const memberName = input.memberName.trim() || 'Irmão';
+  const pastorName = input.pastorName.trim() || 'Atendente';
+  const tipoLabel = PASTORAL_ATTENDANCE_TYPE_LABEL[input.tipo];
+  const counterpart = input.forAttendant ? memberName : pastorName;
+
+  return eventoAgendaFromChurchEvent({
+    id: input.slotId,
+    titulo: `Atendimento pastoral · ${counterpart}`,
+    local: input.tipo === 'online' ? 'Online' : 'Presencial',
+    eventDate: startsDate,
+    eventEndDate: endsDate && !Number.isNaN(endsDate.getTime()) ? endsDate : undefined,
+    descricao: `${memberName} confirmou atendimento ${tipoLabel} com ${pastorName}.`,
+  });
+}
+
 export function buildPastoralBookingWhatsAppMessage(input: {
   pastorName: string;
   memberName: string;
   startsAt: string;
   endsAt: string;
   tipo: PastoralAttendanceType;
+  slotId?: string | null;
 }) {
   const pastorFirst = input.pastorName.trim().split(/\s+/).filter(Boolean)[0] ?? '';
   const memberName = input.memberName.trim() || 'Um irmão da igreja';
   const when = formatPastoralSlotTimeRange(input.startsAt, input.endsAt);
   const tipo = PASTORAL_ATTENDANCE_TYPE_LABEL[input.tipo];
+  const evento = buildPastoralAppointmentCalendarEvent({
+    ...input,
+    forAttendant: true,
+  });
+  const calendarUrl = evento ? buildGoogleCalendarUrl(evento) : null;
 
-  return [
+  const lines = [
     pastorFirst ? `Olá, ${pastorFirst}!` : 'Olá!',
     '',
     `${memberName} reservou um horário que estava disponível na sua agenda pastoral.`,
@@ -233,6 +273,39 @@ export function buildPastoralBookingWhatsAppMessage(input: {
     `Tipo: ${tipo}`,
     '',
     'Esta mensagem confirma a reserva do horário.',
+  ];
+
+  if (calendarUrl) {
+    lines.push('', 'Para adicionar este compromisso na sua agenda, toque no link:', calendarUrl);
+  }
+
+  return lines.join('\n');
+}
+
+export function buildPastoralCancelWhatsAppMessage(input: {
+  pastorName: string;
+  memberName: string;
+  startsAt: string;
+  endsAt: string;
+  tipo: PastoralAttendanceType;
+  reason: string;
+}) {
+  const pastorFirst = input.pastorName.trim().split(/\s+/).filter(Boolean)[0] ?? '';
+  const memberName = input.memberName.trim() || 'Um irmão da igreja';
+  const when = formatPastoralSlotTimeRange(input.startsAt, input.endsAt);
+  const tipo = PASTORAL_ATTENDANCE_TYPE_LABEL[input.tipo];
+  const reason = input.reason.trim();
+
+  return [
+    pastorFirst ? `Olá, ${pastorFirst}!` : 'Olá!',
+    '',
+    `${memberName} cancelou o horário que havia reservado na sua agenda pastoral.`,
+    '',
+    `Quando: ${when}`,
+    `Tipo: ${tipo}`,
+    `Justificativa: ${reason}`,
+    '',
+    'O horário voltou a ficar disponível na sua agenda.',
   ].join('\n');
 }
 
@@ -266,19 +339,47 @@ export async function fetchMyPastoralAppointments(): Promise<MyPastoralAppointme
         return null;
       }
 
+      const status = parseStatus(row.status);
+      const startsAt = String(row.data_hora_inicio ?? '');
+      const startsDate = startsAt ? new Date(startsAt) : null;
+      const canCancelByTime =
+        status === 'reservado'
+        && startsDate
+        && !Number.isNaN(startsDate.getTime())
+        && startsDate.getTime() > Date.now();
+
       return {
         id,
         pastoral_request_id: row.pastoral_request_id ? String(row.pastoral_request_id) : null,
-        data_hora_inicio: String(row.data_hora_inicio ?? ''),
+        data_hora_inicio: startsAt,
         data_hora_fim: String(row.data_hora_fim ?? ''),
         tipo_atendimento: parseTipo(row.tipo_atendimento),
-        status: parseStatus(row.status),
+        status,
         pastor_name: String(row.pastor_name ?? ''),
+        pastor_phone: String(row.pastor_phone ?? '').trim() || null,
         request_status: row.request_status != null ? String(row.request_status) : null,
         destination_label: row.destination_label != null ? String(row.destination_label) : null,
+        can_cancel: row.can_cancel === true || canCancelByTime,
       } satisfies MyPastoralAppointment;
     })
     .filter((row): row is MyPastoralAppointment => row !== null);
+}
+
+export async function cancelPastoralSlot(slotId: string, reason: string) {
+  const payload = await rpcJson('cancel_pastoral_slot', {
+    p_slot_id: slotId,
+    p_reason: reason,
+  });
+
+  return {
+    success: payload.success === true,
+    message: String(payload.message ?? 'Falha ao cancelar.'),
+    pastorName: String(payload.pastor_name ?? '').trim() || null,
+    pastorPhone: String(payload.pastor_phone ?? '').trim() || null,
+    startsAt: String(payload.data_hora_inicio ?? '').trim() || null,
+    endsAt: String(payload.data_hora_fim ?? '').trim() || null,
+    tipo: parseTipo(payload.tipo_atendimento),
+  };
 }
 
 export async function fetchMyPastoralAgenda(fromIso: string, untilIso: string) {
