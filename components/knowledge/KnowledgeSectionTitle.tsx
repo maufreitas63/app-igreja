@@ -26,7 +26,7 @@ export function KnowledgeSectionTitle({
         {leftSlot}
         <Text style={[titleStyle, styles.titlePad]}>{title}</Text>
       </View>
-      <View style={styles.infoSlot} pointerEvents="box-none">
+      <View style={styles.infoSlot}>
         <KnowledgeRouteInfo
           routeKey={routeKey}
           iconColor={iconColor}
@@ -63,5 +63,6 @@ const styles = StyleSheet.create({
     bottom: 0,
     justifyContent: 'center',
     zIndex: 2,
+    pointerEvents: 'box-none',
   },
 });

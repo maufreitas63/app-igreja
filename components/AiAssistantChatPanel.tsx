@@ -118,7 +118,7 @@ export function AiAssistantChatPanel() {
 
       {FLOAT_COMPOSER ? (
         <>
-          <View style={{ height: dockHeight }} pointerEvents="none" />
+          <View style={{ height: dockHeight, pointerEvents: 'none' }} />
           <View
             onLayout={(event) => setDockHeight(event.nativeEvent.layout.height)}
             style={[styles.composerDock, { bottom: dockBottom }]}

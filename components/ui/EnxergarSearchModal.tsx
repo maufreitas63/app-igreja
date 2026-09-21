@@ -88,7 +88,6 @@ export function EnxergarSearchModal({
             { paddingTop: insets.top + 8, paddingBottom: CLOSE_FOOTER_DOCK_HEIGHT },
           ]}
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-          pointerEvents="box-none"
         >
           <View
             style={[

@@ -1,4 +1,5 @@
 // app/_layout.tsx
+import '@/lib/rnWebDeprecationGuard';
 import { Buffer } from 'buffer';
 
 import { AppBackHandler } from '@/components/AppBackHandler';

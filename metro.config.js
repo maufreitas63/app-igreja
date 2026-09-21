@@ -1,6 +1,32 @@
 const { getDefaultConfig } = require('expo/metro-config');
 const path = require('path');
 
+/** Silencia avisos do RN Web no SSR do Metro (warnOnce reinicia em cada worker). */
+if (!global.__rnWebDeprecationGuardInstalled) {
+  global.__rnWebDeprecationGuardInstalled = true;
+  const originalWarn = console.warn.bind(console);
+  const originalError = console.error.bind(console);
+  const isSuppressed = (...args) => {
+    const text = args.map((arg) => (typeof arg === 'string' ? arg : '')).join(' ');
+    return (
+      text.includes('props.pointerEvents is deprecated')
+      || text.includes('"shadow*" style props are deprecated')
+    );
+  };
+  console.warn = (...args) => {
+    if (isSuppressed(...args)) {
+      return;
+    }
+    originalWarn(...args);
+  };
+  console.error = (...args) => {
+    if (isSuppressed(...args)) {
+      return;
+    }
+    originalError(...args);
+  };
+}
+
 const config = getDefaultConfig(__dirname);
 
 config.resolver.extraNodeModules = {

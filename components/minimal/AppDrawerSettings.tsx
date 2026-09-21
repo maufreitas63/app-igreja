@@ -83,7 +83,6 @@ function SettingsRowView({
     return (
       <View
         style={rowStyle}
-        pointerEvents="none"
         accessibilityRole="text"
         accessibilityState={{ disabled: true }}
         accessibilityLabel={`${item.label} (inativo)`}
@@ -184,7 +183,6 @@ export function AppDrawerSettings({
       <View style={styles.headerRow}>
         <View
           style={styles.titleIcon}
-          pointerEvents="none"
           accessible={false}
           importantForAccessibility="no"
         >
@@ -329,6 +327,7 @@ const styles = StyleSheet.create({
   titleIcon: {
     alignItems: 'center',
     justifyContent: 'center',
+    pointerEvents: 'none',
   },
   title: {
     ...MINIMAL_TYPO.screenTitle,
@@ -411,6 +410,7 @@ const styles = StyleSheet.create({
   },
   itemBlocked: {
     opacity: 0.72,
+    pointerEvents: 'none',
   },
   itemIconWrap: {
     width: 28,

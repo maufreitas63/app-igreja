@@ -54,7 +54,7 @@ function MinimalScreenLayoutBody({
               <View style={[styles.main, styles.flexContent, contentContainerStyle]}>{children}</View>
             )}
             {overlay ? (
-              <View pointerEvents="box-none" style={styles.overlay}>
+              <View style={styles.overlay}>
                 {overlay}
               </View>
             ) : null}
@@ -122,6 +122,7 @@ const styles = StyleSheet.create({
   overlay: {
     ...StyleSheet.absoluteFillObject,
     zIndex: 40,
+    pointerEvents: 'box-none',
   },
   main: {
     flex: 1,

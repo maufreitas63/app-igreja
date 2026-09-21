@@ -3,6 +3,7 @@ import { CloseFooterBar } from '@/components/minimal/CloseFooterBar';
 import { useSessionCanUseAiAssistant } from '@/hooks/useSessionIsLeadership';
 import { ABIGAIL_NAME } from '@/lib/abigailPersona';
 import { sessionCanUseAiAssistant } from '@/lib/aiLeadershipAccess';
+import { boxShadowStyle } from '@/lib/boxShadow';
 import { MINIMAL_ICON, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { FontAwesome } from '@expo/vector-icons';
 import { useFocusEffect } from 'expo-router';
@@ -124,11 +125,13 @@ const styles = StyleSheet.create({
     backgroundColor: MINIMAL_UI.blueDark,
     alignItems: 'center',
     justifyContent: 'center',
-    elevation: 6,
-    shadowColor: '#00008B',
-    shadowOpacity: 0.28,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 3 },
+    ...boxShadowStyle({
+      color: '#00008B',
+      offsetY: 3,
+      blurRadius: 8,
+      opacity: 0.28,
+      elevation: 6,
+    }),
     zIndex: 40,
   },
   fabInline: {
@@ -138,11 +141,13 @@ const styles = StyleSheet.create({
     backgroundColor: MINIMAL_UI.blueDark,
     alignItems: 'center',
     justifyContent: 'center',
-    elevation: 4,
-    shadowColor: '#00008B',
-    shadowOpacity: 0.22,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 2 },
+    ...boxShadowStyle({
+      color: '#00008B',
+      offsetY: 2,
+      blurRadius: 6,
+      opacity: 0.22,
+      elevation: 4,
+    }),
     flexShrink: 0,
   },
   fabPressed: {

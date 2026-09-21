@@ -199,7 +199,6 @@ export function ClockTimePickerModal({
           ) : (
             <View style={styles.clock}>
               <View
-                pointerEvents="none"
                 style={[
                   styles.hand,
                   {
@@ -209,7 +208,7 @@ export function ClockTimePickerModal({
                   },
                 ]}
               />
-              <View pointerEvents="none" style={styles.centerDot} />
+              <View style={styles.centerDot} />
               {mode === 'hour'
                 ? hourItems.map((item) => {
                     const selected = item.hourValue === hour;
@@ -383,6 +382,7 @@ const styles = StyleSheet.create({
     backgroundColor: MINIMAL_UI.accent,
     borderRadius: 2,
     transformOrigin: '50% 100%',
+    pointerEvents: 'none',
   },
   centerDot: {
     position: 'absolute',
@@ -392,6 +392,7 @@ const styles = StyleSheet.create({
     backgroundColor: MINIMAL_UI.accent,
     left: CLOCK_CENTER - 5,
     top: CLOCK_CENTER - 5,
+    pointerEvents: 'none',
   },
   clockLabel: {
     position: 'absolute',

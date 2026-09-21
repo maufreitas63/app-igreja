@@ -1,5 +1,6 @@
 import { appAlert } from '@/lib/appAlert';
 import { buildBirthdayGreetingMessage } from '@/lib/birthdayGreetingAccess';
+import { boxShadowStyle } from '@/lib/boxShadow';
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { FontAwesome } from '@expo/vector-icons';
 import * as Clipboard from 'expo-clipboard';
@@ -129,11 +130,13 @@ const styles = StyleSheet.create({
     backgroundColor: MINIMAL_UI.background,
     gap: 8,
     zIndex: 12,
-    elevation: 12,
-    shadowColor: '#0F172A',
-    shadowOpacity: 0.16,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 4 },
+    ...boxShadowStyle({
+      color: '#0F172A',
+      offsetY: 4,
+      blurRadius: 10,
+      opacity: 0.16,
+      elevation: 12,
+    }),
   },
   panelTitle: {
     color: MINIMAL_UI.blueDark,
