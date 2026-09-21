@@ -3,7 +3,7 @@ import { buildBirthdayGreetingMessage } from '@/lib/birthdayGreetingAccess';
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { FontAwesome } from '@expo/vector-icons';
 import * as Clipboard from 'expo-clipboard';
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 type Props = {
@@ -15,6 +15,7 @@ type Props = {
 export function HomeBirthdayTag({ aniversariantes, canCopy = false }: Props) {
   const [open, setOpen] = useState(false);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
+  const lastToggleAt = useRef(0);
   const people = aniversariantes
     .map((item) => item.full_name.trim())
     .filter(Boolean)
@@ -23,6 +24,15 @@ export function HomeBirthdayTag({ aniversariantes, canCopy = false }: Props) {
   if (people.length === 0) {
     return null;
   }
+
+  const toggleOpen = () => {
+    const now = Date.now();
+    if (now - lastToggleAt.current < 400) {
+      return;
+    }
+    lastToggleAt.current = now;
+    setOpen((current) => !current);
+  };
 
   const handleCopy = async (key: string, message: string) => {
     try {
@@ -42,7 +52,7 @@ export function HomeBirthdayTag({ aniversariantes, canCopy = false }: Props) {
         accessibilityLabel="Aniversariantes de hoje"
         accessibilityRole="button"
         hitSlop={8}
-        onPress={() => setOpen((current) => !current)}
+        onPress={toggleOpen}
         style={styles.iconWrap}
       >
         <FontAwesome color={MINIMAL_UI.accent} name="birthday-cake" size={28} />
@@ -58,7 +68,10 @@ export function HomeBirthdayTag({ aniversariantes, canCopy = false }: Props) {
             {people.map((person, index) => {
               const key = `${person.name}-${index}`;
               return (
-                <View key={key} style={styles.card}>
+                <View
+                  key={key}
+                  style={[styles.card, index === people.length - 1 ? styles.cardLast : null]}
+                >
                   <Text style={styles.name}>{person.name}</Text>
                   <Text style={styles.message}>{person.message}</Text>
                   {canCopy ? (
@@ -93,9 +106,11 @@ const styles = StyleSheet.create({
     position: 'relative',
     zIndex: 8,
     flexShrink: 0,
+    overflow: 'visible',
   },
   iconWrap: {
     width: 40,
+    height: 28,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -104,7 +119,7 @@ const styles = StyleSheet.create({
     left: 44,
     top: 0,
     minWidth: 240,
-    maxWidth: 320,
+    maxWidth: 300,
     maxHeight: 280,
     paddingHorizontal: 12,
     paddingVertical: 10,
@@ -115,6 +130,10 @@ const styles = StyleSheet.create({
     gap: 8,
     zIndex: 12,
     elevation: 12,
+    shadowColor: '#0F172A',
+    shadowOpacity: 0.16,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
   },
   panelTitle: {
     color: MINIMAL_UI.blueDark,
@@ -131,6 +150,11 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: MINIMAL_UI.divider,
+  },
+  cardLast: {
+    marginBottom: 0,
+    paddingBottom: 0,
+    borderBottomWidth: 0,
   },
   name: {
     color: MINIMAL_UI.blueDark,
