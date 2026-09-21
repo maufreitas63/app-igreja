@@ -10,7 +10,10 @@ const PIX_GUI = 'br.gov.bcb.pix';
 const DEFAULT_CITY = 'SAO PAULO';
 const MAX_EMV_VALUE_LEN = 99;
 
-/** Texto do campo Descrição no Pix Copia e Cola (subcampo 02 do MAI). */
+/**
+ * Informação adicional do Pix (MAI 02). No banco aparece como Descrição
+ * ou, em alguns apps, Incluir comentário — não é exibida no Conecta+.
+ */
 export const PIX_COPY_DESCRIPTION = 'Via Aplicativo Conecta+';
 
 function tlv(id: string, value: string): string {

@@ -213,8 +213,8 @@ export function OfferingsClass({
             </TouchableOpacity>
             <Text style={styles.helpText}>
               {copiaECola || isCampaign
-                ? 'Toque no botão para copiar o Pix Copia e Cola já com o valor exato e colar no aplicativo do banco. O campo Descrição virá preenchido com Via Aplicativo Conecta+.'
-                : 'Toque no botão para copiar a chave e colar no aplicativo do seu banco. No campo Descrição, informe Via Aplicativo Conecta+.'}
+                ? 'Toque no botão para copiar o Pix Copia e Cola já com o valor exato e colar no aplicativo do banco.'
+                : 'Toque no botão para copiar a chave e colar no aplicativo do seu banco.'}
             </Text>
           </>
         ) : (

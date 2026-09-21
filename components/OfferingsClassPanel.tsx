@@ -214,7 +214,7 @@ export function OfferingsClassPanel({ onClose }: OfferingsClassPanelProps) {
       Toast.show({
         type: 'success',
         text1: 'Pix Copia e Cola copiado',
-        text2: `Cole no aplicativo do banco. Valor: ${formatCampaignBrl(amount ?? 0)}. Descrição: ${PIX_COPY_DESCRIPTION}.`,
+        text2: `Cole no aplicativo do banco. Valor: ${formatCampaignBrl(amount ?? 0)}.`,
         visibilityTime: 3500,
       });
     } catch (error) {
