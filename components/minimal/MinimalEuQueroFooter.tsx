@@ -185,8 +185,8 @@ export function MinimalEuQueroFooter() {
         ) : null}
         <EuQueroItem
           icon="heart"
-          title="Fazer um pedido de Oração"
-          subtitle="Compartilhe seu pedido com a equipe pastoral."
+          title="Cuidado Pastoral"
+          subtitle="Estamos aqui para interceder por você ou conversar quando precisar."
           onPress={handleOpenPastoral}
         />
       </View>
