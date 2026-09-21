@@ -70,21 +70,32 @@ export function HomeBirthdayTag({ aniversariantes, canCopy = false }: Props) {
               </Text>
             ))}
             <Text style={styles.message}>{message}</Text>
-            {canCopy ? (
+            <View style={styles.actions}>
+              {canCopy ? (
+                <Pressable
+                  accessibilityLabel="Copiar mensagem dos aniversariantes"
+                  accessibilityRole="button"
+                  onPress={() => void handleCopy()}
+                  style={styles.actionButton}
+                >
+                  <FontAwesome
+                    color={MINIMAL_UI.accent}
+                    name={copied ? 'check' : 'copy'}
+                    size={14}
+                  />
+                  <Text style={styles.actionLabel}>{copied ? 'Copiado' : 'Copiar'}</Text>
+                </Pressable>
+              ) : null}
               <Pressable
-                accessibilityLabel="Copiar mensagem dos aniversariantes"
+                accessibilityLabel="Fechar aniversariantes"
                 accessibilityRole="button"
-                onPress={() => void handleCopy()}
-                style={styles.copyButton}
+                onPress={() => setOpen(false)}
+                style={styles.actionButton}
               >
-                <FontAwesome
-                  color={MINIMAL_UI.accent}
-                  name={copied ? 'check' : 'copy'}
-                  size={14}
-                />
-                <Text style={styles.copyLabel}>{copied ? 'Copiado' : 'Copiar'}</Text>
+                <FontAwesome color={MINIMAL_UI.accent} name="times" size={14} />
+                <Text style={styles.actionLabel}>Fechar</Text>
               </Pressable>
-            ) : null}
+            </View>
           </ScrollView>
         </View>
       ) : null}
@@ -149,18 +160,27 @@ const styles = StyleSheet.create({
     color: MINIMAL_UI.blue,
     fontSize: 13,
     lineHeight: 18,
+    marginTop: 14,
   },
-  copyButton: {
-    alignSelf: 'flex-start',
+  actions: {
     flexDirection: 'row',
     alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginTop: 4,
+  },
+  actionButton: {
+    minWidth: 73,
+    height: 24,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
     gap: 6,
-    paddingVertical: 4,
     paddingHorizontal: 8,
     borderRadius: 8,
     backgroundColor: '#EFF6FF',
   },
-  copyLabel: {
+  actionLabel: {
     color: MINIMAL_UI.accent,
     fontSize: 12,
     fontWeight: '700',
