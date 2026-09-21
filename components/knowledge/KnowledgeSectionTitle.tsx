@@ -8,6 +8,7 @@ type Props = {
   titleStyle?: StyleProp<TextStyle>;
   iconColor?: string;
   accessibilityLabel?: string;
+  leftSlot?: React.ReactNode;
 };
 
 /** Título de seção com «i» à direita — o ícone só renderiza se houver artigo visível. */
@@ -17,10 +18,14 @@ export function KnowledgeSectionTitle({
   titleStyle,
   iconColor,
   accessibilityLabel,
+  leftSlot,
 }: Props) {
   return (
     <View style={styles.row}>
-      <Text style={[titleStyle, styles.titlePad]}>{title}</Text>
+      <View style={styles.titleCluster}>
+        {leftSlot}
+        <Text style={[titleStyle, styles.titlePad]}>{title}</Text>
+      </View>
       <View style={styles.infoSlot} pointerEvents="box-none">
         <KnowledgeRouteInfo
           routeKey={routeKey}
@@ -37,6 +42,16 @@ const styles = StyleSheet.create({
     width: '100%',
     position: 'relative',
     justifyContent: 'center',
+    overflow: 'visible',
+    zIndex: 4,
+  },
+  titleCluster: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    overflow: 'visible',
+    zIndex: 5,
   },
   titlePad: {
     paddingRight: 36,

@@ -1,4 +1,5 @@
 import { FamilyAgendaModal } from '@/components/FamilyAgendaModal';
+import { HomeBirthdayTag } from '@/components/minimal/HomeBirthdayTag';
 import { HomeInboxPagerNav } from '@/components/minimal/HomeInboxPagerNav';
 import {
   InboxList,
@@ -31,6 +32,9 @@ import {
   OPEN_FAMILY_AGENDA_PARAM,
 } from '@/lib/familyAgendaNavigation';
 import { pickRouteParam } from '@/lib/dashboardReturnNavigation';
+import { loadBirthdaysClassData } from '@/lib/birthdaysClassData';
+import type { BirthdaysClassEntry } from '@/lib/birthdaysClassTypes';
+import { isBirthdayToday } from '@/lib/birthdaysClassUtils';
 import { MINIMAL_SECTION_TITLE, MINIMAL_TYPO, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { useActiveEvents } from '@/hooks/useActiveEvents';
 import { supabase } from '@/lib/supabase';
@@ -63,6 +67,7 @@ export function EventsInboxHome() {
   const [generosityNotices, setGenerosityNotices] = useState<GenerosityNotice[]>([]);
   const [emprestimoNotices, setEmprestimoNotices] = useState<EmprestimoLivroNotice[]>([]);
   const [scaleSwapNotices, setScaleSwapNotices] = useState<ScaleSwapNotice[]>([]);
+  const [aniversariantes, setAniversariantes] = useState<BirthdaysClassEntry[]>([]);
   const [avisosLoading, setAvisosLoading] = useState(false);
   const [avisosError, setAvisosError] = useState<string | null>(null);
   const pagerRef = useRef<ScrollView>(null);
@@ -158,6 +163,28 @@ export function EventsInboxHome() {
         setAvisosLoading(false);
       }
     }
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    void loadBirthdaysClassData()
+      .then((entries) => {
+        if (cancelled) {
+          return;
+        }
+
+        setAniversariantes(entries.filter((entry) => isBirthdayToday(entry)));
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setAniversariantes([]);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   useEffect(() => {
@@ -303,6 +330,7 @@ export function EventsInboxHome() {
                 title="Proximos Eventos"
                 routeKey={KNOWLEDGE_ROUTE.home}
                 titleStyle={styles.sectionTitle}
+                leftSlot={<HomeBirthdayTag aniversariantes={aniversariantes} />}
               />
               <InboxList
                 items={inboxItems}
@@ -450,7 +478,7 @@ const styles = StyleSheet.create({
     minHeight: INBOX_LIST_MAX_HEIGHT + 44,
     width: '100%',
     maxWidth: '100%',
-    overflow: 'hidden',
+    overflow: 'visible',
     backgroundColor: MINIMAL_UI.background,
   },
   avisosSection: {
