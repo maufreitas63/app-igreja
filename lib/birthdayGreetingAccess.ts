@@ -51,7 +51,33 @@ export async function resolveBirthdayGreetingAccess(): Promise<BirthdayGreetingA
   return { canRead, canCopy };
 }
 
-export function buildBirthdayGreetingMessage(fullName: string) {
-  const name = fullName.trim() || 'este irmão';
-  return `Juntem-se a nós para parabenizar ${name} por mais um ano de vida. Aproveite e reserve alguns minutinhos para orar e agradecer por essa vida.`;
+export function joinBirthdayNames(fullNames: string[]) {
+  const names = fullNames.map((name) => name.trim()).filter(Boolean);
+
+  if (names.length === 0) {
+    return 'estes irmãos';
+  }
+
+  if (names.length === 1) {
+    return names[0];
+  }
+
+  if (names.length === 2) {
+    return `${names[0]} e ${names[1]}`;
+  }
+
+  return `${names.slice(0, -1).join(', ')} e ${names[names.length - 1]}`;
+}
+
+export function buildBirthdayGreetingMessage(fullNames: string | string[]) {
+  const names = (Array.isArray(fullNames) ? fullNames : [fullNames])
+    .map((name) => name.trim())
+    .filter(Boolean);
+  const label = joinBirthdayNames(names);
+  const plural = names.length > 1;
+  const thanks = plural
+    ? 'Aproveite e reserve alguns minutinhos para orar e agradecer por essas vidas.'
+    : 'Aproveite e reserve alguns minutinhos para orar e agradecer por essa vida.';
+
+  return `Juntem-se a nós para parabenizar ${label} por mais um ano de vida. ${thanks}`;
 }

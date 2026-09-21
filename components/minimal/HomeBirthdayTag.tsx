@@ -15,16 +15,15 @@ type Props = {
 /** Bolo à esquerda de «Proximos Eventos»; só renderiza se houver aniversariante hoje. */
 export function HomeBirthdayTag({ aniversariantes, canCopy = false }: Props) {
   const [open, setOpen] = useState(false);
-  const [copiedKey, setCopiedKey] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
   const lastToggleAt = useRef(0);
-  const people = aniversariantes
-    .map((item) => item.full_name.trim())
-    .filter(Boolean)
-    .map((name) => ({ name, message: buildBirthdayGreetingMessage(name) }));
+  const names = aniversariantes.map((item) => item.full_name.trim()).filter(Boolean);
 
-  if (people.length === 0) {
+  if (names.length === 0) {
     return null;
   }
+
+  const message = buildBirthdayGreetingMessage(names);
 
   const toggleOpen = () => {
     const now = Date.now();
@@ -35,13 +34,11 @@ export function HomeBirthdayTag({ aniversariantes, canCopy = false }: Props) {
     setOpen((current) => !current);
   };
 
-  const handleCopy = async (key: string, message: string) => {
+  const handleCopy = async () => {
     try {
       await Clipboard.setStringAsync(message);
-      setCopiedKey(key);
-      setTimeout(() => {
-        setCopiedKey((current) => (current === key ? null : current));
-      }, 1600);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1600);
     } catch {
       await appAlert('Copiar', 'Não foi possível copiar a mensagem.');
     }
@@ -62,39 +59,32 @@ export function HomeBirthdayTag({ aniversariantes, canCopy = false }: Props) {
         <View style={styles.panel}>
           <Text style={styles.panelTitle}>Aniversariantes de hoje</Text>
           <ScrollView
+            contentContainerStyle={styles.panelScrollContent}
             nestedScrollEnabled
             showsVerticalScrollIndicator
             style={styles.panelScroll}
           >
-            {people.map((person, index) => {
-              const key = `${person.name}-${index}`;
-              return (
-                <View
-                  key={key}
-                  style={[styles.card, index === people.length - 1 ? styles.cardLast : null]}
-                >
-                  <Text style={styles.name}>{person.name}</Text>
-                  <Text style={styles.message}>{person.message}</Text>
-                  {canCopy ? (
-                    <Pressable
-                      accessibilityLabel={`Copiar mensagem de ${person.name}`}
-                      accessibilityRole="button"
-                      onPress={() => void handleCopy(key, person.message)}
-                      style={styles.copyButton}
-                    >
-                      <FontAwesome
-                        color={MINIMAL_UI.accent}
-                        name={copiedKey === key ? 'check' : 'copy'}
-                        size={14}
-                      />
-                      <Text style={styles.copyLabel}>
-                        {copiedKey === key ? 'Copiado' : 'Copiar'}
-                      </Text>
-                    </Pressable>
-                  ) : null}
-                </View>
-              );
-            })}
+            {names.map((name, index) => (
+              <Text key={`${name}-${index}`} style={styles.name}>
+                {name}
+              </Text>
+            ))}
+            <Text style={styles.message}>{message}</Text>
+            {canCopy ? (
+              <Pressable
+                accessibilityLabel="Copiar mensagem dos aniversariantes"
+                accessibilityRole="button"
+                onPress={() => void handleCopy()}
+                style={styles.copyButton}
+              >
+                <FontAwesome
+                  color={MINIMAL_UI.accent}
+                  name={copied ? 'check' : 'copy'}
+                  size={14}
+                />
+                <Text style={styles.copyLabel}>{copied ? 'Copiado' : 'Copiar'}</Text>
+              </Pressable>
+            ) : null}
           </ScrollView>
         </View>
       ) : null}
@@ -147,17 +137,8 @@ const styles = StyleSheet.create({
   panelScroll: {
     maxHeight: 230,
   },
-  card: {
+  panelScrollContent: {
     gap: 6,
-    paddingBottom: 10,
-    marginBottom: 8,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: MINIMAL_UI.divider,
-  },
-  cardLast: {
-    marginBottom: 0,
-    paddingBottom: 0,
-    borderBottomWidth: 0,
   },
   name: {
     color: MINIMAL_UI.blueDark,
