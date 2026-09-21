@@ -32,6 +32,7 @@ import {
   OPEN_FAMILY_AGENDA_PARAM,
 } from '@/lib/familyAgendaNavigation';
 import { pickRouteParam } from '@/lib/dashboardReturnNavigation';
+import { resolveBirthdayGreetingAccess } from '@/lib/birthdayGreetingAccess';
 import { loadBirthdaysClassData } from '@/lib/birthdaysClassData';
 import type { BirthdaysClassEntry } from '@/lib/birthdaysClassTypes';
 import { isBirthdayToday } from '@/lib/birthdaysClassUtils';
@@ -68,6 +69,7 @@ export function EventsInboxHome() {
   const [emprestimoNotices, setEmprestimoNotices] = useState<EmprestimoLivroNotice[]>([]);
   const [scaleSwapNotices, setScaleSwapNotices] = useState<ScaleSwapNotice[]>([]);
   const [aniversariantes, setAniversariantes] = useState<BirthdaysClassEntry[]>([]);
+  const [birthdayCanCopy, setBirthdayCanCopy] = useState(false);
   const [avisosLoading, setAvisosLoading] = useState(false);
   const [avisosError, setAvisosError] = useState<string | null>(null);
   const pagerRef = useRef<ScrollView>(null);
@@ -168,19 +170,34 @@ export function EventsInboxHome() {
   useEffect(() => {
     let cancelled = false;
 
-    void loadBirthdaysClassData()
-      .then((entries) => {
+    void (async () => {
+      const access = await resolveBirthdayGreetingAccess();
+
+      if (cancelled) {
+        return;
+      }
+
+      setBirthdayCanCopy(access.canCopy);
+
+      if (!access.canRead) {
+        setAniversariantes([]);
+        return;
+      }
+
+      try {
+        const entries = await loadBirthdaysClassData();
+
         if (cancelled) {
           return;
         }
 
         setAniversariantes(entries.filter((entry) => isBirthdayToday(entry)));
-      })
-      .catch(() => {
+      } catch {
         if (!cancelled) {
           setAniversariantes([]);
         }
-      });
+      }
+    })();
 
     return () => {
       cancelled = true;
@@ -330,7 +347,7 @@ export function EventsInboxHome() {
                 title="Proximos Eventos"
                 routeKey={KNOWLEDGE_ROUTE.home}
                 titleStyle={styles.sectionTitle}
-                leftSlot={<HomeBirthdayTag aniversariantes={aniversariantes} />}
+                leftSlot={<HomeBirthdayTag aniversariantes={aniversariantes} canCopy={birthdayCanCopy} />}
               />
               <InboxList
                 items={inboxItems}
