@@ -31,7 +31,6 @@ import {
   type PixAccountsBundle,
 } from '@/lib/pixAccountsApi';
 import {
-  PIX_COPY_DESCRIPTION,
   brlCentsDigitsToAmount,
   buildPixCopiaECola,
   composeCampaignDonationAmount,
@@ -123,7 +122,7 @@ export function OfferingsClassPanel({ onClose }: OfferingsClassPanelProps) {
         pixKey: activePixKey,
         amount,
         merchantName: churchName,
-        description: PIX_COPY_DESCRIPTION,
+        description: campaign.titulo,
       }),
     };
   }, [activePixKey, campaign, churchName, integerAmount]);
@@ -145,7 +144,6 @@ export function OfferingsClassPanel({ onClose }: OfferingsClassPanelProps) {
         pixKey: activePixKey,
         amount,
         merchantName: churchName,
-        description: PIX_COPY_DESCRIPTION,
       }),
     };
   }, [activePixKey, campaign, churchName, offeringCentsDigits]);
