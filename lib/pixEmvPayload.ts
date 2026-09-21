@@ -10,6 +10,9 @@ const PIX_GUI = 'br.gov.bcb.pix';
 const DEFAULT_CITY = 'SAO PAULO';
 const MAX_EMV_VALUE_LEN = 99;
 
+/** Texto do campo Descrição no Pix Copia e Cola (subcampo 02 do MAI). */
+export const PIX_COPY_DESCRIPTION = 'Via Aplicativo Conecta+';
+
 function tlv(id: string, value: string): string {
   if (value.length > MAX_EMV_VALUE_LEN) {
     throw new Error(`Campo EMV ${id} excede ${MAX_EMV_VALUE_LEN} caracteres.`);
@@ -140,8 +143,37 @@ export function normalizePixKey(raw: string): string {
   return key;
 }
 
-function buildMerchantAccount(pixKey: string): string {
-  return tlv('00', PIX_GUI) + tlv('01', pixKey);
+export function sanitizePixDescription(value: string, maxLength: number): string {
+  return value
+    .normalize('NFD')
+    .replace(/\p{M}/gu, '')
+    .replace(/[^A-Za-z0-9 +]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, maxLength);
+}
+
+function buildMerchantAccount(pixKey: string, description?: string | null) {
+  const account = tlv('00', PIX_GUI) + tlv('01', pixKey);
+  const extra = description ? sanitizePixDescription(description, MAX_EMV_VALUE_LEN) : '';
+
+  if (!extra) {
+    return account;
+  }
+
+  let fitted = extra;
+
+  while (fitted.length > 0) {
+    const candidate = account + tlv('02', fitted);
+
+    if (candidate.length <= MAX_EMV_VALUE_LEN) {
+      return candidate;
+    }
+
+    fitted = fitted.slice(0, -1).trimEnd();
+  }
+
+  return account;
 }
 
 export type PixCopiaEColaInput = {
@@ -163,7 +195,7 @@ export function buildPixCopiaECola(input: PixCopiaEColaInput): string | null {
     const payloadWithoutCrc =
       tlv('00', '01') +
       tlv('01', '11') +
-      tlv('26', buildMerchantAccount(pixKey)) +
+      tlv('26', buildMerchantAccount(pixKey, input.description ?? PIX_COPY_DESCRIPTION)) +
       tlv('52', '0000') +
       tlv('53', '986') +
       tlv('54', formatPixAmount(input.amount)) +

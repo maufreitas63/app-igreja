@@ -31,6 +31,7 @@ import {
   type PixAccountsBundle,
 } from '@/lib/pixAccountsApi';
 import {
+  PIX_COPY_DESCRIPTION,
   brlCentsDigitsToAmount,
   buildPixCopiaECola,
   composeCampaignDonationAmount,
@@ -122,7 +123,7 @@ export function OfferingsClassPanel({ onClose }: OfferingsClassPanelProps) {
         pixKey: activePixKey,
         amount,
         merchantName: churchName,
-        description: campaign.titulo,
+        description: PIX_COPY_DESCRIPTION,
       }),
     };
   }, [activePixKey, campaign, churchName, integerAmount]);
@@ -144,6 +145,7 @@ export function OfferingsClassPanel({ onClose }: OfferingsClassPanelProps) {
         pixKey: activePixKey,
         amount,
         merchantName: churchName,
+        description: PIX_COPY_DESCRIPTION,
       }),
     };
   }, [activePixKey, campaign, churchName, offeringCentsDigits]);
@@ -212,7 +214,7 @@ export function OfferingsClassPanel({ onClose }: OfferingsClassPanelProps) {
       Toast.show({
         type: 'success',
         text1: 'Pix Copia e Cola copiado',
-        text2: `Cole no aplicativo do banco. Valor: ${formatCampaignBrl(amount ?? 0)}.`,
+        text2: `Cole no aplicativo do banco. Valor: ${formatCampaignBrl(amount ?? 0)}. Descrição: ${PIX_COPY_DESCRIPTION}.`,
         visibilityTime: 3500,
       });
     } catch (error) {
