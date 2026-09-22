@@ -1,6 +1,7 @@
 import { KnowledgeSectionTitle } from '@/components/knowledge/KnowledgeSectionTitle';
+import { CLOSE_FOOTER_DOCK_HEIGHT } from '@/components/minimal/CloseFooterBar';
 import { KNOWLEDGE_ROUTE } from '@/lib/knowledge/routeKeys';
-import { MINIMAL_SECTION_TITLE } from '@/lib/minimalUiTheme';
+import { MINIMAL_SCREEN_PADDING_LEFT, MINIMAL_SCREEN_PADDING_RIGHT, MINIMAL_SECTION_TITLE, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { VIGILANCE_SCALES_UI } from '@/lib/dashboardCardThemes';
 import type { OfferingsRecipientRow } from '@/lib/offeringsRecipientInfo';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -21,6 +22,46 @@ const OFFERINGS_CLASS_SURFACE = '#FFFFFF';
 const OFFERINGS_COPY_BUTTON_BG = '#3A96DD';
 const OFFERINGS_COPY_BUTTON_TEXT = '#FFFFFF';
 const OFFERINGS_COPY_BUTTON_BORDER = '#1B4F8A';
+/** padding 8 + botão 48 + padding 8 + borda — fica imediatamente acima do Fechar. */
+const OFFERINGS_COPY_DOCK_HEIGHT = 8 + 48 + 8 + 1;
+const AMOUNT_SCROLL_MARGIN_BOTTOM = CLOSE_FOOTER_DOCK_HEIGHT + OFFERINGS_COPY_DOCK_HEIGHT;
+
+const keepAmountAboveKeyboard = (target: unknown) => {
+  if (Platform.OS !== 'web' || typeof window === 'undefined') {
+    return;
+  }
+
+  const node = target as {
+    getBoundingClientRect?: () => { bottom: number };
+    parentElement?: { parentElement?: unknown } | null;
+  } | null;
+  if (!node || typeof node.getBoundingClientRect !== 'function') {
+    return;
+  }
+
+  const visibleHeight = window.visualViewport?.height ?? window.innerHeight;
+  const clearBottom = visibleHeight - CLOSE_FOOTER_DOCK_HEIGHT - OFFERINGS_COPY_DOCK_HEIGHT - 8;
+  const rect = node.getBoundingClientRect();
+  if (rect.bottom <= clearBottom) {
+    return;
+  }
+
+  const delta = rect.bottom - clearBottom;
+  let parent = node.parentElement as {
+    parentElement: typeof node.parentElement;
+    scrollHeight: number;
+    clientHeight: number;
+    scrollTop: number;
+  } | null;
+
+  while (parent) {
+    if (parent.scrollHeight > parent.clientHeight + 1) {
+      parent.scrollTop += delta;
+      return;
+    }
+    parent = parent.parentElement as typeof parent;
+  }
+};
 
 export type OfferingsClassProps = {
   title?: string;
@@ -89,10 +130,27 @@ export function OfferingsClass({
   const centsSuffix = campaignCentsSuffix || ',00';
   const copyEnabled = Boolean(copiaECola || (!isCampaign && !onOfferingAmountChange && pixKey));
   const copyLabel = isCampaign ? 'Copiar Chave Pix' : 'Copiar chave PIX';
+  const showCopyDock = Boolean(pixKey) && !pixKeyLoading;
+  const scrollInset = CLOSE_FOOTER_DOCK_HEIGHT + (showCopyDock ? OFFERINGS_COPY_DOCK_HEIGHT : 0);
+
+  React.useEffect(() => {
+    if (Platform.OS !== 'web' || typeof window === 'undefined' || !window.visualViewport) {
+      return;
+    }
+
+    const onResize = () => {
+      const active = typeof document !== 'undefined' ? document.activeElement : null;
+      keepAmountAboveKeyboard(active);
+    };
+
+    window.visualViewport.addEventListener('resize', onResize);
+    return () => window.visualViewport?.removeEventListener('resize', onResize);
+  }, []);
 
   return (
+    <View style={styles.root}>
     <ScrollView
-      style={styles.root}
+      style={[styles.scroll, { marginBottom: scrollInset }]}
       contentContainerStyle={styles.content}
       keyboardShouldPersistTaps="handled"
       showsVerticalScrollIndicator={false}
@@ -141,6 +199,7 @@ export function OfferingsClass({
                 placeholderTextColor="#94A3B8"
                 keyboardType="number-pad"
                 inputMode="numeric"
+                onFocus={(event) => keepAmountAboveKeyboard(event.target)}
                 accessibilityLabel="Valor em reais. Digite só a parte inteira; os centavos do projeto ficam fixos."
               />
               <Text
@@ -175,6 +234,7 @@ export function OfferingsClass({
               placeholderTextColor="#94A3B8"
               keyboardType="number-pad"
               inputMode="numeric"
+              onFocus={(event) => keepAmountAboveKeyboard(event.target)}
               accessibilityLabel="Valor em reais, com centavos"
             />
             <AmountClearButton
@@ -200,17 +260,6 @@ export function OfferingsClass({
         ) : pixKey ? (
           <>
             {isCampaign ? null : <Text style={styles.pixKeyValue}>{pixKey}</Text>}
-            <TouchableOpacity
-              style={[styles.copyButton, copyEnabled ? null : styles.copyButtonDisabled]}
-              onPress={onCopyPixKey}
-              disabled={!copyEnabled}
-              activeOpacity={0.85}
-              accessibilityRole="button"
-              accessibilityLabel={copyLabel}
-            >
-              <MaterialIcons name="touch-app" size={28} color={OFFERINGS_COPY_BUTTON_TEXT} />
-              <Text style={styles.copyButtonText}>{copyLabel}</Text>
-            </TouchableOpacity>
             <Text style={styles.helpText}>
               {copiaECola || isCampaign
                 ? 'Toque no botão para copiar o Pix Copia e Cola já com o valor exato e colar no aplicativo do banco.'
@@ -235,6 +284,24 @@ export function OfferingsClass({
         )}
       </View>
     </ScrollView>
+    {showCopyDock ? (
+      <View style={styles.copyDock}>
+        <View style={styles.copyDockInner}>
+          <TouchableOpacity
+            style={[styles.copyButton, copyEnabled ? null : styles.copyButtonDisabled]}
+            onPress={onCopyPixKey}
+            disabled={!copyEnabled}
+            activeOpacity={0.85}
+            accessibilityRole="button"
+            accessibilityLabel={copyLabel}
+          >
+            <MaterialIcons name="touch-app" size={28} color={OFFERINGS_COPY_BUTTON_TEXT} />
+            <Text style={styles.copyButtonText}>{copyLabel}</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    ) : null}
+    </View>
   );
 }
 
@@ -244,11 +311,38 @@ const styles = StyleSheet.create({
     width: '100%',
     alignSelf: 'stretch',
     backgroundColor: OFFERINGS_CLASS_SURFACE,
+    minHeight: 0,
+  },
+  scroll: {
+    flex: 1,
+    width: '100%',
+    alignSelf: 'stretch',
+    backgroundColor: OFFERINGS_CLASS_SURFACE,
   },
   content: {
     flexGrow: 1,
     gap: 16,
     paddingBottom: 16,
+  },
+  copyDock: {
+    position: Platform.OS === 'web' ? 'fixed' : 'absolute',
+    bottom: CLOSE_FOOTER_DOCK_HEIGHT,
+    left: 0,
+    right: 0,
+    zIndex: 39,
+    width: '100%',
+    paddingTop: 8,
+    paddingBottom: 8,
+    paddingLeft: MINIMAL_SCREEN_PADDING_LEFT,
+    paddingRight: MINIMAL_SCREEN_PADDING_RIGHT,
+    borderTopWidth: 1,
+    borderTopColor: MINIMAL_UI.divider,
+    backgroundColor: OFFERINGS_CLASS_SURFACE,
+    ...(Platform.OS === 'web' ? ({ boxSizing: 'border-box' } as object) : null),
+  },
+  copyDockInner: {
+    width: '100%',
+    paddingHorizontal: 16,
   },
   title: {
     ...MINIMAL_SECTION_TITLE,
@@ -364,7 +458,12 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     textAlign: 'right',
     backgroundColor: 'transparent',
-    ...(Platform.OS === 'web' ? { outlineStyle: 'none' as const } : null),
+    ...(Platform.OS === 'web'
+      ? {
+          outlineStyle: 'none' as const,
+          scrollMarginBottom: AMOUNT_SCROLL_MARGIN_BOTTOM,
+        }
+      : null),
   },
   amountCentsFixed: {
     color: '#1E3A5F',
@@ -384,6 +483,9 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     textAlign: 'center',
     backgroundColor: '#F8FAFC',
+    ...(Platform.OS === 'web'
+      ? { scrollMarginBottom: AMOUNT_SCROLL_MARGIN_BOTTOM }
+      : null),
   },
   clearAmountButton: {
     minHeight: 48,
