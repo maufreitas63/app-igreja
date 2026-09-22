@@ -284,6 +284,13 @@ export function invalidateOperatorSuperAdminCache() {
   invalidateAsyncCache('session:super_admin');
 }
 
+/** RPC única de Super Admin. Quem chama decide se erro vira false ou exceção. */
+export function queryIsSuperAdminProfile(profileId: string) {
+  return supabase.rpc('is_super_admin_profile', {
+    p_profile_id: profileId,
+  });
+}
+
 const readSessionIsSuperAdmin = async (profileId?: string | null): Promise<boolean> => {
   let resolvedId = profileId?.trim() ?? (await resolveRealSessionProfileId());
 
@@ -295,9 +302,7 @@ const readSessionIsSuperAdmin = async (profileId?: string | null): Promise<boole
     return false;
   }
 
-  const { data, error } = await supabase.rpc('is_super_admin_profile', {
-    p_profile_id: resolvedId,
-  });
+  const { data, error } = await queryIsSuperAdminProfile(resolvedId);
 
   if (error) {
     if (isSupabaseRpcMissingError(error, 'is_super_admin_profile')) {

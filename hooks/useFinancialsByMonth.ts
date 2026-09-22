@@ -1,3 +1,4 @@
+import { financialsThroughDateQuery } from '@/lib/financialsThroughDateQuery';
 import { computeYearToDateRealizedMovement } from '@/lib/financialYearToDate';
 import {
   computeFinancialBalance,
@@ -98,15 +99,7 @@ const isMissingFinancialReceiptColumn = (error: { code?: string; message?: strin
 };
 
 const financialRowsQuery = (select: string, endDate: string) =>
-  supabase
-    .from('financials')
-    .select(select)
-    .in('budget_version', [
-      FINANCIAL_BUDGET_VERSION_REALIZED,
-      FINANCIAL_BUDGET_VERSION_PLANNED,
-    ])
-    .lte('transaction_date', endDate)
-    .order('transaction_date', { ascending: true });
+  financialsThroughDateQuery(select, endDate);
 
 const fetchFinancialRowsThroughDate = async (endDate: string) => {
   const viaRpc = await fetchFinancialRowsThroughDateViaRpc(endDate);

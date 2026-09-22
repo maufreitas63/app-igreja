@@ -5,6 +5,7 @@ import { MEMBER_ACCEPTED_VALUE } from '@/lib/membersAccepted';
 import { buildPhoneDbQueryVariants } from '@/lib/phoneDbVariants';
 import { phoneDigitsMatch, resolveProfileIdByPhone } from '@/lib/resolveProfileByPhone';
 import { formatFullName } from '@/lib/fullName';
+import { fetchProfileRowById } from '@/lib/profileRow';
 import { supabase } from '@/lib/supabase';
 import {
   clearStoredProfileId,
@@ -102,11 +103,7 @@ const loadProfileRowByPhone = async (targetPhone: string) => {
     return null;
   }
 
-  const { data, error } = await supabase
-    .from('profiles')
-    .select(PROFILE_SELECT)
-    .eq('id', profileId)
-    .maybeSingle();
+  const { data, error } = await fetchProfileRowById(profileId, PROFILE_SELECT);
 
   if (error || !data) {
     return null;
@@ -143,11 +140,7 @@ export async function loadSessionProfileById(
     }
   }
 
-  const { data, error } = await supabase
-    .from('profiles')
-    .select(PROFILE_SELECT)
-    .eq('id', trimmed)
-    .maybeSingle();
+  const { data, error } = await fetchProfileRowById(trimmed, PROFILE_SELECT);
 
   if ((!error && data) || !isGhostModeActive()) {
     if (error || !data) {
@@ -240,11 +233,7 @@ export async function loadSessionProfile(targetPhone: string): Promise<SessionPr
   let storedProfileIdWasInvalid = false;
 
   if (storedProfileId) {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select(PROFILE_SELECT)
-      .eq('id', storedProfileId)
-      .maybeSingle();
+    const { data, error } = await fetchProfileRowById(storedProfileId, PROFILE_SELECT);
 
     if (!error && data) {
       if (!phoneDigitsMatch(data.phone, targetPhone)) {

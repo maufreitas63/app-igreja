@@ -5,8 +5,6 @@ import {
   type MembershipDateRecord,
 } from '@/lib/memberGrowthSeries';
 import {
-  FINANCIAL_BUDGET_VERSION_PLANNED,
-  FINANCIAL_BUDGET_VERSION_REALIZED,
   normalizeFinancialEntryRow,
   type FinancialEntry,
 } from '@/lib/financialEntry';
@@ -19,6 +17,7 @@ import {
 } from '@/lib/financialMonth';
 import { countPositiveRevenueMonths } from '@/lib/financialPredictiveModel';
 import { sumOrdinaryTithesOfferingsRevenue } from '@/lib/ordinaryTithesOfferingsRevenue';
+import { financialsThroughDateQuery } from '@/lib/financialsThroughDateQuery';
 import { supabase } from '@/lib/supabase';
 import { isSupabaseRpcMissingError } from '@/lib/supabaseRpc';
 
@@ -35,13 +34,10 @@ const fetchFinancialRowsThroughDate = async (endDate: string) => {
   let from = 0;
 
   while (true) {
-    const { data, error } = await supabase
-      .from('financials')
-      .select(FINANCIAL_SELECT)
-      .in('budget_version', [FINANCIAL_BUDGET_VERSION_REALIZED, FINANCIAL_BUDGET_VERSION_PLANNED])
-      .lte('transaction_date', endDate)
-      .order('transaction_date', { ascending: true })
-      .range(from, from + FINANCIAL_PAGE_SIZE - 1);
+    const { data, error } = await financialsThroughDateQuery(FINANCIAL_SELECT, endDate).range(
+      from,
+      from + FINANCIAL_PAGE_SIZE - 1
+    );
 
     if (error) {
       throw error;

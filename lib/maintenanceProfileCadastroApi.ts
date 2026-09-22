@@ -3,6 +3,7 @@ import {
   type SyncProfileAddressInput,
 } from '@/lib/syncProfileAddressFromCep';
 import { formatFullName } from '@/lib/fullName';
+import { fetchProfileRowById } from '@/lib/profileRow';
 import { checkSessionIsSuperAdmin } from '@/lib/maintenanceAccessControlApi';
 import { supabase } from '@/lib/supabase';
 import { coerceRpcBoolean, isSupabaseRpcMissing } from '@/lib/supabaseRpc';
@@ -164,11 +165,10 @@ export async function fetchProfileCadastro(profileId: string): Promise<ProfileCa
   }
 
   const showAccessPin = await actorMayViewAccessPin();
-  const { data, error } = await supabase
-    .from('profiles')
-    .select(showAccessPin ? PROFILE_CADASTRO_SELECT_WITH_PIN : PROFILE_CADASTRO_SELECT_BASE)
-    .eq('id', profileId)
-    .maybeSingle();
+  const { data, error } = await fetchProfileRowById(
+    profileId,
+    showAccessPin ? PROFILE_CADASTRO_SELECT_WITH_PIN : PROFILE_CADASTRO_SELECT_BASE
+  );
 
   if (error) {
     throw error;

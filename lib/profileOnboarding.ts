@@ -1,5 +1,5 @@
+import { fetchProfileRowById } from '@/lib/profileRow';
 import { resolveProfileIdByPhone } from '@/lib/resolveProfileByPhone';
-import { supabase } from '@/lib/supabase';
 
 /** Campos que o cadastro inicial não preenche — completados em Dados Cadastrais. */
 const ONBOARDING_COMPLETION_FIELDS = [
@@ -137,11 +137,7 @@ export async function loadProfileByPhone(phone: string) {
     return null;
   }
 
-  const { data, error } = await supabase
-    .from('profiles')
-    .select(PROFILE_LOGIN_SELECT)
-    .eq('id', profileId)
-    .maybeSingle();
+  const { data, error } = await fetchProfileRowById(profileId, PROFILE_LOGIN_SELECT);
 
   if (error) {
     throw error;

@@ -2,6 +2,7 @@ import {
   ACCESS_SCREEN,
   invalidateAccessControlCache,
   profileHasAccess,
+  queryIsSuperAdminProfile,
   sessionHasAccess,
 } from '@/lib/accessControl';
 import { ACCESS_SCREEN_MAINTENANCE_EXTRA } from '@/lib/accessScreen';
@@ -176,9 +177,7 @@ export async function resolveActorProfileId(options?: { forceRefresh?: boolean }
 }
 
 const readIsSuperAdminProfile = async (profileId: string) => {
-  const { data, error } = await supabase.rpc('is_super_admin_profile', {
-    p_profile_id: profileId,
-  });
+  const { data, error } = await queryIsSuperAdminProfile(profileId);
 
   if (error) {
     const message = (error.message ?? '').toLowerCase();
