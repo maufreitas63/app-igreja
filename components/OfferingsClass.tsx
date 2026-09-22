@@ -22,46 +22,28 @@ const OFFERINGS_CLASS_SURFACE = '#FFFFFF';
 const OFFERINGS_COPY_BUTTON_BG = '#3A96DD';
 const OFFERINGS_COPY_BUTTON_TEXT = '#FFFFFF';
 const OFFERINGS_COPY_BUTTON_BORDER = '#1B4F8A';
-/** padding 8 + botão 48 + padding 8 + borda — fica imediatamente acima do Fechar. */
-const OFFERINGS_COPY_DOCK_HEIGHT = 8 + 48 + 8 + 1;
-const AMOUNT_SCROLL_MARGIN_BOTTOM = CLOSE_FOOTER_DOCK_HEIGHT + OFFERINGS_COPY_DOCK_HEIGHT;
+/** padding 8 + botão (ícone 28 + padding 24 + borda 4) + padding 8 + borda. */
+const OFFERINGS_COPY_DOCK_HEIGHT = 8 + 56 + 8 + 1;
 
-const keepAmountAboveKeyboard = (target: unknown) => {
-  if (Platform.OS !== 'web' || typeof window === 'undefined') {
-    return;
+const TITULAR_ROW_ID = 'offerings-titular-row';
+
+function offeringsScroller(): HTMLElement | null {
+  if (Platform.OS !== 'web' || typeof document === 'undefined') {
+    return null;
   }
 
-  const node = target as {
-    getBoundingClientRect?: () => { bottom: number };
-    parentElement?: { parentElement?: unknown } | null;
-  } | null;
-  if (!node || typeof node.getBoundingClientRect !== 'function') {
-    return;
-  }
-
-  const visibleHeight = window.visualViewport?.height ?? window.innerHeight;
-  const clearBottom = visibleHeight - CLOSE_FOOTER_DOCK_HEIGHT - OFFERINGS_COPY_DOCK_HEIGHT - 8;
-  const rect = node.getBoundingClientRect();
-  if (rect.bottom <= clearBottom) {
-    return;
-  }
-
-  const delta = rect.bottom - clearBottom;
-  let parent = node.parentElement as {
-    parentElement: typeof node.parentElement;
-    scrollHeight: number;
-    clientHeight: number;
-    scrollTop: number;
-  } | null;
-
-  while (parent) {
-    if (parent.scrollHeight > parent.clientHeight + 1) {
-      parent.scrollTop += delta;
-      return;
+  const row = document.getElementById(TITULAR_ROW_ID);
+  let node = row?.parentElement ?? null;
+  while (node) {
+    const overflow = getComputedStyle(node).overflowY;
+    if (overflow === 'auto' || overflow === 'scroll') {
+      return node;
     }
-    parent = parent.parentElement as typeof parent;
+    node = node.parentElement;
   }
-};
+
+  return null;
+}
 
 export type OfferingsClassProps = {
   title?: string;
@@ -131,21 +113,108 @@ export function OfferingsClass({
   const copyEnabled = Boolean(copiaECola || (!isCampaign && !onOfferingAmountChange && pixKey));
   const copyLabel = isCampaign ? 'Copiar Chave Pix' : 'Copiar chave PIX';
   const showCopyDock = Boolean(pixKey) && !pixKeyLoading;
-  const scrollInset = CLOSE_FOOTER_DOCK_HEIGHT + (showCopyDock ? OFFERINGS_COPY_DOCK_HEIGHT : 0);
+  const scrollInset = showCopyDock ? OFFERINGS_COPY_DOCK_HEIGHT : 0;
+  const [anchorPad, setAnchorPad] = React.useState(0);
+  const pendingScroll = React.useRef<number | null>(null);
 
-  React.useEffect(() => {
-    if (Platform.OS !== 'web' || typeof window === 'undefined' || !window.visualViewport) {
+  const alignTitularBelowHeader = React.useCallback(() => {
+    if (Platform.OS !== 'web' || typeof document === 'undefined') {
       return;
     }
 
-    const onResize = () => {
-      const active = typeof document !== 'undefined' ? document.activeElement : null;
-      keepAmountAboveKeyboard(active);
+    const row = document.getElementById(TITULAR_ROW_ID);
+    const scroller = offeringsScroller();
+    if (!row || !scroller) {
+      return;
+    }
+
+    const delta = row.getBoundingClientRect().top - scroller.getBoundingClientRect().top;
+    if (delta <= 1) {
+      return;
+    }
+
+    const target = Math.ceil(delta + scroller.scrollTop);
+    const maxScroll = scroller.scrollHeight - scroller.clientHeight;
+    if (maxScroll < target - 1) {
+      pendingScroll.current = target;
+      const spacer = scroller.clientHeight;
+      setAnchorPad((pad) => (pad >= spacer ? pad : spacer));
+      return;
+    }
+
+    scroller.scrollTop = target;
+  }, []);
+
+  const releaseTitularAnchor = React.useCallback(() => {
+    const scroller = offeringsScroller();
+    if (scroller) {
+      scroller.scrollTop = 0;
+    }
+    setAnchorPad(0);
+  }, []);
+
+  React.useLayoutEffect(() => {
+    const target = pendingScroll.current;
+    if (target == null) {
+      return;
+    }
+
+    const apply = () => {
+      const scroller = offeringsScroller();
+      if (scroller) {
+        scroller.scrollTop = target;
+      }
     };
 
-    window.visualViewport.addEventListener('resize', onResize);
-    return () => window.visualViewport?.removeEventListener('resize', onResize);
-  }, []);
+    apply();
+    const frame = requestAnimationFrame(apply);
+    return () => cancelAnimationFrame(frame);
+  }, [anchorPad]);
+
+  React.useEffect(() => {
+    if (Platform.OS !== 'web' || typeof document === 'undefined') {
+      return;
+    }
+
+    const isAmountField = (target: EventTarget | null) => {
+      const label = (target as HTMLElement | null)?.getAttribute?.('aria-label') ?? '';
+      return label.startsWith('Valor em reais');
+    };
+
+    const onFocusIn = (event: FocusEvent) => {
+      if (isAmountField(event.target)) {
+        alignTitularBelowHeader();
+      }
+    };
+
+    const onFocusOut = (event: FocusEvent) => {
+      if (!isAmountField(event.target)) {
+        return;
+      }
+
+      window.setTimeout(() => {
+        const active = document.activeElement;
+        if (!isAmountField(active)) {
+          releaseTitularAnchor();
+        }
+      }, 0);
+    };
+
+    const onResize = () => {
+      if (isAmountField(document.activeElement)) {
+        alignTitularBelowHeader();
+      }
+    };
+
+    document.addEventListener('focusin', onFocusIn);
+    document.addEventListener('focusout', onFocusOut);
+    window.visualViewport?.addEventListener('resize', onResize);
+    return () => {
+      document.removeEventListener('focusin', onFocusIn);
+      document.removeEventListener('focusout', onFocusOut);
+      window.visualViewport?.removeEventListener('resize', onResize);
+    };
+  }, [alignTitularBelowHeader, releaseTitularAnchor]);
 
   return (
     <View style={styles.root}>
@@ -174,14 +243,23 @@ export function OfferingsClass({
       <View style={styles.section}>
         <Text style={styles.sectionLabel}>Dados do recebedor</Text>
         <View style={styles.recipientList}>
-          {recipientRows.map((row) => (
-            <View key={row.label} style={styles.recipientRow}>
+          {recipientRows.map((row, index) => {
+            const titularIndex = recipientRows.findIndex((item) => item.label === 'Titular');
+            const anchorIndex = titularIndex >= 0 ? titularIndex : recipientRows.length - 1;
+
+            return (
+            <View
+              key={row.label}
+              nativeID={index === anchorIndex ? TITULAR_ROW_ID : undefined}
+              style={styles.recipientRow}
+            >
               <Text style={styles.recipientLabel}>{row.label}</Text>
               <Text style={styles.recipientValue} numberOfLines={3}>
                 {row.value}
               </Text>
             </View>
-          ))}
+            );
+          })}
         </View>
       </View>
 
@@ -199,7 +277,8 @@ export function OfferingsClass({
                 placeholderTextColor="#94A3B8"
                 keyboardType="number-pad"
                 inputMode="numeric"
-                onFocus={(event) => keepAmountAboveKeyboard(event.target)}
+                onFocus={alignTitularBelowHeader}
+                onBlur={releaseTitularAnchor}
                 accessibilityLabel="Valor em reais. Digite só a parte inteira; os centavos do projeto ficam fixos."
               />
               <Text
@@ -234,7 +313,8 @@ export function OfferingsClass({
               placeholderTextColor="#94A3B8"
               keyboardType="number-pad"
               inputMode="numeric"
-              onFocus={(event) => keepAmountAboveKeyboard(event.target)}
+              onFocus={alignTitularBelowHeader}
+              onBlur={releaseTitularAnchor}
               accessibilityLabel="Valor em reais, com centavos"
             />
             <AmountClearButton
@@ -283,6 +363,7 @@ export function OfferingsClass({
           </View>
         )}
       </View>
+      {anchorPad > 0 ? <View style={{ height: anchorPad }} /> : null}
     </ScrollView>
     {showCopyDock ? (
       <View style={styles.copyDock}>
@@ -458,12 +539,7 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     textAlign: 'right',
     backgroundColor: 'transparent',
-    ...(Platform.OS === 'web'
-      ? {
-          outlineStyle: 'none' as const,
-          scrollMarginBottom: AMOUNT_SCROLL_MARGIN_BOTTOM,
-        }
-      : null),
+    ...(Platform.OS === 'web' ? { outlineStyle: 'none' as const } : null),
   },
   amountCentsFixed: {
     color: '#1E3A5F',
@@ -483,9 +559,6 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     textAlign: 'center',
     backgroundColor: '#F8FAFC',
-    ...(Platform.OS === 'web'
-      ? { scrollMarginBottom: AMOUNT_SCROLL_MARGIN_BOTTOM }
-      : null),
   },
   clearAmountButton: {
     minHeight: 48,
