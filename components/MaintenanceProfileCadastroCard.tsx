@@ -354,14 +354,16 @@ export function MaintenanceProfileCadastroCard({
             </View>
           ))}
 
-          <View style={[styles.fieldRow, minimal && styles.fieldRowMinimal]}>
-            <Text style={[styles.fieldLabel, minimal && styles.fieldLabelMinimal]}>
-              Senha de acesso (PIN)
-            </Text>
-            <Text style={[styles.fieldValue, minimal && styles.fieldValueMinimal]}>
-              {formatAccessPinDisplay(profile.access_pin ?? selectedPickerOption?.accessPin)}
-            </Text>
-          </View>
+          {profile.showAccessPin ? (
+            <View style={[styles.fieldRow, minimal && styles.fieldRowMinimal]}>
+              <Text style={[styles.fieldLabel, minimal && styles.fieldLabelMinimal]}>
+                Senha de acesso (PIN)
+              </Text>
+              <Text style={[styles.fieldValue, minimal && styles.fieldValueMinimal]}>
+                {formatAccessPinDisplay(profile.access_pin ?? selectedPickerOption?.accessPin)}
+              </Text>
+            </View>
+          ) : null}
 
           <TouchableOpacity
             style={[

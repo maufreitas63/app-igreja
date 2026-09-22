@@ -579,6 +579,12 @@ export default function MaintenanceDashboard() {
         }
 
         if (!snapshot.allowed) {
+          // Ghost: não cobre a rota com «Redirecionando...» nem volta ao Início.
+          if (ghostModeActive) {
+            setAccessState('allowed');
+            return;
+          }
+
           setAccessState('denied');
           const { denyScreenAccessAndRedirect } = await import('@/lib/screenAccessDenyRedirect');
           denyScreenAccessAndRedirect(
@@ -862,6 +868,10 @@ export default function MaintenanceDashboard() {
 
   const maintenancePanelCards = useMemo(() => {
     return MAINTENANCE_PANEL_CARDS.filter((card) => {
+      if (ghostModeActive && requestedPanel && card.content === requestedPanel) {
+        return true;
+      }
+
       if (card.content === 'access_control') {
         return canAccessAccessControlCard;
       }
@@ -923,7 +933,9 @@ export default function MaintenanceDashboard() {
     canAccessProfileCadastro,
     canOperateGhostMode,
     canManageAccessControl,
+    ghostModeActive,
     maintenancePanelAccess,
+    requestedPanel,
     scalePanelAccess,
   ]);
 
@@ -938,12 +950,12 @@ export default function MaintenanceDashboard() {
   const activeMaintenancePanelContent = activeMaintenanceCard?.content ?? null;
 
   useEffect(() => {
-    if (accessState !== 'allowed' || activeMaintenanceCard) {
+    if (accessState !== 'allowed' || activeMaintenanceCard || ghostModeActive) {
       return;
     }
 
     router.replace(MEMBER_HOME_PATH);
-  }, [accessState, activeMaintenanceCard, router]);
+  }, [accessState, activeMaintenanceCard, ghostModeActive, router]);
 
   useFamilyReceptionSuperAdminNotifier(
     accessState === 'allowed'

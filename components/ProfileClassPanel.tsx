@@ -689,6 +689,12 @@ export function ProfileClassPanel({
         }
 
         if (!allowed) {
+          // No Ghost a tela permanece aberta com a identidade do alvo.
+          if (ghostModeActive) {
+            await fetchProfile({ force: true });
+            return;
+          }
+
           setLoading(false);
           setColumnAccessLoading(false);
           Alert.alert(
