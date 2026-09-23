@@ -9,6 +9,7 @@ import {
   type AssemblyMinutePdfInput,
 } from '@/lib/assemblyMinutesPdf';
 import { supabase } from '@/lib/supabase';
+import { getStoredTenantId } from '@/lib/tenantSession';
 import { withActiveTenantStoragePrefix } from '@/lib/tenantStoragePath';
 
 export const ASSEMBLY_MINUTES_SQL_HINT =
@@ -174,10 +175,17 @@ const prepareAssemblyMinuteRows = (rows: Omit<AssemblyMinuteRecord, 'signedUrl'>
   );
 
 export async function fetchAssemblyMinutes(): Promise<AssemblyMinuteRecord[]> {
-  const { data, error } = await supabase
+  const tenantId = (await getStoredTenantId())?.trim() || '';
+  let query = supabase
     .from('maintenance_assembly_minutes')
     .select('id, title, storage_path, file_name, mime_type, uploaded_by_profile_id, created_at')
     .order('created_at', { ascending: false });
+
+  if (tenantId) {
+    query = query.eq('tenant_id', tenantId);
+  }
+
+  const { data, error } = await query;
 
   if (error) {
     if (isMissingAssemblyMinutesSchemaError(error)) {
@@ -223,6 +231,7 @@ export async function uploadAssemblyMinute(input: {
     throw uploadError;
   }
 
+  const tenantId = (await getStoredTenantId())?.trim() || null;
   const { data, error } = await supabase
     .from('maintenance_assembly_minutes')
     .insert({
@@ -231,6 +240,7 @@ export async function uploadAssemblyMinute(input: {
       file_name: input.pdf.fileName,
       mime_type: input.pdf.contentType || 'application/pdf',
       uploaded_by_profile_id: actorProfileId,
+      ...(tenantId ? { tenant_id: tenantId } : {}),
     })
     .select('id, title, storage_path, file_name, mime_type, uploaded_by_profile_id, created_at')
     .single();

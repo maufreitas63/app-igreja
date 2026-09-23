@@ -81,6 +81,7 @@ create policy maintenance_assembly_minutes_select
     public.session_has_screen_access('dashboard.card.administrativo', 'view')
     or public.session_has_screen_access('maintenance.card.financials', 'view')
     or public.can_manage_maintenance_support()
+    or public.profile_has_role_code(public.current_session_profile_id(), 'member')
   );
 
 drop policy if exists maintenance_assembly_minutes_insert on public.maintenance_assembly_minutes;
@@ -124,6 +125,7 @@ create policy assembly_minutes_storage_select
       public.session_has_screen_access('dashboard.card.administrativo', 'view')
       or public.session_has_screen_access('maintenance.card.financials', 'view')
       or public.can_manage_maintenance_support()
+      or public.profile_has_role_code(public.current_session_profile_id(), 'member')
     )
   );
 
