@@ -1,5 +1,6 @@
 import { useAppDrawer } from '@/context/AppDrawerContext';
 import { useAppDrawerMenu, type AppDrawerMenuItemResolved } from '@/hooks/useAppDrawerMenu';
+import { useMemberMenuSwipe } from '@/hooks/useMemberMenuSwipe';
 import {
   APP_DRAWER_SETTINGS_GROUPS,
   DISCIPLESHIP_SETTINGS_MODULE_KEYS,
@@ -87,12 +88,23 @@ export function AppDrawer() {
   const [settingsOpen, setSettingsOpen] = useState(false);
 
   useEffect(() => {
+    void refresh();
+  }, [refresh]);
+
+  useEffect(() => {
     if (isOpen) {
       void refresh();
     } else {
       setSettingsOpen(false);
     }
   }, [isOpen, refresh]);
+
+  const visibleItems = items.filter((item) => item.enabled);
+
+  useMemberMenuSwipe({
+    items: visibleItems,
+    suspended: isOpen || settingsOpen,
+  });
 
   const handlePress = (item: AppDrawerMenuItemResolved) => {
     traceClick('drawer', 'menu-item-press', {
@@ -123,7 +135,6 @@ export function AppDrawer() {
     void navigateDrawerMenuItem(router, moduleKey);
   }, [closeDrawer, router]);
 
-  const visibleItems = items.filter((item) => item.enabled);
   const visibleSettings = settingsItems.filter(
     (item) => item.enabled || item.commerciallyBlocked
   );

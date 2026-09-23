@@ -92,7 +92,11 @@ export function ConfirmDialogHost() {
 
   // Web: overlay no root, sem Modal — o Modal do RN dispara history.back()
   // e o Expo Router desfaz a tela (Ghost / Perfil / qualquer item).
-  return <View style={styles.webOverlay}>{dialogBody}</View>;
+  return (
+    <View nativeID="confirm-dialog-overlay" style={styles.webOverlay}>
+      {dialogBody}
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({
