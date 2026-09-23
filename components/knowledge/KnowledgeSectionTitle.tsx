@@ -51,7 +51,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 8,
     overflow: 'visible',
-    zIndex: 5,
+    zIndex: 1,
+    pointerEvents: 'box-none',
   },
   titlePad: {
     paddingRight: 36,
@@ -62,7 +63,6 @@ const styles = StyleSheet.create({
     top: 0,
     bottom: 0,
     justifyContent: 'center',
-    zIndex: 2,
-    pointerEvents: 'box-none',
+    zIndex: 6,
   },
 });

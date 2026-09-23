@@ -2,8 +2,8 @@ import { KnowledgeSectionTitle } from '@/components/knowledge/KnowledgeSectionTi
 import { ServiceMuralDetailModal } from '@/components/ServiceMuralDetailModal';
 import { KNOWLEDGE_ROUTE } from '@/lib/knowledge/routeKeys';
 import { loadEffectiveSessionProfile } from '@/lib/loadSessionProfile';
-import { computeMaintenanceContentHeight, maintenancePanelStyles } from '@/lib/maintenanceCardStyles';
-import { MINIMAL_UI } from '@/lib/minimalUiTheme';
+import { computeMaintenanceContentHeight } from '@/lib/maintenanceCardStyles';
+import { MINIMAL_SECTION_TITLE, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import {
   fetchProfileServicesMural,
   SERVICE_CATEGORIA_LABEL,
@@ -120,7 +120,7 @@ export function ApoioMutuoPanel({ panelHeight, isActive = true }: Props) {
       <KnowledgeSectionTitle
         title="Apoio Mútuo"
         routeKey={KNOWLEDGE_ROUTE.apoioMutuo}
-        titleStyle={maintenancePanelStyles.panelTitle}
+        titleStyle={MINIMAL_SECTION_TITLE}
       />
       <View style={styles.hero}>
         <Text style={styles.heroTitle}>Quem caminha junto, cresce junto.</Text>

@@ -35,6 +35,7 @@ declare
     '/pequeno-grupo',
     '/mural-oportunidades',
     '/mural-generosidade',
+    '/apoio-mutuo',
     '/suggestions-improvements',
     '/avisos',
     '/primicias',
