@@ -9,10 +9,17 @@ import { FAMILY_RELATIONSHIP_OPTIONS } from '@/lib/familyRelationshipOptions';
 import { ensureProfilesForMembers } from '@/lib/memberProfiles';
 import { applyProfileBirthDates } from '@/lib/profileBirthDates';
 import { supabase } from '@/lib/supabase';
-import { getEffectiveUserPhone, loadEffectiveSessionProfile } from '@/lib/loadSessionProfile';
+import { getStoredTenantId } from '@/lib/tenantSession';
 import {
+  getEffectiveUserPhone,
+  invalidateSessionProfileLoadCache,
+  loadEffectiveSessionProfile,
+} from '@/lib/loadSessionProfile';
+import {
+  familyCodeBelongsToActiveTenant,
+  findFamilyIdForPhoneInActiveTenant,
   normalizeFamilyCode,
-  resolveExistingFamilyIdForPhone,
+  reserveNextFamilyId,
 } from '@/lib/family';
 import { resolveProfileIdByPhone } from '@/lib/resolveProfileByPhone';
 import { upsertFamilyMember } from '@/lib/upsertFamilyMember';
@@ -196,9 +203,13 @@ export async function loadManageMembersData(phoneParam: string | null): Promise<
       phoneDigitsMatch(requestedPhone, effectivePhone));
 
   if (useSessionIdentity && sessionProfile) {
-    currentFamilyId = normalizeFamilyCode(
+    const profileFamilyId = normalizeFamilyCode(
       sessionProfile.family_id ?? sessionProfile.codigo_membro ?? null
     );
+    // O perfil guarda um único código. Em outra instância esse código é de outra igreja.
+    if (profileFamilyId && (await familyCodeBelongsToActiveTenant(profileFamilyId))) {
+      currentFamilyId = profileFamilyId;
+    }
     profileName = formatFullName(sessionProfile.full_name);
     profilePhone = sessionProfile.phone?.trim() || effectivePhone;
     profileBirth = sessionProfile.birth_date ?? null;
@@ -206,7 +217,7 @@ export async function loadManageMembersData(phoneParam: string | null): Promise<
   }
 
   if (!currentFamilyId && phoneForLookup) {
-    currentFamilyId = (await resolveExistingFamilyIdForPhone(phoneForLookup)) ?? '';
+    currentFamilyId = (await findFamilyIdForPhoneInActiveTenant(phoneForLookup)) ?? '';
   }
 
   if (!acceptorProfileId && phoneForLookup) {
@@ -225,7 +236,12 @@ export async function loadManageMembersData(phoneParam: string | null): Promise<
         profileBirth = profile.birth_date;
         acceptorProfileId = profile.id ?? null;
         if (!currentFamilyId) {
-          currentFamilyId = normalizeFamilyCode(profile.family_id ?? profile.codigo_membro ?? null);
+          const profileFamilyId = normalizeFamilyCode(
+            profile.family_id ?? profile.codigo_membro ?? null
+          );
+          if (profileFamilyId && (await familyCodeBelongsToActiveTenant(profileFamilyId))) {
+            currentFamilyId = profileFamilyId;
+          }
         }
       }
     } else {
@@ -243,9 +259,47 @@ export async function loadManageMembersData(phoneParam: string | null): Promise<
         profileBirth = profile.birth_date;
         acceptorProfileId = profile.id ?? null;
         if (!currentFamilyId) {
-          currentFamilyId = normalizeFamilyCode(profile.family_id ?? profile.codigo_membro ?? null);
+          const profileFamilyId = normalizeFamilyCode(
+            profile.family_id ?? profile.codigo_membro ?? null
+          );
+          if (profileFamilyId && (await familyCodeBelongsToActiveTenant(profileFamilyId))) {
+            currentFamilyId = profileFamilyId;
+          }
         }
       }
+    }
+  }
+
+  if (!currentFamilyId && profileName) {
+    try {
+      const reservedFamilyId = await reserveNextFamilyId();
+      currentFamilyId = reservedFamilyId;
+
+      if (acceptorProfileId) {
+        const activeTenantId = (await getStoredTenantId())?.trim() || '';
+        const { data: profileOwner } = await supabase
+          .from('profiles')
+          .select('tenant_id')
+          .eq('id', acceptorProfileId)
+          .maybeSingle();
+        const profileTenantId = String(profileOwner?.tenant_id ?? '').trim();
+
+        if (activeTenantId && profileTenantId === activeTenantId) {
+          const { error: profileFamilyError } = await supabase
+            .from('profiles')
+            .update({
+              family_id: reservedFamilyId,
+              codigo_membro: reservedFamilyId,
+            })
+            .eq('id', acceptorProfileId);
+
+          if (!profileFamilyError) {
+            invalidateSessionProfileLoadCache();
+          }
+        }
+      }
+    } catch {
+      currentFamilyId = '';
     }
   }
 
@@ -274,12 +328,19 @@ export async function loadManageMembersData(phoneParam: string | null): Promise<
     };
   }
 
+  const activeTenantId = (await getStoredTenantId())?.trim() || '';
+
   const fetchFamilyMembers = async () => {
-    const { data } = await supabase
+    let query = supabase
       .from('members')
       .select('*')
-      .ilike('family_id', currentFamilyId)
-      .order('created_at', { ascending: false });
+      .ilike('family_id', currentFamilyId);
+
+    if (activeTenantId) {
+      query = query.eq('tenant_id', activeTenantId);
+    }
+
+    const { data } = await query.order('created_at', { ascending: false });
 
     return (data ?? []).map((member) => ({
       id: String(member.id ?? ''),
@@ -310,13 +371,17 @@ export async function loadManageMembersData(phoneParam: string | null): Promise<
 
     if (!existsInDatabase && profilePhone?.trim()) {
       const phoneVariants = buildPhoneDbQueryVariants(profilePhone);
-      const { data: existingByPhone } = await supabase
+      let existingQuery = supabase
         .from('members')
         .select('id')
         .ilike('family_id', currentFamilyId)
-        .in('phone', phoneVariants.length ? phoneVariants : [profilePhone.trim()])
-        .limit(1)
-        .maybeSingle();
+        .in('phone', phoneVariants.length ? phoneVariants : [profilePhone.trim()]);
+
+      if (activeTenantId) {
+        existingQuery = existingQuery.eq('tenant_id', activeTenantId);
+      }
+
+      const { data: existingByPhone } = await existingQuery.limit(1).maybeSingle();
 
       existsInDatabase = Boolean(existingByPhone?.id);
     }

@@ -6,7 +6,11 @@ import { useGhostMode } from '@/context/GhostModeContext';
 import { resolveEventEnabledRoomKeys } from '@/lib/maintenanceEventForm';
 import { useActiveEvents, type ActiveEventListItem } from '@/hooks/useActiveEvents';
 import { useLiveFamilyGeoCheckin } from '@/hooks/useLiveFamilyGeoCheckin';
-import { resolveFamilyIdForPhone, normalizeFamilyCode } from '@/lib/family';
+import {
+  familyCodeBelongsToActiveTenant,
+  normalizeFamilyCode,
+  resolveFamilyIdForPhone,
+} from '@/lib/family';
 import { loadEffectiveSessionProfile } from '@/lib/loadSessionProfile';
 import { writeDashboardSelectedEventId } from '@/lib/dashboardSelectedEvent';
 import { NO_BOX_SHADOW } from '@/lib/boxShadow';
@@ -98,10 +102,16 @@ export function FamilyAgendaModal({ visible, initialEventId, onClose, onNeedsAud
             : null
         );
 
-        const resolvedFamilyId =
-          normalizeFamilyCode(
-            sessionProfile?.family_id ?? sessionProfile?.codigo_membro ?? null
-          ) || (phone ? await resolveFamilyIdForPhone(phone) : null);
+        const profileFamilyId = normalizeFamilyCode(
+          sessionProfile?.family_id ?? sessionProfile?.codigo_membro ?? null
+        );
+        const profileFamilyMatches =
+          Boolean(profileFamilyId) && (await familyCodeBelongsToActiveTenant(profileFamilyId));
+        const resolvedFamilyId = profileFamilyMatches
+          ? profileFamilyId
+          : phone
+            ? await resolveFamilyIdForPhone(phone)
+            : null;
 
         if (!isMounted) {
           return;

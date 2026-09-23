@@ -28,6 +28,28 @@ export function clearFamilyIdPrefixCache(): void {
 export const normalizeFamilyCode = (value: string | null | undefined): string =>
   (value ?? '').trim().toUpperCase();
 
+/** `IBS0001` pertence ao prefixo `IBS`. `IBN0001` não. */
+export function familyCodeUsesPrefix(
+  familyId: string | null | undefined,
+  prefix: string | null | undefined
+): boolean {
+  const code = normalizeFamilyCode(familyId);
+  const safePrefix = (prefix ?? '').replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+
+  if (!code || !safePrefix) {
+    return false;
+  }
+
+  return new RegExp(`^${escapeRegex(safePrefix)}\\d+$`, 'i').test(code);
+}
+
+export async function familyCodeBelongsToActiveTenant(
+  familyId: string | null | undefined
+): Promise<boolean> {
+  const prefix = await getFamilyIdPrefix();
+  return familyCodeUsesPrefix(familyId, prefix);
+}
+
 export async function formatFamilyId(num: number): Promise<string> {
   const prefix = await getFamilyIdPrefix();
   return buildFamilyId(prefix, num);
@@ -227,6 +249,23 @@ export async function resolveFamilyIdForPhone(phone: string | null | undefined) 
   return (await resolveExistingFamilyIdForPhone(phone)) ?? resolveCurrentFamilyId();
 }
 
+/**
+ * Família do telefone na instância ativa.
+ * Ignora código de outra igreja (ex.: IBN0001 com a sessão em IBS).
+ */
+export async function findFamilyIdForPhoneInActiveTenant(
+  phone: string | null | undefined
+): Promise<string | null> {
+  const member = await findMemberByPhone(phone);
+  const familyId = normalizeFamilyCode(member?.family_id);
+
+  if (!familyId || !(await familyCodeBelongsToActiveTenant(familyId))) {
+    return null;
+  }
+
+  return familyId;
+}
+
 /** Família já vinculada ao telefone — nunca usa o contador `family_ref`. */
 export async function resolveExistingFamilyIdForPhone(phone: string | null | undefined) {
   if (!phone?.trim()) {
@@ -236,17 +275,23 @@ export async function resolveExistingFamilyIdForPhone(phone: string | null | und
   const profile = await getProfileFamilyByPhone(phone);
 
   const profileFamilyId = resolveProfileFamilyValue(profile);
-  if (profileFamilyId) {
+  if (profileFamilyId && (await familyCodeBelongsToActiveTenant(profileFamilyId))) {
     return normalizeFamilyCode(profileFamilyId);
   }
 
   const memberByPhone = await findMemberByPhone(phone);
-  if (memberByPhone?.family_id) {
+  if (
+    memberByPhone?.family_id &&
+    (await familyCodeBelongsToActiveTenant(memberByPhone.family_id))
+  ) {
     return normalizeFamilyCode(memberByPhone.family_id);
   }
 
   const memberByName = await findMemberByName(profile?.full_name);
-  if (memberByName?.family_id) {
+  if (
+    memberByName?.family_id &&
+    (await familyCodeBelongsToActiveTenant(memberByName.family_id))
+  ) {
     return normalizeFamilyCode(memberByName.family_id);
   }
 
@@ -261,17 +306,23 @@ export async function resolveFamilyIdForAuthUser(authUserId: string | null | und
   const profile = await getProfileFamilyByAuthUser(authUserId);
 
   const profileFamilyId = resolveProfileFamilyValue(profile);
-  if (profileFamilyId) {
+  if (profileFamilyId && (await familyCodeBelongsToActiveTenant(profileFamilyId))) {
     return normalizeFamilyCode(profileFamilyId);
   }
 
   const memberByPhone = await findMemberByPhone(profile?.phone);
-  if (memberByPhone?.family_id) {
+  if (
+    memberByPhone?.family_id &&
+    (await familyCodeBelongsToActiveTenant(memberByPhone.family_id))
+  ) {
     return normalizeFamilyCode(memberByPhone.family_id);
   }
 
   const memberByName = await findMemberByName(profile?.full_name);
-  if (memberByName?.family_id) {
+  if (
+    memberByName?.family_id &&
+    (await familyCodeBelongsToActiveTenant(memberByName.family_id))
+  ) {
     return normalizeFamilyCode(memberByName.family_id);
   }
 

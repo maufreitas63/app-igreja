@@ -47,9 +47,11 @@ const buildProfilePayload = (
 });
 
 async function updateProfileWithFallback(profileId: string, payload: ProfileUpsertPayload) {
+  // Não desativa um perfil que já existe: is_active false vale só no insert de integrante novo.
+  const { is_active: _omitActiveFlag, ...profileUpdate } = payload;
   const { error } = await supabase
     .from('profiles')
-    .update(payload)
+    .update(profileUpdate)
     .eq('id', profileId);
 
   if (error && isMissingFamilyIdColumnError(error)) {
