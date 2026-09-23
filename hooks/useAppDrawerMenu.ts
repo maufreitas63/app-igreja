@@ -35,6 +35,7 @@ import { loadMaintenanceDashboardAccess } from '@/lib/maintenanceDashboardAccess
 import { fetchProfileHasActiveMembership } from '@/lib/profileMembershipStatus';
 import { loadEffectiveSessionProfile } from '@/lib/loadSessionProfile';
 import { resolveEffectiveProfileId } from '@/lib/sessionProfile';
+import { effectiveProfileHasMemberRole } from '@/lib/memberRoleAccess';
 
 export type AppDrawerMenuItemResolved = AppDrawerMenuItem & {
   enabled: boolean;
@@ -59,6 +60,7 @@ type DrawerEnableContext = {
   canAccessPastoralCare: boolean;
   hasActiveMembership: boolean;
   isSuperAdmin: boolean;
+  isMember: boolean;
 };
 
 const SETTINGS_PEOPLE_OPS_KEYS: ReadonlySet<AppDrawerModuleKey> = new Set([
@@ -85,6 +87,10 @@ function isDrawerModuleEnabled(
     || moduleKey === 'menu_apoio_mutuo'
   ) {
     return true;
+  }
+
+  if (moduleKey === 'menu_documentos_oficiais') {
+    return context.isMember;
   }
 
   if (moduleKey === 'menu_conhecimento') {
@@ -221,7 +227,7 @@ export function useAppDrawerMenu() {
         ?? (await loadEffectiveSessionProfile())?.id?.trim()
         ?? null;
 
-      const [dashboardCardAccess, dashboardScreenAccess, maintenanceAccess, hasActiveMembership, roomAccess, mediaAuthAccess, billingStatus] =
+      const [dashboardCardAccess, dashboardScreenAccess, maintenanceAccess, hasActiveMembership, roomAccess, mediaAuthAccess, billingStatus, isMember] =
         await Promise.all([
           profileId
             ? loadDashboardCardViewAccess(profileId, { forceRefresh: ghostActive })
@@ -234,6 +240,7 @@ export function useAppDrawerMenu() {
           sessionHasAccess('screen', ACCESS_SCREEN.configuracaoSalas, 'view'),
           sessionHasAccess('screen', ACCESS_SCREEN.autorizacaoMidia, 'view'),
           getTenantBillingStatus().catch(() => null),
+          effectiveProfileHasMemberRole(),
         ]);
 
       const extraScreenEntries = await Promise.all(
@@ -275,6 +282,7 @@ export function useAppDrawerMenu() {
         canAccessPastoralCare: maintenanceAccess.canAccessPastoralCare === true,
         hasActiveMembership,
         isSuperAdmin: superAdmin,
+        isMember,
       };
 
       setItems(

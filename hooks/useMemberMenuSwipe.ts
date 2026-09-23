@@ -11,6 +11,7 @@ const SWIPE_DISTANCE = 88;
 const MEMBER_MENU_PATHS: { moduleKey: AppDrawerModuleKey; path: string }[] = [
   { moduleKey: 'menu_perfil', path: '/perfil' },
   { moduleKey: 'gestao_financeira', path: '/financial' },
+  { moduleKey: 'menu_documentos_oficiais', path: '/documentos-oficiais' },
   { moduleKey: 'menu_small_group', path: '/pequeno-grupo' },
   { moduleKey: 'menu_escalas', path: '/escalas' },
   { moduleKey: 'menu_opportunity_mural', path: '/mural-oportunidades' },

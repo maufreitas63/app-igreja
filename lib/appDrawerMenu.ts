@@ -55,6 +55,7 @@ export type AppDrawerModuleKey =
   | 'menu_orquestrador'
   | AppDrawerPlaceholderModuleKey
   | 'gestao_financeira'
+  | 'menu_documentos_oficiais'
   | 'Events'
   | 'Event_gantt'
   | 'event_orchestration'
@@ -128,6 +129,7 @@ export const APP_DRAWER_MENU_ITEMS: AppDrawerMenuItem[] = [
   { letter: 'a', label: 'Início', moduleKey: 'events_panel' },
   { letter: 'b', label: 'Perfil', moduleKey: 'menu_perfil' },
   { letter: 'c', label: 'Financeiro', moduleKey: 'gestao_financeira' },
+  { letter: 'c2', label: 'Documentos oficiais', moduleKey: 'menu_documentos_oficiais' },
   { letter: 'd', label: 'Minha Célula', moduleKey: 'menu_small_group' },
   { letter: 'e', label: 'Escalas', moduleKey: 'menu_escalas' },
   { letter: 'f', label: 'Mural de Oportunidades', moduleKey: 'menu_opportunity_mural' },
@@ -684,6 +686,11 @@ async function navigateDrawerMenuItemBody(
       withReturnDashboardCard(DASHBOARD_FINANCIAL_CARD_ID),
       drawerNavigate()
     );
+    return;
+  }
+
+  if (moduleKey === 'menu_documentos_oficiais') {
+    openScreen(router, '/documentos-oficiais', withFailClosedReturn());
     return;
   }
 

@@ -32,6 +32,7 @@ declare
     '/pastoral',
     '/escalas',
     '/financial',
+    '/documentos-oficiais',
     '/pequeno-grupo',
     '/mural-oportunidades',
     '/mural-generosidade',

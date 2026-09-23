@@ -11,6 +11,7 @@ export const ACCESS_SCREEN = {
   pastoral: '/pastoral',
   pastoralHistory: '/pastoral-history',
   financial: '/financial',
+  documentosOficiais: '/documentos-oficiais',
   aliancaConectaReino: '/alianca-conecta-reino',
   aliancaIndicados: '/alianca-indicados',
   expenseReport: '/expense-report',
