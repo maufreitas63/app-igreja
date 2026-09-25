@@ -14,6 +14,7 @@ export const KNOWLEDGE_ROUTE = {
   escalas: '/escalas',
   financial: '/financial',
   documentosOficiais: '/documentos-oficiais',
+  atribuicoes: '/atribuicoes',
   login: 'login',
   sair: 'sair',
   avisos: '/avisos',

@@ -21,6 +21,7 @@ type Props = {
   showSubtitleSpacer?: boolean;
   accessibilityLabel?: string;
   modalTitle?: string;
+  rightAction?: React.ReactNode;
 };
 
 export function MaintenanceHelpInfoTitle({
@@ -32,6 +33,7 @@ export function MaintenanceHelpInfoTitle({
   showSubtitleSpacer,
   accessibilityLabel,
   modalTitle = 'Como usar',
+  rightAction,
 }: Props) {
   const [open, setOpen] = useState(false);
   const color = iconColor ?? (minimal ? MINIMAL_UI.icon : MINIMAL_UI.accent);
@@ -40,7 +42,10 @@ export function MaintenanceHelpInfoTitle({
   return (
     <>
       <View style={styles.titleRow}>
-        <Text style={[titleStyle, styles.titleText]}>{title}</Text>
+        <View style={styles.titleCluster}>
+          <Text style={[titleStyle, styles.titleText]}>{title}</Text>
+          {rightAction}
+        </View>
         <TouchableOpacity
           style={styles.helpButton}
           onPress={() => setOpen(true)}
@@ -73,9 +78,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     minHeight: 28,
   },
-  titleText: {
+  titleCluster: {
     flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
     paddingHorizontal: 28,
+  },
+  titleText: {
+    flexShrink: 1,
   },
   helpButton: {
     position: 'absolute',

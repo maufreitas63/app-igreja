@@ -770,6 +770,7 @@ const MAINTENANCE_EXTRA_SCREEN_ROUTE_KEYS = new Set<string>(
 
 const isMaintenanceScreenKey = (key: string) =>
   key === ACCESS_SCREEN.maintenance
+  || key === ACCESS_SCREEN.atribuicoes
   || key.startsWith('maintenance.card.')
   || key.startsWith('scale_type.')
   || MAINTENANCE_EXTRA_SCREEN_ROUTE_KEYS.has(key);

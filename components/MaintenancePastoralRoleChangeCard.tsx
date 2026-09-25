@@ -19,9 +19,11 @@ import {
   profileHasEditableMembershipDates,
   profileHasMembershipDateLink,
 } from '@/lib/pastoralRoleChangeApi';
+import { sessionCanAccessAtribuicoes } from '@/lib/atribuicoesApi';
 import { CONTAIN_WIDTH } from '@/lib/minimalPresentation';
 import { MINIMAL_SECTION_TITLE, MINIMAL_UI } from '@/lib/minimalUiTheme';
-import React, { useMemo, useState } from 'react';
+import { useRouter } from 'expo-router';
+import React, { useEffect, useMemo, useState } from 'react';
 import Toast from 'react-native-toast-message';
 import {
   ActivityIndicator,
@@ -64,6 +66,8 @@ export function MaintenancePastoralRoleChangeCard({
   panelHeight,
   minimal = false,
 }: Props) {
+  const router = useRouter();
+  const [canOpenAtribuicoes, setCanOpenAtribuicoes] = useState(false);
   const [membershipDateEditor, setMembershipDateEditor] = useState<MembershipDateEditorState | null>(
     null
   );
@@ -81,6 +85,24 @@ export function MaintenancePastoralRoleChangeCard({
     updateMembershipDate,
     reloadProfiles,
   } = useMaintenancePastoralRoleChange(isActive);
+
+  useEffect(() => {
+    if (!isActive) {
+      return;
+    }
+
+    let active = true;
+
+    void sessionCanAccessAtribuicoes().then((allowed) => {
+      if (active) {
+        setCanOpenAtribuicoes(allowed);
+      }
+    });
+
+    return () => {
+      active = false;
+    };
+  }, [isActive]);
 
   const [enxergarOpen, setEnxergarOpen] = useState(false);
   const contentHeight = computeMaintenanceContentHeight(panelHeight);
@@ -228,6 +250,31 @@ export function MaintenancePastoralRoleChangeCard({
         helpText={PASTORAL_ROLE_CHANGE_HELP}
         minimal={minimal}
         titleStyle={minimal ? styles.sectionTitle : maintenancePanelStyles.panelTitle}
+        rightAction={
+          canOpenAtribuicoes ? (
+            <TouchableOpacity
+              onPress={() =>
+                router.push({
+                  pathname: '/atribuicoes',
+                  params: { presentation: 'minimal' },
+                })
+              }
+              style={[styles.atribuicoesButton, minimal && styles.atribuicoesButtonMinimal]}
+              activeOpacity={0.85}
+              accessibilityRole="button"
+              accessibilityLabel="Abrir Atribuições"
+            >
+              <Text
+                style={[
+                  styles.atribuicoesButtonText,
+                  minimal && styles.atribuicoesButtonTextMinimal,
+                ]}
+              >
+                Atribuições
+              </Text>
+            </TouchableOpacity>
+          ) : null
+        }
       />
 
       {error ? (
@@ -891,6 +938,24 @@ const styles = StyleSheet.create({
     borderRadius: 0,
     backgroundColor: MINIMAL_UI.background,
     overflow: 'hidden',
+  },
+  atribuicoesButton: {
+    borderWidth: 1,
+    borderColor: 'rgba(58, 150, 221, 0.45)',
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+  atribuicoesButtonText: {
+    color: ACCENT,
+    fontSize: 12,
+    fontWeight: '800',
+  },
+  atribuicoesButtonMinimal: {
+    borderColor: MINIMAL_UI.blueDark,
+  },
+  atribuicoesButtonTextMinimal: {
+    color: MINIMAL_UI.blueDark,
   },
   sectionTitle: {
     ...MINIMAL_SECTION_TITLE,

@@ -18,6 +18,7 @@ export const DASHBOARD_SCREEN_DENIED_MESSAGES: Record<string, string> = {
   '/pequeno-grupo': 'Você não tem permissão para abrir Minha Célula.',
   '/mural-oportunidades': 'Você não tem permissão para abrir o Mural de Oportunidades.',
   '/apoio-mutuo': 'Você não tem permissão para abrir o Apoio Mútuo.',
+  '/atribuicoes': 'Apenas a Equipe Pastoral e o Super Administrador acessam Atribuições.',
   '/primicias': 'Você não tem permissão para abrir a campanha Prímicias.',
 };
 
