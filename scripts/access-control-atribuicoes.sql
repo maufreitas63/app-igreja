@@ -119,12 +119,16 @@ begin
 end;
 $$;
 
+drop function if exists public.listar_perfis_atribuicoes(uuid, text, text, integer, integer);
+drop function if exists public.listar_perfis_atribuicoes(uuid, text, text, integer, integer, boolean);
+
 create or replace function public.listar_perfis_atribuicoes(
   p_actor_profile_id uuid,
   p_role_code text,
   p_query text default null,
   p_offset integer default 0,
-  p_limit integer default 40
+  p_limit integer default 40,
+  p_assigned boolean default null
 )
 returns table (
   id uuid,
@@ -156,25 +160,30 @@ begin
   end if;
 
   return query
-  select
-    p.id,
-    coalesce(nullif(trim(p.full_name), ''), '(sem nome)'),
-    exists (
-      select 1
-        from public.profile_access_roles par
-        join public.access_roles ar on ar.id = par.role_id
-       where par.profile_id = p.id
-         and ar.code = v_role
-    )
-  from public.profiles p
- where p.tenant_id = v_tenant
-   -- Super Admin entra na lista pelos outros papéis; o papel super_admin não é oferecido nesta tela.
-   and coalesce(nullif(trim(p.full_name), ''), nullif(trim(p.phone), '')) is not null
-   and (
-     v_q is null
-     or lower(coalesce(p.full_name, '')) like '%' || v_q || '%'
-   )
- order by p.full_name, p.id
+  select filtered.id, filtered.full_name, filtered.assigned
+  from (
+    select
+      p.id,
+      coalesce(nullif(trim(p.full_name), ''), '(sem nome)') as full_name,
+      exists (
+        select 1
+          from public.profile_access_roles par
+          join public.access_roles ar on ar.id = par.role_id
+         where par.profile_id = p.id
+           and ar.code = v_role
+      ) as assigned
+    from public.profiles p
+   where p.tenant_id = v_tenant
+     -- Super Admin entra na lista pelos outros papéis; o papel super_admin não é oferecido nesta tela.
+     and coalesce(nullif(trim(p.full_name), ''), nullif(trim(p.phone), '')) is not null
+     and (
+       v_q is null
+       or lower(coalesce(p.full_name, '')) like '%' || v_q || '%'
+     )
+  ) filtered
+ where p_assigned is null
+    or filtered.assigned = p_assigned
+ order by filtered.full_name, filtered.id
  offset v_offset
  limit v_limit + 1;
 end;
@@ -251,7 +260,7 @@ grant execute on function public.atribuicoes_excluded_role_codes() to anon, auth
 grant execute on function public.assert_atribuicoes_actor(uuid) to anon, authenticated;
 grant execute on function public.session_can_access_atribuicoes() to anon, authenticated;
 grant execute on function public.listar_papeis_atribuicoes(uuid) to anon, authenticated;
-grant execute on function public.listar_perfis_atribuicoes(uuid, text, text, integer, integer) to anon, authenticated;
+grant execute on function public.listar_perfis_atribuicoes(uuid, text, text, integer, integer, boolean) to anon, authenticated;
 grant execute on function public.definir_papel_atribuicao(uuid, uuid, text, boolean) to anon, authenticated;
 
 do $$

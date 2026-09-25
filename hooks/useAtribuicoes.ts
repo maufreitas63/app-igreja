@@ -10,10 +10,25 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 const SEARCH_DEBOUNCE_MS = 250;
 
+export type AtribuicaoAssignedFilter = 'sim' | 'nao' | null;
+
+function assignedFilterToBoolean(filter: AtribuicaoAssignedFilter): boolean | null {
+  if (filter === 'sim') {
+    return true;
+  }
+
+  if (filter === 'nao') {
+    return false;
+  }
+
+  return null;
+}
+
 export function useAtribuicoes(isActive: boolean) {
   const [roles, setRoles] = useState<AtribuicaoRole[]>([]);
   const [selectedRoleCode, setSelectedRoleCode] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [assignedFilter, setAssignedFilter] = useState<AtribuicaoAssignedFilter>(null);
   const [profiles, setProfiles] = useState<AtribuicaoProfile[]>([]);
   const [loadingRoles, setLoadingRoles] = useState(false);
   const [loadingList, setLoadingList] = useState(false);
@@ -24,6 +39,7 @@ export function useAtribuicoes(isActive: boolean) {
   const requestSeqRef = useRef(0);
   const selectedRoleRef = useRef('');
   const searchQueryRef = useRef('');
+  const assignedFilterRef = useRef<AtribuicaoAssignedFilter>(null);
 
   useEffect(() => {
     selectedRoleRef.current = selectedRoleCode;
@@ -32,6 +48,10 @@ export function useAtribuicoes(isActive: boolean) {
   useEffect(() => {
     searchQueryRef.current = searchQuery;
   }, [searchQuery]);
+
+  useEffect(() => {
+    assignedFilterRef.current = assignedFilter;
+  }, [assignedFilter]);
 
   const loadRoles = useCallback(async () => {
     setLoadingRoles(true);
@@ -57,7 +77,13 @@ export function useAtribuicoes(isActive: boolean) {
   }, []);
 
   const loadPage = useCallback(
-    async (roleCode: string, query: string, offset: number, append: boolean) => {
+    async (
+      roleCode: string,
+      query: string,
+      filter: AtribuicaoAssignedFilter,
+      offset: number,
+      append: boolean
+    ) => {
       if (!roleCode) {
         setProfiles([]);
         setHasMore(false);
@@ -80,9 +106,14 @@ export function useAtribuicoes(isActive: boolean) {
           query,
           offset,
           limit: ATRIBUICOES_PAGE_SIZE,
+          assigned: assignedFilterToBoolean(filter),
         });
 
-        if (seq !== requestSeqRef.current || selectedRoleRef.current !== roleCode) {
+        if (
+          seq !== requestSeqRef.current
+          || selectedRoleRef.current !== roleCode
+          || assignedFilterRef.current !== filter
+        ) {
           return;
         }
 
@@ -122,8 +153,8 @@ export function useAtribuicoes(isActive: boolean) {
       return;
     }
 
-    void loadPage(selectedRoleCode, searchQueryRef.current, 0, false);
-  }, [isActive, loadPage, selectedRoleCode]);
+    void loadPage(selectedRoleCode, searchQueryRef.current, assignedFilter, 0, false);
+  }, [assignedFilter, isActive, loadPage, selectedRoleCode]);
 
   useEffect(() => {
     if (!isActive || !selectedRoleCode) {
@@ -131,7 +162,7 @@ export function useAtribuicoes(isActive: boolean) {
     }
 
     const handle = setTimeout(() => {
-      void loadPage(selectedRoleCode, searchQuery, 0, false);
+      void loadPage(selectedRoleCode, searchQuery, assignedFilterRef.current, 0, false);
     }, SEARCH_DEBOUNCE_MS);
 
     return () => clearTimeout(handle);
@@ -146,13 +177,34 @@ export function useAtribuicoes(isActive: boolean) {
     setError(null);
   }, []);
 
+  const toggleAssignedFilter = useCallback((value: Exclude<AtribuicaoAssignedFilter, null>) => {
+    requestSeqRef.current += 1;
+    setAssignedFilter((current) => {
+      const next = current === value ? null : value;
+      assignedFilterRef.current = next;
+      return next;
+    });
+    setProfiles([]);
+    setHasMore(false);
+    setError(null);
+  }, []);
+
   const loadMore = useCallback(() => {
     if (!selectedRoleCode || loadingList || loadingMore || !hasMore) {
       return;
     }
 
-    void loadPage(selectedRoleCode, searchQuery, profiles.length, true);
-  }, [hasMore, loadPage, loadingList, loadingMore, profiles.length, searchQuery, selectedRoleCode]);
+    void loadPage(selectedRoleCode, searchQuery, assignedFilter, profiles.length, true);
+  }, [
+    assignedFilter,
+    hasMore,
+    loadPage,
+    loadingList,
+    loadingMore,
+    profiles.length,
+    searchQuery,
+    selectedRoleCode,
+  ]);
 
   const toggleAssignment = useCallback(
     async (profileId: string, assigned: boolean) => {
@@ -181,11 +233,20 @@ export function useAtribuicoes(isActive: boolean) {
               row.id === profileId ? { ...row, assigned: previous === true } : row
             )
           );
-        } else if (typeof result.assigned === 'boolean') {
+        } else {
+          const nextAssigned = typeof result.assigned === 'boolean' ? result.assigned : assigned;
+          const filter = assignedFilterRef.current;
+          const matchesFilter =
+            filter === null
+            || (filter === 'sim' && nextAssigned)
+            || (filter === 'nao' && !nextAssigned);
+
           setProfiles((current) =>
-            current.map((row) =>
-              row.id === profileId ? { ...row, assigned: result.assigned === true } : row
-            )
+            matchesFilter
+              ? current.map((row) =>
+                  row.id === profileId ? { ...row, assigned: nextAssigned } : row
+                )
+              : current.filter((row) => row.id !== profileId)
           );
         }
 
@@ -216,6 +277,8 @@ export function useAtribuicoes(isActive: boolean) {
     changeRole,
     searchQuery,
     setSearchQuery,
+    assignedFilter,
+    toggleAssignedFilter,
     profiles,
     loadingRoles,
     loadingList,

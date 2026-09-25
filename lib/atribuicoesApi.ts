@@ -82,6 +82,7 @@ export async function listAtribuicaoProfiles(input: {
   query?: string;
   offset?: number;
   limit?: number;
+  assigned?: boolean | null;
 }): Promise<{ rows: AtribuicaoProfile[]; hasMore: boolean }> {
   const actorProfileId = await resolveActorProfileId();
 
@@ -96,6 +97,7 @@ export async function listAtribuicaoProfiles(input: {
     p_query: input.query?.trim() || null,
     p_offset: input.offset ?? 0,
     p_limit: limit,
+    p_assigned: input.assigned ?? null,
   });
 
   if (error) {

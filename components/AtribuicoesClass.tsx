@@ -1,10 +1,10 @@
 import { KnowledgeSectionTitle } from '@/components/knowledge/KnowledgeSectionTitle';
 import { DropdownSelect } from '@/components/ui/DropdownSelect';
-import { SegmentChipRow } from '@/components/ui/SegmentChipRow';
-import { useAtribuicoes } from '@/hooks/useAtribuicoes';
+import { useAtribuicoes, type AtribuicaoAssignedFilter } from '@/hooks/useAtribuicoes';
 import { formatShortName } from '@/lib/formatShortName';
 import { KNOWLEDGE_ROUTE } from '@/lib/knowledge/routeKeys';
 import { MINIMAL_SECTION_TITLE, MINIMAL_UI } from '@/lib/minimalUiTheme';
+import { FontAwesome } from '@expo/vector-icons';
 import React, { useCallback } from 'react';
 import Toast from 'react-native-toast-message';
 import {
@@ -13,13 +13,50 @@ import {
   StyleSheet,
   Text,
   TextInput,
+  TouchableOpacity,
   View,
 } from 'react-native';
 
-const ASSIGNMENT_OPTIONS = [
-  { value: 'sim', label: 'Sim' },
-  { value: 'nao', label: 'Não' },
-] as const;
+const SIM_BG = '#16A34A';
+const NAO_BG = '#DC2626';
+const SIM_MUTED = '#DCFCE7';
+const NAO_MUTED = '#FEE2E2';
+
+type AssignmentChipProps = {
+  value: 'sim' | 'nao';
+  selected: boolean;
+  onPress: () => void;
+  accessibilityLabel: string;
+};
+
+function AssignmentChip({ value, selected, onPress, accessibilityLabel }: AssignmentChipProps) {
+  const isSim = value === 'sim';
+
+  return (
+    <TouchableOpacity
+      accessibilityRole="radio"
+      accessibilityState={{ selected }}
+      accessibilityLabel={accessibilityLabel}
+      activeOpacity={0.85}
+      onPress={onPress}
+      style={[
+        styles.chip,
+        isSim ? styles.chipSim : styles.chipNao,
+        selected && (isSim ? styles.chipSimSelected : styles.chipNaoSelected),
+      ]}
+    >
+      <Text
+        style={[
+          styles.chipText,
+          isSim ? styles.chipTextSim : styles.chipTextNao,
+          selected && styles.chipTextSelected,
+        ]}
+      >
+        {isSim ? 'Sim' : 'Não'}
+      </Text>
+    </TouchableOpacity>
+  );
+}
 
 type Props = {
   isActive?: boolean;
@@ -32,6 +69,8 @@ export function AtribuicoesClass({ isActive = true }: Props) {
     changeRole,
     searchQuery,
     setSearchQuery,
+    assignedFilter,
+    toggleAssignedFilter,
     profiles,
     loadingRoles,
     loadingList,
@@ -55,6 +94,15 @@ export function AtribuicoesClass({ isActive = true }: Props) {
     },
     [toggleAssignment]
   );
+
+  const handleHeaderFilter = useCallback(
+    (value: Exclude<AtribuicaoAssignedFilter, null>) => {
+      toggleAssignedFilter(value);
+    },
+    [toggleAssignedFilter]
+  );
+
+  const hasNameQuery = searchQuery.trim().length > 0;
 
   return (
     <View style={styles.root}>
@@ -82,18 +130,56 @@ export function AtribuicoesClass({ isActive = true }: Props) {
       )}
 
       <Text style={styles.label}>Buscar por nome</Text>
-      <TextInput
-        value={searchQuery}
-        onChangeText={setSearchQuery}
-        placeholder="Nome"
-        placeholderTextColor={MINIMAL_UI.textMuted}
-        autoCorrect={false}
-        autoCapitalize="none"
-        style={styles.search}
-        accessibilityLabel="Buscar por nome"
-      />
+      <View style={styles.searchWrap}>
+        <TextInput
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          placeholder="Nome"
+          placeholderTextColor={MINIMAL_UI.textMuted}
+          autoCorrect={false}
+          autoCapitalize="none"
+          style={[styles.search, hasNameQuery && styles.searchWithClear]}
+          accessibilityLabel="Buscar por nome"
+        />
+        {hasNameQuery ? (
+          <TouchableOpacity
+            style={styles.searchClear}
+            onPress={() => setSearchQuery('')}
+            activeOpacity={0.85}
+            accessibilityRole="button"
+            accessibilityLabel="Limpar nome"
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
+            <FontAwesome name="times-circle" size={18} color={MINIMAL_UI.icon} />
+          </TouchableOpacity>
+        ) : null}
+      </View>
 
       {error ? <Text style={styles.error}>{error}</Text> : null}
+
+      <View style={styles.listHeader}>
+        <Text style={styles.headerName}>Nome</Text>
+        <View style={styles.toggle}>
+          <View style={styles.chipRow}>
+            <AssignmentChip
+              value="sim"
+              selected={assignedFilter === 'sim'}
+              onPress={() => handleHeaderFilter('sim')}
+              accessibilityLabel={
+                assignedFilter === 'sim' ? 'Limpar filtro Sim' : 'Filtrar por Sim'
+              }
+            />
+            <AssignmentChip
+              value="nao"
+              selected={assignedFilter === 'nao'}
+              onPress={() => handleHeaderFilter('nao')}
+              accessibilityLabel={
+                assignedFilter === 'nao' ? 'Limpar filtro Não' : 'Filtrar por Não'
+              }
+            />
+          </View>
+        </View>
+      </View>
 
       {loadingList && profiles.length === 0 ? (
         <ActivityIndicator color={MINIMAL_UI.accent} style={styles.loader} />
@@ -109,8 +195,8 @@ export function AtribuicoesClass({ isActive = true }: Props) {
           ListEmptyComponent={
             selectedRoleCode ? (
               <Text style={styles.empty}>
-                {searchQuery.trim()
-                  ? 'Nenhum nome corresponde à busca.'
+                {hasNameQuery || assignedFilter
+                  ? 'Nenhuma pessoa corresponde aos filtros.'
                   : 'Nenhuma pessoa encontrada nesta igreja.'}
               </Text>
             ) : (
@@ -128,20 +214,32 @@ export function AtribuicoesClass({ isActive = true }: Props) {
                 {formatShortName(item.fullName, { profileId: item.id })}
               </Text>
               <View style={styles.toggle}>
-                <SegmentChipRow
-                  compact
-                  options={[...ASSIGNMENT_OPTIONS]}
-                  selectedValue={item.assigned ? 'sim' : 'nao'}
-                  onSelect={(value) => {
-                    const nextAssigned = value === 'sim';
+                <View style={styles.chipRow}>
+                  <AssignmentChip
+                    value="sim"
+                    selected={item.assigned}
+                    onPress={() => {
+                      if (savingProfileId === item.id || item.assigned) {
+                        return;
+                      }
 
-                    if (savingProfileId === item.id || nextAssigned === item.assigned) {
-                      return;
-                    }
+                      void handleToggle(item.id, true);
+                    }}
+                    accessibilityLabel="Sim"
+                  />
+                  <AssignmentChip
+                    value="nao"
+                    selected={!item.assigned}
+                    onPress={() => {
+                      if (savingProfileId === item.id || !item.assigned) {
+                        return;
+                      }
 
-                    void handleToggle(item.id, nextAssigned);
-                  }}
-                />
+                      void handleToggle(item.id, false);
+                    }}
+                    accessibilityLabel="Não"
+                  />
+                </View>
               </View>
             </View>
           )}
@@ -171,6 +269,10 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     marginTop: 4,
   },
+  searchWrap: {
+    position: 'relative',
+    justifyContent: 'center',
+  },
   search: {
     borderWidth: 1,
     borderColor: MINIMAL_UI.border,
@@ -181,6 +283,18 @@ const styles = StyleSheet.create({
     backgroundColor: MINIMAL_UI.background,
     fontSize: 15,
   },
+  searchWithClear: {
+    paddingRight: 40,
+  },
+  searchClear: {
+    position: 'absolute',
+    right: 10,
+    top: 0,
+    bottom: 0,
+    width: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   error: {
     color: '#DC2626',
     textAlign: 'center',
@@ -190,6 +304,19 @@ const styles = StyleSheet.create({
   },
   inlineLoader: {
     marginVertical: 8,
+  },
+  listHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingHorizontal: 12,
+    paddingBottom: 2,
+  },
+  headerName: {
+    flex: 1,
+    color: MINIMAL_UI.textMuted,
+    fontSize: 13,
+    fontWeight: '700',
   },
   list: {
     flex: 1,
@@ -224,5 +351,50 @@ const styles = StyleSheet.create({
   toggle: {
     width: 148,
     flexShrink: 0,
+  },
+  chipRow: {
+    flexDirection: 'row',
+    gap: 6,
+  },
+  chip: {
+    flex: 1,
+    minHeight: 36,
+    borderRadius: 10,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+  },
+  chipSim: {
+    borderColor: '#86EFAC',
+    backgroundColor: SIM_MUTED,
+  },
+  chipNao: {
+    borderColor: '#FCA5A5',
+    backgroundColor: NAO_MUTED,
+  },
+  chipSimSelected: {
+    borderColor: SIM_BG,
+    backgroundColor: SIM_BG,
+  },
+  chipNaoSelected: {
+    borderColor: NAO_BG,
+    backgroundColor: NAO_BG,
+  },
+  chipText: {
+    fontSize: 13,
+    lineHeight: 16,
+    fontWeight: '800',
+    textAlign: 'center',
+  },
+  chipTextSim: {
+    color: '#15803D',
+  },
+  chipTextNao: {
+    color: '#B91C1C',
+  },
+  chipTextSelected: {
+    color: '#FFFFFF',
   },
 });
