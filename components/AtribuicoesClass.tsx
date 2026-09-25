@@ -1,18 +1,19 @@
 import { KnowledgeSectionTitle } from '@/components/knowledge/KnowledgeSectionTitle';
 import { DropdownSelect } from '@/components/ui/DropdownSelect';
+import { EnxergarSearchModal } from '@/components/ui/EnxergarSearchModal';
 import { useAtribuicoes, type AtribuicaoAssignedFilter } from '@/hooks/useAtribuicoes';
 import { formatShortName } from '@/lib/formatShortName';
 import { KNOWLEDGE_ROUTE } from '@/lib/knowledge/routeKeys';
 import { MINIMAL_SECTION_TITLE, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { FontAwesome } from '@expo/vector-icons';
-import React, { useCallback } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import Toast from 'react-native-toast-message';
 import {
   ActivityIndicator,
   FlatList,
+  Pressable,
   StyleSheet,
   Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -78,8 +79,11 @@ export function AtribuicoesClass({ isActive = true }: Props) {
     savingProfileId,
     error,
     loadMore,
+    hasMore,
     toggleAssignment,
   } = useAtribuicoes(isActive);
+  const [enxergarOpen, setEnxergarOpen] = useState(false);
+  const appliedNameQueryRef = useRef('');
 
   const handleToggle = useCallback(
     async (profileId: string, nextAssigned: boolean) => {
@@ -102,7 +106,32 @@ export function AtribuicoesClass({ isActive = true }: Props) {
     [toggleAssignedFilter]
   );
 
-  const hasNameQuery = searchQuery.trim().length > 0;
+  const openNameSearch = useCallback(() => {
+    appliedNameQueryRef.current = searchQuery;
+    setEnxergarOpen(true);
+  }, [searchQuery]);
+
+  const closeNameSearch = useCallback(() => {
+    setSearchQuery(appliedNameQueryRef.current);
+    setEnxergarOpen(false);
+  }, [setSearchQuery]);
+
+  const applyNameFilter = useCallback(
+    (fullName: string) => {
+      appliedNameQueryRef.current = fullName;
+      setSearchQuery(fullName);
+      setEnxergarOpen(false);
+    },
+    [setSearchQuery]
+  );
+
+  const clearNameFilter = useCallback(() => {
+    appliedNameQueryRef.current = '';
+    setSearchQuery('');
+  }, [setSearchQuery]);
+
+  const hasNameQuery = (enxergarOpen ? appliedNameQueryRef.current : searchQuery).trim().length > 0;
+  const triggerName = (enxergarOpen ? appliedNameQueryRef.current : searchQuery).trim();
 
   return (
     <View style={styles.root}>
@@ -131,20 +160,23 @@ export function AtribuicoesClass({ isActive = true }: Props) {
 
       <Text style={styles.label}>Buscar por nome</Text>
       <View style={styles.searchWrap}>
-        <TextInput
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-          placeholder="Nome"
-          placeholderTextColor={MINIMAL_UI.textMuted}
-          autoCorrect={false}
-          autoCapitalize="none"
+        <Pressable
+          onPress={openNameSearch}
           style={[styles.search, hasNameQuery && styles.searchWithClear]}
+          accessibilityRole="button"
           accessibilityLabel="Buscar por nome"
-        />
+        >
+          <Text
+            style={[styles.searchText, !hasNameQuery && styles.searchPlaceholder]}
+            numberOfLines={1}
+          >
+            {triggerName || 'Nome'}
+          </Text>
+        </Pressable>
         {hasNameQuery ? (
           <TouchableOpacity
             style={styles.searchClear}
-            onPress={() => setSearchQuery('')}
+            onPress={clearNameFilter}
             activeOpacity={0.85}
             accessibilityRole="button"
             accessibilityLabel="Limpar nome"
@@ -154,6 +186,69 @@ export function AtribuicoesClass({ isActive = true }: Props) {
           </TouchableOpacity>
         ) : null}
       </View>
+      <EnxergarSearchModal
+        visible={enxergarOpen}
+        title="Buscar por nome"
+        searchQuery={searchQuery}
+        onSearchQueryChange={setSearchQuery}
+        searchPlaceholder="Nome"
+        countLabel={
+          loadingList
+            ? 'Carregando...'
+            : `${profiles.length} nome${profiles.length === 1 ? '' : 's'}`
+        }
+        onClose={closeNameSearch}
+        variant="minimal"
+      >
+        {loadingList && profiles.length === 0 ? (
+          <ActivityIndicator color={MINIMAL_UI.accent} style={styles.inlineLoader} />
+        ) : profiles.length === 0 ? (
+          <Text style={styles.enxergarEmpty}>
+            {searchQuery.trim()
+              ? 'Nenhum nome corresponde à busca.'
+              : 'Nenhuma pessoa encontrada nesta igreja.'}
+          </Text>
+        ) : (
+          <>
+            {profiles.map((item) => {
+              const shortName = formatShortName(item.fullName, { profileId: item.id });
+
+              return (
+                <TouchableOpacity
+                  key={item.id}
+                  style={styles.enxergarRow}
+                  onPress={() => applyNameFilter(item.fullName)}
+                  activeOpacity={0.85}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Filtrar por ${shortName}`}
+                >
+                  <Text style={styles.name} numberOfLines={2}>
+                    {shortName}
+                  </Text>
+                  <Text style={item.assigned ? styles.enxergarSim : styles.enxergarNao}>
+                    {item.assigned ? 'Sim' : 'Não'}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+            {hasMore ? (
+              <TouchableOpacity
+                style={styles.enxergarMore}
+                onPress={loadMore}
+                activeOpacity={0.85}
+                accessibilityRole="button"
+                accessibilityLabel="Carregar mais nomes"
+              >
+                {loadingMore ? (
+                  <ActivityIndicator color={MINIMAL_UI.accent} />
+                ) : (
+                  <Text style={styles.enxergarMoreText}>Carregar mais</Text>
+                )}
+              </TouchableOpacity>
+            ) : null}
+          </>
+        )}
+      </EnxergarSearchModal>
 
       {error ? <Text style={styles.error}>{error}</Text> : null}
 
@@ -279,12 +374,51 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     paddingHorizontal: 12,
     paddingVertical: 10,
-    color: MINIMAL_UI.text,
     backgroundColor: MINIMAL_UI.background,
-    fontSize: 15,
+    justifyContent: 'center',
+    minHeight: 44,
   },
   searchWithClear: {
     paddingRight: 40,
+  },
+  searchText: {
+    color: MINIMAL_UI.text,
+    fontSize: 15,
+  },
+  searchPlaceholder: {
+    color: MINIMAL_UI.textMuted,
+  },
+  enxergarRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingVertical: 10,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: MINIMAL_UI.divider,
+  },
+  enxergarEmpty: {
+    color: MINIMAL_UI.textMuted,
+    textAlign: 'center',
+    marginTop: 12,
+  },
+  enxergarSim: {
+    color: '#15803D',
+    fontSize: 13,
+    fontWeight: '800',
+  },
+  enxergarNao: {
+    color: '#B91C1C',
+    fontSize: 13,
+    fontWeight: '800',
+  },
+  enxergarMore: {
+    alignItems: 'center',
+    paddingVertical: 12,
+  },
+  enxergarMoreText: {
+    color: MINIMAL_UI.blueDark,
+    fontSize: 14,
+    fontWeight: '700',
   },
   searchClear: {
     position: 'absolute',
