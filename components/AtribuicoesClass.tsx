@@ -157,94 +157,94 @@ export function AtribuicoesClass({ isActive = true }: Props) {
 
       {error ? <Text style={styles.error}>{error}</Text> : null}
 
-      <View style={styles.listHeader}>
-        <Text style={styles.headerName}>Nome</Text>
-        <View style={styles.toggle}>
-          <View style={styles.chipRow}>
-            <AssignmentChip
-              value="sim"
-              selected={assignedFilter === 'sim'}
-              onPress={() => handleHeaderFilter('sim')}
-              accessibilityLabel={
-                assignedFilter === 'sim' ? 'Limpar filtro Sim' : 'Filtrar por Sim'
-              }
-            />
-            <AssignmentChip
-              value="nao"
-              selected={assignedFilter === 'nao'}
-              onPress={() => handleHeaderFilter('nao')}
-              accessibilityLabel={
-                assignedFilter === 'nao' ? 'Limpar filtro Não' : 'Filtrar por Não'
-              }
-            />
-          </View>
-        </View>
-      </View>
-
-      {loadingList && profiles.length === 0 ? (
-        <ActivityIndicator color={MINIMAL_UI.accent} style={styles.loader} />
-      ) : (
-        <FlatList
-          data={profiles}
-          keyExtractor={(item) => item.id}
-          style={styles.list}
-          contentContainerStyle={styles.listContent}
-          keyboardShouldPersistTaps="handled"
-          onEndReached={loadMore}
-          onEndReachedThreshold={0.4}
-          ListEmptyComponent={
-            selectedRoleCode ? (
-              <Text style={styles.empty}>
-                {hasNameQuery || assignedFilter
-                  ? 'Nenhuma pessoa corresponde aos filtros.'
-                  : 'Nenhuma pessoa encontrada nesta igreja.'}
-              </Text>
-            ) : (
-              <Text style={styles.empty}>Selecione um papel para ver a lista.</Text>
-            )
-          }
-          ListFooterComponent={
-            loadingMore ? (
-              <ActivityIndicator color={MINIMAL_UI.accent} style={styles.inlineLoader} />
-            ) : null
-          }
-          renderItem={({ item }) => (
-            <View style={styles.row}>
-              <Text style={styles.name} numberOfLines={2}>
-                {formatShortName(item.fullName, { profileId: item.id })}
-              </Text>
-              <View style={styles.toggle}>
-                <View style={styles.chipRow}>
-                  <AssignmentChip
-                    value="sim"
-                    selected={item.assigned}
-                    onPress={() => {
-                      if (savingProfileId === item.id || item.assigned) {
-                        return;
-                      }
-
-                      void handleToggle(item.id, true);
-                    }}
-                    accessibilityLabel="Sim"
-                  />
-                  <AssignmentChip
-                    value="nao"
-                    selected={!item.assigned}
-                    onPress={() => {
-                      if (savingProfileId === item.id || !item.assigned) {
-                        return;
-                      }
-
-                      void handleToggle(item.id, false);
-                    }}
-                    accessibilityLabel="Não"
-                  />
-                </View>
+      <FlatList
+        data={profiles}
+        keyExtractor={(item) => item.id}
+        style={styles.list}
+        contentContainerStyle={styles.listContent}
+        keyboardShouldPersistTaps="handled"
+        stickyHeaderIndices={[0]}
+        onEndReached={loadMore}
+        onEndReachedThreshold={0.4}
+        ListHeaderComponent={
+          <View style={[styles.columns, styles.listHeader]}>
+            <Text style={styles.headerName}>Nome</Text>
+            <View style={styles.toggle}>
+              <View style={styles.chipRow}>
+                <AssignmentChip
+                  value="sim"
+                  selected={assignedFilter === 'sim'}
+                  onPress={() => handleHeaderFilter('sim')}
+                  accessibilityLabel={
+                    assignedFilter === 'sim' ? 'Limpar filtro Sim' : 'Filtrar por Sim'
+                  }
+                />
+                <AssignmentChip
+                  value="nao"
+                  selected={assignedFilter === 'nao'}
+                  onPress={() => handleHeaderFilter('nao')}
+                  accessibilityLabel={
+                    assignedFilter === 'nao' ? 'Limpar filtro Não' : 'Filtrar por Não'
+                  }
+                />
               </View>
             </View>
-          )}
-        />
-      )}
+          </View>
+        }
+        ListEmptyComponent={
+          loadingList ? (
+            <ActivityIndicator color={MINIMAL_UI.accent} style={styles.loader} />
+          ) : selectedRoleCode ? (
+            <Text style={styles.empty}>
+              {hasNameQuery || assignedFilter
+                ? 'Nenhuma pessoa corresponde aos filtros.'
+                : 'Nenhuma pessoa encontrada nesta igreja.'}
+            </Text>
+          ) : (
+            <Text style={styles.empty}>Selecione um papel para ver a lista.</Text>
+          )
+        }
+        ListFooterComponent={
+          loadingMore ? (
+            <ActivityIndicator color={MINIMAL_UI.accent} style={styles.inlineLoader} />
+          ) : null
+        }
+        renderItem={({ item }) => (
+          <View style={[styles.columns, styles.row]}>
+            <Text style={styles.name} numberOfLines={2}>
+              {formatShortName(item.fullName, { profileId: item.id })}
+            </Text>
+            <View style={styles.toggle}>
+              <View style={styles.chipRow}>
+                <AssignmentChip
+                  value="sim"
+                  selected={item.assigned}
+                  onPress={() => {
+                    if (savingProfileId === item.id || item.assigned) {
+                      return;
+                    }
+
+                    void handleToggle(item.id, true);
+                  }}
+                  accessibilityLabel="Sim"
+                />
+                <AssignmentChip
+                  value="nao"
+                  selected={!item.assigned}
+                  onPress={() => {
+                    if (savingProfileId === item.id || !item.assigned) {
+                      return;
+                    }
+
+                    void handleToggle(item.id, false);
+                  }}
+                  accessibilityLabel="Não"
+                />
+              </View>
+            </View>
+          </View>
+        )}
+      />
     </View>
   );
 }
@@ -305,12 +305,18 @@ const styles = StyleSheet.create({
   inlineLoader: {
     marginVertical: 8,
   },
-  listHeader: {
+  columns: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
+    paddingVertical: 8,
     paddingHorizontal: 12,
-    paddingBottom: 2,
+    borderWidth: 1,
+  },
+  listHeader: {
+    borderColor: 'transparent',
+    backgroundColor: MINIMAL_UI.background,
+    paddingVertical: 4,
   },
   headerName: {
     flex: 1,
@@ -332,14 +338,8 @@ const styles = StyleSheet.create({
     marginTop: 16,
   },
   row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    borderWidth: 1,
     borderColor: MINIMAL_UI.border,
     borderRadius: 14,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
     backgroundColor: MINIMAL_UI.background,
   },
   name: {
