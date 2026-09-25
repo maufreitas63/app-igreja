@@ -168,8 +168,7 @@ begin
     )
   from public.profiles p
  where p.tenant_id = v_tenant
-   -- Proteção aplicada: Gestor não tem visibilidade do Super Administrador
-   and not public.is_super_admin_profile(p.id)
+   -- Super Admin entra na lista pelos outros papéis; o papel super_admin não é oferecido nesta tela.
    and coalesce(nullif(trim(p.full_name), ''), nullif(trim(p.phone), '')) is not null
    and (
      v_q is null
@@ -210,9 +209,9 @@ begin
     return jsonb_build_object('success', false, 'message', 'Este papel não pode ser atribuído aqui.');
   end if;
 
-  -- Proteção aplicada: Gestor não tem visibilidade do Super Administrador
-  if public.is_super_admin_profile(p_target_profile_id) then
-    return jsonb_build_object('success', false, 'message', 'Este perfil não pode ser alterado nesta tela.');
+  -- Proteção aplicada: o papel Super Administrador não é atribuído nem removido nesta tela.
+  if v_role = 'super_admin' then
+    return jsonb_build_object('success', false, 'message', 'O Super Administrador não é gerenciado nesta tela.');
   end if;
 
   if not exists (
@@ -277,10 +276,10 @@ begin
 Somente Equipe Pastoral e Super Administrador.
 
 ## Papel
-Escolha o papel operacional. Visitante, membro, congregado, responsável familiar e Super Administrador ficam fora desta tela.
+Escolha o papel operacional. Visitante, membro, congregado, responsável familiar e Super Administrador ficam fora do seletor.
 
 ## Lista
-A busca filtra pelo nome. Sim indica quem já tem o papel; Não, os demais. O toque grava na hora.$body$,
+A busca filtra pelo nome. Quem também é Super Administrador aparece pelos outros papéis (Secretaria, Tesoureiro etc.), nunca como Super Administrador. Sim indica quem já tem o papel escolhido; o toque grava na hora.$body$,
       '/atribuicoes',
       null,
       true,
@@ -295,10 +294,10 @@ A busca filtra pelo nome. Sim indica quem já tem o papel; Não, os demais. O to
 Somente Equipe Pastoral e Super Administrador.
 
 ## Papel
-Escolha o papel operacional. Visitante, membro, congregado, responsável familiar e Super Administrador ficam fora desta tela.
+Escolha o papel operacional. Visitante, membro, congregado, responsável familiar e Super Administrador ficam fora do seletor.
 
 ## Lista
-A busca filtra pelo nome. Sim indica quem já tem o papel; Não, os demais. O toque grava na hora.$body$,
+A busca filtra pelo nome. Quem também é Super Administrador aparece pelos outros papéis (Secretaria, Tesoureiro etc.), nunca como Super Administrador. Sim indica quem já tem o papel escolhido; o toque grava na hora.$body$,
            route_key = '/atribuicoes',
            is_published = true,
            sort_order = 210,
