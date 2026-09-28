@@ -39,6 +39,7 @@ const SETTINGS_ICONS: Partial<Record<AppDrawerModuleKey, React.ComponentProps<ty
   menu_totem: 'qrcode',
   menu_autorizacao_midia: 'shield',
   menu_membros: 'users',
+  menu_familias: 'address-book',
   menu_mapa: 'map-marker',
   menu_aniversariantes: 'birthday-cake',
   pastoral_care: 'heart',

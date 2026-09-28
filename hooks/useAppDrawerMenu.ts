@@ -65,6 +65,7 @@ type DrawerEnableContext = {
 
 const SETTINGS_PEOPLE_OPS_KEYS: ReadonlySet<AppDrawerModuleKey> = new Set([
   'menu_membros',
+  'menu_familias',
   'menu_mapa',
   'menu_aniversariantes',
   'menu_administrativo',

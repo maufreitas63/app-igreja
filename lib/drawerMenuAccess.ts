@@ -24,6 +24,7 @@ export const DRAWER_MEMBER_CARD_BY_MODULE: Partial<Record<AppDrawerModuleKey, st
   menu_apoio_mutuo: 'apoio_mutuo',
   menu_aniversariantes: 'birthdays',
   menu_membros: 'members_list',
+  menu_familias: 'members_list',
   menu_administrativo: 'administrativo',
 };
 
@@ -42,6 +43,7 @@ export const DRAWER_MODULES_REQUIRING_ACTIVE_MEMBERSHIP: ReadonlySet<AppDrawerMo
   'menu_escalas',
   'menu_aniversariantes',
   'menu_membros',
+  'menu_familias',
   'menu_administrativo',
   'menu_mapa',
   'menu_small_group',

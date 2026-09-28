@@ -37,6 +37,7 @@ export type AppDrawerModuleKey =
   | 'menu_escalas'
   | 'menu_aniversariantes'
   | 'menu_membros'
+  | 'menu_familias'
   | 'menu_mapa'
   | 'menu_administrativo'
   | 'menu_igrejas'
@@ -170,6 +171,13 @@ export const APP_DRAWER_SETTINGS_ITEMS: AppDrawerSettingsItem[] = [
     moduleKey: 'menu_membros',
     group: 'pessoas',
     hint: 'Diretório da comunidade',
+  },
+  {
+    letter: 'p1b',
+    label: 'Lista de Famílias',
+    moduleKey: 'menu_familias',
+    group: 'pessoas',
+    hint: 'Integrantes por código de família',
   },
   {
     letter: 'p2',
@@ -664,6 +672,11 @@ async function navigateDrawerMenuItemBody(
 
   if (moduleKey === 'menu_membros') {
     openScreen(router, '/membros', withFailClosedReturn());
+    return;
+  }
+
+  if (moduleKey === 'menu_familias') {
+    openScreen(router, '/lista-familias' as Href, withFailClosedReturn());
     return;
   }
 

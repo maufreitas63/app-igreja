@@ -45,21 +45,8 @@ import { useLocalSearchParams } from 'expo-router';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Alert, FlatList } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import {
-  ALREADY_IN_FAMILY_TOAST_MESSAGE,
-  SELF_MEMBER_BLOCK_MESSAGE,
-  convertDateToISO,
-  formatDate,
-  formatDisplayDate,
-  formatPhone,
-  loadManageMembersData,
-  normalizeMemberName,
-  phoneDigitsMatch,
-  showFamilyInconsistencyToast,
-  showFamilyWarningToast,
-  type ManagedMember,
-  type ManageMembersData,
-} from '@/lib/manageMembers/shared';
+import { loadManageMembersData, normalizeMemberName, phoneDigitsMatch, showFamilyInconsistencyToast, showFamilyWarningToast, ALREADY_IN_FAMILY_TOAST_MESSAGE, SELF_MEMBER_BLOCK_MESSAGE, convertDateToISO, formatDate, formatDisplayDate, formatPhone, type ManagedMember, type ManageMembersData } from '@/lib/manageMembers/shared';
+import { loadDirectoryFamilyData } from '@/lib/familyDirectory';
 
 
 export type MembersClassPanelProps = {
@@ -68,6 +55,9 @@ export type MembersClassPanelProps = {
   returnRoute?: string | null;
   returnDashboardCard?: string | null;
   onBack?: () => void;
+  /** Família da instância aberta pela Lista de Famílias, no lugar da família da sessão. */
+  directoryFamilyCode?: string | null;
+  initialEditMemberId?: string | null;
 };
 
 export function MembersClassPanel({
@@ -76,6 +66,8 @@ export function MembersClassPanel({
   returnRoute: returnRouteProp,
   returnDashboardCard: returnDashboardCardProp,
   onBack,
+  directoryFamilyCode = null,
+  initialEditMemberId = null,
 }: MembersClassPanelProps) {
   const insets = useSafeAreaInsets();
   const isEmbeddedOverlay = embedded && Boolean(onBack);
@@ -119,6 +111,11 @@ export function MembersClassPanel({
   const [canUpdateFamilyMembers, setCanUpdateFamilyMembers] = useState(false);
 
   useEffect(() => {
+    if (directoryFamilyCode) {
+      setCanUpdateFamilyMembers(true);
+      return;
+    }
+
     void (async () => {
       const [tableUpdate, screenManageUpdate, screenManageView] = await Promise.all([
         sessionHasAccess('table', 'members', 'update'),
@@ -129,7 +126,7 @@ export function MembersClassPanel({
       // Membro/representante legal: RLS limita à própria família; o ACL de `member` só tinha view.
       setCanUpdateFamilyMembers(tableUpdate || screenManageUpdate || screenManageView);
     })();
-  }, []);
+  }, [directoryFamilyCode]);
 
   const [familyId, setFamilyId] = useState('');
   const [members, setMembers] = useState<ManagedMember[]>([]);
@@ -169,9 +166,11 @@ export function MembersClassPanel({
   }, []);
 
   const fetchData = useCallback(async () => {
-    const data = await loadManageMembersData(phoneParam);
+    const data = directoryFamilyCode
+      ? await loadDirectoryFamilyData(directoryFamilyCode)
+      : await loadManageMembersData(phoneParam);
     applyLoadedData(data);
-  }, [phoneParam, applyLoadedData]);
+  }, [directoryFamilyCode, phoneParam, applyLoadedData]);
 
   const resetForm = useCallback(() => {
     setName('');
@@ -617,10 +616,30 @@ export function MembersClassPanel({
     })();
   }, []);
 
+  const startedEditFor = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!initialEditMemberId || startedEditFor.current === initialEditMemberId) {
+      return;
+    }
+
+    const member = members.find((entry) => String(entry.id) === initialEditMemberId);
+
+    if (!member) {
+      return;
+    }
+
+    startedEditFor.current = initialEditMemberId;
+    startEditingMember(member);
+  }, [initialEditMemberId, members, startEditingMember]);
+
   useEffect(() => {
     let active = true;
 
-    void loadManageMembersData(phoneParam).then((data) => {
+    void (directoryFamilyCode
+      ? loadDirectoryFamilyData(directoryFamilyCode)
+      : loadManageMembersData(phoneParam)
+    ).then((data) => {
       if (active) {
         applyLoadedData(data);
       }
@@ -629,7 +648,7 @@ export function MembersClassPanel({
     return () => {
       active = false;
     };
-  }, [phoneParam, applyLoadedData]);
+  }, [directoryFamilyCode, phoneParam, applyLoadedData]);
 
   const isAccountLegalRepresentativeMember = useCallback(
     (member: Pick<ManagedMember, 'full_name' | 'phone' | 'relationship'>) => {
