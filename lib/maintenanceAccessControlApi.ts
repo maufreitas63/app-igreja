@@ -768,15 +768,17 @@ const MAINTENANCE_EXTRA_SCREEN_ROUTE_KEYS = new Set<string>(
   Object.values(ACCESS_SCREEN_MAINTENANCE_EXTRA)
 );
 
+/** Manutenção: painéis `maintenance.card.*` e telas `maintenance.*` (campanhas, agenda, mural). */
 const isMaintenanceScreenKey = (key: string) =>
   key === ACCESS_SCREEN.maintenance
   || key === ACCESS_SCREEN.atribuicoes
-  || key.startsWith('maintenance.card.')
+  || key.startsWith('maintenance.')
   || key.startsWith('scale_type.')
   || MAINTENANCE_EXTRA_SCREEN_ROUTE_KEYS.has(key);
 
+/** Produto: cards `dashboard.card.*` e telas `dashboard.*` (ex.: agendar atendimento). */
 const isMainProductScreenKey = (key: string) =>
-  key.startsWith('dashboard.card.')
+  key.startsWith('dashboard.')
   || key.startsWith('menu_')
   || MAIN_PRODUCT_SCREEN_ROUTE_KEYS.has(key);
 
