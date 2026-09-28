@@ -139,6 +139,7 @@ export function MembersClassPanel({
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [birthDate, setBirthDate] = useState('');
+  const [marriageDate, setMarriageDate] = useState('');
   const [parentesco, setParentesco] = useState('');
   const [adding, setAdding] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -176,6 +177,7 @@ export function MembersClassPanel({
     setName('');
     setPhone('');
     setBirthDate('');
+    setMarriageDate('');
     setParentesco('');
     setEditingMemberId(null);
     setEditingMemberSnapshot(null);
@@ -566,6 +568,7 @@ export function MembersClassPanel({
     setName(formatFullName(member.full_name));
     setPhone(member.phone ? formatPhone(member.phone) : '');
     setBirthDate(member.birth_date ? formatDisplayDate(member.birth_date) : '');
+    setMarriageDate(member.marriage_date ? formatDisplayDate(member.marriage_date) : '');
     setParentesco(member.relationship ?? '');
     setMedicalFoodAlerts('');
     setPendingMemberPhoto(null);
@@ -772,11 +775,13 @@ export function MembersClassPanel({
     setAdding(true);
     try {
       const birthIso = convertDateToISO(birthDate);
+      const marriageIso = convertDateToISO(marriageDate);
       const normalizedFamilyId = normalizeFamilyCode(familyId);
       const memberPayload = {
         full_name: normalizedName,
         phone: normalizedPhone,
         birth_date: birthIso,
+        marriage_date: marriageIso,
         relationship: parentesco,
         family_id: normalizedFamilyId,
         accepted: MEMBER_ACCEPTED_VALUE,
@@ -910,6 +915,7 @@ export function MembersClassPanel({
             full_name: normalizedName,
             phone: normalizedPhone,
             birth_date: birthIso,
+            marriage_date: marriageIso,
             relationship: parentesco,
           })
           .eq('id', existingMember.id);
@@ -1072,6 +1078,8 @@ export function MembersClassPanel({
       onPhoneBlur={handlePhoneBlur}
       birthDate={birthDate}
       onBirthDateChange={(value) => setBirthDate(formatDate(value))}
+      marriageDate={marriageDate}
+      onMarriageDateChange={(value) => setMarriageDate(formatDate(value))}
       parentesco={parentesco}
       onParentescoChange={setParentesco}
       pendingMemberPhoto={pendingMemberPhoto}

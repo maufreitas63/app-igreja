@@ -381,13 +381,16 @@ create unique index members_family_name_uq
 -- 6) RPC upsert usada pelo app (lib/upsertFamilyMember.ts)
 -- ---------------------------------------------------------------------------
 
+drop function if exists public.upsert_family_member(text, text, text, date, text, boolean);
+
 create or replace function public.upsert_family_member(
   p_family_id text,
   p_full_name text,
   p_phone text default null,
   p_birth_date date default null,
   p_relationship text default 'Outros',
-  p_accepted boolean default true
+  p_accepted boolean default true,
+  p_marriage_date date default null
 )
 returns jsonb
 language plpgsql
@@ -433,6 +436,7 @@ begin
        set full_name = v_full_name,
            phone = coalesce(v_phone, m.phone),
            birth_date = coalesce(p_birth_date, m.birth_date),
+           marriage_date = coalesce(p_marriage_date, m.marriage_date),
            relationship = coalesce(v_relationship, m.relationship),
            family_id = v_family_id,
            accepted = coalesce(p_accepted, m.accepted)
@@ -443,6 +447,7 @@ begin
       full_name,
       phone,
       birth_date,
+      marriage_date,
       relationship,
       family_id,
       accepted
@@ -450,6 +455,7 @@ begin
       v_full_name,
       v_phone,
       p_birth_date,
+      p_marriage_date,
       v_relationship,
       v_family_id,
       coalesce(p_accepted, true)
@@ -492,7 +498,7 @@ exception
 end;
 $$;
 
-grant execute on function public.upsert_family_member(text, text, text, date, text, boolean)
+grant execute on function public.upsert_family_member(text, text, text, date, text, boolean, date)
   to anon, authenticated;
 grant execute on function public.find_member_id_in_family(text, text, text)
   to anon, authenticated;

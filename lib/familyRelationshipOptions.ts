@@ -19,8 +19,21 @@ export const FAMILY_DEPENDENT_RELATIONSHIP_OPTIONS = FAMILY_RELATIONSHIP_OPTIONS
 
 export type FamilyDependentRelationship = (typeof FAMILY_DEPENDENT_RELATIONSHIP_OPTIONS)[number];
 
+const normalizeRelationshipKey = (value: string | null | undefined) =>
+  (value ?? '')
+    .trim()
+    .toLocaleLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+
 export const isFamilyRelationship = (value: string): value is FamilyRelationship =>
   (FAMILY_RELATIONSHIP_OPTIONS as readonly string[]).includes(value);
+
+export const isConjugeRelationship = (value: string | null | undefined) =>
+  normalizeRelationshipKey(value) === 'conjuge';
+
+export const isRepresentanteLegalRelationship = (value: string | null | undefined) =>
+  normalizeRelationshipKey(value) === 'representante legal';
 
 /** Ordem de exibição: representante → cônjuge → filhos → pai → mãe → outros. */
 export const FAMILY_RELATIONSHIP_DISPLAY_ORDER = [
@@ -31,13 +44,6 @@ export const FAMILY_RELATIONSHIP_DISPLAY_ORDER = [
   'Mãe',
   'Outros',
 ] as const;
-
-const normalizeRelationshipKey = (value: string | null | undefined) =>
-  (value ?? '')
-    .trim()
-    .toLocaleLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '');
 
 export const familyRelationshipDisplayRank = (relationship: string | null | undefined): number => {
   const normalized = normalizeRelationshipKey(relationship);

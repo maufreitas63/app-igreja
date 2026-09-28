@@ -54,6 +54,8 @@ export type MembersClassProps = {
   onPhoneBlur: () => void;
   birthDate: string;
   onBirthDateChange: (value: string) => void;
+  marriageDate: string;
+  onMarriageDateChange: (value: string) => void;
   parentesco: string;
   onParentescoChange: (value: string) => void;
   pendingMemberPhoto: string | null;
@@ -97,6 +99,8 @@ export function MembersClass({
   onPhoneBlur,
   birthDate,
   onBirthDateChange,
+  marriageDate,
+  onMarriageDateChange,
   parentesco,
   onParentescoChange,
   pendingMemberPhoto,
@@ -265,6 +269,17 @@ export function MembersClass({
                   onChangeText={(value) => onBirthDateChange(formatDate(value))}
                 />
 
+                <Text style={membersClassStyles.fieldLabel}>Casamento</Text>
+                <TextInput
+                  style={membersClassStyles.input}
+                  placeholder="DD/MM/AAAA"
+                  keyboardType="number-pad"
+                  maxLength={10}
+                  placeholderTextColor={MINIMAL_UI.textMuted}
+                  value={marriageDate}
+                  onChangeText={(value) => onMarriageDateChange(formatDate(value))}
+                />
+
                 <Text style={membersClassStyles.fieldLabel}>Grau de parentesco</Text>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} style={membersClassStyles.scrollOptions}>
                   {OPCOES_PARENTESCO.map((opcao) => (
@@ -396,6 +411,7 @@ export function MembersClass({
                   <Text style={membersClassStyles.memberInfo}>
                     {item.phone ? `${formatIbsManualUiPhone(item.phone, item.id)} ` : 'Sem telefone '}
                     {item.birth_date ? `• Nasc: ${formatDisplayDate(item.birth_date)}` : ''}
+                    {item.marriage_date ? ` • Casamento: ${formatDisplayDate(item.marriage_date)}` : ''}
                   </Text>
                   {showVidaTmp && birthDateElapsedCode ? (
                     <Text style={membersClassStyles.memberInfo}>Vida: {birthDateElapsedCode}</Text>

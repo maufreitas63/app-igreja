@@ -10,6 +10,7 @@ export type FamilyMemberMatchRow = {
   full_name: string;
   phone: string | null;
   birth_date: string | null;
+  marriage_date?: string | null;
   family_id: string;
   relationship?: string | null;
   accepted?: boolean | null;

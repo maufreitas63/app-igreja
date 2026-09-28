@@ -257,6 +257,25 @@ export function FamilyRegistrationForm({ tenantCode, churchName }: FamilyRegistr
 
               <FormField
                 control={form.control as never}
+                name="informant.marriageDate"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Data de casamento (opcional)</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="dd/mm/aaaa"
+                        inputMode="numeric"
+                        {...field}
+                        onChange={(event) => field.onChange(formatDateInput(event.target.value))}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control as never}
                 name="informant.phone"
                 render={({ field }) => (
                   <FormItem>
@@ -351,9 +370,10 @@ export function FamilyRegistrationForm({ tenantCode, churchName }: FamilyRegistr
                 size="sm"
                 disabled={!canAddDependent || isSubmitting}
                 onClick={() =>
-                  append({
+                    append({
                     fullName: '',
                     birthDate: '',
+                    marriageDate: '',
                     relationship: 'Filho(a)',
                     phone: '',
                     foodRestrictions: '',
@@ -441,6 +461,25 @@ export function FamilyRegistrationForm({ tenantCode, churchName }: FamilyRegistr
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Data de nascimento</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="dd/mm/aaaa"
+                            inputMode="numeric"
+                            {...field}
+                            onChange={(event) => field.onChange(formatDateInput(event.target.value))}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control as never}
+                    name={`dependents.${index}.marriageDate`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Data de casamento (opcional)</FormLabel>
                         <FormControl>
                           <Input
                             placeholder="dd/mm/aaaa"

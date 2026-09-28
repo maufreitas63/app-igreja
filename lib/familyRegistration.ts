@@ -88,6 +88,7 @@ export function formatPhoneForStorage(value: string): string | null {
 export type FamilyRegistrationDependent = {
   fullName: string;
   birthDate: string;
+  marriageDate: string;
   phone: string;
   relationship: FamilyDependentRelationship;
   foodRestrictions: string;
@@ -97,6 +98,7 @@ export type FamilyRegistrationFormValues = {
   informant: {
     fullName: string;
     birthDate: string;
+    marriageDate: string;
     phone: string;
     cep: string;
     addressNumber: string;
@@ -111,6 +113,7 @@ type FamilyRegistrationRpcPayload = {
   informant: {
     full_name: string;
     birth_date: string;
+    marriage_date: string | null;
     phone: string | null;
     cep: string | null;
     address_number: string | null;
@@ -124,6 +127,7 @@ type FamilyRegistrationRpcPayload = {
   dependents: Array<{
     full_name: string;
     birth_date: string;
+    marriage_date: string | null;
     phone: string | null;
     relationship: string;
     medical_food_alerts: string | null;
@@ -145,6 +149,14 @@ async function buildFamilyRegistrationRpcPayload(
     throw new Error('Data de nascimento do informante inválida.');
   }
 
+  const informantMarriageIso = values.informant.marriageDate.trim()
+    ? parseBrazilianDateToIso(values.informant.marriageDate)
+    : null;
+
+  if (values.informant.marriageDate.trim() && !informantMarriageIso) {
+    throw new Error('Data de casamento do informante inválida.');
+  }
+
   const informantPhone = formatPhoneForStorage(values.informant.phone);
 
   if (!informantPhone) {
@@ -164,6 +176,18 @@ async function buildFamilyRegistrationRpcPayload(
       throw new Error(`Data de nascimento inválida para o dependente "${name}".`);
     }
 
+    let marriageIso = dependent.marriageDate.trim()
+      ? parseBrazilianDateToIso(dependent.marriageDate)
+      : null;
+
+    if (dependent.marriageDate.trim() && !marriageIso) {
+      throw new Error(`Data de casamento inválida para o dependente "${name}".`);
+    }
+
+    if (!marriageIso && dependent.relationship === 'Cônjuge' && informantMarriageIso) {
+      marriageIso = informantMarriageIso;
+    }
+
     const phoneRaw = dependent.phone?.trim() ?? '';
 
     if (phoneRaw && !isValidBrazilMobilePhone(phoneRaw)) {
@@ -177,6 +201,7 @@ async function buildFamilyRegistrationRpcPayload(
     dependents.push({
       full_name: name,
       birth_date: birthIso,
+      marriage_date: marriageIso,
       phone,
       relationship: dependent.relationship,
       medical_food_alerts: dependent.foodRestrictions.trim() || null,
@@ -188,6 +213,7 @@ async function buildFamilyRegistrationRpcPayload(
     informant: {
       full_name: formatFullName(values.informant.fullName),
       birth_date: informantBirthIso,
+      marriage_date: informantMarriageIso,
       phone: informantPhone,
       ...address,
       medical_food_alerts: values.informant.foodRestrictions.trim() || null,

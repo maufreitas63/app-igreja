@@ -1,5 +1,6 @@
 import { FamilyAgendaModal } from '@/components/FamilyAgendaModal';
 import { HomeBirthdayTag } from '@/components/minimal/HomeBirthdayTag';
+import { HomeWeddingTag } from '@/components/minimal/HomeWeddingTag';
 import { HomeInboxPagerNav } from '@/components/minimal/HomeInboxPagerNav';
 import {
   InboxList,
@@ -36,6 +37,7 @@ import { resolveBirthdayGreetingAccess } from '@/lib/birthdayGreetingAccess';
 import { loadBirthdaysClassData } from '@/lib/birthdaysClassData';
 import type { BirthdaysClassEntry } from '@/lib/birthdaysClassTypes';
 import { isBirthdayToday } from '@/lib/birthdaysClassUtils';
+import { loadWeddingAnniversariesToday, type WeddingAnniversaryCouple } from '@/lib/weddingAnniversaryData';
 import { MINIMAL_SECTION_TITLE, MINIMAL_TYPO, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { useActiveEvents } from '@/hooks/useActiveEvents';
 import { supabase } from '@/lib/supabase';
@@ -69,6 +71,7 @@ export function EventsInboxHome() {
   const [emprestimoNotices, setEmprestimoNotices] = useState<EmprestimoLivroNotice[]>([]);
   const [scaleSwapNotices, setScaleSwapNotices] = useState<ScaleSwapNotice[]>([]);
   const [aniversariantes, setAniversariantes] = useState<BirthdaysClassEntry[]>([]);
+  const [casaisAniversario, setCasaisAniversario] = useState<WeddingAnniversaryCouple[]>([]);
   const [birthdayCanCopy, setBirthdayCanCopy] = useState(false);
   const [avisosLoading, setAvisosLoading] = useState(false);
   const [avisosError, setAvisosError] = useState<string | null>(null);
@@ -181,20 +184,26 @@ export function EventsInboxHome() {
 
       if (!access.canRead) {
         setAniversariantes([]);
+        setCasaisAniversario([]);
         return;
       }
 
       try {
-        const entries = await loadBirthdaysClassData();
+        const [entries, weddingCouples] = await Promise.all([
+          loadBirthdaysClassData(),
+          loadWeddingAnniversariesToday(),
+        ]);
 
         if (cancelled) {
           return;
         }
 
         setAniversariantes(entries.filter((entry) => isBirthdayToday(entry)));
+        setCasaisAniversario(weddingCouples);
       } catch {
         if (!cancelled) {
           setAniversariantes([]);
+          setCasaisAniversario([]);
         }
       }
     })();
@@ -347,7 +356,12 @@ export function EventsInboxHome() {
                 title="Proximos Eventos"
                 routeKey={KNOWLEDGE_ROUTE.home}
                 titleStyle={styles.sectionTitle}
-                leftSlot={<HomeBirthdayTag aniversariantes={aniversariantes} canCopy={birthdayCanCopy} />}
+                leftSlot={
+                  <View style={styles.homeTags}>
+                    <HomeBirthdayTag aniversariantes={aniversariantes} canCopy={birthdayCanCopy} />
+                    <HomeWeddingTag casais={casaisAniversario} canCopy={birthdayCanCopy} />
+                  </View>
+                }
               />
               <InboxList
                 items={inboxItems}
@@ -497,6 +511,12 @@ const styles = StyleSheet.create({
     maxWidth: '100%',
     overflow: 'visible',
     backgroundColor: MINIMAL_UI.background,
+  },
+  homeTags: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    overflow: 'visible',
+    zIndex: 8,
   },
   avisosSection: {
     flexGrow: 1,

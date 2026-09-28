@@ -143,8 +143,10 @@ declare
   v_dependent jsonb;
   v_informant_name text;
   v_informant_birth date;
+  v_informant_marriage date;
   v_dependent_name text;
   v_birth date;
+  v_marriage date;
   v_phone text;
   v_phone_store text;
   v_relationship text;
@@ -231,6 +233,13 @@ begin
     return jsonb_build_object('success', false, 'message', 'Informe a data de nascimento do representante legal.');
   end if;
 
+  begin
+    v_informant_marriage := nullif(trim(coalesce(v_informant ->> 'marriage_date', '')), '')::date;
+  exception
+    when others then
+      return jsonb_build_object('success', false, 'message', 'Data de casamento do representante legal inválida.');
+  end;
+
   v_phone := nullif(trim(coalesce(v_informant ->> 'phone', '')), '');
 
   if v_phone is null or not public.recepcao_is_valid_mobile_phone(v_phone) then
@@ -297,6 +306,17 @@ begin
           'success', false,
           'message',
           format('Data de nascimento inválida para o dependente "%s".', v_dependent_name)
+        );
+    end;
+
+    begin
+      perform nullif(trim(coalesce(v_dependent ->> 'marriage_date', '')), '')::date;
+    exception
+      when others then
+        return jsonb_build_object(
+          'success', false,
+          'message',
+          format('Data de casamento inválida para o dependente "%s".', v_dependent_name)
         );
     end;
 
@@ -368,6 +388,7 @@ begin
     is_informant,
     full_name,
     birth_date,
+    marriage_date,
     phone,
     relationship,
     cep,
@@ -387,6 +408,7 @@ begin
     true,
     v_informant_name,
     v_informant_birth,
+    v_informant_marriage,
     v_phone_store,
     'Representante Legal',
     v_cep,
@@ -423,6 +445,17 @@ begin
           'success', false,
           'message',
           format('Data de nascimento inválida para o dependente "%s".', v_dependent_name)
+        );
+    end;
+
+    begin
+      v_marriage := nullif(trim(coalesce(v_dependent ->> 'marriage_date', '')), '')::date;
+    exception
+      when others then
+        return jsonb_build_object(
+          'success', false,
+          'message',
+          format('Data de casamento inválida para o dependente "%s".', v_dependent_name)
         );
     end;
 
@@ -475,6 +508,7 @@ begin
       is_informant,
       full_name,
       birth_date,
+      marriage_date,
       phone,
       relationship,
       cep,
@@ -494,6 +528,7 @@ begin
       false,
       v_dependent_name,
       v_birth,
+      v_marriage,
       v_phone_store,
       v_relationship,
       v_cep,
@@ -1076,6 +1111,7 @@ begin
         update public.members m
            set full_name = v_member.full_name,
                birth_date = v_member.birth_date,
+               marriage_date = coalesce(v_member.marriage_date, m.marriage_date),
                phone = coalesce(
                  public.recepcao_phone_for_storage(v_member.phone, v_member.full_name),
                  m.phone
@@ -1088,6 +1124,7 @@ begin
         insert into public.members (
           full_name,
           birth_date,
+          marriage_date,
           phone,
           relationship,
           family_id,
@@ -1096,6 +1133,7 @@ begin
         ) values (
           v_member.full_name,
           v_member.birth_date,
+          v_member.marriage_date,
           public.recepcao_phone_for_storage(v_member.phone, v_member.full_name),
           v_member.relationship,
           v_family_id,

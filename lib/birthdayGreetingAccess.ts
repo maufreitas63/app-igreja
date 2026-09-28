@@ -81,3 +81,12 @@ export function buildBirthdayGreetingMessage(fullNames: string | string[]) {
 
   return `Juntem-se a nós para parabenizar ${label} por mais um ano de vida. ${thanks}`;
 }
+
+export function buildWeddingAnniversaryGreetingMessage(fullNames: string | string[]) {
+  const names = (Array.isArray(fullNames) ? fullNames : [fullNames])
+    .map((name) => name.trim())
+    .filter(Boolean);
+  const label = joinBirthdayNames(names);
+
+  return `Juntem-se a nós para parabenizar ${label} por mais um ano de casamento. Aproveite e reserve alguns minutinhos para orar e agradecer por essa união.`;
+}

@@ -20,6 +20,15 @@ const requiredBirthDate = z
     message: 'Use o formato dd/mm/aaaa com data válida.',
   });
 
+const optionalMarriageDate = z
+  .string()
+  .trim()
+  .optional()
+  .default('')
+  .refine((value) => !value || parseBrazilianDateToIso(value) !== null, {
+    message: 'Use o formato dd/mm/aaaa com data válida.',
+  });
+
 const requiredMobilePhone = z
   .string()
   .trim()
@@ -52,6 +61,7 @@ const dependentRelationship = z.enum(FAMILY_DEPENDENT_RELATIONSHIP_OPTIONS, {
 const dependentSchema = z.object({
   fullName: requiredName,
   birthDate: requiredBirthDate,
+  marriageDate: optionalMarriageDate,
   relationship: dependentRelationship,
   phone: optionalMobilePhone,
   foodRestrictions: z.string().trim().optional().default(''),
@@ -61,6 +71,7 @@ export const familyRegistrationSchema = z.object({
   informant: z.object({
     fullName: requiredName,
     birthDate: requiredBirthDate,
+    marriageDate: optionalMarriageDate,
     phone: requiredMobilePhone,
     cep: requiredCep,
     addressNumber: z.string().trim().min(1, 'Informe o número do endereço.'),
@@ -78,6 +89,7 @@ export const familyRegistrationDefaultValues: FamilyRegistrationSchemaValues = {
   informant: {
     fullName: '',
     birthDate: '',
+    marriageDate: '',
     phone: '',
     cep: '',
     addressNumber: '',

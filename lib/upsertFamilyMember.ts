@@ -13,6 +13,7 @@ export type UpsertFamilyMemberInput = {
   full_name: string;
   phone: string | null;
   birth_date: string | null;
+  marriage_date?: string | null;
   relationship?: string | null;
   accepted?: boolean;
 };
@@ -41,6 +42,7 @@ const buildMemberPayload = (input: UpsertFamilyMemberInput) => {
     fullName,
     phone: input.phone?.trim() || null,
     birthDate: input.birth_date,
+    marriageDate: input.marriage_date ?? null,
     relationship: input.relationship?.trim() || 'Outros',
     accepted: input.accepted ?? MEMBER_ACCEPTED_VALUE,
   };
@@ -72,12 +74,13 @@ async function upsertFamilyMemberFallback(
         full_name: payload.fullName,
         phone: payload.phone,
         birth_date: payload.birthDate,
+        marriage_date: payload.marriageDate,
         relationship: payload.relationship,
         family_id: payload.familyId,
         accepted: payload.accepted,
       })
       .eq('id', existing.id)
-      .select('id, full_name, phone, birth_date, family_id, relationship, accepted')
+      .select('id, full_name, phone, birth_date, marriage_date, family_id, relationship, accepted')
       .maybeSingle();
 
     if (error) {
@@ -98,12 +101,13 @@ async function upsertFamilyMemberFallback(
         full_name: payload.fullName,
         phone: payload.phone,
         birth_date: payload.birthDate,
+        marriage_date: payload.marriageDate,
         relationship: payload.relationship,
         family_id: payload.familyId,
         accepted: payload.accepted,
       },
     ])
-    .select('id, full_name, phone, birth_date, family_id, relationship, accepted')
+    .select('id, full_name, phone, birth_date, marriage_date, family_id, relationship, accepted')
     .maybeSingle();
 
   if (error) {
@@ -143,6 +147,7 @@ export async function upsertFamilyMember(
     p_birth_date: payload.birthDate,
     p_relationship: payload.relationship,
     p_accepted: payload.accepted,
+    p_marriage_date: payload.marriageDate,
   });
 
   if (!error) {
@@ -165,6 +170,7 @@ export async function upsertFamilyMember(
             full_name: payload.fullName,
             phone: payload.phone,
             birth_date: payload.birthDate,
+            marriage_date: payload.marriageDate,
             family_id: payload.familyId,
             relationship: payload.relationship,
             accepted: payload.accepted,

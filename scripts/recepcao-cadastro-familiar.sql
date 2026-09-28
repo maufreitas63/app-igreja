@@ -41,6 +41,7 @@ create table if not exists public.recepcao_cadastro_familiar (
     check (status in ('pending', 'processed', 'rejected', 'skipped')),
   full_name text not null,
   birth_date date not null,
+  marriage_date date null,
   phone text null,
   relationship text not null,
   cep text null,
@@ -64,7 +65,8 @@ alter table public.recepcao_cadastro_familiar
   add column if not exists address_city text null,
   add column if not exists address_state text null,
   add column if not exists applied_profile_id uuid null references public.profiles (id) on delete set null,
-  add column if not exists applied_member_id uuid null references public.members (id) on delete set null;
+  add column if not exists applied_member_id uuid null references public.members (id) on delete set null,
+  add column if not exists marriage_date date null;
 
 create index if not exists idx_recepcao_cadastro_familiar_submission
   on public.recepcao_cadastro_familiar (submission_id);
@@ -633,8 +635,10 @@ declare
   v_dependent jsonb;
   v_informant_name text;
   v_informant_birth date;
+  v_informant_marriage date;
   v_dependent_name text;
   v_birth date;
+  v_marriage date;
   v_phone text;
   v_relationship text;
   v_cep text;
@@ -679,6 +683,13 @@ begin
   exception
     when others then
       return jsonb_build_object('success', false, 'message', 'Data de nascimento do representante legal inválida.');
+  end;
+
+  begin
+    v_informant_marriage := nullif(trim(coalesce(v_informant ->> 'marriage_date', '')), '')::date;
+  exception
+    when others then
+      return jsonb_build_object('success', false, 'message', 'Data de casamento do representante legal inválida.');
   end;
 
   v_phone := nullif(trim(coalesce(v_informant ->> 'phone', '')), '');
@@ -744,6 +755,17 @@ begin
         );
     end;
 
+    begin
+      perform nullif(trim(coalesce(v_dependent ->> 'marriage_date', '')), '')::date;
+    exception
+      when others then
+        return jsonb_build_object(
+          'success', false,
+          'message',
+          format('Data de casamento inválida para o dependente "%s".', v_dependent_name)
+        );
+    end;
+
     v_relationship := nullif(trim(coalesce(v_dependent ->> 'relationship', '')), '');
 
     if v_relationship is null or not (v_relationship = any (v_allowed_relationships)) then
@@ -779,6 +801,7 @@ begin
     is_informant,
     full_name,
     birth_date,
+    marriage_date,
     phone,
     relationship,
     cep,
@@ -797,6 +820,7 @@ begin
     true,
     v_informant_name,
     v_informant_birth,
+    v_informant_marriage,
     v_phone,
     'Representante Legal',
     v_cep,
@@ -835,6 +859,17 @@ begin
         );
     end;
 
+    begin
+      v_marriage := nullif(trim(coalesce(v_dependent ->> 'marriage_date', '')), '')::date;
+    exception
+      when others then
+        return jsonb_build_object(
+          'success', false,
+          'message',
+          format('Data de casamento inválida para o dependente "%s".', v_dependent_name)
+        );
+    end;
+
     v_relationship := nullif(trim(coalesce(v_dependent ->> 'relationship', '')), '');
     v_phone := nullif(trim(coalesce(v_dependent ->> 'phone', '')), '');
     v_food_alerts := nullif(trim(coalesce(v_dependent ->> 'medical_food_alerts', '')), '');
@@ -851,6 +886,7 @@ begin
       is_informant,
       full_name,
       birth_date,
+      marriage_date,
       phone,
       relationship,
       cep,
@@ -869,6 +905,7 @@ begin
       false,
       v_dependent_name,
       v_birth,
+      v_marriage,
       v_phone,
       v_relationship,
       v_cep,
@@ -1169,6 +1206,7 @@ begin
         update public.members m
            set full_name = v_member.full_name,
                birth_date = v_member.birth_date,
+               marriage_date = coalesce(v_member.marriage_date, m.marriage_date),
                phone = coalesce(
                  public.recepcao_phone_for_storage(v_member.phone, v_member.full_name),
                  m.phone
@@ -1181,6 +1219,7 @@ begin
         insert into public.members (
           full_name,
           birth_date,
+          marriage_date,
           phone,
           relationship,
           family_id,
@@ -1188,6 +1227,7 @@ begin
         ) values (
           v_member.full_name,
           v_member.birth_date,
+          v_member.marriage_date,
           public.recepcao_phone_for_storage(v_member.phone, v_member.full_name),
           v_member.relationship,
           v_family_id,

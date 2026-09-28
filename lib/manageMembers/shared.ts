@@ -174,6 +174,7 @@ export type ManageMembersData = {
 
 export type ManagedMember = {
   birth_date: string | null;
+  marriage_date: string | null;
   family_id: string;
   full_name: string;
   id: string;
@@ -348,6 +349,7 @@ export async function loadManageMembersData(phoneParam: string | null): Promise<
       family_id: normalizeFamilyCode(member.family_id),
       phone: member.phone ?? null,
       birth_date: member.birth_date ?? null,
+      marriage_date: member.marriage_date ?? null,
       relationship: String(member.relationship ?? ''),
       accepted: member.accepted ?? null,
     })) as ManagedMember[];
