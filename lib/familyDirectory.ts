@@ -20,6 +20,26 @@ export type FamilyDirectoryOption = {
   searchText: string;
 };
 
+export function familyDirectoryRoleLabel(roleCode: string | null | undefined) {
+  const code = String(roleCode ?? '')
+    .trim()
+    .toLocaleLowerCase();
+
+  if (code === 'member') {
+    return 'Membro';
+  }
+
+  if (code === 'congregado') {
+    return 'Congregado';
+  }
+
+  if (code === 'visitante') {
+    return 'Visitante';
+  }
+
+  return '—';
+}
+
 const asText = (value: unknown) => {
   const text = String(value ?? '').trim();
   return text || null;
@@ -43,6 +63,7 @@ const parseMember = (row: Record<string, unknown>): ManagedMember | null => {
     birth_date: asText(row.birth_date),
     marriage_date: asText(row.marriage_date),
     accepted: row.accepted === true ? true : row.accepted === false ? false : null,
+    role_code: asText(row.role_code),
   };
 };
 

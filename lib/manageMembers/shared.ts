@@ -181,6 +181,8 @@ export type ManagedMember = {
   phone: string | null;
   relationship: string;
   accepted?: boolean | null;
+  /** Papel básico do perfil ligado: member | congregado | visitante. */
+  role_code?: string | null;
 };
 
 export async function loadManageMembersData(phoneParam: string | null): Promise<ManageMembersData> {

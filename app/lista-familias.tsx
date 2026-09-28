@@ -10,6 +10,7 @@ import { ACCESS_DASHBOARD_CARD } from '@/lib/accessControl';
 import { resolveReturnDashboardCardParam, resolveReturnRouteParam } from '@/lib/dashboardReturnNavigation';
 import {
   buildFamilyDirectoryOptions,
+  familyDirectoryRoleLabel,
   fetchTenantFamilyMembers,
 } from '@/lib/familyDirectory';
 import { compareFamilyMembersByRelationship } from '@/lib/familyRelationshipOptions';
@@ -118,12 +119,16 @@ export default function ListaFamiliasScreen() {
                   <View style={styles.headerRow}>
                     <Text style={[styles.headerCell, styles.relationshipCol]}>Parentesco</Text>
                     <Text style={[styles.headerCell, styles.nameCol]}>Nome completo</Text>
+                    <Text style={[styles.headerCell, styles.roleCol]}>Papel</Text>
                   </View>
                   {selectedMembers.map((member) => {
                     return (
                       <View key={member.id} style={styles.row}>
                         <Text style={[styles.cell, styles.relationshipCol]}>{member.relationship || '—'}</Text>
                         <Text style={[styles.cell, styles.nameCol]}>{member.full_name}</Text>
+                        <Text style={[styles.cell, styles.roleCol]}>
+                          {familyDirectoryRoleLabel(member.role_code)}
+                        </Text>
                         <View style={styles.actions}>
                           <View style={styles.editAnchor} />
                           <TouchableOpacity
@@ -205,12 +210,16 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   relationshipCol: {
-    width: 118,
+    width: 108,
     flexShrink: 0,
   },
   nameCol: {
     flex: 1,
     minWidth: 0,
+  },
+  roleCol: {
+    width: 96,
+    flexShrink: 0,
   },
   actions: {
     flexDirection: 'row',

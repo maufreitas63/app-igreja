@@ -1,4 +1,7 @@
--- Lista de Famílias: integrantes da igreja da sessão, para quem já vê a Lista de Membros.
+-- Lista de Famílias: inclui o papel básico do perfil (visitante / congregado / membro).
+-- Execute: npx supabase db query --linked -f scripts/list-tenant-family-directory.sql
+
+drop function if exists public.list_tenant_family_directory();
 
 create or replace function public.list_tenant_family_directory()
 returns table (
@@ -9,7 +12,8 @@ returns table (
   phone text,
   birth_date date,
   marriage_date date,
-  accepted boolean
+  accepted boolean,
+  role_code text
 )
 language plpgsql
 stable
@@ -42,8 +46,15 @@ begin
     nullif(trim(coalesce(m.phone, '')), '') as phone,
     m.birth_date,
     m.marriage_date,
-    m.accepted
+    m.accepted,
+    case
+      when v_profile.id is null then null
+      else public.resolve_basic_role_code_for_profile(v_profile.id)
+    end as role_code
   from public.members m
+  left join lateral (
+    select public.find_profile_id_for_member_sync(m.phone, m.full_name) as id
+  ) v_profile on true
   where m.tenant_id = v_tenant
     and nullif(trim(m.family_id), '') is not null
     and nullif(trim(m.full_name), '') is not null
