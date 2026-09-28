@@ -136,3 +136,6 @@ $$;
 
 grant execute on function public.upsert_family_member(text, text, text, date, text, boolean, date)
   to anon, authenticated;
+
+-- Alinhamento RL ↔ Cônjuge: scripts/members-sync-couple-marriage-date.sql
+

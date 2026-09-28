@@ -149,7 +149,7 @@ async function buildFamilyRegistrationRpcPayload(
     throw new Error('Data de nascimento do informante inválida.');
   }
 
-  const informantMarriageIso = values.informant.marriageDate.trim()
+  let informantMarriageIso = values.informant.marriageDate.trim()
     ? parseBrazilianDateToIso(values.informant.marriageDate)
     : null;
 
@@ -184,10 +184,6 @@ async function buildFamilyRegistrationRpcPayload(
       throw new Error(`Data de casamento inválida para o dependente "${name}".`);
     }
 
-    if (!marriageIso && dependent.relationship === 'Cônjuge' && informantMarriageIso) {
-      marriageIso = informantMarriageIso;
-    }
-
     const phoneRaw = dependent.phone?.trim() ?? '';
 
     if (phoneRaw && !isValidBrazilMobilePhone(phoneRaw)) {
@@ -206,6 +202,20 @@ async function buildFamilyRegistrationRpcPayload(
       relationship: dependent.relationship,
       medical_food_alerts: dependent.foodRestrictions.trim() || null,
     });
+  }
+
+  const spouseMarriageIso =
+    dependents.find((dependent) => dependent.relationship === 'Cônjuge')?.marriage_date ?? null;
+  const sharedMarriageIso = informantMarriageIso ?? spouseMarriageIso;
+
+  if (sharedMarriageIso) {
+    informantMarriageIso = sharedMarriageIso;
+
+    for (const dependent of dependents) {
+      if (dependent.relationship === 'Cônjuge') {
+        dependent.marriage_date = sharedMarriageIso;
+      }
+    }
   }
 
   return {
