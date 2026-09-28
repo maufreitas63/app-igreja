@@ -357,11 +357,23 @@ set search_path = public
 as $$
 declare
   v_status jsonb;
+  v_management_unlocked boolean := false;
+  v_instance_active boolean := true;
 begin
   v_status := public.get_tenant_billing_status(p_tenant_id);
 
   if coalesce((v_status ->> 'success')::boolean, false) is not true then
     raise exception '%', coalesce(v_status ->> 'message', 'Faturamento indisponível.');
+  end if;
+
+  v_management_unlocked := coalesce((v_status ->> 'management_unlocked')::boolean, false);
+  v_instance_active := coalesce((v_status ->> 'instance_active')::boolean, true);
+
+  if v_management_unlocked then
+    if v_instance_active is not true then
+      raise exception 'A instância está inativa. Reative a igreja antes de cadastrar usuários.';
+    end if;
+    return;
   end if;
 
   if coalesce((v_status ->> 'access_allowed')::boolean, false) is not true then

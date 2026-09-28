@@ -1,71 +1,9 @@
--- Trava comercial da instância + interruptor mestre do Superadmin.
--- Não altera papéis, grants nem profile_access_roles.
-
-alter table public.igrejas
-  add column if not exists management_unlocked boolean not null default false;
+-- Gestão Liberada: libera a manutenção da instância (inclui cadastro de usuários)
+-- mesmo com assinatura inativa/vencida/ausente. Não altera papéis nem grants.
+-- Execute: npx supabase db query --linked -f scripts/billing-management-unlock-allows-members.sql
 
 comment on column public.igrejas.management_unlocked is
   'Interruptor mestre do Super Administrador: libera a gestão da instância (cadastros e telas de manutenção) mesmo sem contrato/pagamento Stripe. Não altera papéis nem permissões.';
-
-create or replace function public.tenant_has_signed_saas_contract(p_tenant_id uuid)
-returns boolean
-language sql
-stable
-security definer
-set search_path = public
-as $$
-  select exists (
-    select 1
-      from public.billing_saas_contracts c
-     where c.tenant_id = p_tenant_id
-  );
-$$;
-
-create or replace function public.set_tenant_management_unlocked(
-  p_unlocked boolean,
-  p_tenant_id uuid default null
-)
-returns jsonb
-language plpgsql
-security definer
-set search_path = public
-as $$
-declare
-  v_tenant uuid;
-  v_unlocked boolean;
-begin
-  -- Interruptor de governança operacional. Não toca profile_access_roles / access_grants.
-  if public.current_session_profile_id() is null
-     or not public.is_super_admin_profile(public.current_session_profile_id()) then
-    raise exception 'Apenas o Super Administrador pode liberar ou bloquear a gestão da instância.';
-  end if;
-
-  v_tenant := coalesce(p_tenant_id, public.current_session_tenant_id());
-
-  if v_tenant is null then
-    return jsonb_build_object('success', false, 'message', 'Tenant não identificado.');
-  end if;
-
-  if not exists (select 1 from public.igrejas i where i.id = v_tenant) then
-    return jsonb_build_object('success', false, 'message', 'Igreja (tenant) não encontrada.');
-  end if;
-
-  update public.igrejas
-     set management_unlocked = coalesce(p_unlocked, false)
-   where id = v_tenant
-  returning management_unlocked into v_unlocked;
-
-  return jsonb_build_object(
-    'success', true,
-    'tenant_id', v_tenant,
-    'management_unlocked', coalesce(v_unlocked, false),
-    'message', case
-      when coalesce(v_unlocked, false) then 'Gestão da instância liberada: cadastros e manutenção ficam disponíveis. Papéis e permissões não foram alterados.'
-      else 'Gestão da instância bloqueada. Papéis e permissões não foram alterados.'
-    end
-  );
-end;
-$$;
 
 create or replace function public.get_tenant_billing_status(p_tenant_id uuid default null)
 returns jsonb
@@ -157,6 +95,7 @@ begin
   v_commercially_ok := v_allowed and v_has_contract;
 
   if coalesce(v_management_unlocked, false) and coalesce(v_instance_active, true) then
+    -- Gestão Liberada: manutenção operacional (inclui novos cadastros) sem exigir plano pago.
     v_can_add := true;
   else
     v_can_add :=
@@ -202,8 +141,44 @@ begin
 end;
 $$;
 
-grant execute on function public.tenant_has_signed_saas_contract(uuid) to anon, authenticated, service_role;
-grant execute on function public.set_tenant_management_unlocked(boolean, uuid) to authenticated, service_role;
+create or replace function public.assert_tenant_can_add_member(p_tenant_id uuid default null)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_status jsonb;
+  v_management_unlocked boolean := false;
+  v_instance_active boolean := true;
+begin
+  v_status := public.get_tenant_billing_status(p_tenant_id);
+
+  if coalesce((v_status ->> 'success')::boolean, false) is not true then
+    raise exception '%', coalesce(v_status ->> 'message', 'Faturamento indisponível.');
+  end if;
+
+  v_management_unlocked := coalesce((v_status ->> 'management_unlocked')::boolean, false);
+  v_instance_active := coalesce((v_status ->> 'instance_active')::boolean, true);
+
+  if v_management_unlocked then
+    if v_instance_active is not true then
+      raise exception 'A instância está inativa. Reative a igreja antes de cadastrar usuários.';
+    end if;
+    return;
+  end if;
+
+  if coalesce((v_status ->> 'access_allowed')::boolean, false) is not true then
+    raise exception 'Assinatura inativa ou vencida. Ative um plano em Assinaturas.';
+  end if;
+
+  if coalesce((v_status ->> 'can_add_member')::boolean, false) is not true then
+    raise exception 'Limite de membros do plano atingido. Faça upgrade em Assinaturas.';
+  end if;
+end;
+$$;
+
 grant execute on function public.get_tenant_billing_status(uuid) to anon, authenticated, service_role;
+grant execute on function public.assert_tenant_can_add_member(uuid) to anon, authenticated;
 
 notify pgrst, 'reload schema';

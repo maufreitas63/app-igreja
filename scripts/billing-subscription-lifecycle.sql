@@ -57,6 +57,10 @@ begin
   v_members := coalesce((v_breakdown ->> 'active_users')::integer, 0);
 
   if v_sub.id is null then
+    v_can_add :=
+      coalesce(v_management_unlocked, false)
+      and coalesce(v_instance_active, true);
+
     return jsonb_build_object(
       'success', true,
       'billing_configured', true,
@@ -72,7 +76,7 @@ begin
       'active_members', coalesce((v_breakdown ->> 'active_members')::integer, 0),
       'active_congregados', coalesce((v_breakdown ->> 'active_congregados')::integer, 0),
       'max_members', null,
-      'can_add_member', false,
+      'can_add_member', v_can_add,
       'plan', null
     );
   end if;
@@ -84,13 +88,18 @@ begin
 
   v_allowed := public.tenant_subscription_is_access_allowed(v_sub.status);
   v_commercially_ok := v_allowed and v_has_contract;
-  v_can_add :=
-    v_allowed
-    and coalesce(v_instance_active, true)
-    and (
-      v_plan.max_members = -1
-      or v_members < v_plan.max_members
-    );
+
+  if coalesce(v_management_unlocked, false) and coalesce(v_instance_active, true) then
+    v_can_add := true;
+  else
+    v_can_add :=
+      v_allowed
+      and coalesce(v_instance_active, true)
+      and (
+        v_plan.max_members = -1
+        or v_members < v_plan.max_members
+      );
+  end if;
 
   return jsonb_build_object(
     'success', true,
