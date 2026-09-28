@@ -6,36 +6,21 @@ import { ScreenAccessGate } from '@/components/ScreenAccessGate';
 import { DropdownSelect } from '@/components/ui/DropdownSelect';
 import { useDashboardCardRouteAccess } from '@/hooks/useDashboardCardRouteAccess';
 import { useReturnToCallerOnLeave } from '@/hooks/useReturnToCallerOnLeave';
-import { acceptMemberIntoFamily } from '@/lib/acceptMemberIntoFamily';
 import { ACCESS_DASHBOARD_CARD } from '@/lib/accessControl';
-import { showAppToast } from '@/lib/appToast';
 import { resolveReturnDashboardCardParam, resolveReturnRouteParam } from '@/lib/dashboardReturnNavigation';
 import {
   buildFamilyDirectoryOptions,
   fetchTenantFamilyMembers,
 } from '@/lib/familyDirectory';
-import { findProfileIdForMember } from '@/lib/memberProfiles';
 import { compareFamilyMembersByRelationship } from '@/lib/familyRelationshipOptions';
-import {
-  hasAnyProfileAddress,
-  inheritFamilyAddressToAcceptedMember,
-  loadAcceptorAddressForFamilyScreen,
-  resolveAcceptorAuthUserId,
-} from '@/lib/inheritFamilyAddress';
-import { loadEffectiveSessionProfile } from '@/lib/loadSessionProfile';
-import {
-  ACCENT,
-  MEMBERS_CLASS_ICON_COLOR,
-  membersClassStyles,
-} from '@/lib/manageMembers/membersClassStyles';
-import { showFamilyInconsistencyToast, type ManagedMember } from '@/lib/manageMembers/shared';
+import { membersClassStyles } from '@/lib/manageMembers/membersClassStyles';
+import type { ManagedMember } from '@/lib/manageMembers/shared';
 import { KNOWLEDGE_ROUTE } from '@/lib/knowledge/routeKeys';
 import { MINIMAL_SECTION_TITLE, MINIMAL_UI } from '@/lib/minimalUiTheme';
-import { applyNewFamilyCodeForRejectedMember } from '@/lib/rejectedMemberFamilyCode';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useLocalSearchParams } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 export default function ListaFamiliasScreen() {
   const params = useLocalSearchParams();
@@ -54,7 +39,6 @@ export default function ListaFamiliasScreen() {
   const [members, setMembers] = useState<ManagedMember[]>([]);
   const [selectedCode, setSelectedCode] = useState('');
   const [editingMemberId, setEditingMemberId] = useState<string | null>(null);
-  const [pendingIds, setPendingIds] = useState<string[]>([]);
 
   const options = useMemo(() => buildFamilyDirectoryOptions(members), [members]);
   const selectedMembers = useMemo(
@@ -81,94 +65,6 @@ export default function ListaFamiliasScreen() {
   useEffect(() => {
     void reload();
   }, [reload]);
-
-  const toggleAccepted = useCallback(
-    async (member: ManagedMember) => {
-      const memberId = String(member.id);
-
-      if (pendingIds.includes(memberId)) {
-        return;
-      }
-
-      setPendingIds((current) => [...current, memberId]);
-
-      try {
-        const profileId = await findProfileIdForMember({
-          full_name: member.full_name,
-          phone: member.phone,
-          birth_date: member.birth_date,
-        });
-        const nextAccepted = member.accepted !== true;
-
-        if (!nextAccepted) {
-          await applyNewFamilyCodeForRejectedMember(
-            {
-              id: memberId,
-              full_name: member.full_name,
-              phone: member.phone,
-              birth_date: member.birth_date,
-              family_id: member.family_id,
-            },
-            profileId
-          );
-        } else {
-          await acceptMemberIntoFamily({
-            memberId,
-            targetFamilyId: selectedCode,
-            profileId,
-            member: {
-              full_name: member.full_name,
-              phone: member.phone,
-              birth_date: member.birth_date,
-            },
-          });
-
-          const sessionProfile = await loadEffectiveSessionProfile();
-          const inheritedAddress = await loadAcceptorAddressForFamilyScreen({
-            profileId: sessionProfile?.id ?? null,
-            phone: sessionProfile?.phone ?? null,
-            authUserId: await resolveAcceptorAuthUserId(),
-          });
-
-          if (inheritedAddress && hasAnyProfileAddress(inheritedAddress)) {
-            try {
-              await inheritFamilyAddressToAcceptedMember(
-                {
-                  full_name: member.full_name,
-                  phone: member.phone,
-                  birth_date: member.birth_date,
-                },
-                {
-                  acceptorProfileId: sessionProfile?.id ?? null,
-                  acceptorPhone: sessionProfile?.phone ?? null,
-                  acceptorAuthUserId: await resolveAcceptorAuthUserId(),
-                  acceptedProfileId: profileId,
-                  inheritedAddress,
-                }
-              );
-            } catch {
-              showAppToast({
-                type: 'info',
-                text1: 'Integrante reconhecido',
-                text2: 'O vínculo foi confirmado, mas o endereço da família não pôde ser copiado.',
-              });
-            }
-          }
-        }
-
-        await reload();
-      } catch (toggleError) {
-        const message =
-          toggleError instanceof Error
-            ? toggleError.message
-            : 'Não foi possível atualizar o reconhecimento do integrante.';
-        showFamilyInconsistencyToast(message, 'Erro');
-      } finally {
-        setPendingIds((current) => current.filter((id) => id !== memberId));
-      }
-    },
-    [pendingIds, reload, selectedCode]
-  );
 
   if (editingMemberId && selectedCode) {
     return (
@@ -220,43 +116,12 @@ export default function ListaFamiliasScreen() {
                     <Text style={[styles.headerCell, styles.nameCol]}>Nome completo</Text>
                   </View>
                   {selectedMembers.map((member) => {
-                    const pending = pendingIds.includes(String(member.id));
-
                     return (
                       <View key={member.id} style={styles.row}>
                         <Text style={[styles.cell, styles.relationshipCol]}>{member.relationship || '—'}</Text>
                         <Text style={[styles.cell, styles.nameCol]}>{member.full_name}</Text>
                         <View style={styles.actions}>
-                          <Pressable
-                            style={({ pressed }) => [
-                              membersClassStyles.acceptButton,
-                              member.accepted === true && membersClassStyles.acceptButtonChecked,
-                              member.accepted === false && membersClassStyles.acceptButtonUnchecked,
-                              pending && membersClassStyles.acceptButtonPending,
-                              pressed && !pending && membersClassStyles.acceptButtonPressed,
-                            ]}
-                            onPress={() => void toggleAccepted(member)}
-                            hitSlop={8}
-                            accessibilityRole="checkbox"
-                            accessibilityState={{ checked: member.accepted === true, disabled: pending }}
-                            accessibilityLabel={
-                              member.accepted === true
-                                ? `Integrante ${member.full_name} reconhecido como pertencente à família`
-                                : member.accepted === false
-                                  ? `Integrante ${member.full_name} marcado como não pertencente à família`
-                                  : `Marcar ${member.full_name} como pertencente à família`
-                            }
-                          >
-                            {pending ? (
-                              <ActivityIndicator color={ACCENT} size="small" />
-                            ) : member.accepted === true ? (
-                              <MaterialIcons name="check" size={18} color={MINIMAL_UI.onDark} />
-                            ) : member.accepted === false ? (
-                              <MaterialIcons name="close" size={16} color="#B91C1C" />
-                            ) : (
-                              <MaterialIcons name="check-box-outline-blank" size={20} color={MEMBERS_CLASS_ICON_COLOR} />
-                            )}
-                          </Pressable>
+                          <View style={styles.editAnchor} />
                           <TouchableOpacity
                             style={membersClassStyles.editButton}
                             onPress={() => setEditingMemberId(String(member.id))}
@@ -348,5 +213,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
     flexShrink: 0,
+  },
+  editAnchor: {
+    width: 34,
+    height: 34,
   },
 });
