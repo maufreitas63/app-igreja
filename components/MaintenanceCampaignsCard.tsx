@@ -9,7 +9,6 @@ import {
   formatCampaignBrl,
   formatCampaignCentsShort,
   formatCampaignProgressLabel,
-  pickAndUploadCampaignCover,
   saveCampaignProject,
   type CampaignProject,
   type CampaignStatus,
@@ -30,7 +29,6 @@ import { formatBrazilDateInput } from '@/lib/inputMasks';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
-  Image,
   ScrollView,
   StyleSheet,
   Text,
@@ -120,7 +118,6 @@ export function MaintenanceCampaignsCard({
   const [dataFim, setDataFim] = useState('');
   const [status, setStatus] = useState<CampaignStatus>('rascunho');
   const [centavos, setCentavos] = useState('60');
-  const [coverUrl, setCoverUrl] = useState<string | null>(null);
   const [pixSlot, setPixSlot] = useState<PixAccountSlot | ''>('');
   const [pixBundle, setPixBundle] = useState<PixAccountsBundle | null>(null);
 
@@ -148,7 +145,6 @@ export function MaintenanceCampaignsCard({
     setCentavos(
       String(Math.round((campaign?.centavos_referencia ?? 0.6) * 100)).padStart(2, '0')
     );
-    setCoverUrl(campaign?.cover_url ?? null);
     setPixSlot(campaign?.bank_account_id ?? campaign?.chave_pix_selecionada ?? '');
   };
 
@@ -252,7 +248,6 @@ export function MaintenanceCampaignsCard({
         dataFim: dataFimIso,
         status,
         centavosReferencia: centsValue,
-        coverUrl,
         chavePixSelecionada: pixSlot,
         bankAccountId: pixSlot,
       });
@@ -271,21 +266,6 @@ export function MaintenanceCampaignsCard({
       }
     } finally {
       setSaving(false);
-    }
-  };
-
-  const handleCover = async () => {
-    try {
-      const nextUrl = await pickAndUploadCampaignCover(selectedId || null);
-      if (nextUrl) {
-        setCoverUrl(nextUrl);
-      }
-    } catch (uploadError) {
-      Toast.show({
-        type: 'error',
-        text1: 'Capa',
-        text2: uploadError instanceof Error ? uploadError.message : 'Falha no upload.',
-      });
     }
   };
 
@@ -349,8 +329,6 @@ export function MaintenanceCampaignsCard({
               </Text>
             </View>
           ) : null}
-
-          {coverUrl ? <Image source={{ uri: coverUrl }} style={styles.cover} /> : null}
 
           <TextInput
             style={maintenancePanelStyles.input}
@@ -465,9 +443,6 @@ export function MaintenanceCampaignsCard({
             selectedValue={status}
             onSelect={(value) => setStatus(value as CampaignStatus)}
           />
-          <TouchableOpacity style={styles.secondary} onPress={() => void handleCover()}>
-            <Text style={styles.secondaryText}>Enviar imagem de capa</Text>
-          </TouchableOpacity>
           <TouchableOpacity style={styles.primary} onPress={() => void handleSave()} disabled={saving}>
             {saving ? (
               <ActivityIndicator color="#FFFFFF" />
@@ -524,12 +499,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     textAlign: 'center',
   },
-  cover: {
-    width: '100%',
-    height: 88,
-    borderRadius: 8,
-    backgroundColor: '#E2E8F0',
-  },
   multiline: {
     minHeight: 64,
     textAlignVertical: 'top',
@@ -563,17 +532,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     textAlign: 'center',
     fontWeight: '700',
-  },
-  secondary: {
-    borderWidth: 1,
-    borderColor: '#1E3A5F',
-    borderRadius: 8,
-    paddingVertical: 10,
-    alignItems: 'center',
-  },
-  secondaryText: {
-    color: '#1E3A5F',
-    fontWeight: '800',
   },
   primary: {
     backgroundColor: '#1E3A5F',

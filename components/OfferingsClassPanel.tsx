@@ -45,7 +45,6 @@ import React, { useCallback, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
-  Image,
   ScrollView,
   StyleSheet,
   Text,
@@ -288,9 +287,6 @@ export function OfferingsClassPanel({ onClose }: OfferingsClassPanelProps) {
                   accessibilityRole="button"
                   accessibilityLabel={`Contribuir com ${item.titulo}`}
                 >
-                  {item.cover_url ? (
-                    <Image source={{ uri: item.cover_url }} style={styles.pickerCover} />
-                  ) : null}
                   <Text style={styles.pickerCardTitle}>{item.titulo}</Text>
                   {item.descricao ? (
                     <Text style={styles.pickerCardDescription} numberOfLines={3}>
@@ -320,7 +316,6 @@ export function OfferingsClassPanel({ onClose }: OfferingsClassPanelProps) {
           pixKeyLoading={pixKeyLoading}
           campaignTitle={campaign?.titulo ?? null}
           campaignHint={campaign ? formatCampaignCentsHint(campaign.centavos_referencia) : null}
-          campaignCoverUrl={campaign?.cover_url ?? null}
           campaignIntegerAmount={integerAmount}
           onCampaignIntegerAmountChange={(value) => setIntegerAmount(parseIntegerReaisInput(value))}
           campaignCentsSuffix={campaign ? formatCampaignCentsShort(campaign.centavos_referencia) : null}
@@ -384,12 +379,6 @@ const styles = StyleSheet.create({
     padding: 12,
     gap: 8,
     backgroundColor: '#FFFFFF',
-  },
-  pickerCover: {
-    width: '100%',
-    height: 88,
-    borderRadius: 8,
-    backgroundColor: '#E2E8F0',
   },
   pickerCardTitle: {
     color: '#1E3A5F',

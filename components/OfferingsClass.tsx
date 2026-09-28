@@ -8,7 +8,6 @@ import { MaterialIcons } from '@expo/vector-icons';
 import React from 'react';
 import {
   ActivityIndicator,
-  Image,
   Platform,
   ScrollView,
   StyleSheet,
@@ -54,7 +53,6 @@ export type OfferingsClassProps = {
   onRetryLoadPixKey?: () => void;
   campaignTitle?: string | null;
   campaignHint?: string | null;
-  campaignCoverUrl?: string | null;
   campaignIntegerAmount?: string;
   onCampaignIntegerAmountChange?: (value: string) => void;
   campaignCentsSuffix?: string | null;
@@ -98,7 +96,6 @@ export function OfferingsClass({
   onRetryLoadPixKey,
   campaignTitle = null,
   campaignHint = null,
-  campaignCoverUrl = null,
   campaignIntegerAmount = '',
   onCampaignIntegerAmountChange,
   campaignCentsSuffix = null,
@@ -232,9 +229,6 @@ export function OfferingsClass({
 
       {campaignTitle ? (
         <View style={styles.campaignBanner}>
-          {campaignCoverUrl ? (
-            <Image source={{ uri: campaignCoverUrl }} style={styles.campaignCover} />
-          ) : null}
           <Text style={styles.campaignTitle}>{campaignTitle}</Text>
           {campaignHint ? <Text style={styles.campaignHint}>{campaignHint}</Text> : null}
         </View>
@@ -436,12 +430,6 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 12,
     backgroundColor: '#EFF6FF',
-  },
-  campaignCover: {
-    width: '100%',
-    height: 88,
-    borderRadius: 8,
-    backgroundColor: '#E2E8F0',
   },
   campaignTitle: {
     color: '#1E3A5F',

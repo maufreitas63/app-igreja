@@ -3,10 +3,8 @@
  * SQL: scripts/campaign-projects-schema.sql
  */
 
-import { pickChurchLogoFromGallery, uploadChurchPublicImage } from '@/lib/churchLogo';
 import { supabase } from '@/lib/supabase';
 import { isSupabaseRpcMissingError } from '@/lib/supabaseRpc';
-import { getStoredTenantId } from '@/lib/tenantSession';
 
 export const CAMPAIGN_PROJECTS_SQL_HINT =
   'Execute no Supabase: scripts/campaign-projects-schema.sql';
@@ -225,7 +223,6 @@ export async function saveCampaignProject(input: {
   dataFim: string | null;
   status: CampaignStatus;
   centavosReferencia: number;
-  coverUrl?: string | null;
   chavePixSelecionada?: string | null;
   bankAccountId?: string | null;
 }) {
@@ -239,7 +236,6 @@ export async function saveCampaignProject(input: {
     p_data_fim: input.dataFim || null,
     p_status: input.status,
     p_centavos_referencia: input.centavosReferencia,
-    p_cover_url: input.coverUrl ?? null,
     p_chave_pix_selecionada: input.bankAccountId ?? input.chavePixSelecionada ?? null,
     p_bank_account_id: input.bankAccountId ?? input.chavePixSelecionada ?? null,
   });
@@ -300,21 +296,4 @@ export async function fetchMyCampaignNotices(): Promise<CampaignNotice[]> {
   } catch {
     return [];
   }
-}
-
-export async function pickAndUploadCampaignCover(campaignId?: string | null) {
-  const image = await pickChurchLogoFromGallery();
-
-  if (!image) {
-    return null;
-  }
-
-  const tenantId = (await getStoredTenantId())?.trim();
-
-  if (!tenantId) {
-    throw new Error('Igreja não identificada para o upload da capa.');
-  }
-
-  const suffix = campaignId?.trim() || `draft-${Date.now()}`;
-  return uploadChurchPublicImage(tenantId, `campaigns/${suffix}`, image);
 }
