@@ -5,10 +5,23 @@ import {
   getCurrentBirthdayMonth,
   resolveBirthdayMonthLabel,
 } from '@/lib/birthdaysClassUtils';
+import { loadWeddingAnniversaryCouples } from '@/lib/weddingAnniversaryData';
 import { normalizePhoneForWhatsApp } from '@/lib/whatsapp';
 import * as Linking from 'expo-linking';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Alert, AppState, StyleSheet, View } from 'react-native';
+
+const toWeddingListEntry = (
+  couple: Awaited<ReturnType<typeof loadWeddingAnniversaryCouples>>[number]
+): BirthdaysClassEntry => ({
+  full_name: couple.full_name,
+  birth_date: couple.marriage_date,
+  phone: couple.phone,
+  day: couple.day,
+  month: couple.month,
+  kind: 'wedding',
+  names: couple.names,
+});
 
 /** Container com dados e navegação — compõe o BirthdaysClass stateless. */
 export function BirthdaysClassPanel() {
@@ -32,8 +45,21 @@ export function BirthdaysClassPanel() {
     setError(null);
 
     try {
-      const loaded = await loadBirthdaysClassData();
-      setEntries(loaded);
+      const [loaded, couples] = await Promise.all([
+        loadBirthdaysClassData(),
+        loadWeddingAnniversaryCouples().catch((weddingError) => {
+          console.error('Erro ao carregar aniversários de casamento:', weddingError);
+          return [];
+        }),
+      ]);
+      setEntries(
+        [...loaded, ...couples.map(toWeddingListEntry)].sort(
+          (left, right) =>
+            left.month - right.month ||
+            left.day - right.day ||
+            left.full_name.localeCompare(right.full_name, 'pt-BR')
+        )
+      );
     } catch (loadError) {
       console.error('Erro ao carregar aniversariantes:', loadError);
       setEntries([]);

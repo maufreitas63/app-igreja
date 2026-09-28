@@ -70,8 +70,21 @@ export function BirthdaysClass({
         </View>
 
         <Text style={styles.summaryText}>
-          {entries.length} aniversariante
-          {entries.length === 1 ? '' : 's'} em {selectedMonthLabel.toLowerCase()}.
+          {(() => {
+            const birthdayCount = entries.filter((entry) => entry.kind !== 'wedding').length;
+            const weddingCount = entries.filter((entry) => entry.kind === 'wedding').length;
+            const monthLabel = selectedMonthLabel.toLowerCase();
+
+            if (weddingCount === 0) {
+              return `${birthdayCount} aniversariante${birthdayCount === 1 ? '' : 's'} em ${monthLabel}.`;
+            }
+
+            if (birthdayCount === 0) {
+              return `${weddingCount} aniversário${weddingCount === 1 ? '' : 's'} de casamento em ${monthLabel}.`;
+            }
+
+            return `${birthdayCount} aniversariante${birthdayCount === 1 ? '' : 's'} e ${weddingCount} aniversário${weddingCount === 1 ? '' : 's'} de casamento em ${monthLabel}.`;
+          })()}
         </Text>
 
         <View style={styles.listBox}>
@@ -95,21 +108,36 @@ export function BirthdaysClass({
               nestedScrollEnabled
               showsVerticalScrollIndicator
             >
-              {entries.map((entry, index) => (
-                <View key={`${entry.birth_date}-${entry.full_name}-${index}`} style={styles.row}>
+              {entries.map((entry, index) => {
+                const isWedding = entry.kind === 'wedding';
+                const displayName = isWedding
+                  ? (entry.names?.length
+                      ? entry.names.map((name) => formatShortName(name)).join(' e ')
+                      : entry.full_name)
+                  : formatShortName(entry.full_name);
+
+                return (
+                <View key={`${entry.kind ?? 'birthday'}-${entry.birth_date}-${entry.full_name}-${index}`} style={styles.row}>
                   <View style={styles.dateBadge}>
                     <Text style={styles.dateBadgeText}>
                       {formatBirthdayDayMonth(entry.day, entry.month)}
                     </Text>
                   </View>
                   <View style={styles.rowContent}>
-                    <Text style={styles.nameText}>{formatShortName(entry.full_name)}</Text>
+                    <View style={styles.nameBlock}>
+                      <Text style={styles.nameText}>{displayName}</Text>
+                      {isWedding ? <Text style={styles.kindText}>Casamento</Text> : null}
+                    </View>
                     <TouchableOpacity
                       style={[styles.whatsappButton, !entry.phone && styles.whatsappButtonDisabled]}
                       onPress={() => onOpenWhatsapp?.(entry)}
                       disabled={!entry.phone}
                       activeOpacity={0.85}
-                      accessibilityLabel="Abrir WhatsApp do aniversariante"
+                      accessibilityLabel={
+                        isWedding
+                          ? 'Abrir WhatsApp do casal'
+                          : 'Abrir WhatsApp do aniversariante'
+                      }
                     >
                       <FontAwesome
                         name="whatsapp"
@@ -119,7 +147,8 @@ export function BirthdaysClass({
                     </TouchableOpacity>
                   </View>
                 </View>
-              ))}
+                );
+              })}
             </ScrollView>
           ) : (
             <Text style={styles.emptyText}>
@@ -265,11 +294,22 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '800',
   },
-  nameText: {
+  nameBlock: {
     flex: 1,
+    minWidth: 0,
+    gap: 2,
+  },
+  nameText: {
     color: MINIMAL_UI.text,
     fontSize: 14,
     fontWeight: '600',
+  },
+  kindText: {
+    color: MINIMAL_UI.textMuted,
+    fontSize: 11,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
   },
   whatsappButton: {
     width: 32,

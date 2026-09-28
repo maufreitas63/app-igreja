@@ -1,5 +1,8 @@
 import { appAlert } from '@/lib/appAlert';
-import { buildBirthdayGreetingMessage } from '@/lib/birthdayGreetingAccess';
+import {
+  buildBirthdayGreetingMessage,
+  buildWeddingAnniversaryGreetingMessage,
+} from '@/lib/birthdayGreetingAccess';
 import { boxShadowStyle } from '@/lib/boxShadow';
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { FontAwesome } from '@expo/vector-icons';
@@ -9,21 +12,26 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 type Props = {
   aniversariantes: Array<{ full_name: string }>;
+  casais?: Array<{ full_name: string }>;
   canCopy?: boolean;
 };
 
-/** Bolo à esquerda de «Proximos Eventos»; só renderiza se houver aniversariante hoje. */
-export function HomeBirthdayTag({ aniversariantes, canCopy = false }: Props) {
+/** Bolo à esquerda de «Proximos Eventos»; só renderiza se houver aniversário pessoal ou de casamento hoje. */
+export function HomeBirthdayTag({ aniversariantes, casais = [], canCopy = false }: Props) {
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const lastToggleAt = useRef(0);
   const names = aniversariantes.map((item) => item.full_name.trim()).filter(Boolean);
+  const coupleNames = casais.map((item) => item.full_name.trim()).filter(Boolean);
 
-  if (names.length === 0) {
+  if (names.length === 0 && coupleNames.length === 0) {
     return null;
   }
 
-  const message = buildBirthdayGreetingMessage(names);
+  const birthdayMessage = names.length > 0 ? buildBirthdayGreetingMessage(names) : '';
+  const weddingMessage =
+    coupleNames.length > 0 ? buildWeddingAnniversaryGreetingMessage(coupleNames) : '';
+  const message = [birthdayMessage, weddingMessage].filter(Boolean).join('\n\n');
 
   const toggleOpen = () => {
     const now = Date.now();
@@ -65,10 +73,20 @@ export function HomeBirthdayTag({ aniversariantes, canCopy = false }: Props) {
             style={styles.panelScroll}
           >
             {names.map((name, index) => (
-              <Text key={`${name}-${index}`} style={styles.name}>
+              <Text key={`birthday-${name}-${index}`} style={styles.name}>
                 {name}
               </Text>
             ))}
+            {coupleNames.length > 0 ? (
+              <>
+                <Text style={styles.sectionTitle}>Aniversário de casamento</Text>
+                {coupleNames.map((name, index) => (
+                  <Text key={`wedding-${name}-${index}`} style={styles.name}>
+                    {name}
+                  </Text>
+                ))}
+              </>
+            ) : null}
             <Text style={styles.message}>{message}</Text>
             <View style={styles.actions}>
               {canCopy ? (
@@ -144,6 +162,13 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '800',
     textTransform: 'uppercase',
+  },
+  sectionTitle: {
+    color: MINIMAL_UI.blueDark,
+    fontSize: 11,
+    fontWeight: '800',
+    textTransform: 'uppercase',
+    marginTop: 8,
   },
   panelScroll: {
     maxHeight: 230,

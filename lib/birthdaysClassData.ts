@@ -30,6 +30,7 @@ export async function loadBirthdaysClassData(): Promise<BirthdaysClassEntry[]> {
         phone: entry.phone ? String(entry.phone) : null,
         day: parts.day,
         month: parts.month,
+        kind: 'birthday' as const,
       } satisfies BirthdaysClassEntry;
     })
     .filter((entry): entry is BirthdaysClassEntry => entry !== null)

@@ -4,6 +4,8 @@ export type BirthdaysClassEntry = {
   phone: string | null;
   day: number;
   month: number;
+  kind?: 'birthday' | 'wedding';
+  names?: string[];
 };
 
 export type BirthdaysClassMonthOption = {

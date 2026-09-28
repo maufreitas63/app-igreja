@@ -1,6 +1,5 @@
 import { FamilyAgendaModal } from '@/components/FamilyAgendaModal';
 import { HomeBirthdayTag } from '@/components/minimal/HomeBirthdayTag';
-import { HomeWeddingTag } from '@/components/minimal/HomeWeddingTag';
 import { HomeInboxPagerNav } from '@/components/minimal/HomeInboxPagerNav';
 import {
   InboxList,
@@ -357,10 +356,11 @@ export function EventsInboxHome() {
                 routeKey={KNOWLEDGE_ROUTE.home}
                 titleStyle={styles.sectionTitle}
                 leftSlot={
-                  <View style={styles.homeTags}>
-                    <HomeBirthdayTag aniversariantes={aniversariantes} canCopy={birthdayCanCopy} />
-                    <HomeWeddingTag casais={casaisAniversario} canCopy={birthdayCanCopy} />
-                  </View>
+                  <HomeBirthdayTag
+                    aniversariantes={aniversariantes}
+                    casais={casaisAniversario}
+                    canCopy={birthdayCanCopy}
+                  />
                 }
               />
               <InboxList
@@ -511,12 +511,6 @@ const styles = StyleSheet.create({
     maxWidth: '100%',
     overflow: 'visible',
     backgroundColor: MINIMAL_UI.background,
-  },
-  homeTags: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    overflow: 'visible',
-    zIndex: 8,
   },
   avisosSection: {
     flexGrow: 1,
