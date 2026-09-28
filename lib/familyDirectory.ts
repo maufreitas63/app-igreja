@@ -64,13 +64,23 @@ const namedPerson = (members: ManagedMember[], match: (relationship: string) => 
   members.find((member) => match(member.relationship) && member.full_name.trim())?.full_name.trim()
   ?? '';
 
-/** IBN0001. Família e o representante legal; se não houver, o cônjuge. */
+/** Vários integrantes: "IBN0001. Família de {representante ou cônjuge}". Um só: "IBN0001. {nome}". */
 export function familyDirectoryOptionLabel(code: string, members: ManagedMember[]) {
   const person =
     namedPerson(members, isRepresentanteLegalRelationship)
-    || namedPerson(members, isConjugeRelationship);
+    || namedPerson(members, isConjugeRelationship)
+    || members.find((member) => member.full_name.trim())?.full_name.trim()
+    || '';
 
-  return person ? `${code}. Família e ${person}` : `${code}. Família`;
+  if (!person) {
+    return code;
+  }
+
+  if (members.length <= 1) {
+    return `${code}. ${person}`;
+  }
+
+  return `${code}. Família de ${person}`;
 }
 
 export function buildFamilyDirectoryOptions(members: ManagedMember[]): FamilyDirectoryOption[] {
