@@ -1483,7 +1483,7 @@ begin
       select 1
         from public.small_groups g
        where g.is_active
-         and (v_tenant is null or g.tenant_id = v_tenant)
+         and g.tenant_id = v_tenant
          and (g.leader_profile_id = v_actor or g.host_profile_id = v_actor)
     ) into v_is_leader;
   end if;
@@ -1492,6 +1492,7 @@ begin
   select ea.*
     from public.event_avisos ea
    where ea.is_published is true
+     and ea.tenant_id = v_tenant
      and (
        coalesce(ea.audience, 'all') = 'all'
        or (ea.audience = 'small_group_leaders' and v_is_leader)
@@ -1674,14 +1675,14 @@ begin
       select 1
         from public.small_groups g
        where g.is_active
-         and (v_tenant is null or g.tenant_id = v_tenant)
+         and g.tenant_id = v_tenant
          and (g.leader_profile_id = v_actor or g.host_profile_id = v_actor)
     ) into v_is_leader;
 
     select r.perfil_vencedor into v_winner
       from public.ministerial_resultados r
      where r.profile_id = v_actor
-       and (v_tenant is null or r.tenant_id = v_tenant)
+       and r.tenant_id = v_tenant
      order by r.completed_at desc nulls last
      limit 1;
   end if;
@@ -1691,7 +1692,7 @@ begin
     from public.event_avisos ea
     left join public.volunteer_opportunities o on o.id = ea.opportunity_id
    where ea.is_published is true
-     and (v_tenant is null or ea.tenant_id is null or ea.tenant_id = v_tenant)
+     and ea.tenant_id = v_tenant
      and (
        coalesce(ea.audience, 'all') = 'all'
        or (ea.audience = 'small_group_leaders' and v_is_leader)
@@ -1700,7 +1701,7 @@ begin
          and v_winner is not null
          and o.id is not null
          and o.status = 'aberta'
-         and (v_tenant is null or o.tenant_id = v_tenant)
+         and o.tenant_id = v_tenant
          and v_winner = any(public.volunteer_gifts_normalized(o.required_gifts))
        )
      )

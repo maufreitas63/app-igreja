@@ -764,14 +764,14 @@ begin
       select 1
         from public.small_groups g
        where g.is_active
-         and (v_tenant is null or g.tenant_id = v_tenant)
+         and g.tenant_id = v_tenant
          and (g.leader_profile_id = v_actor or g.host_profile_id = v_actor)
     ) into v_is_leader;
 
     select r.perfil_vencedor into v_winner
       from public.ministerial_resultados r
      where r.profile_id = v_actor
-       and (v_tenant is null or r.tenant_id = v_tenant)
+       and r.tenant_id = v_tenant
      order by r.completed_at desc nulls last
      limit 1;
   end if;
@@ -781,7 +781,7 @@ begin
     from public.event_avisos ea
     left join public.volunteer_opportunities o on o.id = ea.opportunity_id
    where ea.is_published is true
-     and (v_tenant is null or ea.tenant_id is null or ea.tenant_id = v_tenant)
+     and ea.tenant_id = v_tenant
      and (
        coalesce(ea.audience, 'all') = 'all'
        or (ea.audience = 'small_group_leaders' and v_is_leader)
@@ -790,7 +790,7 @@ begin
          and v_winner is not null
          and o.id is not null
          and o.status = 'aberta'
-         and (v_tenant is null or o.tenant_id = v_tenant)
+         and o.tenant_id = v_tenant
          and v_winner = any(public.volunteer_gifts_normalized(o.required_gifts))
        )
      )
@@ -849,11 +849,25 @@ begin
 
   if v_audience is distinct from 'opportunity_match' then
     v_opp := null;
-  elsif v_opp is null then
+  elsif v_opp is null or not exists (
+    select 1
+      from public.volunteer_opportunities opp
+     where opp.id = v_opp
+       and opp.tenant_id = v_tenant
+  ) then
     return jsonb_build_object(
       'success', false,
-      'message', 'Selecione a vaga para avisar só quem tem o perfil compatível.'
+      'message', 'Selecione a vaga desta igreja para avisar só quem tem o perfil compatível.'
     );
+  end if;
+
+  if p_id is not null and exists (
+    select 1
+      from public.event_avisos existing
+     where existing.id = p_id
+       and existing.tenant_id is distinct from v_tenant
+  ) then
+    return jsonb_build_object('success', false, 'message', 'Aviso não encontrado.');
   end if;
 
   v_id := coalesce(p_id, gen_random_uuid());
@@ -875,7 +889,12 @@ begin
         opportunity_id = excluded.opportunity_id,
         updated_at = now(),
         updated_by_profile_id = p_actor_profile_id
+  where public.event_avisos.tenant_id = v_tenant
   returning * into v_row;
+
+  if v_row.id is null then
+    return jsonb_build_object('success', false, 'message', 'Aviso não encontrado.');
+  end if;
 
   return jsonb_build_object(
     'success', true,

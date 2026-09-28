@@ -126,23 +126,34 @@ as $$
   select *
     from public.event_avisos ea
    where ea.is_published is true
+     and ea.tenant_id = public.current_session_tenant_id()
      and coalesce(ea.audience, 'all') <> 'opportunity_match'
    order by ea.sort_order asc, ea.updated_at desc;
 $$;
 
 create or replace function public.listar_event_avisos_orquestrador(p_actor_profile_id uuid)
 returns setof public.event_avisos
-language sql
+language plpgsql
 stable
 security definer
 set search_path = public
 as $$
-  select *
+declare
+  v_tenant uuid := public.current_session_tenant_id();
+begin
+  if v_tenant is null
+     or p_actor_profile_id is null
+     or p_actor_profile_id is distinct from public.current_session_profile_id()
+     or not public.profile_is_event_control_admin(p_actor_profile_id) then
+    return;
+  end if;
+
+  return query
+  select ea.*
     from public.event_avisos ea
-   where p_actor_profile_id is not null
-     and p_actor_profile_id = public.current_session_profile_id()
-     and public.profile_is_event_control_admin(p_actor_profile_id)
+   where ea.tenant_id = v_tenant
    order by ea.sort_order asc, ea.updated_at desc;
+end;
 $$;
 
 create or replace function public.salvar_event_aviso(
@@ -255,7 +266,9 @@ begin
     return jsonb_build_object('success', false, 'message', 'Aviso inválido.');
   end if;
 
-  delete from public.event_avisos where id = p_id;
+  delete from public.event_avisos
+   where id = p_id
+     and tenant_id = public.current_session_tenant_id();
 
   if not found then
     return jsonb_build_object('success', false, 'message', 'Aviso não encontrado.');
@@ -368,14 +381,14 @@ begin
       select 1
         from public.small_groups g
        where g.is_active
-         and (v_tenant is null or g.tenant_id = v_tenant)
+         and g.tenant_id = v_tenant
          and (g.leader_profile_id = v_actor or g.host_profile_id = v_actor)
     ) into v_is_leader;
 
     select r.perfil_vencedor into v_winner
       from public.ministerial_resultados r
      where r.profile_id = v_actor
-       and (v_tenant is null or r.tenant_id = v_tenant)
+       and r.tenant_id = v_tenant
      order by r.completed_at desc nulls last
      limit 1;
   end if;
@@ -385,7 +398,7 @@ begin
     from public.event_avisos ea
     left join public.volunteer_opportunities o on o.id = ea.opportunity_id
    where ea.is_published is true
-     and (v_tenant is null or ea.tenant_id is null or ea.tenant_id = v_tenant)
+     and ea.tenant_id = v_tenant
      and (
        coalesce(ea.audience, 'all') = 'all'
        or (ea.audience = 'small_group_leaders' and v_is_leader)
@@ -394,7 +407,7 @@ begin
          and v_winner is not null
          and o.id is not null
          and o.status = 'aberta'
-         and (v_tenant is null or o.tenant_id = v_tenant)
+         and o.tenant_id = v_tenant
          and v_winner = any(public.volunteer_gifts_normalized(o.required_gifts))
        )
      )
