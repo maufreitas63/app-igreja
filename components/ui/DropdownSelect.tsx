@@ -22,6 +22,8 @@ import {
 export type DropdownOption = {
   value: string;
   label: string;
+  /** Texto extra usado só na busca (ex.: nomes de todos os integrantes). */
+  searchText?: string;
 };
 
 type DropdownSelectProps = {
@@ -112,7 +114,12 @@ export function DropdownSelect({
       return options;
     }
 
-    return options.filter((option) => normalizeSearch(option.label).includes(query));
+    return options.filter((option) => {
+      const haystack = normalizeSearch(
+        [option.label, option.searchText].filter(Boolean).join(' ')
+      );
+      return haystack.includes(query);
+    });
   }, [filterOptionsLocally, options, searchQuery, searchable]);
 
   const clearBlurTimer = () => {

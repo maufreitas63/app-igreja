@@ -101,12 +101,16 @@ export default function ListaFamiliasScreen() {
             <>
               <DropdownSelect
                 searchable
-                options={options.map((option) => ({ value: option.code, label: option.label }))}
+                options={options.map((option) => ({
+                  value: option.code,
+                  label: option.label,
+                  searchText: option.searchText,
+                }))}
                 selectedValue={selectedCode}
                 onValueChange={setSelectedCode}
                 modalTitle="Família"
                 placeholder="Selecione a família"
-                searchPlaceholder="Código ou nome"
+                searchPlaceholder="Código ou nome de qualquer integrante"
                 variant="minimal"
               />
               {selectedCode ? (

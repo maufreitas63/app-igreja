@@ -66,7 +66,7 @@ begin
 Secretaria e liderança: abrir uma família pelo código e conferir parentesco e nome completo.
 
 ## Escolha
-A caixa lista só famílias desta igreja. Com mais de um integrante, o rótulo é «código. Família de {representante ou cônjuge}». Com uma pessoa só, aparece o código e o nome.
+A caixa lista só famílias desta igreja. Digite o código ou o nome de qualquer integrante (membro ou agregado) para achar a família. Com mais de um integrante, o rótulo é «código. Família de {representante ou cônjuge}». Com uma pessoa só, aparece o código e o nome.
 
 ## Editar
 O lápis abre a mesma ficha de Gerenciar Família, onde o reconhecimento do integrante continua.$body$,

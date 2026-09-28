@@ -16,6 +16,8 @@ export const FAMILY_DIRECTORY_SQL_HINT =
 export type FamilyDirectoryOption = {
   code: string;
   label: string;
+  /** Código + nomes de todos os integrantes, para a busca achar a família por qualquer pessoa. */
+  searchText: string;
 };
 
 const asText = (value: unknown) => {
@@ -83,6 +85,14 @@ export function familyDirectoryOptionLabel(code: string, members: ManagedMember[
   return `${code}. Família de ${person}`;
 }
 
+function familyDirectorySearchText(code: string, members: ManagedMember[]) {
+  const names = members
+    .map((member) => member.full_name.trim())
+    .filter(Boolean);
+
+  return [code, ...names].join(' ');
+}
+
 export function buildFamilyDirectoryOptions(members: ManagedMember[]): FamilyDirectoryOption[] {
   const byCode = new Map<string, ManagedMember[]>();
 
@@ -102,6 +112,7 @@ export function buildFamilyDirectoryOptions(members: ManagedMember[]): FamilyDir
     .map(([code, group]) => ({
       code,
       label: familyDirectoryOptionLabel(code, group),
+      searchText: familyDirectorySearchText(code, group),
     }));
 }
 
