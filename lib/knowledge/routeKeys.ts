@@ -35,6 +35,7 @@ export const KNOWLEDGE_ROUTE = {
   salas: '/configuracao-salas',
   autorizacaoMidia: '/autorizacao-midia',
   membros: '/membros',
+  listaFamilias: '/lista-familias',
   mapa: '/mapa-geolocalizacao',
   aniversariantes: '/aniversariantes',
   administrativo: '/administrativo',

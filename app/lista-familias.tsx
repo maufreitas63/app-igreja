@@ -1,3 +1,4 @@
+import { KnowledgeSectionTitle } from '@/components/knowledge/KnowledgeSectionTitle';
 import { MembersClassPanel } from '@/components/MembersClassPanel';
 import { CloseFooterBar } from '@/components/minimal/CloseFooterBar';
 import { MinimalScreenLayout } from '@/components/minimal/MinimalScreenLayout';
@@ -28,7 +29,8 @@ import {
   membersClassStyles,
 } from '@/lib/manageMembers/membersClassStyles';
 import { showFamilyInconsistencyToast, type ManagedMember } from '@/lib/manageMembers/shared';
-import { MINIMAL_UI } from '@/lib/minimalUiTheme';
+import { KNOWLEDGE_ROUTE } from '@/lib/knowledge/routeKeys';
+import { MINIMAL_SECTION_TITLE, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { applyNewFamilyCodeForRejectedMember } from '@/lib/rejectedMemberFamilyCode';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useLocalSearchParams } from 'expo-router';
@@ -190,7 +192,11 @@ export default function ListaFamiliasScreen() {
     <ScreenAccessGate status={accessStatus}>
       <MinimalScreenLayout scroll={false} footer={<CloseFooterBar onPress={returnToCaller} />}>
         <View style={styles.page}>
-          <Text style={styles.title}>Lista de Famílias</Text>
+          <KnowledgeSectionTitle
+            title="Lista de Famílias"
+            routeKey={KNOWLEDGE_ROUTE.listaFamilias}
+            titleStyle={styles.title}
+          />
           {loading ? (
             <ActivityIndicator color={MINIMAL_UI.accent} />
           ) : error ? (
@@ -286,10 +292,8 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   title: {
-    color: MINIMAL_UI.accent,
-    fontWeight: '800',
-    fontSize: 17,
-    textAlign: 'center',
+    ...MINIMAL_SECTION_TITLE,
+    alignSelf: 'stretch',
   },
   error: {
     color: '#B91C1C',
