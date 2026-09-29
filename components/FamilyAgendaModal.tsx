@@ -254,6 +254,14 @@ export function FamilyAgendaModal({ visible, initialEventId, onClose, onNeedsAud
     </>
   ) : null;
 
+  const handleClose = useCallback(() => {
+    if (showKidsCheckinQr) {
+      setShowKidsCheckinQr(false);
+      return;
+    }
+    onClose();
+  }, [onClose, showKidsCheckinQr]);
+
   if (!visible) {
     if (geo.status === 'error' && geo.errorMessage) {
       return (
@@ -278,14 +286,6 @@ export function FamilyAgendaModal({ visible, initialEventId, onClose, onNeedsAud
       </View>
     );
   }
-
-  const handleClose = useCallback(() => {
-    if (showKidsCheckinQr) {
-      setShowKidsCheckinQr(false);
-      return;
-    }
-    onClose();
-  }, [onClose, showKidsCheckinQr]);
 
   return (
     <View style={styles.panel}>
