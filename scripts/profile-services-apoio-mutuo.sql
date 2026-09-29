@@ -18,13 +18,16 @@ begin
   if public.is_super_admin_profile(v_me) then
     return true;
   end if;
-  -- Membro, congregado e visitante da instância atual (sem exigir vínculo formal).
-  return exists (
+  if not exists (
     select 1
       from public.profiles p
      where p.id = v_me
        and p.tenant_id = v_tenant
-  );
+  ) then
+    return false;
+  end if;
+  return public.session_has_resource_access('screen', '/apoio-mutuo', 'view')
+      or public.session_has_resource_access('screen', 'dashboard.card.apoio_mutuo', 'view');
 end;
 $$;
 

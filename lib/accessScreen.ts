@@ -30,6 +30,7 @@ export const ACCESS_SCREEN = {
   redesSociais: '/redes-sociais',
   generosityMural: '/mural-generosidade',
   apoioMutuo: '/apoio-mutuo',
+  suggestionsImprovements: '/suggestions-improvements',
   primicias: '/primicias',
   scalesAllowSwap: 'scales.allow_swap',
 } as const;

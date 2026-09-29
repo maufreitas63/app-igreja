@@ -2,7 +2,6 @@ import type { AppDrawerModuleKey } from '@/lib/appDrawerMenu';
 import {
   ACCESS_DASHBOARD_CARD,
   ACCESS_SCREEN,
-  isDashboardCardContentAllowed,
   type DashboardCardViewAccess,
 } from '@/lib/accessControl';
 import {
@@ -49,6 +48,7 @@ export const DRAWER_MODULES_REQUIRING_ACTIVE_MEMBERSHIP: ReadonlySet<AppDrawerMo
   'menu_small_group',
   'menu_opportunity_mural',
   'menu_generosity_mural',
+  'menu_apoio_mutuo',
 ]);
 
 export type DrawerMemberAccessContext = {
@@ -95,23 +95,21 @@ export function isDrawerMemberModuleAllowed(
   return true;
 }
 
-/** Alinhado a `useSuggestionsImprovementsAccess`: painel manutenção OU administrativo + membro ativo. */
+/** Alinhado a `useSuggestionsImprovementsAccess`: tela do produto ou painel de manutenção. */
 export function isSuggestionsImprovementsAccessAllowed(options: {
-  hasAdministrativoCard: boolean;
+  hasProductScreen: boolean;
   hasMaintenancePanel: boolean;
-  hasActiveMembership: boolean;
 }): boolean {
-  return options.hasMaintenancePanel || (options.hasAdministrativoCard && options.hasActiveMembership);
+  return options.hasProductScreen || options.hasMaintenancePanel;
 }
 
-/** Alinhado a `useSuggestionsImprovementsAccess`: painel manutenção OU administrativo + membro ativo. */
+/** Alinhado a `useSuggestionsImprovementsAccess`: tela do produto ou painel de manutenção. */
 export function isDrawerSuggestionsImprovementsAllowed(
   context: DrawerMemberAccessContext & Pick<DrawerMaintenanceAccessContext, 'maintenancePanelAccess'>
 ): boolean {
   return isSuggestionsImprovementsAccessAllowed({
+    hasProductScreen: context.dashboardScreenAccess[ACCESS_SCREEN.suggestionsImprovements] === true,
     hasMaintenancePanel: context.maintenancePanelAccess.suggestions_improvements === true,
-    hasAdministrativoCard: isDashboardCardContentAllowed('administrativo', context.dashboardCardAccess),
-    hasActiveMembership: context.hasActiveMembership,
   });
 }
 

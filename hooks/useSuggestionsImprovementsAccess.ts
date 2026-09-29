@@ -4,10 +4,9 @@ import {
   isAclStrictMode,
   sessionHasAccess,
   ACL_UNAVAILABLE_MESSAGE,
+  ACCESS_SCREEN,
 } from '@/lib/accessControl';
 import { isSuggestionsImprovementsAccessAllowed } from '@/lib/drawerMenuAccess';
-import { fetchProfileHasActiveMembership } from '@/lib/profileMembershipStatus';
-import { resolveEffectiveProfileId } from '@/lib/sessionProfile';
 import { getGhostModeState, subscribeGhostMode } from '@/lib/ghostMode';
 import { MEMBER_HOME_PATH } from '@/lib/failClosedNavigation';
 import { denyScreenAccessAndRedirect } from '@/lib/screenAccessDenyRedirect';
@@ -58,11 +57,9 @@ export function useSuggestionsImprovementsAccess(options?: {
             return;
           }
 
-          const profileId = await resolveEffectiveProfileId();
-          const [hasAdministrativo, hasMaintenancePanel, activeMembership] = await Promise.all([
-            sessionHasAccess('screen', ACCESS_DASHBOARD_CARD.administrativo, 'view'),
+          const [hasProductScreen, hasMaintenancePanel] = await Promise.all([
+            sessionHasAccess('screen', ACCESS_SCREEN.suggestionsImprovements, 'view'),
             sessionHasAccess('screen', SUGGESTIONS_MAINTENANCE_RESOURCE, 'view'),
-            profileId ? fetchProfileHasActiveMembership(profileId) : Promise.resolve(false),
           ]);
 
           if (!active) {
@@ -70,9 +67,8 @@ export function useSuggestionsImprovementsAccess(options?: {
           }
 
           const allowed = isSuggestionsImprovementsAccessAllowed({
-            hasAdministrativoCard: hasAdministrativo,
+            hasProductScreen,
             hasMaintenancePanel,
-            hasActiveMembership: activeMembership,
           });
 
           if (!allowed) {

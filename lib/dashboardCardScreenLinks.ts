@@ -44,6 +44,7 @@ export const DASHBOARD_CARD_PARAM_TO_CONTENT: Record<string, string> = {
 export const DASHBOARD_CARD_LINKED_SCREEN: Partial<Record<string, string>> = {
   pastoral: ACCESS_SCREEN.pastoral,
   financial: ACCESS_SCREEN.financial,
+  apoio_mutuo: ACCESS_SCREEN.apoioMutuo,
 };
 
 export const DASHBOARD_CARD_BLOCKED_MESSAGES: Partial<Record<string, string>> = {

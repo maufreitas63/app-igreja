@@ -85,7 +85,6 @@ function isDrawerModuleEnabled(
     || moduleKey === 'menu_redes_sociais'
     || moduleKey === 'menu_sobre_conecta'
     || moduleKey === 'menu_como_faco'
-    || moduleKey === 'menu_apoio_mutuo'
   ) {
     return true;
   }
@@ -197,7 +196,6 @@ const MEMBER_FALLBACK_KEYS: ReadonlySet<AppDrawerModuleKey> = new Set([
   'menu_redes_sociais',
   'menu_sobre_conecta',
   'menu_como_faco',
-  'menu_apoio_mutuo',
 ]);
 
 export function useAppDrawerMenu() {
@@ -251,6 +249,7 @@ export function useAppDrawerMenu() {
           ACCESS_SCREEN.mapGeolocation,
           ACCESS_SCREEN.generosityMural,
           ACCESS_SCREEN.apoioMutuo,
+          ACCESS_SCREEN.suggestionsImprovements,
           ACCESS_SCREEN.livrosDoados,
         ].map(async (resourceKey) => {
           if (dashboardScreenAccess[resourceKey] === true) {
