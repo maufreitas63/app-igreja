@@ -97,6 +97,11 @@ const shouldBlockForBilling = (
     return false;
   }
 
+  // Gestão Liberada: toda a instância opera sem exigir assinatura Stripe ativa.
+  if (isTenantManagementOpen(billing)) {
+    return false;
+  }
+
   // Assinatura existente porém inativa: só bloqueia se ENFORCE estiver ligado.
   if (billing.hasSubscription) {
     return isBillingEnforceEnabled();
@@ -132,6 +137,7 @@ const applyGateRedirect = (
  * Middleware de assinatura e instância — nunca desmonta a UI.
  * Instância inativa: usuários comuns vão para selecionar igreja.
  * Paywall de plano: redireciona em background para /billing.
+ * Com Gestão Liberada, o paywall fica desligado para toda a instância.
  */
 export function AppBillingGate({ children }: Props) {
   const pathname = usePathname();

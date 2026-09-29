@@ -25,6 +25,7 @@ export function hasValidPaidSaasContract(
   return status.accessAllowed === true && status.hasSignedContract === true;
 }
 
+/** Interruptor mestre do Superadmin: libera gestão e uso da instância sem assinatura Stripe ativa. */
 export function isTenantManagementOpen(
   status: Pick<TenantBillingStatus, 'managementUnlocked'>
 ): boolean {
