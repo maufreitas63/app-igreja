@@ -92,6 +92,8 @@ export type FamilyRegistrationDependent = {
   phone: string;
   relationship: FamilyDependentRelationship;
   foodRestrictions: string;
+  additionalCareNotes: string;
+  specialNeeds: string;
 };
 
 export type FamilyRegistrationFormValues = {
@@ -104,6 +106,8 @@ export type FamilyRegistrationFormValues = {
     addressNumber: string;
     addressComplement: string;
     foodRestrictions: string;
+    additionalCareNotes: string;
+    specialNeeds: string;
   };
   dependents: FamilyRegistrationDependent[];
 };
@@ -123,6 +127,8 @@ type FamilyRegistrationRpcPayload = {
     address_city: string | null;
     address_state: string | null;
     medical_food_alerts: string | null;
+    additional_care_notes: string | null;
+    special_needs: string | null;
   };
   dependents: Array<{
     full_name: string;
@@ -131,6 +137,8 @@ type FamilyRegistrationRpcPayload = {
     phone: string | null;
     relationship: string;
     medical_food_alerts: string | null;
+    additional_care_notes: string | null;
+    special_needs: string | null;
   }>;
 };
 
@@ -201,6 +209,8 @@ async function buildFamilyRegistrationRpcPayload(
       phone,
       relationship: dependent.relationship,
       medical_food_alerts: dependent.foodRestrictions.trim() || null,
+      additional_care_notes: dependent.additionalCareNotes.trim() || null,
+      special_needs: dependent.specialNeeds.trim() || null,
     });
   }
 
@@ -227,6 +237,8 @@ async function buildFamilyRegistrationRpcPayload(
       phone: informantPhone,
       ...address,
       medical_food_alerts: values.informant.foodRestrictions.trim() || null,
+      additional_care_notes: values.informant.additionalCareNotes.trim() || null,
+      special_needs: values.informant.specialNeeds.trim() || null,
     },
     dependents,
   };

@@ -8,6 +8,8 @@ export type MemberProfileInput = {
   full_name: string;
   phone: string | null;
   medical_food_alerts?: string | null;
+  additional_care_notes?: string | null;
+  special_needs?: string | null;
 };
 
 const isMissingFamilyIdColumnError = (error: unknown) => {
@@ -27,6 +29,8 @@ type ProfileUpsertPayload = {
   family_id: string;
   codigo_membro: string;
   medical_food_alerts?: string | null;
+  additional_care_notes?: string | null;
+  special_needs?: string | null;
 } & ProfileAddressPatch;
 
 const buildProfilePayload = (
@@ -42,6 +46,12 @@ const buildProfilePayload = (
   codigo_membro: familyId,
   ...(member.medical_food_alerts !== undefined
     ? { medical_food_alerts: member.medical_food_alerts?.trim() || null }
+    : {}),
+  ...(member.additional_care_notes !== undefined
+    ? { additional_care_notes: member.additional_care_notes?.trim() || null }
+    : {}),
+  ...(member.special_needs !== undefined
+    ? { special_needs: member.special_needs?.trim() || null }
     : {}),
   ...(inheritedAddress ?? {}),
 });

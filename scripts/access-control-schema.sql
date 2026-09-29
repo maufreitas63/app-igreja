@@ -402,7 +402,9 @@ values
   ('column', 'profiles.address_city', 'Cidade'),
   ('column', 'profiles.address_state', 'Estado'),
   ('column', 'profiles.cep', 'CEP'),
-  ('column', 'profiles.medical_food_alerts', 'Alertas alimentares'),
+  ('column', 'profiles.medical_food_alerts', 'Restrição alimentar'),
+  ('column', 'profiles.additional_care_notes', 'Observações adicionais'),
+  ('column', 'profiles.special_needs', 'Necessidades específicas'),
   ('column', 'profiles.lgpd_accepted', 'LGPD aceito'),
   ('column', 'profiles.family_id', 'Código família'),
   ('column', 'profiles.role', 'Papel no sistema'),
@@ -452,7 +454,9 @@ select r.id, res.id, g.can_view, g.can_update
       ('column', 'profiles.address_city', true, true),
       ('column', 'profiles.address_state', true, true),
       ('column', 'profiles.cpf', true, true),
-      ('column', 'profiles.medical_food_alerts', true, true)
+      ('column', 'profiles.medical_food_alerts', true, true),
+      ('column', 'profiles.additional_care_notes', true, true),
+      ('column', 'profiles.special_needs', true, true)
   ) as g(resource_type, resource_key, can_view, can_update)
   join public.access_resources res
     on res.resource_type = g.resource_type

@@ -16,7 +16,11 @@ import { writeDashboardSelectedEventId } from '@/lib/dashboardSelectedEvent';
 import { NO_BOX_SHADOW } from '@/lib/boxShadow';
 import { MINIMAL_SECTION_TITLE, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import QRCode from 'react-native-qrcode-svg';
+
+const KIDS_CHECKIN_QR_HINT =
+  'Apresente este QR Code na recepcao da sala para confimar a entrega de seu filho no Espaço Infantil';
 
 type Props = {
   visible: boolean;
@@ -29,6 +33,7 @@ type Props = {
 /** Painel inline da Agenda da Família — entre o topo (saudação) e a barra «Encerrar sessão». */
 export function FamilyAgendaModal({ visible, initialEventId, onClose, onNeedsAudience }: Props) {
   const { state: ghostModeState } = useGhostMode();
+  const { width: windowWidth } = useWindowDimensions();
   const { events, loading, error, refetch } = useActiveEvents({
     enabled: true,
     enablePolling: true,
@@ -37,6 +42,7 @@ export function FamilyAgendaModal({ visible, initialEventId, onClose, onNeedsAud
   const [selectedEventId, setSelectedEventId] = useState<string | null>(initialEventId);
   const [userPhone, setUserPhone] = useState<string | null>(null);
   const [familyId, setFamilyId] = useState<string | null>(null);
+  const [showKidsCheckinQr, setShowKidsCheckinQr] = useState(false);
   const [profile, setProfile] = useState<{
     id: string;
     full_name?: string | null;
@@ -47,8 +53,15 @@ export function FamilyAgendaModal({ visible, initialEventId, onClose, onNeedsAud
   } | null>(null);
   const [isProfileLoading, setIsProfileLoading] = useState(false);
 
+  const kidsQrValue = useMemo(
+    () => normalizeFamilyCode(familyId ?? profile?.codigo_membro ?? profile?.family_id ?? null),
+    [familyId, profile?.codigo_membro, profile?.family_id]
+  );
+  const kidsQrSize = Math.min(220, Math.max(160, Math.floor(windowWidth * 0.42)));
+
   useEffect(() => {
     if (!visible) {
+      setShowKidsCheckinQr(false);
       return;
     }
 
@@ -266,10 +279,20 @@ export function FamilyAgendaModal({ visible, initialEventId, onClose, onNeedsAud
     );
   }
 
+  const handleClose = useCallback(() => {
+    if (showKidsCheckinQr) {
+      setShowKidsCheckinQr(false);
+      return;
+    }
+    onClose();
+  }, [onClose, showKidsCheckinQr]);
+
   return (
     <View style={styles.panel}>
       <View style={styles.panelHeader}>
-        <Text style={styles.panelTitle}>Agenda da Família</Text>
+        <Text style={styles.panelTitle}>
+          {showKidsCheckinQr ? 'Espaço Infantil | Check-in QR' : 'Agenda da Família'}
+        </Text>
       </View>
 
       <ScrollView
@@ -279,28 +302,66 @@ export function FamilyAgendaModal({ visible, initialEventId, onClose, onNeedsAud
         showsVerticalScrollIndicator
         nestedScrollEnabled
       >
-        <FamilyAgendaView
-          loading={loading || isProfileLoading}
-          events={events}
-          selectedEvent={selectedEvent}
-          eventsError={error}
-          capacityFillColor={capacityFillColor}
-          capacityRatio={capacityRatio}
-          registrationSection={
-            <>
-              {geoHints}
-              {registrationSection}
-            </>
-          }
-          loginRequiredMessage={
-            !familyRegistrationSessionProfile && !loading && !isProfileLoading
-              ? 'Faça login para se inscrever em eventos.'
-              : null
-          }
-        />
+        {showKidsCheckinQr ? (
+          <View style={styles.kidsQrBlock}>
+            <Text style={styles.kidsQrCaption}>QR Code de Check-in</Text>
+            {kidsQrValue ? (
+              <>
+                <View style={styles.kidsQrSurface}>
+                  <QRCode
+                    value={kidsQrValue}
+                    size={kidsQrSize}
+                    color={MINIMAL_UI.blueDark}
+                    backgroundColor={MINIMAL_UI.background}
+                    ecl="M"
+                    quietZone={8}
+                  />
+                </View>
+                <Text style={styles.kidsQrFamilyCode}>{kidsQrValue}</Text>
+                <Text style={styles.kidsQrHint}>{KIDS_CHECKIN_QR_HINT}</Text>
+              </>
+            ) : (
+              <Text style={styles.kidsQrHint}>
+                Vincule um código de família em Dados Cadastrais para gerar o QR Code de check-in.
+              </Text>
+            )}
+          </View>
+        ) : (
+          <FamilyAgendaView
+            loading={loading || isProfileLoading}
+            events={events}
+            selectedEvent={selectedEvent}
+            eventsError={error}
+            capacityFillColor={capacityFillColor}
+            capacityRatio={capacityRatio}
+            registrationSection={
+              <>
+                {geoHints}
+                {registrationSection}
+              </>
+            }
+            loginRequiredMessage={
+              !familyRegistrationSessionProfile && !loading && !isProfileLoading
+                ? 'Faça login para se inscrever em eventos.'
+                : null
+            }
+          />
+        )}
       </ScrollView>
 
-      <CloseFooterBar onPress={onClose} />
+      <CloseFooterBar
+        onPress={handleClose}
+        secondaryAction={
+          showKidsCheckinQr
+            ? null
+            : {
+                label: 'Espaço Infantil | Check-in QR',
+                onPress: () => setShowKidsCheckinQr(true),
+                accessibilityLabel: 'Espaço Infantil | Check-in QR',
+                variant: 'outline',
+              }
+        }
+      />
     </View>
   );
 }
@@ -349,5 +410,39 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
     marginBottom: 8,
+  },
+  kidsQrBlock: {
+    alignItems: 'center',
+    paddingTop: 24,
+    paddingHorizontal: 16,
+    paddingBottom: 12,
+  },
+  kidsQrCaption: {
+    color: MINIMAL_UI.blueDark,
+    fontSize: 14,
+    fontWeight: '700',
+    marginBottom: 10,
+    textAlign: 'center',
+  },
+  kidsQrSurface: {
+    backgroundColor: MINIMAL_UI.background,
+    padding: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  kidsQrFamilyCode: {
+    marginTop: 8,
+    color: MINIMAL_UI.blueDark,
+    fontSize: 16,
+    fontWeight: '700',
+    letterSpacing: 1,
+  },
+  kidsQrHint: {
+    marginTop: 8,
+    color: MINIMAL_UI.textMuted,
+    fontSize: 12,
+    textAlign: 'center',
+    lineHeight: 17,
+    paddingHorizontal: 8,
   },
 });

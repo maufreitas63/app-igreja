@@ -24,7 +24,9 @@ lgpd_accepted_at,Data do Aceite LGPD
 lgpd_status,Status LGPD
 lgpd_status_date,Data do Status LGPD
 is_active,Perfil Ativo
-medical_food_alerts,Alertas Alimentares
+medical_food_alerts,Restrição Alimentar
+additional_care_notes,Observações Adicionais
+special_needs,Necessidades Específicas
 first_visit_date,Data da Primeira Visita
 invited_by,Convidado Por
 follow_up_status,Status de Acompanhamento

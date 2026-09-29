@@ -14,6 +14,8 @@ export const PROFILE_MANAGE_COLUMN_FIELDS = [
   'address_city',
   'address_state',
   'medical_food_alerts',
+  'additional_care_notes',
+  'special_needs',
   'lgpd_accepted',
   'access_pin',
 ] as const;

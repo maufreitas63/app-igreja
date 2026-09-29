@@ -62,6 +62,10 @@ export type MembersClassProps = {
   onPendingMemberPhotoChange: (value: string | null) => void;
   medicalFoodAlerts: string;
   onMedicalFoodAlertsChange: (value: string) => void;
+  additionalCareNotes: string;
+  onAdditionalCareNotesChange: (value: string) => void;
+  specialNeeds: string;
+  onSpecialNeedsChange: (value: string) => void;
   adding: boolean;
   deleting: boolean;
   canUpdateFamilyMembers: boolean;
@@ -107,6 +111,10 @@ export function MembersClass({
   onPendingMemberPhotoChange,
   medicalFoodAlerts,
   onMedicalFoodAlertsChange,
+  additionalCareNotes,
+  onAdditionalCareNotesChange,
+  specialNeeds,
+  onSpecialNeedsChange,
   adding,
   deleting,
   canUpdateFamilyMembers,
@@ -303,24 +311,50 @@ export function MembersClass({
                   />
                 ) : null}
 
-                {editingMemberId ? (
-                  <>
-                    <Text style={membersClassStyles.fieldLabel}>Restrições alimentares</Text>
-                    <Text style={membersClassStyles.fieldHint}>
-                      Informe alergias, intolerâncias ou outras restrições do familiar.
-                    </Text>
-                    <TextInput
-                      style={[membersClassStyles.input, membersClassStyles.multilineInput]}
-                      placeholder="Ex.: sem lactose, alérgico a amendoim"
-                      placeholderTextColor="#64748b"
-                      value={medicalFoodAlerts}
-                      onChangeText={onMedicalFoodAlertsChange}
-                      multiline
-                      numberOfLines={3}
-                      textAlignVertical="top"
-                    />
-                  </>
-                ) : null}
+                <Text style={membersClassStyles.fieldLabel}>Restrição Alimentar</Text>
+                <Text style={membersClassStyles.fieldHint}>
+                  Informe alergias, intolerâncias ou outras restrições do familiar.
+                </Text>
+                <TextInput
+                  style={[membersClassStyles.input, membersClassStyles.multilineInput]}
+                  placeholder="Ex.: sem lactose, alérgico a amendoim"
+                  placeholderTextColor="#64748b"
+                  value={medicalFoodAlerts}
+                  onChangeText={onMedicalFoodAlertsChange}
+                  multiline
+                  numberOfLines={3}
+                  textAlignVertical="top"
+                />
+
+                <Text style={membersClassStyles.fieldLabel}>Observações Adicionais</Text>
+                <Text style={membersClassStyles.fieldHint}>
+                  Informações extras úteis para o acolhimento (rotina, contatos, avisos).
+                </Text>
+                <TextInput
+                  style={[membersClassStyles.input, membersClassStyles.multilineInput]}
+                  placeholder="Opcional"
+                  placeholderTextColor="#64748b"
+                  value={additionalCareNotes}
+                  onChangeText={onAdditionalCareNotesChange}
+                  multiline
+                  numberOfLines={3}
+                  textAlignVertical="top"
+                />
+
+                <Text style={membersClassStyles.fieldLabel}>Necessidades Específicas</Text>
+                <Text style={membersClassStyles.fieldHint}>
+                  Apoios especiais (mobilidade, comunicação, acompanhamento, etc.).
+                </Text>
+                <TextInput
+                  style={[membersClassStyles.input, membersClassStyles.multilineInput]}
+                  placeholder="Opcional"
+                  placeholderTextColor="#64748b"
+                  value={specialNeeds}
+                  onChangeText={onSpecialNeedsChange}
+                  multiline
+                  numberOfLines={3}
+                  textAlignVertical="top"
+                />
 
                 {editingMemberId ? (
                   <View style={membersClassStyles.memberFormSectionActions}>

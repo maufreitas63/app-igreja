@@ -11,13 +11,19 @@ const CLOSE_BUTTON_BORDER = MINIMAL_UI.blueDark;
 
 /** Altura do botão canónico (Agenda da Família). */
 export const CLOSE_FOOTER_BUTTON_HEIGHT = 51;
+/** Espaço vertical entre botões empilhados no dock. */
+export const CLOSE_FOOTER_BUTTON_GAP = 8;
 /** paddingTop 8 + paddingBottom 12 + botão 51 + border 1 — reserva no fluxo da tela. */
 export const CLOSE_FOOTER_DOCK_HEIGHT = 8 + 12 + CLOSE_FOOTER_BUTTON_HEIGHT + 1;
+
+export type CloseButtonVariant = 'solid' | 'outline';
 
 export type CloseButtonProps = {
   onPress: () => void;
   label?: string;
   accessibilityLabel?: string;
+  /** `solid` = azul com texto branco (Fechar); `outline` = branco com texto azul. */
+  variant?: CloseButtonVariant;
 };
 
 type CloseFooterBarProps = {
@@ -28,32 +34,45 @@ type CloseFooterBarProps = {
   accessibilityLabel?: string;
   /** Ignorado: o dock usa sempre o padding das telas, relativo à viewport. */
   includeScreenPadding?: boolean;
+  /**
+   * Botão acima do «Fechar», mesma altura/largura — tipicamente outline
+   * (ex.: Espaço Infantil | Check-in QR na Agenda da Família).
+   */
+  secondaryAction?: {
+    label: string;
+    onPress: () => void;
+    accessibilityLabel?: string;
+    variant?: CloseButtonVariant;
+  } | null;
 };
 
-const WEB_BUTTON_STYLE: React.CSSProperties = {
-  boxSizing: 'border-box',
-  width: '100%',
-  minHeight: CLOSE_FOOTER_BUTTON_HEIGHT,
-  margin: 0,
-  paddingBlock: 14,
-  paddingInline: 16,
-  borderRadius: 16,
-  borderWidth: 2,
-  borderStyle: 'solid',
-  borderColor: CLOSE_BUTTON_BORDER,
-  backgroundColor: CLOSE_BUTTON_FILL,
-  color: '#FFFFFF',
-  fontSize: 15,
-  fontWeight: 800,
-  fontFamily: 'inherit',
-  lineHeight: '20px',
-  cursor: 'pointer',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  appearance: 'none',
-  WebkitAppearance: 'none',
-};
+function buildWebButtonStyle(variant: CloseButtonVariant): React.CSSProperties {
+  const isOutline = variant === 'outline';
+  return {
+    boxSizing: 'border-box',
+    width: '100%',
+    minHeight: CLOSE_FOOTER_BUTTON_HEIGHT,
+    margin: 0,
+    paddingBlock: 14,
+    paddingInline: 16,
+    borderRadius: 16,
+    borderWidth: 2,
+    borderStyle: 'solid',
+    borderColor: CLOSE_BUTTON_BORDER,
+    backgroundColor: isOutline ? '#FFFFFF' : CLOSE_BUTTON_FILL,
+    color: isOutline ? CLOSE_BUTTON_BORDER : '#FFFFFF',
+    fontSize: 15,
+    fontWeight: 800,
+    fontFamily: 'inherit',
+    lineHeight: '20px',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    appearance: 'none',
+    WebkitAppearance: 'none',
+  };
+}
 
 const closeButtonStyles = StyleSheet.create({
   button: {
@@ -69,10 +88,16 @@ const closeButtonStyles = StyleSheet.create({
     width: '100%',
     ...(Platform.OS === 'web' ? { cursor: 'pointer' as const } : null),
   },
+  buttonOutline: {
+    backgroundColor: '#FFFFFF',
+  },
   buttonText: {
     color: '#FFFFFF',
     fontSize: 15,
     fontWeight: '800',
+  },
+  buttonTextOutline: {
+    color: CLOSE_BUTTON_BORDER,
   },
 });
 
@@ -81,8 +106,10 @@ export function CloseButton({
   onPress,
   label = 'Fechar',
   accessibilityLabel,
+  variant = 'solid',
 }: CloseButtonProps) {
   const resolvedLabel = accessibilityLabel ?? label;
+  const isOutline = variant === 'outline';
 
   if (Platform.OS === 'web') {
     return React.createElement(
@@ -94,7 +121,7 @@ export function CloseButton({
           event.preventDefault();
           onPress();
         },
-        style: WEB_BUTTON_STYLE,
+        style: buildWebButtonStyle(variant),
       },
       label
     );
@@ -103,11 +130,18 @@ export function CloseButton({
   return (
     <Pressable
       onPress={onPress}
-      style={closeButtonStyles.button}
+      style={[closeButtonStyles.button, isOutline ? closeButtonStyles.buttonOutline : null]}
       accessibilityRole="button"
       accessibilityLabel={resolvedLabel}
     >
-      <Text style={closeButtonStyles.buttonText}>{label}</Text>
+      <Text
+        style={[
+          closeButtonStyles.buttonText,
+          isOutline ? closeButtonStyles.buttonTextOutline : null,
+        ]}
+      >
+        {label}
+      </Text>
     </Pressable>
   );
 }
@@ -122,9 +156,13 @@ export function CloseFooterBar({
   contentInsetBottom = 0,
   label,
   accessibilityLabel,
+  secondaryAction = null,
 }: CloseFooterBarProps) {
   const extraBottom = Math.max(0, contentInsetBottom);
-  const reserveHeight = CLOSE_FOOTER_DOCK_HEIGHT + extraBottom;
+  const stackedExtra = secondaryAction
+    ? CLOSE_FOOTER_BUTTON_HEIGHT + CLOSE_FOOTER_BUTTON_GAP
+    : 0;
+  const reserveHeight = CLOSE_FOOTER_DOCK_HEIGHT + stackedExtra + extraBottom;
 
   return (
     <>
@@ -141,6 +179,18 @@ export function CloseFooterBar({
         ]}
       >
         <View style={styles.innerPad}>
+          {secondaryAction ? (
+            <View style={styles.secondarySlot}>
+              <CloseButton
+                onPress={secondaryAction.onPress}
+                label={secondaryAction.label}
+                accessibilityLabel={
+                  secondaryAction.accessibilityLabel ?? secondaryAction.label
+                }
+                variant={secondaryAction.variant ?? 'outline'}
+              />
+            </View>
+          ) : null}
           <CloseButton
             onPress={onPress}
             label={label}
@@ -189,5 +239,9 @@ const styles = StyleSheet.create({
   innerPad: {
     width: '100%',
     paddingHorizontal: 16,
+  },
+  secondarySlot: {
+    width: '100%',
+    marginBottom: CLOSE_FOOTER_BUTTON_GAP,
   },
 });

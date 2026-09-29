@@ -85,7 +85,9 @@ export const FIELD_LABELS: Record<string, string> = {
   lgpd_status: 'Status LGPD',
   lgpd_status_date: 'Data do Status LGPD',
   is_active: 'Perfil Ativo',
-  medical_food_alerts: 'Alertas Alimentares',
+  medical_food_alerts: 'Restrição Alimentar',
+  additional_care_notes: 'Observações Adicionais',
+  special_needs: 'Necessidades Específicas',
   first_visit_date: 'Data da Primeira Visita',
   invited_by: 'Convidado Por',
   follow_up_status: 'Status de Acompanhamento',
@@ -235,7 +237,11 @@ export const inferSectionKey = (field: ProfileFieldRow): ProfileSectionKey => {
     return 'personal';
   }
 
-  if (field.key === 'medical_food_alerts') {
+  if (
+    field.key === 'medical_food_alerts' ||
+    field.key === 'additional_care_notes' ||
+    field.key === 'special_needs'
+  ) {
     return 'personal';
   }
 

@@ -683,6 +683,8 @@ declare
     'address_city',
     'address_state',
     'medical_food_alerts',
+    'additional_care_notes',
+    'special_needs',
     'lgpd_accepted',
     'access_pin'
   ];

@@ -350,9 +350,37 @@ export function FamilyRegistrationForm({ tenantCode, churchName }: FamilyRegistr
                 name="informant.foodRestrictions"
                 render={({ field }) => (
                   <FormItem className="sm:col-span-2">
-                    <FormLabel>Restrições alimentares</FormLabel>
+                    <FormLabel>Restrição Alimentar</FormLabel>
                     <FormControl>
                       <Input placeholder="Alergias, intolerâncias (opcional)" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control as never}
+                name="informant.additionalCareNotes"
+                render={({ field }) => (
+                  <FormItem className="sm:col-span-2">
+                    <FormLabel>Observações Adicionais</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Opcional" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control as never}
+                name="informant.specialNeeds"
+                render={({ field }) => (
+                  <FormItem className="sm:col-span-2">
+                    <FormLabel>Necessidades Específicas</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Opcional" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -377,6 +405,8 @@ export function FamilyRegistrationForm({ tenantCode, churchName }: FamilyRegistr
                     relationship: 'Filho(a)',
                     phone: '',
                     foodRestrictions: '',
+                    additionalCareNotes: '',
+                    specialNeeds: '',
                   })
                 }
               >
@@ -522,9 +552,37 @@ export function FamilyRegistrationForm({ tenantCode, churchName }: FamilyRegistr
                     name={`dependents.${index}.foodRestrictions`}
                     render={({ field }) => (
                       <FormItem className="sm:col-span-2">
-                        <FormLabel>Restrições alimentares</FormLabel>
+                        <FormLabel>Restrição Alimentar</FormLabel>
                         <FormControl>
                           <Input placeholder="Alergias, intolerâncias (opcional)" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control as never}
+                    name={`dependents.${index}.additionalCareNotes`}
+                    render={({ field }) => (
+                      <FormItem className="sm:col-span-2">
+                        <FormLabel>Observações Adicionais</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Opcional" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control as never}
+                    name={`dependents.${index}.specialNeeds`}
+                    render={({ field }) => (
+                      <FormItem className="sm:col-span-2">
+                        <FormLabel>Necessidades Específicas</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Opcional" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>

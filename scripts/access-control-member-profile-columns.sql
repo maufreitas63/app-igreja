@@ -7,7 +7,9 @@ select r.id, res.id, g.can_view, g.can_update
  cross join (
     values
       ('column', 'profiles.cpf', true, true),
-      ('column', 'profiles.medical_food_alerts', true, true)
+      ('column', 'profiles.medical_food_alerts', true, true),
+      ('column', 'profiles.additional_care_notes', true, true),
+      ('column', 'profiles.special_needs', true, true)
   ) as g(resource_type, resource_key, can_view, can_update)
   join public.access_resources res
     on res.resource_type = g.resource_type

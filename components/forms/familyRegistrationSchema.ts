@@ -65,6 +65,8 @@ const dependentSchema = z.object({
   relationship: dependentRelationship,
   phone: optionalMobilePhone,
   foodRestrictions: z.string().trim().optional().default(''),
+  additionalCareNotes: z.string().trim().optional().default(''),
+  specialNeeds: z.string().trim().optional().default(''),
 });
 
 export const familyRegistrationSchema = z.object({
@@ -77,6 +79,8 @@ export const familyRegistrationSchema = z.object({
     addressNumber: z.string().trim().min(1, 'Informe o número do endereço.'),
     addressComplement: z.string().trim().optional().default(''),
     foodRestrictions: z.string().trim().optional().default(''),
+    additionalCareNotes: z.string().trim().optional().default(''),
+    specialNeeds: z.string().trim().optional().default(''),
   }),
   dependents: z
     .array(dependentSchema)
@@ -95,6 +99,8 @@ export const familyRegistrationDefaultValues: FamilyRegistrationSchemaValues = {
     addressNumber: '',
     addressComplement: '',
     foodRestrictions: '',
+    additionalCareNotes: '',
+    specialNeeds: '',
   },
   dependents: [],
 };

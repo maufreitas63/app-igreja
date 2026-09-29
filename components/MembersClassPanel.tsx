@@ -152,6 +152,8 @@ export function MembersClassPanel({
   const [profileLookupMessage, setProfileLookupMessage] = useState<string | null>(null);
   const [linkedProfile, setLinkedProfile] = useState<ProfileMemberLookup | null>(null);
   const [medicalFoodAlerts, setMedicalFoodAlerts] = useState('');
+  const [additionalCareNotes, setAdditionalCareNotes] = useState('');
+  const [specialNeeds, setSpecialNeeds] = useState('');
   const [pendingMemberPhoto, setPendingMemberPhoto] = useState<string | null>(null);
 
   const applyLoadedData = useCallback((data: ManageMembersData) => {
@@ -185,6 +187,8 @@ export function MembersClassPanel({
     setNameSearchResults([]);
     setNameSearchLoading(false);
     setMedicalFoodAlerts('');
+    setAdditionalCareNotes('');
+    setSpecialNeeds('');
     setPendingMemberPhoto(null);
   }, []);
 
@@ -570,6 +574,8 @@ export function MembersClassPanel({
     setMarriageDate(member.marriage_date ? formatDisplayDate(member.marriage_date) : '');
     setParentesco(member.relationship ?? '');
     setMedicalFoodAlerts('');
+    setAdditionalCareNotes('');
+    setSpecialNeeds('');
     setPendingMemberPhoto(null);
     setProfileLookupMessage(null);
     setLinkedProfile(null);
@@ -592,7 +598,7 @@ export function MembersClassPanel({
 
         const { data, error } = await supabase
           .from('profiles')
-          .select('id, medical_food_alerts, selfie_url')
+          .select('id, medical_food_alerts, additional_care_notes, special_needs, selfie_url')
           .eq('id', profileId)
           .maybeSingle();
 
@@ -604,6 +610,10 @@ export function MembersClassPanel({
           setMedicalFoodAlerts(
             typeof data.medical_food_alerts === 'string' ? data.medical_food_alerts.trim() : ''
           );
+          setAdditionalCareNotes(
+            typeof data.additional_care_notes === 'string' ? data.additional_care_notes.trim() : ''
+          );
+          setSpecialNeeds(typeof data.special_needs === 'string' ? data.special_needs.trim() : '');
 
           if (typeof data.selfie_url === 'string' && data.selfie_url.trim()) {
             const previewUrl = await resolveSelfiePreviewUrl(data.selfie_url);
@@ -835,6 +845,8 @@ export function MembersClassPanel({
             phone: normalizedPhone,
             birth_date: birthIso,
             medical_food_alerts: medicalFoodAlerts.trim() || null,
+            additional_care_notes: additionalCareNotes.trim() || null,
+            special_needs: specialNeeds.trim() || null,
           },
           familyId,
           editingMemberSnapshot
@@ -964,6 +976,21 @@ export function MembersClassPanel({
           resolvedLinkedProfile?.id ?? profileIdForAction
         );
 
+        await upsertProfileForManagedMember(
+          {
+            full_name: normalizedName,
+            phone: normalizedPhone,
+            birth_date: birthIso,
+            medical_food_alerts: medicalFoodAlerts.trim() || null,
+            additional_care_notes: additionalCareNotes.trim() || null,
+            special_needs: specialNeeds.trim() || null,
+          },
+          familyId,
+          null,
+          undefined,
+          resolvedLinkedProfile?.id ?? profileIdForAction
+        );
+
         const photoWarning = await persistPendingMemberPhoto(
           memberProfileInput,
           resolvedLinkedProfile?.id ?? profileIdForAction
@@ -1001,6 +1028,21 @@ export function MembersClassPanel({
           phone: normalizedPhone,
           birth_date: birthIso,
         },
+        resolvedLinkedProfile?.id ?? profileIdForAction
+      );
+
+      await upsertProfileForManagedMember(
+        {
+          full_name: normalizedName,
+          phone: normalizedPhone,
+          birth_date: birthIso,
+          medical_food_alerts: medicalFoodAlerts.trim() || null,
+          additional_care_notes: additionalCareNotes.trim() || null,
+          special_needs: specialNeeds.trim() || null,
+        },
+        familyId,
+        null,
+        undefined,
         resolvedLinkedProfile?.id ?? profileIdForAction
       );
 
@@ -1105,6 +1147,10 @@ export function MembersClassPanel({
       onPendingMemberPhotoChange={setPendingMemberPhoto}
       medicalFoodAlerts={medicalFoodAlerts}
       onMedicalFoodAlertsChange={setMedicalFoodAlerts}
+      additionalCareNotes={additionalCareNotes}
+      onAdditionalCareNotesChange={setAdditionalCareNotes}
+      specialNeeds={specialNeeds}
+      onSpecialNeedsChange={setSpecialNeeds}
       adding={adding}
       deleting={deleting}
       canUpdateFamilyMembers={canUpdateFamilyMembers}
