@@ -11,6 +11,11 @@ import {
   normalizeFamilyCode,
   resolveFamilyIdForPhone,
 } from '@/lib/family';
+import { fetchFamilyAudienceMembers } from '@/lib/familyAudienceMembers';
+import {
+  loadKidsTeensAgeLimits,
+  resolveKidsTeensStatusFromBirthDate,
+} from '@/lib/kidsTeensStatus';
 import { loadEffectiveSessionProfile } from '@/lib/loadSessionProfile';
 import { writeDashboardSelectedEventId } from '@/lib/dashboardSelectedEvent';
 import { NO_BOX_SHADOW } from '@/lib/boxShadow';
@@ -43,6 +48,7 @@ export function FamilyAgendaModal({ visible, initialEventId, onClose, onNeedsAud
   const [userPhone, setUserPhone] = useState<string | null>(null);
   const [familyId, setFamilyId] = useState<string | null>(null);
   const [showKidsCheckinQr, setShowKidsCheckinQr] = useState(false);
+  const [hasEligibleKidsForRooms, setHasEligibleKidsForRooms] = useState(false);
   const [profile, setProfile] = useState<{
     id: string;
     full_name?: string | null;
@@ -62,6 +68,7 @@ export function FamilyAgendaModal({ visible, initialEventId, onClose, onNeedsAud
   useEffect(() => {
     if (!visible) {
       setShowKidsCheckinQr(false);
+      setHasEligibleKidsForRooms(false);
       return;
     }
 
@@ -157,6 +164,64 @@ export function FamilyAgendaModal({ visible, initialEventId, onClose, onNeedsAud
 
     void writeDashboardSelectedEventId(selectedEvent.id);
   }, [selectedEvent?.id, visible]);
+
+  useEffect(() => {
+    let active = true;
+
+    const eventOffersKidsSalas =
+      Boolean(selectedEvent?.kids_room) || Boolean(selectedEvent?.teens_room);
+
+    if (!visible || !familyId || !eventOffersKidsSalas) {
+      setHasEligibleKidsForRooms(false);
+      return undefined;
+    }
+
+    void (async () => {
+      try {
+        const [members, limits] = await Promise.all([
+          fetchFamilyAudienceMembers(familyId),
+          loadKidsTeensAgeLimits(),
+        ]);
+
+        if (!active) {
+          return;
+        }
+
+        const birthDates = [
+          ...members.map((member) => member.birth_date),
+          profile?.birth_date ?? null,
+        ];
+
+        const hasEligible = birthDates.some((birthDate) => {
+          const status = resolveKidsTeensStatusFromBirthDate(birthDate, limits);
+          if (status === 'KIDS' && selectedEvent?.kids_room) {
+            return true;
+          }
+          if (status === 'TEENS' && selectedEvent?.teens_room) {
+            return true;
+          }
+          return false;
+        });
+
+        setHasEligibleKidsForRooms(hasEligible);
+      } catch (err) {
+        console.error('Erro ao verificar crianças elegíveis para salas:', err);
+        if (active) {
+          setHasEligibleKidsForRooms(false);
+        }
+      }
+    })();
+
+    return () => {
+      active = false;
+    };
+  }, [
+    familyId,
+    profile?.birth_date,
+    selectedEvent?.kids_room,
+    selectedEvent?.teens_room,
+    visible,
+  ]);
 
   const capacityRatio =
     selectedEvent?.max_capacity && selectedEvent.max_capacity > 0
@@ -352,7 +417,7 @@ export function FamilyAgendaModal({ visible, initialEventId, onClose, onNeedsAud
       <CloseFooterBar
         onPress={handleClose}
         secondaryAction={
-          showKidsCheckinQr
+          showKidsCheckinQr || !hasEligibleKidsForRooms
             ? null
             : {
                 label: 'Espaço Infantil | Check-in QR',
