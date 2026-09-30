@@ -36,7 +36,7 @@ type CloseFooterBarProps = {
   includeScreenPadding?: boolean;
   /**
    * Botão acima do «Fechar», mesma altura/largura — tipicamente outline
-   * (ex.: Espaço Infantil | Check-in QR na Agenda da Família).
+   * (ex.: Espaço Infantil | Check-In / Check-Out QR na Agenda da Família).
    */
   secondaryAction?: {
     label: string;

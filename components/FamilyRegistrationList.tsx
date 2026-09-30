@@ -158,6 +158,7 @@ export const FamilyRegistrationList = ({
     registeredMemberIds,
     registeredMemberStatusById,
     roomCheckInMemberIds,
+    roomReleasedMemberIds,
     loading: loadingRegisteredMembers,
     error: registeredMembersError,
     refetch: refetchRegisteredMembers,
@@ -661,6 +662,7 @@ export const FamilyRegistrationList = ({
             assignedRoomLabel={roomLabelByMemberId[soloParticipant.id]}
             assignedRoomIsOverlay={roomOverlayByMemberId[soloParticipant.id] === true}
             roomCheckInComplete={roomCheckInMemberIds.includes(soloParticipant.id)}
+            roomReleased={roomReleasedMemberIds.includes(soloParticipant.id)}
             onToggle={() => {
               if (!hasEventOpen || isBusy) {
                 return;
@@ -838,6 +840,7 @@ export const FamilyRegistrationList = ({
                 assignedRoomLabel={roomLabelByMemberId[item.id]}
                 assignedRoomIsOverlay={roomOverlayByMemberId[item.id] === true}
                 roomCheckInComplete={roomCheckInMemberIds.includes(item.id)}
+                roomReleased={roomReleasedMemberIds.includes(item.id)}
                 onToggle={() => {
                   if (rowDisabled) {
                     return;

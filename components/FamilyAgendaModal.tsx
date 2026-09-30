@@ -480,7 +480,7 @@ export function FamilyAgendaModal({ visible, initialEventId, onClose, onNeedsAud
     <View style={styles.panel}>
       <View style={styles.panelHeader}>
         <Text style={styles.panelTitle}>
-          {showKidsCheckinQr ? 'Espaço Infantil | Check-in QR' : 'Agenda da Família'}
+          {showKidsCheckinQr ? 'Espaço Infantil | Check-In / Check-Out QR' : 'Agenda da Família'}
         </Text>
       </View>
 
@@ -619,9 +619,9 @@ export function FamilyAgendaModal({ visible, initialEventId, onClose, onNeedsAud
           showKidsCheckinQr || !hasEligibleKidsForRooms
             ? null
             : {
-                label: 'Espaço Infantil | Check-in QR',
+                label: 'Espaço Infantil | Check-In / Check-Out QR',
                 onPress: () => setShowKidsCheckinQr(true),
-                accessibilityLabel: 'Espaço Infantil | Check-in QR',
+                accessibilityLabel: 'Espaço Infantil | Check-In / Check-Out QR',
                 variant: 'outline',
               }
         }

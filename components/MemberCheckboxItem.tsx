@@ -27,6 +27,8 @@ type Props = {
   assignedRoomIsOverlay?: boolean;
   /** Check-in na sala Kids/Teens já registrado pelo servidor. */
   roomCheckInComplete?: boolean;
+  /** Sala finalizada: criança liberada para retirada. */
+  roomReleased?: boolean;
   minimal?: boolean;
   onToggle: () => void;
 };
@@ -45,6 +47,7 @@ export const MemberCheckboxItem = ({
   assignedRoomLabel = null,
   assignedRoomIsOverlay: _assignedRoomIsOverlay = false,
   roomCheckInComplete = false,
+  roomReleased = false,
   minimal = false,
   onToggle,
 }: Props) => {
@@ -122,7 +125,19 @@ export const MemberCheckboxItem = ({
           {statusLine}
         </Text>
       </View>
-      {roomCheckInComplete ? (
+      {roomCheckInComplete && roomReleased ? (
+        <View
+          accessibilityLabel="Criança liberada da sala"
+          accessibilityRole="text"
+          style={[styles.roomReleasedBadge, minimal && styles.roomReleasedBadgeMinimal]}
+        >
+          <Text
+            style={[styles.roomReleasedBadgeText, minimal && styles.roomReleasedBadgeTextMinimal]}
+          >
+            Liberado
+          </Text>
+        </View>
+      ) : roomCheckInComplete ? (
         <View
           accessibilityLabel="Check-in na sala concluído"
           accessibilityRole="text"
@@ -267,5 +282,30 @@ const styles = StyleSheet.create({
   },
   roomCheckInBadgeTextMinimal: {
     color: MINIMAL_UI.onDark,
+  },
+  roomReleasedBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginLeft: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 5,
+    borderRadius: 999,
+    backgroundColor: '#FCE7F3',
+    borderWidth: 1,
+    borderColor: '#F9A8D4',
+    flexShrink: 0,
+  },
+  roomReleasedBadgeMinimal: {
+    backgroundColor: '#FCE7F3',
+    borderColor: '#F9A8D4',
+  },
+  roomReleasedBadgeText: {
+    color: '#DC2626',
+    fontSize: 11,
+    fontWeight: '800',
+    letterSpacing: 0.2,
+  },
+  roomReleasedBadgeTextMinimal: {
+    color: '#DC2626',
   },
 });

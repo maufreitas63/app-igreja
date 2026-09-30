@@ -15,6 +15,7 @@ type EventRegistration = {
   full_name: string | null;
   kids_status: string | null;
   room_entry_checked?: boolean | null;
+  room_released?: boolean | null;
 };
 
 type ProfileLookup = {
@@ -36,6 +37,7 @@ export const useRegisteredEventMembers = (
     Record<string, RegistrationStatus | undefined>
   >({});
   const [roomCheckInMemberIds, setRoomCheckInMemberIds] = useState<string[]>([]);
+  const [roomReleasedMemberIds, setRoomReleasedMemberIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
@@ -49,6 +51,7 @@ export const useRegisteredEventMembers = (
       setRegisteredMemberIds([]);
       setRegisteredMemberStatusById({});
       setRoomCheckInMemberIds([]);
+      setRoomReleasedMemberIds([]);
       setLoading(false);
       setError(null);
       return;
@@ -84,6 +87,7 @@ export const useRegisteredEventMembers = (
       setRegisteredMemberIds([]);
       setRegisteredMemberStatusById(audienceStatusByMemberId);
       setRoomCheckInMemberIds([]);
+      setRoomReleasedMemberIds([]);
       setError(registrationsError);
       setLoading(false);
       return;
@@ -95,6 +99,8 @@ export const useRegisteredEventMembers = (
     const registeredProfileIds = new Set<string>();
     const roomCheckedNames = new Set<string>();
     const roomCheckedProfileIds = new Set<string>();
+    const roomReleasedNames = new Set<string>();
+    const roomReleasedProfileIds = new Set<string>();
     const registeredStatusByName = new Map<string, RegistrationStatus>();
     const registeredStatusByProfileId = new Map<string, RegistrationStatus>();
 
@@ -175,6 +181,14 @@ export const useRegisteredEventMembers = (
         if (registration.profile_id) {
           roomCheckedProfileIds.add(registration.profile_id);
         }
+
+        // Liberado só enquanto ainda está na sala (check-in + liberado).
+        if (registration.room_released === true) {
+          roomReleasedNames.add(normalizedName);
+          if (registration.profile_id) {
+            roomReleasedProfileIds.add(registration.profile_id);
+          }
+        }
       }
 
       const normalizedStatus = registration.kids_status?.trim().toUpperCase();
@@ -192,6 +206,7 @@ export const useRegisteredEventMembers = (
       setRegisteredMemberIds([]);
       setRegisteredMemberStatusById(audienceStatusByMemberId);
       setRoomCheckInMemberIds([]);
+      setRoomReleasedMemberIds([]);
       setLoading(false);
       return;
     }
@@ -220,6 +235,18 @@ export const useRegisteredEventMembers = (
         })
         .map((member) => member.id)
     );
+    setRoomReleasedMemberIds(
+      members
+        .filter((member) => {
+          const profileId = memberProfilesById.get(member.id);
+
+          return (
+            (profileId ? roomReleasedProfileIds.has(profileId) : false)
+            || roomReleasedNames.has(normalizeName(member.full_name))
+          );
+        })
+        .map((member) => member.id)
+    );
     setLoading(false);
   }, [eventId, familyGroupId, memberIdsKey, members]);
 
@@ -227,5 +254,13 @@ export const useRegisteredEventMembers = (
     refetch();
   }, [refetch]);
 
-  return { registeredMemberIds, registeredMemberStatusById, roomCheckInMemberIds, loading, error, refetch };
+  return {
+    registeredMemberIds,
+    registeredMemberStatusById,
+    roomCheckInMemberIds,
+    roomReleasedMemberIds,
+    loading,
+    error,
+    refetch,
+  };
 };
