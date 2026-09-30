@@ -5,7 +5,8 @@ import { useDashboardSelectedEvent } from '@/hooks/useDashboardSelectedEvent';
 import { useRoomServidorScales } from '@/hooks/useRoomServidorScales';
 import { maintenancePanelStyles } from '@/lib/maintenanceCardStyles';
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
-import { useEventRegistrationsByStatus } from '@/hooks/useEventRegistrationsByStatus';
+import { useEventRegistrationsByStatus, registrationHasCareAlert } from '@/hooks/useEventRegistrationsByStatus';
+import type { EventRegistrationGroupItem } from '@/hooks/useEventRegistrationsByStatus';
 import { readDashboardSelectedEventId } from '@/lib/dashboardSelectedEvent';
 import { formatEventDateTimeLabel } from '@/lib/eventDate';
 import { normalizeFamilyCode } from '@/lib/family';
@@ -20,6 +21,8 @@ import { useFocusEffect } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Alert,
+  Platform,
+  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -104,6 +107,8 @@ export const MaintenanceSalaServidorCard = ({
   const [selectedGroupedRoom, setSelectedGroupedRoom] = useState<GroupedRoomKey | null>(null);
   const [roomEntryPendingIds, setRoomEntryPendingIds] = useState<string[]>([]);
   const [qrScannerOpen, setQrScannerOpen] = useState(false);
+  const [careAlertRegistration, setCareAlertRegistration] =
+    useState<EventRegistrationGroupItem | null>(null);
   const [operatorProfile, setOperatorProfile] = useState<{
     id: string | null;
     fullName: string | null;
@@ -843,6 +848,18 @@ export const MaintenanceSalaServidorCard = ({
                                   : styles.roomStatusDotKids,
                               ]}
                             />
+                            {registrationHasCareAlert(registration) ? (
+                              <TouchableOpacity
+                                style={styles.careAlertButton}
+                                onPress={() => setCareAlertRegistration(registration)}
+                                activeOpacity={0.85}
+                                accessibilityRole="button"
+                                accessibilityLabel={`Alertas de cuidado de ${formatDisplayName(registration.full_name)}`}
+                                hitSlop={8}
+                              >
+                                <FontAwesome name="exclamation-triangle" size={14} color="#DC2626" />
+                              </TouchableOpacity>
+                            ) : null}
                           </View>
                           {registration.room_entry_checked ? (
                             registration.room_released ? (
@@ -940,6 +957,75 @@ export const MaintenanceSalaServidorCard = ({
         </View>
       )}
       </View>
+
+      {careAlertRegistration ? (
+        <View
+          nativeID="room-care-alert-overlay"
+          style={styles.careAlertOverlay}
+          pointerEvents="box-none"
+        >
+          <Pressable
+            style={styles.careAlertBackdrop}
+            onPress={() => setCareAlertRegistration(null)}
+            accessibilityRole="button"
+            accessibilityLabel="Fechar alerta"
+          />
+          <View style={styles.careAlertCardShell} pointerEvents="box-none">
+            <View style={[styles.careAlertCard, minimal && styles.careAlertCardMinimal]}>
+              <Text style={[styles.careAlertTitle, minimal && styles.careAlertTitleMinimal]}>
+                {formatDisplayName(careAlertRegistration.full_name)}
+              </Text>
+              <Text style={styles.careAlertSubtitle}>Informações de cuidado</Text>
+              <ScrollView
+                style={styles.careAlertScroll}
+                contentContainerStyle={styles.careAlertScrollContent}
+                nestedScrollEnabled
+              >
+                {careAlertRegistration.medical_food_alerts?.trim() ? (
+                  <View style={styles.careAlertSection}>
+                    <Text style={styles.careAlertSectionLabel}>Restrição Alimentar</Text>
+                    <Text style={styles.careAlertSectionText}>
+                      {careAlertRegistration.medical_food_alerts.trim()}
+                    </Text>
+                  </View>
+                ) : null}
+                {careAlertRegistration.additional_care_notes?.trim() ? (
+                  <View style={styles.careAlertSection}>
+                    <Text style={styles.careAlertSectionLabel}>Observações Adicionais</Text>
+                    <Text style={styles.careAlertSectionText}>
+                      {careAlertRegistration.additional_care_notes.trim()}
+                    </Text>
+                  </View>
+                ) : null}
+                {careAlertRegistration.special_needs?.trim() ? (
+                  <View style={styles.careAlertSection}>
+                    <Text style={styles.careAlertSectionLabel}>Necessidades Específicas</Text>
+                    <Text style={styles.careAlertSectionText}>
+                      {careAlertRegistration.special_needs.trim()}
+                    </Text>
+                  </View>
+                ) : null}
+              </ScrollView>
+              <TouchableOpacity
+                style={[styles.careAlertCloseButton, minimal && styles.careAlertCloseButtonMinimal]}
+                onPress={() => setCareAlertRegistration(null)}
+                activeOpacity={0.85}
+                accessibilityRole="button"
+                accessibilityLabel="Fechar"
+              >
+                <Text
+                  style={[
+                    styles.careAlertCloseButtonText,
+                    minimal && styles.careAlertCloseButtonTextMinimal,
+                  ]}
+                >
+                  Fechar
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      ) : null}
     </View>
   );
 };
@@ -953,6 +1039,7 @@ const styles = StyleSheet.create({
     maxWidth: '100%',
     minWidth: 0,
     overflow: 'hidden',
+    position: 'relative',
   },
   rootEmbedded: {
     paddingHorizontal: 12,
@@ -1329,6 +1416,114 @@ const styles = StyleSheet.create({
   },
   roomStatusDotTeens: {
     backgroundColor: '#EF4444',
+  },
+  careAlertButton: {
+    width: 22,
+    height: 22,
+    borderRadius: 999,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FEE2E2',
+    flexShrink: 0,
+  },
+  careAlertOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 40,
+    elevation: 40,
+    ...(Platform.OS === 'web'
+      ? { position: 'absolute' as const }
+      : null),
+  },
+  careAlertBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(15, 23, 42, 0.45)',
+  },
+  careAlertCardShell: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  careAlertCard: {
+    width: '100%',
+    maxWidth: 400,
+    maxHeight: '80%',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#FECACA',
+    paddingHorizontal: 18,
+    paddingTop: 18,
+    paddingBottom: 14,
+    gap: 12,
+  },
+  careAlertCardMinimal: {
+    backgroundColor: MINIMAL_UI.background,
+    borderColor: MINIMAL_UI.border,
+  },
+  careAlertTitle: {
+    color: '#DC2626',
+    fontSize: 17,
+    fontWeight: '800',
+    textAlign: 'center',
+  },
+  careAlertTitleMinimal: {
+    color: MINIMAL_UI.blueDark,
+  },
+  careAlertSubtitle: {
+    color: '#64748B',
+    fontSize: 13,
+    fontWeight: '600',
+    textAlign: 'center',
+    marginTop: -4,
+  },
+  careAlertScroll: {
+    flexGrow: 0,
+    maxHeight: 280,
+  },
+  careAlertScrollContent: {
+    gap: 12,
+    paddingBottom: 4,
+  },
+  careAlertSection: {
+    gap: 4,
+    padding: 12,
+    borderRadius: 12,
+    backgroundColor: '#FEF2F2',
+    borderWidth: 1,
+    borderColor: '#FECACA',
+  },
+  careAlertSectionLabel: {
+    color: '#B91C1C',
+    fontSize: 12,
+    fontWeight: '800',
+    textTransform: 'uppercase',
+    letterSpacing: 0.3,
+  },
+  careAlertSectionText: {
+    color: '#334155',
+    fontSize: 14,
+    lineHeight: 20,
+  },
+  careAlertCloseButton: {
+    minHeight: 44,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: MINIMAL_UI.blueDark,
+    borderWidth: 1,
+    borderColor: MINIMAL_UI.blueDark,
+  },
+  careAlertCloseButtonMinimal: {
+    backgroundColor: MINIMAL_UI.blueDark,
+  },
+  careAlertCloseButtonText: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  careAlertCloseButtonTextMinimal: {
+    color: MINIMAL_UI.onDark,
   },
   roomCheckInBadge: {
     flexDirection: 'row',

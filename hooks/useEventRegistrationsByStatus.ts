@@ -4,6 +4,12 @@ import { formatFullName, normalizeFullNameKey } from '@/lib/fullName';
 import { supabase } from '@/lib/supabase';
 import { useCallback, useEffect, useState } from 'react';
 
+export type EventRegistrationCareInfo = {
+  medical_food_alerts: string | null;
+  additional_care_notes: string | null;
+  special_needs: string | null;
+};
+
 export type EventRegistrationGroupItem = {
   registration_id: string;
   full_name: string;
@@ -12,7 +18,22 @@ export type EventRegistrationGroupItem = {
   room_released: boolean;
   contact_phone: string | null;
   family_id: string | null;
+  medical_food_alerts: string | null;
+  additional_care_notes: string | null;
+  special_needs: string | null;
 };
+
+export const registrationHasCareAlert = (
+  item: Pick<
+    EventRegistrationGroupItem,
+    'medical_food_alerts' | 'additional_care_notes' | 'special_needs'
+  >
+) =>
+  Boolean(
+    item.medical_food_alerts?.trim()
+    || item.additional_care_notes?.trim()
+    || item.special_needs?.trim()
+  );
 
 type EventRegistrationRpcRow = {
   id?: string | null;
@@ -38,6 +59,14 @@ type FamilyContactRow = {
   family_id: string | null;
   phone: string | null;
   relationship: string | null;
+};
+
+type ProfileCareRow = {
+  full_name: string | null;
+  family_id: string | null;
+  medical_food_alerts: string | null;
+  additional_care_notes: string | null;
+  special_needs: string | null;
 };
 
 type UpdateRoomEntryResult = {
@@ -307,6 +336,45 @@ export const useEventRegistrationsByStatus = (
       }
     }
 
+    const careByNameKey = new Map<
+      string,
+      {
+        medical_food_alerts: string | null;
+        additional_care_notes: string | null;
+        special_needs: string | null;
+      }
+    >();
+
+    if (familyIds.length) {
+      const { data: careRows, error: careRowsError } = await supabase
+        .from('profiles')
+        .select('full_name, family_id, medical_food_alerts, additional_care_notes, special_needs')
+        .in('family_id', familyIds);
+
+      if (!careRowsError) {
+        for (const row of (careRows as ProfileCareRow[] | null) ?? []) {
+          const nameKey = normalizeFullNameKey(row.full_name);
+          if (!nameKey) {
+            continue;
+          }
+
+          const medical = row.medical_food_alerts?.trim() || null;
+          const notes = row.additional_care_notes?.trim() || null;
+          const needs = row.special_needs?.trim() || null;
+
+          if (!medical && !notes && !needs) {
+            continue;
+          }
+
+          careByNameKey.set(nameKey, {
+            medical_food_alerts: medical,
+            additional_care_notes: notes,
+            special_needs: needs,
+          });
+        }
+      }
+    }
+
     let familyMemberNames: Set<string> | null = null;
 
     if (familyIdFilter) {
@@ -355,6 +423,8 @@ export const useEventRegistrationsByStatus = (
           }
         }
 
+        const care = careByNameKey.get(normalizeFullNameKey(fullName));
+
         return {
           registration_id: registrationId || `legacy:${status}:${fullName}:${index}`,
           full_name: fullName,
@@ -363,6 +433,9 @@ export const useEventRegistrationsByStatus = (
           room_released: row.room_released === true,
           contact_phone: familyId ? contactPhoneByFamilyId.get(familyId) ?? null : null,
           family_id: familyId ?? null,
+          medical_food_alerts: care?.medical_food_alerts ?? null,
+          additional_care_notes: care?.additional_care_notes ?? null,
+          special_needs: care?.special_needs ?? null,
         } satisfies EventRegistrationGroupItem;
       })
       .filter((row): row is EventRegistrationGroupItem => Boolean(row));
