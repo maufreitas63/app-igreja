@@ -1,3 +1,4 @@
+import { formatFamilyCodeShortDisplay } from '@/lib/family';
 import { normalizePhoneDigits } from '@/lib/phoneDigits';
 import { supabase } from '@/lib/supabase';
 import { isSupabaseRpcMissingError } from '@/lib/supabaseRpc';
@@ -276,18 +277,22 @@ export function buildVisitorQuickCheckinWhatsAppMessage(options: {
   eventName?: string | null;
   badgeUrl?: string | null;
   qrImageUrl?: string | null;
+  /** Prefixo Parm_entidade — para exibir só o número curto na mensagem. */
+  entityPrefix?: string | null;
 }) {
   const greetingName = String(options.guardianName ?? '').trim() || 'família';
   const eventLabel = String(options.eventName ?? '').trim() || 'o culto de hoje';
   const badgeUrl = String(options.badgeUrl ?? buildVisitorBadgePageUrl(options.familyId)).trim();
   const qrImageUrl = String(options.qrImageUrl ?? buildVisitorQrImageUrl(options.familyId)).trim();
+  const shortCode =
+    formatFamilyCodeShortDisplay(options.familyId, options.entityPrefix) || options.familyId;
 
   return [
     `Olá, ${greetingName}! Seja bem-vindo(a) 🙌`,
     `Seu check-in no Espaço Infantil para ${eventLabel} está confirmado.`,
     `📱 Abra seu crachá com o QR Code:\n${badgeUrl}`,
     `🖼 QR Code (imagem para salvar):\n${qrImageUrl}`,
-    `Código da família: *${options.familyId}*`,
+    `Código da família: *${shortCode}*`,
     'Apresente o QR Code na retirada segura da criança.',
     'Que Deus abençoe a sua visita!',
   ].join('\n\n');

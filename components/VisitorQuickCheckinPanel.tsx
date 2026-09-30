@@ -1,5 +1,7 @@
 import { KnowledgeSectionTitle } from '@/components/knowledge/KnowledgeSectionTitle';
+import { useEntityPrefix } from '@/context/EntityPrefixContext';
 import { appAlert } from '@/lib/appAlert';
+import { formatFamilyCodeShortDisplay } from '@/lib/family';
 import { formatBrazilPhoneInput } from '@/lib/inputMasks';
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { KNOWLEDGE_ROUTE } from '@/lib/knowledge/routeKeys';
@@ -69,6 +71,7 @@ function mapLookupChildren(children: VisitorQuickChild[] | undefined): ChildForm
 }
 
 export function VisitorQuickCheckinPanel() {
+  const { prefix: entityPrefix } = useEntityPrefix();
   const [phase, setPhase] = useState<FlowPhase>('lookup');
   const [phone, setPhone] = useState('');
   const [eventCode, setEventCode] = useState('');
@@ -82,6 +85,10 @@ export function VisitorQuickCheckinPanel() {
   const [busy, setBusy] = useState(false);
   const [loadingEvent, setLoadingEvent] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const familyShortCode = useMemo(
+    () => (familyId ? formatFamilyCodeShortDisplay(familyId, entityPrefix) : ''),
+    [entityPrefix, familyId]
+  );
 
   const isRecurring = lookupStatus === 'recurring_visitor';
   const hasEventCode = eventCode.length === 4;
@@ -196,10 +203,11 @@ export function VisitorQuickCheckinPanel() {
         eventName: targetEventName,
         badgeUrl: buildVisitorBadgePageUrl(targetFamilyId),
         qrImageUrl: buildVisitorQrImageUrl(targetFamilyId),
+        entityPrefix,
       });
       return openWhatsAppLikeBirthdaysWithText(targetPhone, message);
     },
-    []
+    [entityPrefix]
   );
 
   const handleSubmit = useCallback(async () => {
@@ -439,7 +447,7 @@ export function VisitorQuickCheckinPanel() {
         {phase === 'done' && familyId ? (
           <View style={styles.card}>
             <Text style={styles.doneTitle}>Check-in concluído</Text>
-            <Text style={styles.eventLine}>Família {familyId}</Text>
+            <Text style={styles.eventLine}>Família {familyShortCode || familyId}</Text>
             {eventName ? <Text style={styles.eventLine}>{eventName}</Text> : null}
             <View style={styles.qrWrap}>
               <QRCode value={familyId} size={180} />

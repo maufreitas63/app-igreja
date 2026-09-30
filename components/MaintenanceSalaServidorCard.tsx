@@ -9,13 +9,14 @@ import { useEventRegistrationsByStatus, registrationHasCareAlert } from '@/hooks
 import type { EventRegistrationGroupItem } from '@/hooks/useEventRegistrationsByStatus';
 import { readDashboardSelectedEventId } from '@/lib/dashboardSelectedEvent';
 import { formatEventDateTimeLabel } from '@/lib/eventDate';
-import { normalizeFamilyCode } from '@/lib/family';
+import { normalizeFamilyCode, resolveFamilyCodeFromVolunteerInput } from '@/lib/family';
 import { fetchFamilyAudienceMembers } from '@/lib/familyAudienceMembers';
 import { normalizeFullNameKey } from '@/lib/fullName';
 import { loadEffectiveSessionProfile } from '@/lib/loadSessionProfile';
 import { formatRoomServidorNames } from '@/lib/roomServidorScales';
 import { openRoomContactWhatsapp } from '@/lib/whatsapp';
 import { requestConfirmDialog } from '@/lib/confirmDialogHost';
+import { useEntityPrefix } from '@/context/EntityPrefixContext';
 import { FontAwesome } from '@expo/vector-icons';
 import { useFocusEffect } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -91,6 +92,7 @@ export const MaintenanceSalaServidorCard = ({
   minimal = false,
   onCheckinQrActionChange,
 }: MaintenanceSalaServidorCardProps) => {
+  const { prefix: entityPrefix } = useEntityPrefix();
   const {
     kidsRoomLabel,
     teensRoomLabel,
@@ -507,18 +509,18 @@ export const MaintenanceSalaServidorCard = ({
   }, [canCheckInSelectedRoom, onCheckinQrActionChange, selectedGroupedRoomConfig]);
 
   const submitFamilyCodeCheckin = useCallback(() => {
-    const familyId = normalizeScannedFamilyId(familyCodeInput);
+    const familyId = resolveFamilyCodeFromVolunteerInput(familyCodeInput, entityPrefix);
     if (!familyId) {
       Toast.show({
         type: 'error',
         text1: 'Código inválido',
-        text2: 'Informe o código da família (ex.: IBS1234).',
+        text2: 'Informe só o número da família (ex.: 1234).',
       });
       return;
     }
     setFamilyCodeModalOpen(false);
     void handleFamilyQrScan(familyId);
-  }, [familyCodeInput, handleFamilyQrScan]);
+  }, [entityPrefix, familyCodeInput, handleFamilyQrScan]);
 
   const isLoading = loadingEvents || loadingGroupedRegistrations || loadingRoomServidores;
   const hasSalaResources = Boolean(selectedEvent?.kids_room || selectedEvent?.teens_room);
@@ -548,15 +550,15 @@ export const MaintenanceSalaServidorCard = ({
           <View style={styles.familyCodeCard}>
             <Text style={styles.familyCodeTitle}>Digitar Código da Família</Text>
             <Text style={styles.familyCodeHint}>
-              Mesmo fluxo do QR: registra check-in ou baixa (check-out) na sala selecionada.
+              Digite só o número (sem zeros à esquerda). A instância completa o código automaticamente.
             </Text>
             <TextInput
               style={styles.familyCodeInput}
               value={familyCodeInput}
-              onChangeText={(value) => setFamilyCodeInput(value.toUpperCase())}
-              placeholder="Ex.: IBS1234"
+              onChangeText={(value) => setFamilyCodeInput(value.replace(/\D/g, '').replace(/^0+/, ''))}
+              placeholder="Ex.: 1234"
               placeholderTextColor={MINIMAL_UI.textMuted}
-              autoCapitalize="characters"
+              keyboardType="number-pad"
               autoCorrect={false}
               autoFocus
               onSubmitEditing={submitFamilyCodeCheckin}

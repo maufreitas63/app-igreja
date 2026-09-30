@@ -28,6 +28,69 @@ export function clearFamilyIdPrefixCache(): void {
 export const normalizeFamilyCode = (value: string | null | undefined): string =>
   (value ?? '').trim().toUpperCase();
 
+/**
+ * Número da família para digitação/WhatsApp — sem prefixo da instância e sem zeros à esquerda.
+ * Ex.: `IBN0001` → `1`, `IBS01234` → `1234`.
+ */
+export function formatFamilyCodeShortDisplay(
+  familyId: string | null | undefined,
+  prefix?: string | null
+): string {
+  const code = normalizeFamilyCode(familyId);
+  if (!code) {
+    return '';
+  }
+
+  const safePrefix = (prefix ?? '').replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+  let digits = code;
+
+  if (safePrefix && code.startsWith(safePrefix)) {
+    digits = code.slice(safePrefix.length);
+  } else {
+    const match = code.match(/^(.*?)(\d+)$/);
+    digits = match?.[2] ?? code.replace(/^[A-Z]+/, '');
+  }
+
+  const stripped = digits.replace(/^0+/, '');
+  return stripped || '0';
+}
+
+/**
+ * Voluntário digita só o número (ex.: `12`); completa com prefixo da instância e zeros à esquerda.
+ * Aceita também o código completo (`IBN0012`) se colado.
+ */
+export function resolveFamilyCodeFromVolunteerInput(
+  raw: string | null | undefined,
+  prefix: string | null | undefined
+): string {
+  const trimmed = String(raw ?? '').trim().toUpperCase();
+  if (!trimmed) {
+    return '';
+  }
+
+  const safePrefix = (prefix ?? '').replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+
+  if (safePrefix && familyCodeUsesPrefix(trimmed, safePrefix)) {
+    return normalizeFamilyCode(trimmed);
+  }
+
+  if (/^[A-Z]+\d+$/.test(trimmed)) {
+    return normalizeFamilyCode(trimmed);
+  }
+
+  const digitsOnly = trimmed.replace(/\D/g, '');
+  if (!digitsOnly) {
+    return '';
+  }
+
+  const num = Number.parseInt(digitsOnly, 10);
+  if (!Number.isFinite(num) || num <= 0) {
+    return '';
+  }
+
+  return buildFamilyId(safePrefix, num);
+}
+
 /** `IBS0001` pertence ao prefixo `IBS`. `IBN0001` não. */
 export function familyCodeUsesPrefix(
   familyId: string | null | undefined,

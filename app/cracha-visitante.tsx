@@ -1,5 +1,6 @@
+import { useEntityPrefix } from '@/context/EntityPrefixContext';
+import { formatFamilyCodeShortDisplay, normalizeFamilyCode } from '@/lib/family';
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
-import { normalizeFamilyCode } from '@/lib/family';
 import { useLocalSearchParams } from 'expo-router';
 import React, { useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
@@ -10,9 +11,14 @@ import QRCode from 'react-native-qrcode-svg';
  * Query: ?c=CODIGO_FAMILIA
  */
 export default function CrachaVisitanteScreen() {
+  const { prefix: entityPrefix } = useEntityPrefix();
   const params = useLocalSearchParams<{ c?: string | string[] }>();
   const raw = Array.isArray(params.c) ? params.c[0] : params.c;
   const familyId = useMemo(() => normalizeFamilyCode(String(raw ?? '').trim()), [raw]);
+  const shortCode = useMemo(
+    () => formatFamilyCodeShortDisplay(familyId, entityPrefix),
+    [entityPrefix, familyId]
+  );
 
   if (!familyId) {
     return (
@@ -38,7 +44,8 @@ export default function CrachaVisitanteScreen() {
           quietZone={12}
         />
       </View>
-      <Text style={styles.code}>{familyId}</Text>
+      <Text style={styles.code}>{shortCode || familyId}</Text>
+      <Text style={styles.codeHint}>Informe este número ao voluntário na sala</Text>
     </View>
   );
 }
@@ -82,8 +89,13 @@ const styles = StyleSheet.create({
   code: {
     marginTop: 8,
     color: MINIMAL_UI.blueDark,
-    fontSize: 22,
+    fontSize: 28,
     fontWeight: '700',
     letterSpacing: 1,
+  },
+  codeHint: {
+    color: MINIMAL_UI.textMuted,
+    fontSize: 13,
+    textAlign: 'center',
   },
 });
