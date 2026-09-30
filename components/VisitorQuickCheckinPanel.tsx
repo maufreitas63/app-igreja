@@ -4,6 +4,8 @@ import { formatBrazilPhoneInput } from '@/lib/inputMasks';
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { KNOWLEDGE_ROUTE } from '@/lib/knowledge/routeKeys';
 import {
+  buildVisitorBadgePageUrl,
+  buildVisitorQrImageUrl,
   buildVisitorQuickCheckinWhatsAppMessage,
   fetchActiveVisitorCheckinContext,
   lookupVisitorQuickCheckin,
@@ -186,6 +188,20 @@ export function VisitorQuickCheckinPanel() {
     }
   }, [eventCode, eventName, hasEventCode, phone]);
 
+  const openVisitorWhatsApp = useCallback(
+    (targetPhone: string, targetFamilyId: string, targetGuardianName?: string | null, targetEventName?: string | null) => {
+      const message = buildVisitorQuickCheckinWhatsAppMessage({
+        guardianName: targetGuardianName,
+        familyId: targetFamilyId,
+        eventName: targetEventName,
+        badgeUrl: buildVisitorBadgePageUrl(targetFamilyId),
+        qrImageUrl: buildVisitorQrImageUrl(targetFamilyId),
+      });
+      return openWhatsAppLikeBirthdaysWithText(targetPhone, message);
+    },
+    []
+  );
+
   const handleSubmit = useCallback(async () => {
     setError(null);
     setBusy(true);
@@ -218,18 +234,18 @@ export function VisitorQuickCheckinPanel() {
       setEventName(result.event?.name ?? eventName);
       setPhase('done');
 
-      const message = buildVisitorQuickCheckinWhatsAppMessage({
-        guardianName: result.guardian?.full_name ?? guardianName,
-        familyId: result.family_id,
-        eventName: result.event?.name ?? eventName,
-      });
-      openWhatsAppLikeBirthdaysWithText(result.whatsapp?.phone ?? phone, message);
+      openVisitorWhatsApp(
+        result.whatsapp?.phone ?? phone,
+        result.family_id,
+        result.guardian?.full_name ?? guardianName,
+        result.event?.name ?? eventName
+      );
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : 'Falha ao salvar check-in.');
     } finally {
       setBusy(false);
     }
-  }, [children, eventCode, eventName, guardianName, lgpdAccepted, phone]);
+  }, [children, eventCode, eventName, guardianName, lgpdAccepted, openVisitorWhatsApp, phone]);
 
   return (
     <View style={styles.root}>
@@ -429,8 +445,17 @@ export function VisitorQuickCheckinPanel() {
               <QRCode value={familyId} size={180} />
             </View>
             <Text style={styles.hint}>
-              WhatsApp aberto com o crachá digital. Na retirada, valide o QR no Espaço Infantil.
+              WhatsApp com link do crachá e imagem do QR Code. Na retirada, valide o QR no Espaço
+              Infantil.
             </Text>
+            <Pressable
+              style={styles.secondaryButton}
+              onPress={() =>
+                openVisitorWhatsApp(phone, familyId, guardianName || null, eventName)
+              }
+            >
+              <Text style={styles.secondaryButtonText}>Reenviar QR no WhatsApp</Text>
+            </Pressable>
             <Pressable style={styles.primaryButton} onPress={resetFlow}>
               <Text style={styles.primaryButtonText}>Novo cadastro</Text>
             </Pressable>

@@ -245,19 +245,50 @@ export async function submitVisitorQuickCheckin(input: {
   };
 }
 
-/** Mensagem de boas-vindas com código do crachá/QR para o WhatsApp do visitante. */
+/** Link público do crachá com QR (aberto pelo visitante no WhatsApp). */
+export function buildVisitorBadgePageUrl(familyId: string) {
+  const code = encodeURIComponent(String(familyId ?? '').trim());
+  if (!code) {
+    return '';
+  }
+
+  if (typeof window !== 'undefined' && window.location?.origin) {
+    return `${window.location.origin.replace(/\/$/, '')}/cracha-visitante?c=${code}`;
+  }
+
+  return `/cracha-visitante?c=${code}`;
+}
+
+/** Imagem PNG do QR (link direto para o visitante abrir/salvar no WhatsApp). */
+export function buildVisitorQrImageUrl(familyId: string) {
+  const data = encodeURIComponent(String(familyId ?? '').trim());
+  if (!data) {
+    return '';
+  }
+
+  return `https://api.qrserver.com/v1/create-qr-code/?size=480x480&ecc=M&margin=12&data=${data}`;
+}
+
+/** Mensagem de boas-vindas com crachá/QR para o WhatsApp do visitante. */
 export function buildVisitorQuickCheckinWhatsAppMessage(options: {
   guardianName?: string | null;
   familyId: string;
   eventName?: string | null;
+  badgeUrl?: string | null;
+  qrImageUrl?: string | null;
 }) {
   const greetingName = String(options.guardianName ?? '').trim() || 'família';
   const eventLabel = String(options.eventName ?? '').trim() || 'o culto de hoje';
+  const badgeUrl = String(options.badgeUrl ?? buildVisitorBadgePageUrl(options.familyId)).trim();
+  const qrImageUrl = String(options.qrImageUrl ?? buildVisitorQrImageUrl(options.familyId)).trim();
+
   return [
     `Olá, ${greetingName}! Seja bem-vindo(a) 🙌`,
     `Seu check-in no Espaço Infantil para ${eventLabel} está confirmado.`,
-    `Crachá digital / QR Code da família: *${options.familyId}*`,
-    'Apresente este código (ou o QR no app) na retirada segura da criança.',
+    `📱 Abra seu crachá com o QR Code:\n${badgeUrl}`,
+    `🖼 QR Code (imagem para salvar):\n${qrImageUrl}`,
+    `Código da família: *${options.familyId}*`,
+    'Apresente o QR Code na retirada segura da criança.',
     'Que Deus abençoe a sua visita!',
   ].join('\n\n');
 }
