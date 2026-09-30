@@ -857,7 +857,8 @@ export function MembersClassPanel({
               }
             : null,
           undefined,
-          resolvedLinkedProfile?.id
+          resolvedLinkedProfile?.id,
+          editingMemberId
         );
 
         const profileIdForEdit = await resolveProfileIdForMemberAction(
@@ -988,7 +989,8 @@ export function MembersClassPanel({
           familyId,
           null,
           undefined,
-          resolvedLinkedProfile?.id ?? profileIdForAction
+          resolvedLinkedProfile?.id ?? profileIdForAction,
+          String(existingMember.id)
         );
 
         const photoWarning = await persistPendingMemberPhoto(
@@ -1043,7 +1045,8 @@ export function MembersClassPanel({
         familyId,
         null,
         undefined,
-        resolvedLinkedProfile?.id ?? profileIdForAction
+        resolvedLinkedProfile?.id ?? profileIdForAction,
+        upsertedMember.id
       );
 
       const photoWarning = await persistPendingMemberPhoto(

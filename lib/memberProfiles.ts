@@ -193,7 +193,8 @@ export async function upsertProfileForManagedMember(
   familyId: string,
   previousMember?: MemberProfileInput | null,
   inheritedAddress?: ProfileAddressPatch | null,
-  explicitProfileId?: string | null
+  explicitProfileId?: string | null,
+  memberId?: string | null
 ) {
   const normalizedName = formatFullName(member.full_name);
 
@@ -209,10 +210,46 @@ export async function upsertProfileForManagedMember(
 
   if (existingProfileId) {
     await updateProfileWithFallback(existingProfileId, payload);
+    await syncManagedMemberCareFields(existingProfileId, member, memberId);
     return existingProfileId;
   }
 
-  return insertProfileWithFallback(payload);
+  const insertedId = await insertProfileWithFallback(payload);
+  if (insertedId) {
+    await syncManagedMemberCareFields(insertedId, member, memberId);
+  }
+  return insertedId;
+}
+
+async function syncManagedMemberCareFields(
+  profileId: string,
+  member: MemberProfileInput,
+  memberId?: string | null
+) {
+  if (
+    member.medical_food_alerts === undefined
+    && member.additional_care_notes === undefined
+    && member.special_needs === undefined
+  ) {
+    return;
+  }
+
+  const { data, error } = await supabase.rpc('set_managed_member_care_fields', {
+    p_profile_id: profileId,
+    p_medical_food_alerts: member.medical_food_alerts ?? null,
+    p_additional_care_notes: member.additional_care_notes ?? null,
+    p_special_needs: member.special_needs ?? null,
+    p_member_id: memberId?.trim() || null,
+  });
+
+  if (error) {
+    throw error;
+  }
+
+  const result = data as { success?: boolean; message?: string } | null;
+  if (result && result.success === false) {
+    throw new Error(result.message ?? 'Não foi possível gravar os campos de cuidado.');
+  }
 }
 
 export async function ensureProfilesForMembers(

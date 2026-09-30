@@ -311,7 +311,20 @@ export function MembersClass({
                   />
                 ) : null}
 
-                <Text style={membersClassStyles.fieldLabel}>Restrição Alimentar</Text>
+                <View style={membersClassStyles.careFieldHeader}>
+                  <Text style={membersClassStyles.fieldLabel}>Restrição Alimentar</Text>
+                  {medicalFoodAlerts.trim() ? (
+                    <TouchableOpacity
+                      style={membersClassStyles.careFieldClearButton}
+                      onPress={() => onMedicalFoodAlertsChange('')}
+                      accessibilityRole="button"
+                      accessibilityLabel="Limpar restrição alimentar"
+                      hitSlop={8}
+                    >
+                      <Text style={membersClassStyles.careFieldClearButtonText}>X</Text>
+                    </TouchableOpacity>
+                  ) : null}
+                </View>
                 <Text style={membersClassStyles.fieldHint}>
                   Informe alergias, intolerâncias ou outras restrições do familiar.
                 </Text>
@@ -326,7 +339,20 @@ export function MembersClass({
                   textAlignVertical="top"
                 />
 
-                <Text style={membersClassStyles.fieldLabel}>Observações Adicionais</Text>
+                <View style={membersClassStyles.careFieldHeader}>
+                  <Text style={membersClassStyles.fieldLabel}>Observações Adicionais</Text>
+                  {additionalCareNotes.trim() ? (
+                    <TouchableOpacity
+                      style={membersClassStyles.careFieldClearButton}
+                      onPress={() => onAdditionalCareNotesChange('')}
+                      accessibilityRole="button"
+                      accessibilityLabel="Limpar observações adicionais"
+                      hitSlop={8}
+                    >
+                      <Text style={membersClassStyles.careFieldClearButtonText}>X</Text>
+                    </TouchableOpacity>
+                  ) : null}
+                </View>
                 <Text style={membersClassStyles.fieldHint}>
                   Informações extras úteis para o acolhimento (rotina, contatos, avisos).
                 </Text>
@@ -341,7 +367,20 @@ export function MembersClass({
                   textAlignVertical="top"
                 />
 
-                <Text style={membersClassStyles.fieldLabel}>Necessidades Específicas</Text>
+                <View style={membersClassStyles.careFieldHeader}>
+                  <Text style={membersClassStyles.fieldLabel}>Necessidades Específicas</Text>
+                  {specialNeeds.trim() ? (
+                    <TouchableOpacity
+                      style={membersClassStyles.careFieldClearButton}
+                      onPress={() => onSpecialNeedsChange('')}
+                      accessibilityRole="button"
+                      accessibilityLabel="Limpar necessidades específicas"
+                      hitSlop={8}
+                    >
+                      <Text style={membersClassStyles.careFieldClearButtonText}>X</Text>
+                    </TouchableOpacity>
+                  ) : null}
+                </View>
                 <Text style={membersClassStyles.fieldHint}>
                   Apoios especiais (mobilidade, comunicação, acompanhamento, etc.).
                 </Text>
