@@ -20,7 +20,7 @@ type Props = {
 };
 
 const isWeb = Platform.OS === 'web';
-const cameraFacing = isWeb ? 'front' : 'back';
+const cameraFacing = 'back';
 const cameraViewAvailable = typeof CameraView === 'function';
 
 /** Modal de leitura de QR Code de família (check-in nas salas). */
