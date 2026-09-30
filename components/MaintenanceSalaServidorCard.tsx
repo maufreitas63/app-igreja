@@ -9,6 +9,8 @@ import { useEventRegistrationsByStatus } from '@/hooks/useEventRegistrationsBySt
 import { readDashboardSelectedEventId } from '@/lib/dashboardSelectedEvent';
 import { formatEventDateTimeLabel } from '@/lib/eventDate';
 import { normalizeFamilyCode } from '@/lib/family';
+import { fetchFamilyAudienceMembers } from '@/lib/familyAudienceMembers';
+import { normalizeFullNameKey } from '@/lib/fullName';
 import { loadEffectiveSessionProfile } from '@/lib/loadSessionProfile';
 import { formatRoomServidorNames } from '@/lib/roomServidorScales';
 import { openRoomContactWhatsapp } from '@/lib/whatsapp';
@@ -303,7 +305,7 @@ export const MaintenanceSalaServidorCard = ({
     async (rawValue: string) => {
       setQrScannerOpen(false);
 
-      if (!canCheckInSelectedRoom) {
+      if (!canCheckInSelectedRoom || !selectedGroupedRoomConfig) {
         Toast.show({
           type: 'error',
           text1: 'Sem permissão',
@@ -322,12 +324,56 @@ export const MaintenanceSalaServidorCard = ({
         return;
       }
 
-      const roomLabel = selectedGroupedRoomConfig?.label ?? 'sala ativa';
-      const matches = visibleGroupedRegistrations.filter(
-        (registration) => normalizeFamilyCode(registration.family_id) === familyId
-      );
+      const roomKey = selectedGroupedRoomConfig.key;
+      const roomLabel = selectedGroupedRoomConfig.label;
+      const roomRegistrations =
+        roomKey === 'TEENS' ? safeTeensRegistrations : safeKidsRegistrations;
+      const otherRoomKey = roomKey === 'TEENS' ? 'KIDS' : 'TEENS';
+      const otherRoomLabel =
+        availableGroupedRooms.find((room) => room.key === otherRoomKey)?.label
+        ?? (otherRoomKey === 'TEENS' ? teensRoomLabel : kidsRoomLabel);
+      const otherRoomRegistrations =
+        otherRoomKey === 'TEENS' ? safeTeensRegistrations : safeKidsRegistrations;
+
+      let familyNameKeys = new Set<string>();
+      try {
+        const familyMembers = await fetchFamilyAudienceMembers(familyId);
+        familyNameKeys = new Set(
+          familyMembers
+            .map((member) => normalizeFullNameKey(member.full_name))
+            .filter(Boolean)
+        );
+      } catch {
+        familyNameKeys = new Set();
+      }
+
+      const matchesFamily = (
+        registration: (typeof roomRegistrations)[number]
+      ) => {
+        const registrationFamilyId = normalizeFamilyCode(registration.family_id);
+        if (registrationFamilyId && registrationFamilyId === familyId) {
+          return true;
+        }
+        const nameKey = normalizeFullNameKey(registration.full_name);
+        return Boolean(nameKey && familyNameKeys.has(nameKey));
+      };
+
+      const matches = roomRegistrations.filter(matchesFamily);
+      const otherMatches = otherRoomRegistrations.filter(matchesFamily);
 
       if (!matches.length) {
+        const otherLiberated = otherMatches.filter(
+          (registration) => registration.room_entry_checked && registration.room_released
+        );
+        if (otherLiberated.length) {
+          Toast.show({
+            type: 'info',
+            text1: `Selecione ${otherRoomLabel}`,
+            text2: `Há criança(s) liberada(s) nessa sala para dar baixa com o QR.`,
+          });
+          return;
+        }
+
         Toast.show({
           type: 'error',
           text1: 'Nenhuma criança nesta sala',
@@ -336,18 +382,19 @@ export const MaintenanceSalaServidorCard = ({
         return;
       }
 
-      const toCheckIn = matches.filter(
-        (registration) => !registration.room_entry_checked && !registration.room_released
-      );
+      // Baixa só quem está Liberado na sala selecionada; check-in quem ainda não entrou.
       const toCheckOut = matches.filter(
         (registration) => registration.room_entry_checked && registration.room_released
+      );
+      const toCheckIn = matches.filter(
+        (registration) => !registration.room_entry_checked && !registration.room_released
       );
 
       if (!toCheckIn.length && !toCheckOut.length) {
         Toast.show({
           type: 'info',
           text1: 'Já na sala',
-          text2: `Todas as crianças de ${familyId} já estão em ${roomLabel} (ainda não liberadas).`,
+          text2: `Crianças de ${familyId} em ${roomLabel} ainda não foram liberadas para retirada.`,
         });
         return;
       }
@@ -360,11 +407,12 @@ export const MaintenanceSalaServidorCard = ({
       try {
         setRoomEntryPendingIds((current) => [...current, ...pendingIds]);
 
-        for (const registration of toCheckIn) {
-          await setRoomEntryChecked(registration.registration_id, true);
-        }
+        // Prioriza a baixa (Liberado) na sala ativa; depois o check-in pendente.
         for (const registration of toCheckOut) {
           await setRoomEntryChecked(registration.registration_id, false);
+        }
+        for (const registration of toCheckIn) {
+          await setRoomEntryChecked(registration.registration_id, true);
         }
 
         await refetchGroupedRegistrations();
@@ -379,19 +427,19 @@ export const MaintenanceSalaServidorCard = ({
         if (toCheckOut.length && !toCheckIn.length) {
           Toast.show({
             type: 'success',
-            text1: 'Check-out registrado',
-            text2: `${checkOutNames} liberados de ${roomLabel}`,
+            text1: `Baixa · ${roomLabel}`,
+            text2: `${checkOutNames} retirados`,
           });
         } else if (toCheckIn.length && !toCheckOut.length) {
           Toast.show({
             type: 'success',
-            text1: 'Check-in registrado',
+            text1: `Check-in · ${roomLabel}`,
             text2: `${checkInNames} → ${roomLabel}`,
           });
         } else {
           Toast.show({
             type: 'success',
-            text1: 'Check-in / Check-out',
+            text1: `${roomLabel} · Check-in / Check-out`,
             text2: `Entrada: ${checkInNames}. Baixa: ${checkOutNames}.`,
           });
         }
@@ -409,11 +457,15 @@ export const MaintenanceSalaServidorCard = ({
       }
     },
     [
+      availableGroupedRooms,
       canCheckInSelectedRoom,
+      kidsRoomLabel,
       refetchGroupedRegistrations,
-      selectedGroupedRoomConfig?.label,
+      safeKidsRegistrations,
+      safeTeensRegistrations,
+      selectedGroupedRoomConfig,
       setRoomEntryChecked,
-      visibleGroupedRegistrations,
+      teensRoomLabel,
     ]
   );
 
