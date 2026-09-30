@@ -472,11 +472,13 @@ export default function MaintenanceDashboard() {
   const [quorumRegistrySchemaMissing, setQuorumRegistrySchemaMissing] = useState(
     !isQuorumRegistryTableAvailable()
   );
-  const [salaServidorCheckinQrAction, setSalaServidorCheckinQrAction] = useState<{
-    label: string;
-    onPress: () => void;
-    accessibilityLabel?: string;
-  } | null>(null);
+  const [salaServidorCheckinFooterActions, setSalaServidorCheckinFooterActions] = useState<
+    Array<{
+      label: string;
+      onPress: () => void;
+      accessibilityLabel?: string;
+    }>
+  | null>(null);
   const schemaProbeDoneRef = useRef(false);
 
   const isBusy = isSaving || isDeleting || isReplicatingSeven;
@@ -1494,7 +1496,7 @@ export default function MaintenanceDashboard() {
                 embedded={!isMinimalPresentation}
                 panelHeight={cardHeight}
                 minimal={isMinimalPresentation}
-                onCheckinQrActionChange={setSalaServidorCheckinQrAction}
+                onCheckinQrActionChange={setSalaServidorCheckinFooterActions}
               />
             </View>
           ) : item.content === 'events_gantt' ? (
@@ -1796,14 +1798,13 @@ export default function MaintenanceDashboard() {
           {!showEditor ? (
             <CloseFooterBar
               onPress={handleMenu}
-              secondaryAction={
+              secondaryActions={
                 activeMaintenancePanelContent === 'sala_servidor'
-                  ? salaServidorCheckinQrAction
-                    ? {
-                        ...salaServidorCheckinQrAction,
-                        variant: 'outline',
-                      }
-                    : null
+                  && salaServidorCheckinFooterActions?.length
+                  ? salaServidorCheckinFooterActions.map((action) => ({
+                      ...action,
+                      variant: 'outline' as const,
+                    }))
                   : null
               }
             />

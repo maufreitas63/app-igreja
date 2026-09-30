@@ -24,6 +24,15 @@ export type CloseButtonProps = {
   accessibilityLabel?: string;
   /** `solid` = azul com texto branco (Fechar); `outline` = branco com texto azul. */
   variant?: CloseButtonVariant;
+  /** `flex` = compartilha a linha com outro botão (rodapé Espaço Infantil). */
+  layout?: 'full' | 'flex';
+};
+
+export type CloseFooterSecondaryAction = {
+  label: string;
+  onPress: () => void;
+  accessibilityLabel?: string;
+  variant?: CloseButtonVariant;
 };
 
 type CloseFooterBarProps = {
@@ -38,37 +47,43 @@ type CloseFooterBarProps = {
    * Botão acima do «Fechar», mesma altura/largura — tipicamente outline
    * (ex.: Espaço Infantil | Check-In / Check-Out QR na Agenda da Família).
    */
-  secondaryAction?: {
-    label: string;
-    onPress: () => void;
-    accessibilityLabel?: string;
-    variant?: CloseButtonVariant;
-  } | null;
+  secondaryAction?: CloseFooterSecondaryAction | null;
+  /**
+   * Vários botões acima do «Fechar» (ex.: Ler QR + Digitar Código lado a lado).
+   * Tem prioridade sobre `secondaryAction` quando informado.
+   */
+  secondaryActions?: CloseFooterSecondaryAction[] | null;
 };
 
-function buildWebButtonStyle(variant: CloseButtonVariant): React.CSSProperties {
+function buildWebButtonStyle(
+  variant: CloseButtonVariant,
+  layout: 'full' | 'flex' = 'full'
+): React.CSSProperties {
   const isOutline = variant === 'outline';
   return {
     boxSizing: 'border-box',
-    width: '100%',
+    width: layout === 'full' ? '100%' : undefined,
+    flex: layout === 'flex' ? 1 : undefined,
+    minWidth: layout === 'flex' ? 0 : undefined,
     minHeight: CLOSE_FOOTER_BUTTON_HEIGHT,
     margin: 0,
     paddingBlock: 14,
-    paddingInline: 16,
+    paddingInline: 10,
     borderRadius: 16,
     borderWidth: 2,
     borderStyle: 'solid',
     borderColor: CLOSE_BUTTON_BORDER,
     backgroundColor: isOutline ? '#FFFFFF' : CLOSE_BUTTON_FILL,
     color: isOutline ? CLOSE_BUTTON_BORDER : '#FFFFFF',
-    fontSize: 15,
+    fontSize: layout === 'flex' ? 13 : 15,
     fontWeight: 800,
     fontFamily: 'inherit',
-    lineHeight: '20px',
+    lineHeight: '18px',
     cursor: 'pointer',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
+    textAlign: 'center',
     appearance: 'none',
     WebkitAppearance: 'none',
   };
@@ -88,6 +103,12 @@ const closeButtonStyles = StyleSheet.create({
     width: '100%',
     ...(Platform.OS === 'web' ? { cursor: 'pointer' as const } : null),
   },
+  buttonFlex: {
+    flex: 1,
+    width: undefined,
+    minWidth: 0,
+    paddingHorizontal: 10,
+  },
   buttonOutline: {
     backgroundColor: '#FFFFFF',
   },
@@ -95,6 +116,10 @@ const closeButtonStyles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 15,
     fontWeight: '800',
+    textAlign: 'center',
+  },
+  buttonTextFlex: {
+    fontSize: 13,
   },
   buttonTextOutline: {
     color: CLOSE_BUTTON_BORDER,
@@ -107,6 +132,7 @@ export function CloseButton({
   label = 'Fechar',
   accessibilityLabel,
   variant = 'solid',
+  layout = 'full',
 }: CloseButtonProps) {
   const resolvedLabel = accessibilityLabel ?? label;
   const isOutline = variant === 'outline';
@@ -121,7 +147,7 @@ export function CloseButton({
           event.preventDefault();
           onPress();
         },
-        style: buildWebButtonStyle(variant),
+        style: buildWebButtonStyle(variant, layout),
       },
       label
     );
@@ -130,7 +156,11 @@ export function CloseButton({
   return (
     <Pressable
       onPress={onPress}
-      style={[closeButtonStyles.button, isOutline ? closeButtonStyles.buttonOutline : null]}
+      style={[
+        closeButtonStyles.button,
+        isOutline ? closeButtonStyles.buttonOutline : null,
+        layout === 'flex' ? closeButtonStyles.buttonFlex : null,
+      ]}
       accessibilityRole="button"
       accessibilityLabel={resolvedLabel}
     >
@@ -138,6 +168,7 @@ export function CloseButton({
         style={[
           closeButtonStyles.buttonText,
           isOutline ? closeButtonStyles.buttonTextOutline : null,
+          layout === 'flex' ? closeButtonStyles.buttonTextFlex : null,
         ]}
       >
         {label}
@@ -157,9 +188,17 @@ export function CloseFooterBar({
   label,
   accessibilityLabel,
   secondaryAction = null,
+  secondaryActions = null,
 }: CloseFooterBarProps) {
+  const resolvedSecondaryActions =
+    secondaryActions && secondaryActions.length > 0
+      ? secondaryActions
+      : secondaryAction
+        ? [secondaryAction]
+        : [];
+  const secondaryInRow = resolvedSecondaryActions.length > 1;
   const extraBottom = Math.max(0, contentInsetBottom);
-  const stackedExtra = secondaryAction
+  const stackedExtra = resolvedSecondaryActions.length
     ? CLOSE_FOOTER_BUTTON_HEIGHT + CLOSE_FOOTER_BUTTON_GAP
     : 0;
   const reserveHeight = CLOSE_FOOTER_DOCK_HEIGHT + stackedExtra + extraBottom;
@@ -179,16 +218,23 @@ export function CloseFooterBar({
         ]}
       >
         <View style={styles.innerPad}>
-          {secondaryAction ? (
-            <View style={styles.secondarySlot}>
-              <CloseButton
-                onPress={secondaryAction.onPress}
-                label={secondaryAction.label}
-                accessibilityLabel={
-                  secondaryAction.accessibilityLabel ?? secondaryAction.label
-                }
-                variant={secondaryAction.variant ?? 'outline'}
-              />
+          {resolvedSecondaryActions.length ? (
+            <View
+              style={[
+                styles.secondarySlot,
+                secondaryInRow ? styles.secondarySlotRow : null,
+              ]}
+            >
+              {resolvedSecondaryActions.map((action) => (
+                <CloseButton
+                  key={action.accessibilityLabel ?? action.label}
+                  onPress={action.onPress}
+                  label={action.label}
+                  accessibilityLabel={action.accessibilityLabel ?? action.label}
+                  variant={action.variant ?? 'outline'}
+                  layout={secondaryInRow ? 'flex' : 'full'}
+                />
+              ))}
             </View>
           ) : null}
           <CloseButton
@@ -243,5 +289,10 @@ const styles = StyleSheet.create({
   secondarySlot: {
     width: '100%',
     marginBottom: CLOSE_FOOTER_BUTTON_GAP,
+  },
+  secondarySlotRow: {
+    flexDirection: 'row',
+    alignItems: 'stretch',
+    gap: 8,
   },
 });

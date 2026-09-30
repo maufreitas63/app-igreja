@@ -26,6 +26,7 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -41,7 +42,7 @@ type GroupedRoomConfig = {
   headerStyle: object;
 };
 
-type SalaCheckinQrAction = {
+type SalaCheckinFooterAction = {
   label: string;
   onPress: () => void;
   accessibilityLabel?: string;
@@ -51,8 +52,8 @@ type MaintenanceSalaServidorCardProps = {
   embedded?: boolean;
   panelHeight?: number;
   minimal?: boolean;
-  /** Expõe o botão do rodapé «Efetuar Check-In / Check-Out | Ler QRCode» para o CloseFooterBar. */
-  onCheckinQrActionChange?: (action: SalaCheckinQrAction | null) => void;
+  /** Expõe ações do rodapé (QR + digitar código) para o CloseFooterBar. */
+  onCheckinQrActionChange?: (actions: SalaCheckinFooterAction[] | null) => void;
 };
 
 const formatDisplayName = (fullName: string) => {
@@ -107,6 +108,8 @@ export const MaintenanceSalaServidorCard = ({
   const [selectedGroupedRoom, setSelectedGroupedRoom] = useState<GroupedRoomKey | null>(null);
   const [roomEntryPendingIds, setRoomEntryPendingIds] = useState<string[]>([]);
   const [qrScannerOpen, setQrScannerOpen] = useState(false);
+  const [familyCodeModalOpen, setFamilyCodeModalOpen] = useState(false);
+  const [familyCodeInput, setFamilyCodeInput] = useState('');
   const [careAlertRegistration, setCareAlertRegistration] =
     useState<EventRegistrationGroupItem | null>(null);
   const [operatorProfile, setOperatorProfile] = useState<{
@@ -484,14 +487,38 @@ export const MaintenanceSalaServidorCard = ({
       return () => onCheckinQrActionChange(null);
     }
 
-    onCheckinQrActionChange({
-      label: 'Efetuar Check-In / Check-Out | Ler QRCode',
-      accessibilityLabel: 'Efetuar Check-In / Check-Out | Ler QRCode',
-      onPress: () => setQrScannerOpen(true),
-    });
+    onCheckinQrActionChange([
+      {
+        label: 'Ler QR Code',
+        accessibilityLabel: 'Efetuar Check-In / Check-Out | Ler QRCode',
+        onPress: () => setQrScannerOpen(true),
+      },
+      {
+        label: 'Digitar Código da Família',
+        accessibilityLabel: 'Digitar Código da Família para Check-In ou Check-Out',
+        onPress: () => {
+          setFamilyCodeInput('');
+          setFamilyCodeModalOpen(true);
+        },
+      },
+    ]);
 
     return () => onCheckinQrActionChange(null);
   }, [canCheckInSelectedRoom, onCheckinQrActionChange, selectedGroupedRoomConfig]);
+
+  const submitFamilyCodeCheckin = useCallback(() => {
+    const familyId = normalizeScannedFamilyId(familyCodeInput);
+    if (!familyId) {
+      Toast.show({
+        type: 'error',
+        text1: 'Código inválido',
+        text2: 'Informe o código da família (ex.: IBS1234).',
+      });
+      return;
+    }
+    setFamilyCodeModalOpen(false);
+    void handleFamilyQrScan(familyId);
+  }, [familyCodeInput, handleFamilyQrScan]);
 
   const isLoading = loadingEvents || loadingGroupedRegistrations || loadingRoomServidores;
   const hasSalaResources = Boolean(selectedEvent?.kids_room || selectedEvent?.teens_room);
@@ -510,6 +537,45 @@ export const MaintenanceSalaServidorCard = ({
         onClose={() => setQrScannerOpen(false)}
         onScan={(raw) => void handleFamilyQrScan(raw)}
       />
+      {familyCodeModalOpen ? (
+        <View style={styles.familyCodeOverlay} pointerEvents="box-none">
+          <Pressable
+            style={styles.familyCodeBackdrop}
+            onPress={() => setFamilyCodeModalOpen(false)}
+            accessibilityRole="button"
+            accessibilityLabel="Fechar digitar código"
+          />
+          <View style={styles.familyCodeCard}>
+            <Text style={styles.familyCodeTitle}>Digitar Código da Família</Text>
+            <Text style={styles.familyCodeHint}>
+              Mesmo fluxo do QR: registra check-in ou baixa (check-out) na sala selecionada.
+            </Text>
+            <TextInput
+              style={styles.familyCodeInput}
+              value={familyCodeInput}
+              onChangeText={(value) => setFamilyCodeInput(value.toUpperCase())}
+              placeholder="Ex.: IBS1234"
+              placeholderTextColor={MINIMAL_UI.textMuted}
+              autoCapitalize="characters"
+              autoCorrect={false}
+              autoFocus
+              onSubmitEditing={submitFamilyCodeCheckin}
+              returnKeyType="done"
+            />
+            <View style={styles.familyCodeActions}>
+              <Pressable
+                style={styles.familyCodeCancel}
+                onPress={() => setFamilyCodeModalOpen(false)}
+              >
+                <Text style={styles.familyCodeCancelText}>Cancelar</Text>
+              </Pressable>
+              <Pressable style={styles.familyCodeConfirm} onPress={submitFamilyCodeCheckin}>
+                <Text style={styles.familyCodeConfirmText}>Confirmar</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      ) : null}
       {embedded && !minimal ? (
         <View style={styles.embeddedCardHeader}>
           <Text style={maintenancePanelStyles.panelTitle}>Sala(s) - Check In</Text>
@@ -1734,5 +1800,87 @@ const styles = StyleSheet.create({
   },
   roomEntryCheckboxMarkMinimal: {
     color: MINIMAL_UI.onDark,
+  },
+  familyCodeOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 80,
+    elevation: 80,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 20,
+    ...(Platform.OS === 'web'
+      ? ({ position: 'fixed' as unknown as 'absolute' } as object)
+      : null),
+  },
+  familyCodeBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(15, 23, 42, 0.45)',
+  },
+  familyCodeCard: {
+    width: '100%',
+    maxWidth: 400,
+    backgroundColor: MINIMAL_UI.background,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: MINIMAL_UI.border,
+    padding: 18,
+    gap: 10,
+    zIndex: 1,
+  },
+  familyCodeTitle: {
+    color: MINIMAL_UI.blueDark,
+    fontSize: 18,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
+  familyCodeHint: {
+    color: MINIMAL_UI.textMuted,
+    fontSize: 13,
+    textAlign: 'center',
+  },
+  familyCodeInput: {
+    borderWidth: 1,
+    borderColor: MINIMAL_UI.border,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    fontSize: 18,
+    fontWeight: '700',
+    letterSpacing: 1,
+    color: MINIMAL_UI.blueDark,
+    backgroundColor: '#F8FAFC',
+    textAlign: 'center',
+  },
+  familyCodeActions: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 4,
+  },
+  familyCodeCancel: {
+    flex: 1,
+    minHeight: 44,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: MINIMAL_UI.blueDark,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  familyCodeCancelText: {
+    color: MINIMAL_UI.blueDark,
+    fontWeight: '700',
+    fontSize: 15,
+  },
+  familyCodeConfirm: {
+    flex: 1,
+    minHeight: 44,
+    borderRadius: 12,
+    backgroundColor: MINIMAL_UI.blueDark,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  familyCodeConfirmText: {
+    color: MINIMAL_UI.onDark,
+    fontWeight: '700',
+    fontSize: 15,
   },
 });
