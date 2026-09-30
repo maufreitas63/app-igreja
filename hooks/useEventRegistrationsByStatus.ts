@@ -9,6 +9,7 @@ export type EventRegistrationGroupItem = {
   full_name: string;
   kids_status: 'KIDS' | 'TEENS';
   room_entry_checked: boolean;
+  room_released: boolean;
   contact_phone: string | null;
   family_id: string | null;
 };
@@ -20,6 +21,7 @@ type EventRegistrationRpcRow = {
   full_name: string | null;
   kids_status: string | null;
   room_entry_checked?: boolean | null;
+  room_released?: boolean | null;
 };
 
 type EventRegistrationFamilyRow = {
@@ -134,7 +136,7 @@ export const useEventRegistrationsByStatus = (
     if (rpcError) {
       const { data: directData, error: directError } = await supabase
         .from('event_registrations')
-        .select('id, full_name, kids_status, room_entry_checked')
+        .select('id, full_name, kids_status, room_entry_checked, room_released')
         .eq('event_id', eventId)
         .in('kids_status', ['KIDS', 'TEENS'])
         .order('kids_status', { ascending: true })
@@ -358,6 +360,7 @@ export const useEventRegistrationsByStatus = (
           full_name: fullName,
           kids_status: status,
           room_entry_checked: row.room_entry_checked === true,
+          room_released: row.room_released === true,
           contact_phone: familyId ? contactPhoneByFamilyId.get(familyId) ?? null : null,
           family_id: familyId ?? null,
         } satisfies EventRegistrationGroupItem;
@@ -409,18 +412,77 @@ export const useEventRegistrationsByStatus = (
 
       setKidsRegistrations((current) =>
         current.map((item) =>
-          item.registration_id === registrationId ? { ...item, room_entry_checked: checked } : item
+          item.registration_id === registrationId
+            ? {
+                ...item,
+                room_entry_checked: checked,
+                room_released: checked ? item.room_released : false,
+              }
+            : item
         )
       );
       setTeensRegistrations((current) =>
         current.map((item) =>
-          item.registration_id === registrationId ? { ...item, room_entry_checked: checked } : item
+          item.registration_id === registrationId
+            ? {
+                ...item,
+                room_entry_checked: checked,
+                room_released: checked ? item.room_released : false,
+              }
+            : item
         )
       );
 
       return result;
     },
     []
+  );
+
+  const finalizeRoomRelease = useCallback(
+    async (roomKey: 'KIDS' | 'TEENS') => {
+      if (!eventId) {
+        throw new Error('Evento inválido.');
+      }
+
+      const actorProfileId = await resolveActorProfileId({ forceRefresh: false });
+      const { data, error: rpcError } = await supabase.rpc('finalize_event_room_release', {
+        p_event_id: eventId,
+        p_room_key: roomKey,
+        p_actor_profile_id: actorProfileId,
+      });
+
+      if (rpcError) {
+        throw rpcError;
+      }
+
+      const result = data as {
+        success?: boolean;
+        message?: string;
+        updated?: number;
+        phones?: string[];
+      } | null;
+
+      if (!result?.success) {
+        throw new Error(result?.message ?? 'Não foi possível finalizar a sala.');
+      }
+
+      if (roomKey === 'KIDS') {
+        setKidsRegistrations((current) =>
+          current.map((item) =>
+            item.room_entry_checked ? { ...item, room_released: true } : item
+          )
+        );
+      } else {
+        setTeensRegistrations((current) =>
+          current.map((item) =>
+            item.room_entry_checked ? { ...item, room_released: true } : item
+          )
+        );
+      }
+
+      return result;
+    },
+    [eventId]
   );
 
   useEffect(() => {
@@ -435,5 +497,13 @@ export const useEventRegistrationsByStatus = (
     void refetch();
   }, [enabled, refetch]);
 
-  return { kidsRegistrations, teensRegistrations, loading, error, refetch, setRoomEntryChecked };
+  return {
+    kidsRegistrations,
+    teensRegistrations,
+    loading,
+    error,
+    refetch,
+    setRoomEntryChecked,
+    finalizeRoomRelease,
+  };
 };

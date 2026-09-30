@@ -12,6 +12,7 @@ import { normalizeFamilyCode } from '@/lib/family';
 import { loadEffectiveSessionProfile } from '@/lib/loadSessionProfile';
 import { formatRoomServidorNames } from '@/lib/roomServidorScales';
 import { openRoomContactWhatsapp } from '@/lib/whatsapp';
+import { requestConfirmDialog } from '@/lib/confirmDialogHost';
 import { FontAwesome } from '@expo/vector-icons';
 import { useFocusEffect } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -113,6 +114,7 @@ export const MaintenanceSalaServidorCard = ({
     error: groupedRegistrationsError,
     refetch: refetchGroupedRegistrations,
     setRoomEntryChecked,
+    finalizeRoomRelease,
   } = useEventRegistrationsByStatus(selectedEventId);
 
   const {
@@ -253,6 +255,43 @@ export const MaintenanceSalaServidorCard = ({
       );
     } finally {
       setRoomEntryPendingIds((current) => current.filter((id) => id !== registrationId));
+    }
+  };
+
+  const handleFinalizeRoom = async (roomKey: GroupedRoomKey) => {
+    const canFinalize = roomKey === 'TEENS' ? canCheckInTeens : canCheckInKids;
+    if (!canFinalize) {
+      Alert.alert(
+        'Sem permissão',
+        'Somente Secretaria, Super Admin ou servidores escalados para esta sala na data do evento podem finalizar a sala.'
+      );
+      return;
+    }
+
+    const confirmed = await requestConfirmDialog({
+      message: 'Finalizar Sala?',
+      confirmLabel: 'Sim',
+      cancelLabel: 'Não',
+      destructive: true,
+    });
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      const result = await finalizeRoomRelease(roomKey);
+      Toast.show({
+        type: 'success',
+        text1: 'Sala finalizada',
+        text2: result.message ?? 'Crianças liberadas.',
+      });
+      await refetchGroupedRegistrations();
+    } catch (error) {
+      Alert.alert(
+        'Erro',
+        error instanceof Error ? error.message : 'Não foi possível finalizar a sala.'
+      );
     }
   };
 
@@ -520,65 +559,79 @@ export const MaintenanceSalaServidorCard = ({
           <View style={styles.groupedAudienceSelectorRow}>
             {availableGroupedRooms.map((room) => {
               const isSelected = room.key === selectedGroupedRoomConfig?.key;
+              const canFinalizeRoom = room.key === 'TEENS' ? canCheckInTeens : canCheckInKids;
+              const showFinalizeButton = canFinalizeRoom && room.checkedCount > 0;
 
               return (
-                <TouchableOpacity
-                  key={room.key}
-                  style={[
-                    styles.groupedAudienceSelectorChip,
-                    minimal && styles.groupedAudienceSelectorChipMinimal,
-                    isSelected
-                      ? minimal
-                        ? styles.groupedAudienceSelectorChipSelectedMinimal
-                        : room.headerStyle
-                      : minimal
-                        ? styles.groupedAudienceSelectorChipInactiveMinimal
-                        : styles.groupedAudienceSelectorChipInactive,
-                    isSelected && !minimal && styles.groupedAudienceSelectorChipSelected,
-                  ]}
-                  onPress={() => setSelectedGroupedRoom(room.key)}
-                  activeOpacity={0.85}
-                >
-                  <View style={styles.groupedAudienceHeaderLabel}>
-                    <Text
-                      style={[
-                        styles.groupedAudienceHeaderText,
-                        minimal && styles.groupedAudienceHeaderTextMinimal,
-                        isSelected && minimal && styles.groupedAudienceHeaderTextSelectedMinimal,
-                        !isSelected && styles.groupedAudienceHeaderTextInactive,
-                        !isSelected && minimal && styles.groupedAudienceHeaderTextInactiveMinimal,
-                      ]}
-                      numberOfLines={1}
-                    >
-                      {room.label}
-                    </Text>
-                  </View>
-                  <View
+                <View key={room.key} style={styles.groupedAudienceSelectorItem}>
+                  <TouchableOpacity
                     style={[
-                      styles.groupedAudienceCountBadge,
-                      minimal && styles.groupedAudienceCountBadgeMinimal,
+                      styles.groupedAudienceSelectorChip,
+                      minimal && styles.groupedAudienceSelectorChipMinimal,
                       isSelected
                         ? minimal
-                          ? styles.groupedAudienceCountBadgeActiveMinimal
-                          : styles.groupedAudienceCountBadgeActive
+                          ? styles.groupedAudienceSelectorChipSelectedMinimal
+                          : room.headerStyle
                         : minimal
-                          ? styles.groupedAudienceCountBadgeInactiveMinimal
-                          : styles.groupedAudienceCountBadgeInactive,
+                          ? styles.groupedAudienceSelectorChipInactiveMinimal
+                          : styles.groupedAudienceSelectorChipInactive,
+                      isSelected && !minimal && styles.groupedAudienceSelectorChipSelected,
                     ]}
+                    onPress={() => setSelectedGroupedRoom(room.key)}
+                    activeOpacity={0.85}
                   >
-                    <Text
+                    <View style={styles.groupedAudienceHeaderLabel}>
+                      <Text
+                        style={[
+                          styles.groupedAudienceHeaderText,
+                          minimal && styles.groupedAudienceHeaderTextMinimal,
+                          isSelected && minimal && styles.groupedAudienceHeaderTextSelectedMinimal,
+                          !isSelected && styles.groupedAudienceHeaderTextInactive,
+                          !isSelected && minimal && styles.groupedAudienceHeaderTextInactiveMinimal,
+                        ]}
+                        numberOfLines={1}
+                      >
+                        {room.label}
+                      </Text>
+                    </View>
+                    <View
                       style={[
-                        styles.groupedAudienceCountText,
-                        minimal && styles.groupedAudienceCountTextMinimal,
-                        isSelected && minimal && styles.groupedAudienceCountTextSelectedMinimal,
-                        !isSelected && styles.groupedAudienceCountTextInactive,
-                        !isSelected && minimal && styles.groupedAudienceCountTextInactiveMinimal,
+                        styles.groupedAudienceCountBadge,
+                        minimal && styles.groupedAudienceCountBadgeMinimal,
+                        isSelected
+                          ? minimal
+                            ? styles.groupedAudienceCountBadgeActiveMinimal
+                            : styles.groupedAudienceCountBadgeActive
+                          : minimal
+                            ? styles.groupedAudienceCountBadgeInactiveMinimal
+                            : styles.groupedAudienceCountBadgeInactive,
                       ]}
                     >
-                      {`${room.checkedCount}/${room.totalCount}`}
-                    </Text>
-                  </View>
-                </TouchableOpacity>
+                      <Text
+                        style={[
+                          styles.groupedAudienceCountText,
+                          minimal && styles.groupedAudienceCountTextMinimal,
+                          isSelected && minimal && styles.groupedAudienceCountTextSelectedMinimal,
+                          !isSelected && styles.groupedAudienceCountTextInactive,
+                          !isSelected && minimal && styles.groupedAudienceCountTextInactiveMinimal,
+                        ]}
+                      >
+                        {`${room.checkedCount}/${room.totalCount}`}
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+                  {showFinalizeButton ? (
+                    <TouchableOpacity
+                      style={styles.finalizeRoomButton}
+                      onPress={() => void handleFinalizeRoom(room.key)}
+                      activeOpacity={0.85}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Finalizar ${room.label}`}
+                    >
+                      <Text style={styles.finalizeRoomButtonText}>X</Text>
+                    </TouchableOpacity>
+                  ) : null}
+                </View>
               );
             })}
           </View>
@@ -692,30 +745,63 @@ export const MaintenanceSalaServidorCard = ({
                             >
                               {formatDisplayName(registration.full_name)}
                             </Text>
+                            <View
+                              accessibilityLabel={
+                                registration.kids_status === 'TEENS'
+                                  ? 'Faixa Jovens'
+                                  : 'Faixa Infantil'
+                              }
+                              style={[
+                                styles.roomStatusDot,
+                                registration.kids_status === 'TEENS'
+                                  ? styles.roomStatusDotTeens
+                                  : styles.roomStatusDotKids,
+                              ]}
+                            />
                           </View>
                           {registration.room_entry_checked ? (
-                            <View
-                              accessibilityLabel="Check-in na sala concluído"
-                              accessibilityRole="text"
-                              style={[
-                                styles.roomCheckInBadge,
-                                minimal && styles.roomCheckInBadgeMinimal,
-                              ]}
-                            >
-                              <FontAwesome
-                                name="sign-in"
-                                size={11}
-                                color={minimal ? MINIMAL_UI.onDark : '#B45309'}
-                              />
-                              <Text
+                            registration.room_released ? (
+                              <View
+                                accessibilityLabel="Criança liberada da sala"
+                                accessibilityRole="text"
                                 style={[
-                                  styles.roomCheckInBadgeText,
-                                  minimal && styles.roomCheckInBadgeTextMinimal,
+                                  styles.roomReleasedBadge,
+                                  minimal && styles.roomReleasedBadgeMinimal,
                                 ]}
                               >
-                                Na sala
-                              </Text>
-                            </View>
+                                <Text
+                                  style={[
+                                    styles.roomReleasedBadgeText,
+                                    minimal && styles.roomReleasedBadgeTextMinimal,
+                                  ]}
+                                >
+                                  Liberado
+                                </Text>
+                              </View>
+                            ) : (
+                              <View
+                                accessibilityLabel="Check-in na sala concluído"
+                                accessibilityRole="text"
+                                style={[
+                                  styles.roomCheckInBadge,
+                                  minimal && styles.roomCheckInBadgeMinimal,
+                                ]}
+                              >
+                                <FontAwesome
+                                  name="sign-in"
+                                  size={11}
+                                  color={minimal ? MINIMAL_UI.onDark : '#B45309'}
+                                />
+                                <Text
+                                  style={[
+                                    styles.roomCheckInBadgeText,
+                                    minimal && styles.roomCheckInBadgeTextMinimal,
+                                  ]}
+                                >
+                                  Na sala
+                                </Text>
+                              </View>
+                            )
                           ) : null}
                           <View style={styles.groupedAudienceRowAction}>
                             {registration.room_entry_checked ? (
@@ -965,6 +1051,46 @@ const styles = StyleSheet.create({
     maxWidth: '100%',
     minWidth: 0,
   },
+  groupedAudienceSelectorItem: {
+    flexGrow: 1,
+    flexShrink: 1,
+    flexBasis: '45%',
+    minWidth: 0,
+    maxWidth: '100%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  groupedAudienceSelectorChip: {
+    flex: 1,
+    minWidth: 0,
+    borderRadius: 18,
+    borderWidth: 1,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    minHeight: 48,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 8,
+    overflow: 'hidden',
+  },
+  finalizeRoomButton: {
+    minWidth: 28,
+    height: 28,
+    borderRadius: 999,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 8,
+    backgroundColor: '#FCE7F3',
+    flexShrink: 0,
+  },
+  finalizeRoomButtonText: {
+    color: '#DC2626',
+    fontSize: 13,
+    fontWeight: '800',
+    lineHeight: 16,
+  },
   groupedAudienceServidorNamesRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -999,23 +1125,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 18,
     textAlign: 'center',
-  },
-  groupedAudienceSelectorChip: {
-    flexGrow: 1,
-    flexShrink: 1,
-    flexBasis: '45%',
-    minWidth: 0,
-    maxWidth: '100%',
-    borderRadius: 18,
-    borderWidth: 1,
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    minHeight: 48,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 8,
-    overflow: 'hidden',
   },
   groupedAudienceSelectorChipInactive: {
     backgroundColor: '#FFFFFF',
@@ -1113,11 +1222,28 @@ const styles = StyleSheet.create({
     flex: 1,
     minWidth: 0,
     paddingLeft: 6,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   groupedAudienceName: {
     color: '#3A96DD',
     fontSize: 15,
     textAlign: 'left',
+    flexShrink: 1,
+    minWidth: 0,
+  },
+  roomStatusDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 999,
+    flexShrink: 0,
+  },
+  roomStatusDotKids: {
+    backgroundColor: '#FACC15',
+  },
+  roomStatusDotTeens: {
+    backgroundColor: '#EF4444',
   },
   roomCheckInBadge: {
     flexDirection: 'row',
@@ -1142,6 +1268,29 @@ const styles = StyleSheet.create({
   },
   roomCheckInBadgeTextMinimal: {
     color: MINIMAL_UI.onDark,
+  },
+  roomReleasedBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 999,
+    backgroundColor: '#FCE7F3',
+    borderWidth: 1,
+    borderColor: '#F9A8D4',
+    flexShrink: 0,
+  },
+  roomReleasedBadgeMinimal: {
+    backgroundColor: '#FCE7F3',
+    borderColor: '#F9A8D4',
+  },
+  roomReleasedBadgeText: {
+    color: '#DC2626',
+    fontSize: 11,
+    fontWeight: '800',
+  },
+  roomReleasedBadgeTextMinimal: {
+    color: '#DC2626',
   },
   groupedAudienceRowAction: {
     width: 28,

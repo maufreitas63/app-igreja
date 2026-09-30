@@ -44,6 +44,7 @@ type KidsDeliveryRow = {
   id: string;
   fullName: string;
   roomLabel: string;
+  roomStatus: KidsTeensStatus;
 };
 
 function fallbackRoomLabelForStatus(status: KidsTeensStatus): string {
@@ -216,13 +217,28 @@ export function FamilyAgendaModal({ visible, initialEventId, onClose, onNeedsAud
     return checked;
   }, [kidsRegistrations, teensRegistrations]);
 
+  const kidsReleasedByName = useMemo(() => {
+    const released = new Set<string>();
+    for (const registration of [...kidsRegistrations, ...teensRegistrations]) {
+      if (!registration.room_released) {
+        continue;
+      }
+      const key = normalizeFullNameKey(registration.full_name);
+      if (key) {
+        released.add(key);
+      }
+    }
+    return released;
+  }, [kidsRegistrations, teensRegistrations]);
+
   const kidsDeliveryDisplayRows = useMemo(
     () =>
       kidsDeliveryRows.map((row) => ({
         ...row,
         inRoom: kidsInRoomByName.has(normalizeFullNameKey(row.fullName)),
+        released: kidsReleasedByName.has(normalizeFullNameKey(row.fullName)),
       })),
-    [kidsDeliveryRows, kidsInRoomByName]
+    [kidsDeliveryRows, kidsInRoomByName, kidsReleasedByName]
   );
 
   useEffect(() => {
@@ -304,6 +320,7 @@ export function FamilyAgendaModal({ visible, initialEventId, onClose, onNeedsAud
             id: String(member.id),
             fullName: formatFullName(member.full_name) || 'Sem nome',
             roomLabel: resolveKidsDeliveryRoomLabel(status, match),
+            roomStatus: status,
           };
         });
 
@@ -522,14 +539,35 @@ export function FamilyAgendaModal({ visible, initialEventId, onClose, onNeedsAud
                 </View>
                 {kidsDeliveryDisplayRows.map((row) => (
                   <View key={row.id} style={styles.kidsDeliveryRow}>
-                    <Text
-                      style={[styles.kidsDeliveryCell, styles.kidsDeliveryName]}
-                      numberOfLines={2}
-                    >
-                      {row.fullName}
-                    </Text>
+                    <View style={styles.kidsDeliveryNameWrap}>
+                      <Text
+                        style={[styles.kidsDeliveryCell, styles.kidsDeliveryName]}
+                        numberOfLines={2}
+                      >
+                        {row.fullName}
+                      </Text>
+                      <View
+                        accessibilityLabel={
+                          row.roomStatus === 'TEENS' ? 'Faixa Jovens' : 'Faixa Infantil'
+                        }
+                        style={[
+                          styles.kidsDeliveryRoomDot,
+                          row.roomStatus === 'TEENS'
+                            ? styles.kidsDeliveryRoomDotTeens
+                            : styles.kidsDeliveryRoomDotKids,
+                        ]}
+                      />
+                    </View>
                     <View style={styles.kidsDeliveryStatusSlot}>
-                      {row.inRoom ? (
+                      {row.released ? (
+                        <View
+                          accessibilityLabel="Criança liberada da sala"
+                          accessibilityRole="text"
+                          style={styles.kidsReleasedBadge}
+                        >
+                          <Text style={styles.kidsReleasedBadgeText}>Liberado</Text>
+                        </View>
+                      ) : row.inRoom ? (
                         <View
                           accessibilityLabel="Check-in na sala concluído"
                           accessibilityRole="text"
@@ -710,6 +748,25 @@ const styles = StyleSheet.create({
     minWidth: 0,
     fontWeight: '600',
   },
+  kidsDeliveryNameWrap: {
+    flex: 1,
+    minWidth: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  kidsDeliveryRoomDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 999,
+    flexShrink: 0,
+  },
+  kidsDeliveryRoomDotKids: {
+    backgroundColor: '#FACC15',
+  },
+  kidsDeliveryRoomDotTeens: {
+    backgroundColor: '#EF4444',
+  },
   kidsDeliveryStatusSlot: {
     width: 78,
     flexShrink: 0,
@@ -737,6 +794,22 @@ const styles = StyleSheet.create({
   },
   kidsInRoomBadgeText: {
     color: MINIMAL_UI.onDark,
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 0.2,
+  },
+  kidsReleasedBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 7,
+    paddingVertical: 4,
+    borderRadius: 999,
+    backgroundColor: '#FCE7F3',
+    borderWidth: 1,
+    borderColor: '#F9A8D4',
+  },
+  kidsReleasedBadgeText: {
+    color: '#DC2626',
     fontSize: 10,
     fontWeight: '800',
     letterSpacing: 0.2,

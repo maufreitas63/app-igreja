@@ -28,6 +28,11 @@ import {
   lookupAudienceRoomLabel,
   resolveAudienceRoomLabels,
 } from '@/lib/userRoomAssignment';
+import {
+  loadKidsTeensAgeLimits,
+  resolveKidsTeensStatusFromBirthDate,
+  type KidsTeensStatus,
+} from '@/lib/kidsTeensStatus';
 
 export type SessionProfileRegistration = {
   id: string;
@@ -167,6 +172,9 @@ export const FamilyRegistrationList = ({
   const [roomOverlayByMemberId, setRoomOverlayByMemberId] = useState<Record<string, boolean>>(
     {}
   );
+  const [roomStatusByMemberId, setRoomStatusByMemberId] = useState<
+    Record<string, KidsTeensStatus>
+  >({});
   const [soloStatusLoading, setSoloStatusLoading] = useState(false);
   const [soloToggleLoading, setSoloToggleLoading] = useState(false);
 
@@ -292,27 +300,46 @@ export const FamilyRegistrationList = ({
     if (!audience.length) {
       setRoomLabelByMemberId({});
       setRoomOverlayByMemberId({});
+      setRoomStatusByMemberId({});
       return undefined;
     }
 
-    void resolveAudienceRoomLabels(
-      audience.map((member) => member.phone),
-      { familyId: familyId || null }
-    ).then((rows) => {
-      if (!active) return;
+    void (async () => {
+      const [rows, limits] = await Promise.all([
+        resolveAudienceRoomLabels(
+          audience.map((member) => member.phone),
+          { familyId: familyId || null }
+        ),
+        loadKidsTeensAgeLimits(),
+      ]);
+
+      if (!active) {
+        return;
+      }
+
       const index = buildAudienceRoomLabelIndex(rows);
       const next: Record<string, string> = {};
       const nextOverlay: Record<string, boolean> = {};
+      const nextStatus: Record<string, KidsTeensStatus> = {};
+
       for (const member of audience) {
         const match = lookupAudienceRoomLabel(index, member);
-        if (!match) continue;
-        // Exibe a sala efetiva (padrão ou especial), independente das salas habilitadas no evento.
-        next[member.id] = match.room_label;
-        nextOverlay[member.id] = match.room_kind === 'especial';
+        if (match) {
+          // Exibe a sala efetiva (padrão ou especial), independente das salas habilitadas no evento.
+          next[member.id] = match.room_label;
+          nextOverlay[member.id] = match.room_kind === 'especial';
+        }
+
+        const status = resolveKidsTeensStatusFromBirthDate(member.birth_date, limits);
+        if (status) {
+          nextStatus[member.id] = status;
+        }
       }
+
       setRoomLabelByMemberId(next);
       setRoomOverlayByMemberId(nextOverlay);
-    });
+      setRoomStatusByMemberId(nextStatus);
+    })();
 
     return () => {
       active = false;
@@ -630,6 +657,7 @@ export const FamilyRegistrationList = ({
             registrationStatus={soloRegistrationStatus}
             showKidsIndicator={showKidsIndicator}
             showTeensIndicator={showTeensIndicator}
+            roomStatusDot={roomStatusByMemberId[soloParticipant.id] ?? null}
             assignedRoomLabel={roomLabelByMemberId[soloParticipant.id]}
             assignedRoomIsOverlay={roomOverlayByMemberId[soloParticipant.id] === true}
             roomCheckInComplete={roomCheckInMemberIds.includes(soloParticipant.id)}
@@ -806,6 +834,7 @@ export const FamilyRegistrationList = ({
                 registrationStatus={registeredMemberStatusById[item.id]}
                 showKidsIndicator={showKidsIndicator}
                 showTeensIndicator={showTeensIndicator}
+                roomStatusDot={roomStatusByMemberId[item.id] ?? null}
                 assignedRoomLabel={roomLabelByMemberId[item.id]}
                 assignedRoomIsOverlay={roomOverlayByMemberId[item.id] === true}
                 roomCheckInComplete={roomCheckInMemberIds.includes(item.id)}

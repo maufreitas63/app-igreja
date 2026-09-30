@@ -19,6 +19,8 @@ type Props = {
   registrationStatus?: RegistrationStatus;
   showKidsIndicator?: boolean;
   showTeensIndicator?: boolean;
+  /** Bullet amarelo (KIDS) / vermelho (TEENS), mesma regra de Gerenciar Família. */
+  roomStatusDot?: 'KIDS' | 'TEENS' | null;
   /** Sala efetiva (especial vigente ou padrão). */
   assignedRoomLabel?: string | null;
   /** True quando a sala efetiva é especial (sobreposição). */
@@ -37,6 +39,9 @@ export const MemberCheckboxItem = ({
   isRegistered = false,
   registeredEventName = null,
   commitmentCaption = null,
+  showKidsIndicator = false,
+  showTeensIndicator = false,
+  roomStatusDot = null,
   assignedRoomLabel = null,
   assignedRoomIsOverlay: _assignedRoomIsOverlay = false,
   roomCheckInComplete = false,
@@ -64,6 +69,9 @@ export const MemberCheckboxItem = ({
     return 'Sem Inscrições';
   })();
   const hasStatusHighlight = Boolean(caption) || Boolean(roomLabel) || isRegistered;
+  const showRoomDot =
+    (roomStatusDot === 'KIDS' && showKidsIndicator)
+    || (roomStatusDot === 'TEENS' && showTeensIndicator);
 
   return (
     <View style={styles.row}>
@@ -92,6 +100,15 @@ export const MemberCheckboxItem = ({
           <Text style={[styles.name, minimal && styles.nameMinimal]} numberOfLines={1}>
             {displayName}
           </Text>
+          {showRoomDot ? (
+            <View
+              accessibilityLabel={roomStatusDot === 'TEENS' ? 'Faixa Jovens' : 'Faixa Infantil'}
+              style={[
+                styles.roomStatusDot,
+                roomStatusDot === 'TEENS' ? styles.roomStatusDotTeens : styles.roomStatusDotKids,
+              ]}
+            />
+          ) : null}
         </View>
         <Text
           style={[
@@ -195,6 +212,18 @@ const styles = StyleSheet.create({
   nameMinimal: {
     color: MINIMAL_UI.text,
     fontWeight: '600',
+  },
+  roomStatusDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 999,
+    flexShrink: 0,
+  },
+  roomStatusDotKids: {
+    backgroundColor: '#FACC15',
+  },
+  roomStatusDotTeens: {
+    backgroundColor: '#EF4444',
   },
   registeredText: {
     color: MINIMAL_UI.textMuted,

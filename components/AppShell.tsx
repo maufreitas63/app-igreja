@@ -4,6 +4,7 @@ import { AppBillingGate } from '@/components/AppBillingGate';
 import { DevClickTraceBootstrap } from '@/components/DevClickTraceBootstrap';
 import { EventOrchestrationListener } from '@/components/EventOrchestrationListener';
 import { PastoralAppointmentReminderListener } from '@/components/PastoralAppointmentReminderListener';
+import { RoomReleaseHapticsListener } from '@/components/RoomReleaseHapticsListener';
 import { ScaleSwapNoticesListener } from '@/components/ScaleSwapNoticesListener';
 import { TotemDeviceRouteGuard } from '@/components/TotemDeviceRouteGuard';
 import { AppDrawer } from '@/components/minimal/AppDrawer';
@@ -57,6 +58,7 @@ function AppShellContent() {
         <DevClickTraceBootstrap />
         <TotemDeviceRouteGuard />
         <EventOrchestrationListener />
+        <RoomReleaseHapticsListener />
         <PastoralAppointmentReminderListener />
         <ScaleSwapNoticesListener />
         <Slot />
