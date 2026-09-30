@@ -24,6 +24,7 @@ const loadDashboardLinkedScreenKeys = () =>
       ...GROUPED_MANAGE_LINKED_SCREENS,
       ACCESS_SCREEN.generosityMural,
       ACCESS_SCREEN.apoioMutuo,
+      ACCESS_SCREEN.visitantesCadastroRapido,
     ]),
   ];
 

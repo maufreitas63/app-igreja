@@ -23,6 +23,7 @@ export const DRAWER_MEMBER_CARD_BY_MODULE: Partial<Record<AppDrawerModuleKey, st
   menu_apoio_mutuo: 'apoio_mutuo',
   menu_aniversariantes: 'birthdays',
   menu_membros: 'members_list',
+  menu_visitantes_rapido: 'visitor_quick_checkin',
   menu_familias: 'members_list',
   menu_administrativo: 'administrativo',
 };

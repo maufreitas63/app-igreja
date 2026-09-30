@@ -117,6 +117,14 @@ function isDrawerModuleEnabled(
     return context.isSuperAdmin || context.dashboardScreenAccess[ACCESS_SCREEN.livrosDoados] === true;
   }
 
+  if (moduleKey === 'menu_visitantes_rapido') {
+    return (
+      context.isSuperAdmin
+      || context.dashboardCardAccess.visitor_quick_checkin === true
+      || context.dashboardScreenAccess[ACCESS_SCREEN.visitantesCadastroRapido] === true
+    );
+  }
+
   // Ghost: só canOperateGhostMode (RPC = super_admin OU grant maintenance.card.auditor).
   // Não reutilizar isSuperAdmin de cache — evita vazar o menu a outros usuários no mesmo app.
   if (moduleKey === 'auditor') {

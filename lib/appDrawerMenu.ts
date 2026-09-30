@@ -37,6 +37,7 @@ export type AppDrawerModuleKey =
   | 'menu_escalas'
   | 'menu_aniversariantes'
   | 'menu_membros'
+  | 'menu_visitantes_rapido'
   | 'menu_familias'
   | 'menu_mapa'
   | 'menu_administrativo'
@@ -164,6 +165,13 @@ export const APP_DRAWER_SETTINGS_ITEMS: AppDrawerSettingsItem[] = [
     moduleKey: 'menu_autorizacao_midia',
     group: 'operacao',
     hint: 'Termos LGPD e confirmação por e-mail',
+  },
+  {
+    letter: 'p0',
+    label: 'Visitantes / Cadastro Rápido',
+    moduleKey: 'menu_visitantes_rapido',
+    group: 'pessoas',
+    hint: 'Check-in de visitantes no Espaço Infantil',
   },
   {
     letter: 'p1',
@@ -667,6 +675,11 @@ async function navigateDrawerMenuItemBody(
 
   if (moduleKey === 'menu_aniversariantes') {
     openScreen(router, '/aniversariantes', withFailClosedReturn());
+    return;
+  }
+
+  if (moduleKey === 'menu_visitantes_rapido') {
+    openScreen(router, '/visitantes-cadastro-rapido' as Href, withFailClosedReturn());
     return;
   }
 

@@ -53,6 +53,7 @@ export const ACCESS_DASHBOARD_CARD = {
   opportunities: 'dashboard.card.opportunities',
   generosity: 'dashboard.card.generosity',
   apoioMutuo: 'dashboard.card.apoio_mutuo',
+  visitorQuickCheckin: 'dashboard.card.visitor_quick_checkin',
 } as const;
 
 /** `content` do carrossel → `resource_key` em `access_resources`. */
@@ -84,6 +85,7 @@ export const DASHBOARD_CARD_CONTENT_TO_ACCESS_KEY: Record<string, string> = {
   opportunity_mural_card: ACCESS_DASHBOARD_CARD.opportunities,
   generosity_mural: ACCESS_DASHBOARD_CARD.generosity,
   apoio_mutuo: ACCESS_DASHBOARD_CARD.apoioMutuo,
+  visitor_quick_checkin: ACCESS_DASHBOARD_CARD.visitorQuickCheckin,
 };
 
 export type DashboardCardViewAccess = Record<string, boolean>;

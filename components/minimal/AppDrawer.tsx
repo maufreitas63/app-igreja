@@ -38,6 +38,7 @@ const SETTINGS_ICONS: Partial<Record<AppDrawerModuleKey, React.ComponentProps<ty
   menu_livros: 'book',
   menu_totem: 'qrcode',
   menu_autorizacao_midia: 'shield',
+  menu_visitantes_rapido: 'user-plus',
   menu_membros: 'users',
   menu_familias: 'address-book',
   menu_mapa: 'map-marker',

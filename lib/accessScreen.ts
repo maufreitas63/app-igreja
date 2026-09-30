@@ -23,6 +23,7 @@ export const ACCESS_SCREEN = {
   configuracaoSalas: '/configuracao-salas',
   livrosDoados: '/livros-doados',
   totemCheckin: '/totem-checkin',
+  visitantesCadastroRapido: '/visitantes-cadastro-rapido',
   autorizacaoMidia: '/autorizacao-midia',
   discipleshipTrail: '/trilha-discipulado',
   /** Alias legado ainda presente em `access_resources`. */
