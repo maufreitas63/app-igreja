@@ -24,8 +24,8 @@ values
   (
     'screen',
     '/expense-report',
-    'Relatório de Despesas (RD)',
-    'Formulário de RD acessível pelo hub do card Financeiro.',
+    'Reembolsos',
+    'Solicitação de reembolso / relatório de despesas (Perfil).',
     true
   )
 on conflict (resource_type, resource_key) do update

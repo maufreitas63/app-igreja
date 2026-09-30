@@ -38,6 +38,8 @@ export function PerfilClassPanel() {
   const [manageMembers, setManageMembers] = useState(false);
   const [canOpenDiscipleshipTrail, setCanOpenDiscipleshipTrail] = useState(false);
   const [canOpenExpenseReport, setCanOpenExpenseReport] = useState(false);
+  const [canOpenOfferServices, setCanOpenOfferServices] = useState(false);
+  const [canOpenCantinhoLeitura, setCanOpenCantinhoLeitura] = useState(false);
   const [profileClassVisible, setProfileClassVisible] = useState(false);
   const [membersClassVisible, setMembersClassVisible] = useState(false);
   const [discipleshipTrailVisible, setDiscipleshipTrailVisible] = useState(false);
@@ -66,16 +68,21 @@ export function PerfilClassPanel() {
         setManageMembers(false);
         setCanOpenDiscipleshipTrail(false);
         setCanOpenExpenseReport(false);
+        setCanOpenOfferServices(false);
+        setCanOpenCantinhoLeitura(false);
         return;
       }
 
-      const [access, trailAllowed, expenseAllowed] = await Promise.all([
-        loadGroupedManageScreenAccess(resolvedProfileId, {
-          forceRefresh: options?.forceRefresh === true,
-        }),
-        sessionHasAccess('screen', ACCESS_SCREEN.discipleshipTrail, 'view'),
-        sessionHasAccess('screen', ACCESS_SCREEN.expenseReport, 'view'),
-      ]);
+      const [access, trailAllowed, expenseAllowed, offerAllowed, cantinhoAllowed] =
+        await Promise.all([
+          loadGroupedManageScreenAccess(resolvedProfileId, {
+            forceRefresh: options?.forceRefresh === true,
+          }),
+          sessionHasAccess('screen', ACCESS_SCREEN.discipleshipTrail, 'view'),
+          sessionHasAccess('screen', ACCESS_SCREEN.expenseReport, 'view'),
+          sessionHasAccess('screen', ACCESS_SCREEN.offerServices, 'view'),
+          sessionHasAccess('screen', ACCESS_SCREEN.cantinhoLeitura, 'view'),
+        ]);
 
       if (generation !== loadGenerationRef.current) {
         return;
@@ -85,8 +92,16 @@ export function PerfilClassPanel() {
       setManageMembers(access.manageMembers);
       setCanOpenDiscipleshipTrail(trailAllowed);
       setCanOpenExpenseReport(expenseAllowed);
+      setCanOpenOfferServices(offerAllowed);
+      setCanOpenCantinhoLeitura(cantinhoAllowed);
       if (!trailAllowed) {
         setDiscipleshipTrailVisible(false);
+      }
+      if (!offerAllowed) {
+        setServiceOfferVisible(false);
+      }
+      if (!cantinhoAllowed) {
+        setMyBooksVisible(false);
       }
     } catch {
       if (generation === loadGenerationRef.current) {
@@ -94,6 +109,8 @@ export function PerfilClassPanel() {
         setManageMembers(false);
         setCanOpenDiscipleshipTrail(false);
         setCanOpenExpenseReport(false);
+        setCanOpenOfferServices(false);
+        setCanOpenCantinhoLeitura(false);
       }
     } finally {
       if (generation === loadGenerationRef.current) {
@@ -113,12 +130,28 @@ export function PerfilClassPanel() {
   }, []);
 
   const openMyBooks = useCallback(() => {
+    if (!canOpenCantinhoLeitura) {
+      Toast.show({
+        type: 'error',
+        text1: 'Acesso negado',
+        text2: 'Você não tem permissão para abrir o Cantinho da Leitura.',
+      });
+      return;
+    }
     setMyBooksVisible(true);
-  }, []);
+  }, [canOpenCantinhoLeitura]);
 
   const openServiceOffer = useCallback(() => {
+    if (!canOpenOfferServices) {
+      Toast.show({
+        type: 'error',
+        text1: 'Acesso negado',
+        text2: 'Você não tem permissão para abrir Ofereço meus Serviços.',
+      });
+      return;
+    }
     setServiceOfferVisible(true);
-  }, []);
+  }, [canOpenOfferServices]);
 
   const openManageProfile = useCallback(() => {
     setProfileClassVisible(true);
@@ -178,12 +211,14 @@ export function PerfilClassPanel() {
       });
     }
 
-    items.push({
-      key: 'offer-services',
-      label: 'Ofereço meus Serviços',
-      icon: 'miscellaneous-services',
-      onPress: openServiceOffer,
-    });
+    if (canOpenOfferServices) {
+      items.push({
+        key: 'offer-services',
+        label: 'Ofereço meus Serviços',
+        icon: 'miscellaneous-services',
+        onPress: openServiceOffer,
+      });
+    }
 
     if (manageMembers) {
       items.push({
@@ -213,17 +248,21 @@ export function PerfilClassPanel() {
       });
     }
 
-    items.push({
-      key: 'my-books',
-      label: 'Cantinho da Leitura',
-      icon: 'menu-book',
-      onPress: openMyBooks,
-    });
+    if (canOpenCantinhoLeitura) {
+      items.push({
+        key: 'my-books',
+        label: 'Cantinho da Leitura',
+        icon: 'menu-book',
+        onPress: openMyBooks,
+      });
+    }
 
     return items;
   }, [
+    canOpenCantinhoLeitura,
     canOpenDiscipleshipTrail,
     canOpenExpenseReport,
+    canOpenOfferServices,
     manageMembers,
     manageProfile,
     openDigitalIdCard,

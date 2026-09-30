@@ -16,6 +16,8 @@ export const ACCESS_SCREEN = {
   aliancaConectaReino: '/alianca-conecta-reino',
   aliancaIndicados: '/alianca-indicados',
   expenseReport: '/expense-report',
+  offerServices: '/ofereco-servicos',
+  cantinhoLeitura: '/cantinho-leitura',
   mapGeolocation: '/mapa-geolocalizacao',
   mapGeolocationPinDetail: '/mapa-geolocalizacao/detalhe-pin',
   lgpd: '/lgpd',
@@ -42,4 +44,6 @@ export const ACCESS_SCREEN = {
  */
 export const ACCESS_SCREEN_MAINTENANCE_EXTRA = {
   discipleshipRecognitionsLegacy: '/trilha-reconhecimentos',
+  /** Acervo — menu Manutenção (engrenagem), não produto do membro. */
+  livrosDoados: '/livros-doados',
 } as const;
