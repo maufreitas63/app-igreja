@@ -12,20 +12,52 @@ import {
   resolveFamilyIdForPhone,
 } from '@/lib/family';
 import { fetchFamilyAudienceMembers } from '@/lib/familyAudienceMembers';
+import { formatFullName } from '@/lib/fullName';
+import {
+  KIDS_ROOM_DISPLAY_LABEL,
+  TEENS_ROOM_DISPLAY_LABEL,
+} from '@/lib/entityPrefixCore';
 import {
   loadKidsTeensAgeLimits,
   resolveKidsTeensStatusFromBirthDate,
+  type KidsTeensStatus,
 } from '@/lib/kidsTeensStatus';
 import { loadEffectiveSessionProfile } from '@/lib/loadSessionProfile';
 import { writeDashboardSelectedEventId } from '@/lib/dashboardSelectedEvent';
 import { NO_BOX_SHADOW } from '@/lib/boxShadow';
 import { MINIMAL_SECTION_TITLE, MINIMAL_UI } from '@/lib/minimalUiTheme';
+import {
+  buildAudienceRoomLabelIndex,
+  lookupAudienceRoomLabel,
+  resolveAudienceRoomLabels,
+} from '@/lib/userRoomAssignment';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
 
 const KIDS_CHECKIN_QR_HINT =
   'Apresente este QR Code na recepcao da sala para confimar a entrega de seu filho no Espaço Infantil';
+
+type KidsDeliveryRow = {
+  id: string;
+  fullName: string;
+  roomLabel: string;
+};
+
+function fallbackRoomLabelForStatus(status: KidsTeensStatus): string {
+  return status === 'TEENS' ? TEENS_ROOM_DISPLAY_LABEL : KIDS_ROOM_DISPLAY_LABEL;
+}
+
+function resolveKidsDeliveryRoomLabel(
+  status: KidsTeensStatus,
+  match: { room_key: string; room_label: string } | null
+): string {
+  const key = (match?.room_key ?? '').trim().toUpperCase();
+  if (key === 'KIDS' || key === 'TEENS') {
+    return match?.room_label?.trim() || fallbackRoomLabelForStatus(status);
+  }
+  return fallbackRoomLabelForStatus(status);
+}
 
 type Props = {
   visible: boolean;
@@ -48,7 +80,7 @@ export function FamilyAgendaModal({ visible, initialEventId, onClose, onNeedsAud
   const [userPhone, setUserPhone] = useState<string | null>(null);
   const [familyId, setFamilyId] = useState<string | null>(null);
   const [showKidsCheckinQr, setShowKidsCheckinQr] = useState(false);
-  const [hasEligibleKidsForRooms, setHasEligibleKidsForRooms] = useState(false);
+  const [kidsDeliveryRows, setKidsDeliveryRows] = useState<KidsDeliveryRow[]>([]);
   const [profile, setProfile] = useState<{
     id: string;
     full_name?: string | null;
@@ -59,6 +91,8 @@ export function FamilyAgendaModal({ visible, initialEventId, onClose, onNeedsAud
   } | null>(null);
   const [isProfileLoading, setIsProfileLoading] = useState(false);
 
+  const hasEligibleKidsForRooms = kidsDeliveryRows.length > 0;
+
   const kidsQrValue = useMemo(
     () => normalizeFamilyCode(familyId ?? profile?.codigo_membro ?? profile?.family_id ?? null),
     [familyId, profile?.codigo_membro, profile?.family_id]
@@ -68,7 +102,7 @@ export function FamilyAgendaModal({ visible, initialEventId, onClose, onNeedsAud
   useEffect(() => {
     if (!visible) {
       setShowKidsCheckinQr(false);
-      setHasEligibleKidsForRooms(false);
+      setKidsDeliveryRows([]);
       return;
     }
 
@@ -172,7 +206,7 @@ export function FamilyAgendaModal({ visible, initialEventId, onClose, onNeedsAud
       Boolean(selectedEvent?.kids_room) || Boolean(selectedEvent?.teens_room);
 
     if (!visible || !familyId || !eventOffersKidsSalas) {
-      setHasEligibleKidsForRooms(false);
+      setKidsDeliveryRows([]);
       return undefined;
     }
 
@@ -187,27 +221,51 @@ export function FamilyAgendaModal({ visible, initialEventId, onClose, onNeedsAud
           return;
         }
 
-        const birthDates = [
-          ...members.map((member) => member.birth_date),
-          profile?.birth_date ?? null,
-        ];
+        const eligible = members
+          .map((member) => {
+            const status = resolveKidsTeensStatusFromBirthDate(member.birth_date, limits);
+            if (status === 'KIDS' && selectedEvent?.kids_room) {
+              return { member, status };
+            }
+            if (status === 'TEENS' && selectedEvent?.teens_room) {
+              return { member, status };
+            }
+            return null;
+          })
+          .filter((entry): entry is NonNullable<typeof entry> => entry != null);
 
-        const hasEligible = birthDates.some((birthDate) => {
-          const status = resolveKidsTeensStatusFromBirthDate(birthDate, limits);
-          if (status === 'KIDS' && selectedEvent?.kids_room) {
-            return true;
-          }
-          if (status === 'TEENS' && selectedEvent?.teens_room) {
-            return true;
-          }
-          return false;
+        if (!eligible.length) {
+          setKidsDeliveryRows([]);
+          return;
+        }
+
+        const roomRows = await resolveAudienceRoomLabels(
+          eligible.map(({ member }) => member.phone),
+          { familyId }
+        );
+
+        if (!active) {
+          return;
+        }
+
+        const roomIndex = buildAudienceRoomLabelIndex(roomRows);
+        const nextRows: KidsDeliveryRow[] = eligible.map(({ member, status }) => {
+          const match = lookupAudienceRoomLabel(roomIndex, member);
+          return {
+            id: String(member.id),
+            fullName: formatFullName(member.full_name) || 'Sem nome',
+            roomLabel: resolveKidsDeliveryRoomLabel(status, match),
+          };
         });
 
-        setHasEligibleKidsForRooms(hasEligible);
+        nextRows.sort((a, b) =>
+          a.fullName.localeCompare(b.fullName, 'pt-BR', { sensitivity: 'base' })
+        );
+        setKidsDeliveryRows(nextRows);
       } catch (err) {
         console.error('Erro ao verificar crianças elegíveis para salas:', err);
         if (active) {
-          setHasEligibleKidsForRooms(false);
+          setKidsDeliveryRows([]);
         }
       }
     })();
@@ -217,7 +275,6 @@ export function FamilyAgendaModal({ visible, initialEventId, onClose, onNeedsAud
     };
   }, [
     familyId,
-    profile?.birth_date,
     selectedEvent?.kids_room,
     selectedEvent?.teens_room,
     visible,
@@ -390,6 +447,29 @@ export function FamilyAgendaModal({ visible, initialEventId, onClose, onNeedsAud
                 Vincule um código de família em Dados Cadastrais para gerar o QR Code de check-in.
               </Text>
             )}
+
+            {kidsDeliveryRows.length > 0 ? (
+              <View style={styles.kidsDeliveryTable}>
+                <View style={[styles.kidsDeliveryRow, styles.kidsDeliveryHeader]}>
+                  <Text style={[styles.kidsDeliveryCell, styles.kidsDeliveryName, styles.kidsDeliveryHeaderText]}>
+                    Criança
+                  </Text>
+                  <Text style={[styles.kidsDeliveryCell, styles.kidsDeliveryRoom, styles.kidsDeliveryHeaderText]}>
+                    Sala
+                  </Text>
+                </View>
+                {kidsDeliveryRows.map((row) => (
+                  <View key={row.id} style={styles.kidsDeliveryRow}>
+                    <Text style={[styles.kidsDeliveryCell, styles.kidsDeliveryName]} numberOfLines={2}>
+                      {row.fullName}
+                    </Text>
+                    <Text style={[styles.kidsDeliveryCell, styles.kidsDeliveryRoom]} numberOfLines={2}>
+                      {row.roomLabel}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            ) : null}
           </View>
         ) : (
           <FamilyAgendaView
@@ -509,5 +589,50 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 17,
     paddingHorizontal: 8,
+  },
+  kidsDeliveryTable: {
+    alignSelf: 'stretch',
+    width: '100%',
+    marginTop: 20,
+    borderWidth: 1,
+    borderColor: MINIMAL_UI.border,
+    borderRadius: 12,
+    overflow: 'hidden',
+    backgroundColor: MINIMAL_UI.background,
+  },
+  kidsDeliveryRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    borderTopWidth: 1,
+    borderTopColor: MINIMAL_UI.divider,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    gap: 12,
+  },
+  kidsDeliveryHeader: {
+    borderTopWidth: 0,
+    backgroundColor: MINIMAL_UI.rowHover,
+  },
+  kidsDeliveryCell: {
+    color: MINIMAL_UI.text,
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  kidsDeliveryHeaderText: {
+    color: MINIMAL_UI.blueDark,
+    fontWeight: '700',
+    fontSize: 12,
+    textTransform: 'uppercase',
+    letterSpacing: 0.3,
+  },
+  kidsDeliveryName: {
+    flex: 1.4,
+    fontWeight: '600',
+  },
+  kidsDeliveryRoom: {
+    flex: 1,
+    textAlign: 'right',
+    fontWeight: '600',
+    color: MINIMAL_UI.blueDark,
   },
 });
