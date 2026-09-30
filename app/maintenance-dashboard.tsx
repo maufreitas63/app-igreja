@@ -472,6 +472,11 @@ export default function MaintenanceDashboard() {
   const [quorumRegistrySchemaMissing, setQuorumRegistrySchemaMissing] = useState(
     !isQuorumRegistryTableAvailable()
   );
+  const [salaServidorCheckinQrAction, setSalaServidorCheckinQrAction] = useState<{
+    label: string;
+    onPress: () => void;
+    accessibilityLabel?: string;
+  } | null>(null);
   const schemaProbeDoneRef = useRef(false);
 
   const isBusy = isSaving || isDeleting || isReplicatingSeven;
@@ -1489,6 +1494,7 @@ export default function MaintenanceDashboard() {
                 embedded={!isMinimalPresentation}
                 panelHeight={cardHeight}
                 minimal={isMinimalPresentation}
+                onCheckinQrActionChange={setSalaServidorCheckinQrAction}
               />
             </View>
           ) : item.content === 'events_gantt' ? (
@@ -1788,7 +1794,19 @@ export default function MaintenanceDashboard() {
           </View>
 
           {!showEditor ? (
-            <CloseFooterBar onPress={handleMenu} />
+            <CloseFooterBar
+              onPress={handleMenu}
+              secondaryAction={
+                activeMaintenancePanelContent === 'sala_servidor'
+                  ? salaServidorCheckinQrAction
+                    ? {
+                        ...salaServidorCheckinQrAction,
+                        variant: 'outline',
+                      }
+                    : null
+                  : null
+              }
+            />
           ) : null}
 
           {showEditor ? (

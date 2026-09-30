@@ -1,5 +1,6 @@
 import { useRoomDisplayLabels } from '@/hooks/useRoomDisplayLabels';
 import { CardLoadingState } from '@/components/ui/CardLoadingState';
+import { FamilyQrCodeScanner } from '@/components/FamilyQrCodeScanner';
 import { useDashboardSelectedEvent } from '@/hooks/useDashboardSelectedEvent';
 import { useRoomServidorScales } from '@/hooks/useRoomServidorScales';
 import { maintenancePanelStyles } from '@/lib/maintenanceCardStyles';
@@ -7,6 +8,7 @@ import { MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { useEventRegistrationsByStatus } from '@/hooks/useEventRegistrationsByStatus';
 import { readDashboardSelectedEventId } from '@/lib/dashboardSelectedEvent';
 import { formatEventDateTimeLabel } from '@/lib/eventDate';
+import { normalizeFamilyCode } from '@/lib/family';
 import { loadEffectiveSessionProfile } from '@/lib/loadSessionProfile';
 import { formatRoomServidorNames } from '@/lib/roomServidorScales';
 import { openRoomContactWhatsapp } from '@/lib/whatsapp';
@@ -21,6 +23,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import Toast from 'react-native-toast-message';
 
 type GroupedRoomKey = 'KIDS' | 'TEENS';
 
@@ -32,10 +35,18 @@ type GroupedRoomConfig = {
   headerStyle: object;
 };
 
+type SalaCheckinQrAction = {
+  label: string;
+  onPress: () => void;
+  accessibilityLabel?: string;
+};
+
 type MaintenanceSalaServidorCardProps = {
   embedded?: boolean;
   panelHeight?: number;
   minimal?: boolean;
+  /** Expõe o botão do rodapé «Efetuar Check-In | ler QR Code» para o CloseFooterBar. */
+  onCheckinQrActionChange?: (action: SalaCheckinQrAction | null) => void;
 };
 
 const formatDisplayName = (fullName: string) => {
@@ -48,10 +59,30 @@ const formatDisplayName = (fullName: string) => {
   return `${parts[0]} ${parts[parts.length - 1]}`;
 };
 
+const normalizeScannedFamilyId = (raw: string) => {
+  const trimmed = raw.trim();
+  if (!trimmed) {
+    return '';
+  }
+
+  try {
+    const url = new URL(trimmed);
+    const fromQuery = url.searchParams.get('family') ?? url.searchParams.get('familia');
+    if (fromQuery?.trim()) {
+      return normalizeFamilyCode(fromQuery);
+    }
+  } catch {
+    // não é URL — usa o valor bruto
+  }
+
+  return normalizeFamilyCode(trimmed);
+};
+
 export const MaintenanceSalaServidorCard = ({
   embedded,
   panelHeight,
   minimal = false,
+  onCheckinQrActionChange,
 }: MaintenanceSalaServidorCardProps) => {
   const {
     kidsRoomLabel,
@@ -69,6 +100,7 @@ export const MaintenanceSalaServidorCard = ({
 
   const [selectedGroupedRoom, setSelectedGroupedRoom] = useState<GroupedRoomKey | null>(null);
   const [roomEntryPendingIds, setRoomEntryPendingIds] = useState<string[]>([]);
+  const [qrScannerOpen, setQrScannerOpen] = useState(false);
   const [operatorProfile, setOperatorProfile] = useState<{
     id: string | null;
     fullName: string | null;
@@ -224,6 +256,114 @@ export const MaintenanceSalaServidorCard = ({
     }
   };
 
+  const handleFamilyQrScan = useCallback(
+    async (rawValue: string) => {
+      setQrScannerOpen(false);
+
+      if (!canCheckInSelectedRoom) {
+        Toast.show({
+          type: 'error',
+          text1: 'Sem permissão',
+          text2: 'Somente Secretaria, Super Admin ou servidores escalados podem registrar o check-in.',
+        });
+        return;
+      }
+
+      const familyId = normalizeScannedFamilyId(rawValue);
+      if (!familyId) {
+        Toast.show({
+          type: 'error',
+          text1: 'QR inválido',
+          text2: 'Não foi possível identificar o código da família.',
+        });
+        return;
+      }
+
+      const roomLabel = selectedGroupedRoomConfig?.label ?? 'sala ativa';
+      const matches = visibleGroupedRegistrations.filter(
+        (registration) => normalizeFamilyCode(registration.family_id) === familyId
+      );
+
+      if (!matches.length) {
+        Toast.show({
+          type: 'error',
+          text1: 'Nenhuma criança nesta sala',
+          text2: `A família ${familyId} não tem inscritos em ${roomLabel}.`,
+        });
+        return;
+      }
+
+      const pending = matches.filter((registration) => !registration.room_entry_checked);
+      if (!pending.length) {
+        Toast.show({
+          type: 'info',
+          text1: 'Já na sala',
+          text2: `Todas as crianças de ${familyId} já estão em ${roomLabel}.`,
+        });
+        return;
+      }
+
+      try {
+        setRoomEntryPendingIds((current) => [
+          ...current,
+          ...pending.map((registration) => registration.registration_id),
+        ]);
+
+        for (const registration of pending) {
+          await setRoomEntryChecked(registration.registration_id, true);
+        }
+
+        await refetchGroupedRegistrations();
+
+        const names = pending.map((registration) => formatDisplayName(registration.full_name)).join(', ');
+        Toast.show({
+          type: 'success',
+          text1: 'Check-in registrado',
+          text2: `${names} → ${roomLabel}`,
+        });
+      } catch (error) {
+        Toast.show({
+          type: 'error',
+          text1: 'Erro no check-in',
+          text2:
+            error instanceof Error
+              ? error.message
+              : 'Não foi possível registrar a entrada na sala.',
+        });
+      } finally {
+        setRoomEntryPendingIds((current) =>
+          current.filter((id) => !pending.some((registration) => registration.registration_id === id))
+        );
+      }
+    },
+    [
+      canCheckInSelectedRoom,
+      refetchGroupedRegistrations,
+      selectedGroupedRoomConfig?.label,
+      setRoomEntryChecked,
+      visibleGroupedRegistrations,
+    ]
+  );
+
+  useEffect(() => {
+    if (!onCheckinQrActionChange) {
+      return undefined;
+    }
+
+    if (!canCheckInSelectedRoom || !selectedGroupedRoomConfig) {
+      onCheckinQrActionChange(null);
+      return () => onCheckinQrActionChange(null);
+    }
+
+    onCheckinQrActionChange({
+      label: 'Efetuar Check-In | ler QR Code',
+      accessibilityLabel: 'Efetuar Check-In | ler QR Code',
+      onPress: () => setQrScannerOpen(true),
+    });
+
+    return () => onCheckinQrActionChange(null);
+  }, [canCheckInSelectedRoom, onCheckinQrActionChange, selectedGroupedRoomConfig]);
+
   const isLoading = loadingEvents || loadingGroupedRegistrations || loadingRoomServidores;
   const hasSalaResources = Boolean(selectedEvent?.kids_room || selectedEvent?.teens_room);
 
@@ -236,6 +376,11 @@ export const MaintenanceSalaServidorCard = ({
         panelHeight ? { height: panelHeight } : null,
       ]}
     >
+      <FamilyQrCodeScanner
+        visible={qrScannerOpen}
+        onClose={() => setQrScannerOpen(false)}
+        onScan={(raw) => void handleFamilyQrScan(raw)}
+      />
       {embedded && !minimal ? (
         <View style={styles.embeddedCardHeader}>
           <Text style={maintenancePanelStyles.panelTitle}>Sala(s) - Check In</Text>

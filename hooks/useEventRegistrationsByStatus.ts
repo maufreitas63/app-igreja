@@ -10,6 +10,7 @@ export type EventRegistrationGroupItem = {
   kids_status: 'KIDS' | 'TEENS';
   room_entry_checked: boolean;
   contact_phone: string | null;
+  family_id: string | null;
 };
 
 type EventRegistrationRpcRow = {
@@ -358,6 +359,7 @@ export const useEventRegistrationsByStatus = (
           kids_status: status,
           room_entry_checked: row.room_entry_checked === true,
           contact_phone: familyId ? contactPhoneByFamilyId.get(familyId) ?? null : null,
+          family_id: familyId ?? null,
         } satisfies EventRegistrationGroupItem;
       })
       .filter((row): row is EventRegistrationGroupItem => Boolean(row));
