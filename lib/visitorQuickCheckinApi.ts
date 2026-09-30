@@ -3,7 +3,7 @@ import { supabase } from '@/lib/supabase';
 import { isSupabaseRpcMissingError } from '@/lib/supabaseRpc';
 
 export const VISITOR_QUICK_CHECKIN_SQL_HINT =
-  'Execute no Supabase: scripts/visitor-quick-checkin.sql';
+  'Execute no Supabase: scripts/visitor-quick-checkin.sql e scripts/visitor-checkin-code-auto-assign.sql';
 
 export const ACCESS_VISITOR_QUICK_CHECKIN = 'dashboard.card.visitor_quick_checkin' as const;
 
@@ -141,6 +141,28 @@ function mapRpcError(error: { message?: string }, rpcName: string): Error {
     return new Error(VISITOR_QUICK_CHECKIN_SQL_HINT);
   }
   return new Error(error.message || 'Falha no cadastro rápido de visitantes.');
+}
+
+export type ActiveVisitorCheckinContext = {
+  success: boolean;
+  message: string;
+  event?: VisitorQuickEvent | null;
+};
+
+/** Culto ativo + código de 4 dígitos (somente leitura no Cadastro Rápido). */
+export async function fetchActiveVisitorCheckinContext(): Promise<ActiveVisitorCheckinContext> {
+  const { data, error } = await supabase.rpc('get_active_visitor_checkin_context');
+
+  if (error) {
+    throw mapRpcError(error, 'get_active_visitor_checkin_context');
+  }
+
+  const row = asRecord(data) ?? {};
+  return {
+    success: row.success === true,
+    message: asText(row.message) ?? 'Não foi possível obter o culto ativo.',
+    event: parseEvent(row.event),
+  };
 }
 
 export async function lookupVisitorQuickCheckin(

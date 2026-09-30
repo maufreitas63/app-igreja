@@ -27,6 +27,8 @@ export type MaintenanceEventFormState = {
   somenteMembros: boolean;
   geofenceAtivo: boolean;
   isPublished: boolean;
+  /** Código de 4 dígitos para check-in de visitantes (somente leitura; gerado no banco). */
+  visitorCheckinCode: string;
 };
 
 export const emptyMaintenanceEventForm = (): MaintenanceEventFormState => ({
@@ -46,6 +48,7 @@ export const emptyMaintenanceEventForm = (): MaintenanceEventFormState => ({
   somenteMembros: false,
   geofenceAtivo: false,
   isPublished: true,
+  visitorCheckinCode: '',
 });
 
 const normalizeRoomKeyList = (keys: unknown): string[] => {
@@ -257,6 +260,7 @@ export const formFromMaintenanceEvent = (event: {
   somente_membros?: boolean | null;
   geofence_ativo?: boolean | null;
   is_locked: boolean | null;
+  visitor_checkin_code?: string | null;
 }): MaintenanceEventFormState => {
   const fromColumn = normalizeRoomKeyList(event.enabled_room_keys);
   const enabledRoomKeys =
@@ -290,6 +294,9 @@ export const formFromMaintenanceEvent = (event: {
     somenteMembros: event.somente_membros === true,
     geofenceAtivo: event.geofence_ativo === true,
     isPublished: event.is_locked !== true,
+    visitorCheckinCode: String(event.visitor_checkin_code ?? '')
+      .replace(/\D/g, '')
+      .slice(0, 4),
   };
 };
 

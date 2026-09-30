@@ -3,7 +3,7 @@ import { isSupabaseRpcMissingError } from '@/lib/supabaseRpc';
 import type { PostgrestError } from '@supabase/supabase-js';
 
 const EVENT_SELECT_BASE =
-  'id, name, event_date, event_local, max_capacity, parm_ofertas, kids_room, teens_room, is_locked';
+  'id, name, event_date, event_local, max_capacity, parm_ofertas, kids_room, teens_room, is_locked, visitor_checkin_code';
 
 let totemAtivoColumnAvailable: boolean | null = null;
 let requerQuorumColumnAvailable: boolean | null = null;

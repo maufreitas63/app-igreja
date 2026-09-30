@@ -2124,6 +2124,33 @@ export default function MaintenanceDashboard() {
                 <View style={[styles.publishRow, isMinimalPresentation && styles.publishRowMinimal]}>
                   <View style={styles.publishCopy}>
                     <Text style={[styles.fieldLabel, isMinimalPresentation && styles.fieldLabelMinimal]}>
+                      Código visitante (4 dígitos)
+                    </Text>
+                    <Text
+                      style={[
+                        styles.publishHint,
+                        isMinimalPresentation && styles.publishHintMinimal,
+                      ]}
+                    >
+                      {form.visitorCheckinCode
+                        ? 'Gerado automaticamente e usado no Cadastro Rápido de Visitantes.'
+                        : 'Será gerado automaticamente ao salvar o evento.'}
+                    </Text>
+                  </View>
+                  <Text
+                    style={[
+                      styles.visitorCheckinCodeValue,
+                      isMinimalPresentation && styles.visitorCheckinCodeValueMinimal,
+                    ]}
+                    accessibilityLabel="Código de check-in de visitantes"
+                  >
+                    {form.visitorCheckinCode || '————'}
+                  </Text>
+                </View>
+
+                <View style={[styles.publishRow, isMinimalPresentation && styles.publishRowMinimal]}>
+                  <View style={styles.publishCopy}>
+                    <Text style={[styles.fieldLabel, isMinimalPresentation && styles.fieldLabelMinimal]}>
                       Publicação
                     </Text>
                     <Text
@@ -3437,6 +3464,17 @@ const styles = StyleSheet.create({
   },
   publishHintMinimal: {
     color: MINIMAL_UI.textMuted,
+  },
+  visitorCheckinCodeValue: {
+    fontSize: 22,
+    fontWeight: '700',
+    letterSpacing: 4,
+    color: '#E2E8F0',
+    minWidth: 72,
+    textAlign: 'right',
+  },
+  visitorCheckinCodeValueMinimal: {
+    color: MINIMAL_UI.blueDark,
   },
   fieldLabelMinimal: {
     color: MINIMAL_UI.textMuted,

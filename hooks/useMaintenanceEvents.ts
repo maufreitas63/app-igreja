@@ -35,6 +35,7 @@ export type MaintenanceEvent = {
   somente_membros: boolean | null;
   geofence_ativo: boolean | null;
   is_locked: boolean | null;
+  visitor_checkin_code?: string | null;
 };
 
 export const useMaintenanceEvents = () => {

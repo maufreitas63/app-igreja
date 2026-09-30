@@ -5,6 +5,7 @@ import { MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { KNOWLEDGE_ROUTE } from '@/lib/knowledge/routeKeys';
 import {
   buildVisitorQuickCheckinWhatsAppMessage,
+  fetchActiveVisitorCheckinContext,
   lookupVisitorQuickCheckin,
   submitVisitorQuickCheckin,
   type VisitorQuickChild,
@@ -12,7 +13,7 @@ import {
 } from '@/lib/visitorQuickCheckinApi';
 import { openWhatsAppLikeBirthdaysWithText } from '@/lib/whatsapp';
 import { MaterialIcons } from '@expo/vector-icons';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Pressable,
@@ -77,9 +78,11 @@ export function VisitorQuickCheckinPanel() {
   const [eventName, setEventName] = useState<string | null>(null);
   const [familyId, setFamilyId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [loadingEvent, setLoadingEvent] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const isRecurring = lookupStatus === 'recurring_visitor';
+  const hasEventCode = eventCode.length === 4;
 
   const titleHint = useMemo(() => {
     if (lookupStatus === 'recurring_visitor') {
@@ -88,22 +91,50 @@ export function VisitorQuickCheckinPanel() {
     if (lookupStatus === 'new_visitor') {
       return 'Novo visitante — preencha os dados.';
     }
-    return 'Informe o celular do responsável e o código de 4 dígitos do culto.';
-  }, [lookupMessage, lookupStatus]);
+    if (!hasEventCode) {
+      return 'Aguardando o código do culto ativo (gerado na Programação de Eventos).';
+    }
+    return 'Informe o celular do responsável. O código do culto ativo já está associado.';
+  }, [hasEventCode, lookupMessage, lookupStatus]);
+
+  const loadActiveEvent = useCallback(async () => {
+    setLoadingEvent(true);
+    setError(null);
+    try {
+      const context = await fetchActiveVisitorCheckinContext();
+      if (!context.success || !context.event?.visitor_checkin_code) {
+        setEventCode('');
+        setEventName(null);
+        setError(context.message || 'Nenhum culto ativo com código de visitante.');
+        return;
+      }
+      setEventCode(String(context.event.visitor_checkin_code).replace(/\D/g, '').slice(0, 4));
+      setEventName(context.event.name ?? null);
+    } catch (loadError) {
+      setEventCode('');
+      setEventName(null);
+      setError(loadError instanceof Error ? loadError.message : 'Falha ao carregar o culto ativo.');
+    } finally {
+      setLoadingEvent(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void loadActiveEvent();
+  }, [loadActiveEvent]);
 
   const resetFlow = useCallback(() => {
     setPhase('lookup');
     setPhone('');
-    setEventCode('');
     setGuardianName('');
     setLgpdAccepted(false);
     setChildren([emptyChild()]);
     setLookupStatus(null);
     setLookupMessage(null);
-    setEventName(null);
     setFamilyId(null);
     setError(null);
-  }, []);
+    void loadActiveEvent();
+  }, [loadActiveEvent]);
 
   const updateChild = useCallback((key: string, patch: Partial<ChildForm>) => {
     setChildren((prev) => prev.map((child) => (child.key === key ? { ...child, ...patch } : child)));
@@ -115,12 +146,16 @@ export function VisitorQuickCheckinPanel() {
 
   const handleLookup = useCallback(async () => {
     setError(null);
+    if (!hasEventCode) {
+      setError('Código do culto ativo indisponível. Confira a Programação de Eventos.');
+      return;
+    }
     setBusy(true);
     try {
       const result = await lookupVisitorQuickCheckin(phone, eventCode);
       setLookupStatus(result.status);
       setLookupMessage(result.message);
-      setEventName(result.event?.name ?? null);
+      setEventName(result.event?.name ?? eventName);
 
       if (result.status === 'member_blocked') {
         void appAlert('Membro ativo', result.message, 'Entendi');
@@ -149,7 +184,7 @@ export function VisitorQuickCheckinPanel() {
     } finally {
       setBusy(false);
     }
-  }, [eventCode, phone]);
+  }, [eventCode, eventName, hasEventCode, phone]);
 
   const handleSubmit = useCallback(async () => {
     setError(null);
@@ -222,18 +257,20 @@ export function VisitorQuickCheckinPanel() {
             />
             <Text style={styles.label}>Código do evento (4 dígitos)</Text>
             <TextInput
-              style={styles.input}
-              value={eventCode}
-              onChangeText={(value) => setEventCode(value.replace(/\D/g, '').slice(0, 4))}
-              keyboardType="number-pad"
+              style={[styles.input, styles.inputReadonly]}
+              value={loadingEvent ? '…' : eventCode}
+              editable={false}
+              selectTextOnFocus={false}
               placeholder="0000"
               placeholderTextColor={MINIMAL_UI.textMuted}
               maxLength={4}
+              accessibilityLabel="Código do culto ativo, somente leitura"
             />
+            {eventName ? <Text style={styles.eventLine}>Culto ativo: {eventName}</Text> : null}
             <Pressable
-              style={[styles.primaryButton, busy && styles.buttonDisabled]}
+              style={[styles.primaryButton, (busy || !hasEventCode || loadingEvent) && styles.buttonDisabled]}
               onPress={() => void handleLookup()}
-              disabled={busy}
+              disabled={busy || !hasEventCode || loadingEvent}
             >
               {busy ? (
                 <ActivityIndicator color={MINIMAL_UI.onDark} />
