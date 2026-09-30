@@ -1,5 +1,6 @@
 import { KnowledgeSectionTitle } from '@/components/knowledge/KnowledgeSectionTitle';
 import { appAlert } from '@/lib/appAlert';
+import { formatBrazilPhoneInput } from '@/lib/inputMasks';
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { KNOWLEDGE_ROUTE } from '@/lib/knowledge/routeKeys';
 import {
@@ -211,11 +212,13 @@ export function VisitorQuickCheckinPanel() {
             <TextInput
               style={styles.input}
               value={phone}
-              onChangeText={setPhone}
+              onChangeText={(value) => setPhone(formatBrazilPhoneInput(value))}
               keyboardType="phone-pad"
-              placeholder="11999999999"
+              placeholder="(11) 98765-4321"
               placeholderTextColor={MINIMAL_UI.textMuted}
               maxLength={15}
+              autoComplete="tel"
+              textContentType="telephoneNumber"
             />
             <Text style={styles.label}>Código do evento (4 dígitos)</Text>
             <TextInput
