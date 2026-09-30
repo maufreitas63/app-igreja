@@ -5,6 +5,7 @@ import { GeoCheckinStatusBanner } from '@/components/GeoCheckinStatusBanner';
 import { useGhostMode } from '@/context/GhostModeContext';
 import { resolveEventEnabledRoomKeys } from '@/lib/maintenanceEventForm';
 import { useActiveEvents, type ActiveEventListItem } from '@/hooks/useActiveEvents';
+import { useEventRegistrationsByStatus } from '@/hooks/useEventRegistrationsByStatus';
 import { useLiveFamilyGeoCheckin } from '@/hooks/useLiveFamilyGeoCheckin';
 import {
   familyCodeBelongsToActiveTenant,
@@ -12,7 +13,7 @@ import {
   resolveFamilyIdForPhone,
 } from '@/lib/family';
 import { fetchFamilyAudienceMembers } from '@/lib/familyAudienceMembers';
-import { formatFullName } from '@/lib/fullName';
+import { formatFullName, normalizeFullNameKey } from '@/lib/fullName';
 import {
   KIDS_ROOM_DISPLAY_LABEL,
   TEENS_ROOM_DISPLAY_LABEL,
@@ -31,6 +32,7 @@ import {
   lookupAudienceRoomLabel,
   resolveAudienceRoomLabels,
 } from '@/lib/userRoomAssignment';
+import { FontAwesome } from '@expo/vector-icons';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
@@ -191,6 +193,38 @@ export function FamilyAgendaModal({ visible, initialEventId, onClose, onNeedsAud
     [events, selectedEventId]
   );
 
+  const {
+    kidsRegistrations,
+    teensRegistrations,
+    refetch: refetchRoomEntryStatus,
+  } = useEventRegistrationsByStatus(selectedEvent?.id, {
+    enabled: Boolean(visible && familyId && selectedEvent?.id),
+    familyId,
+  });
+
+  const kidsInRoomByName = useMemo(() => {
+    const checked = new Set<string>();
+    for (const registration of [...kidsRegistrations, ...teensRegistrations]) {
+      if (!registration.room_entry_checked) {
+        continue;
+      }
+      const key = normalizeFullNameKey(registration.full_name);
+      if (key) {
+        checked.add(key);
+      }
+    }
+    return checked;
+  }, [kidsRegistrations, teensRegistrations]);
+
+  const kidsDeliveryDisplayRows = useMemo(
+    () =>
+      kidsDeliveryRows.map((row) => ({
+        ...row,
+        inRoom: kidsInRoomByName.has(normalizeFullNameKey(row.fullName)),
+      })),
+    [kidsDeliveryRows, kidsInRoomByName]
+  );
+
   useEffect(() => {
     if (!visible || !selectedEvent?.id) {
       return;
@@ -198,6 +232,21 @@ export function FamilyAgendaModal({ visible, initialEventId, onClose, onNeedsAud
 
     void writeDashboardSelectedEventId(selectedEvent.id);
   }, [selectedEvent?.id, visible]);
+
+  useEffect(() => {
+    if (!showKidsCheckinQr || !visible) {
+      return undefined;
+    }
+
+    void refetchRoomEntryStatus({ silent: true });
+    const timer = setInterval(() => {
+      void refetchRoomEntryStatus({ silent: true });
+    }, 4000);
+
+    return () => {
+      clearInterval(timer);
+    };
+  }, [refetchRoomEntryStatus, showKidsCheckinQr, visible]);
 
   useEffect(() => {
     let active = true;
@@ -448,22 +497,53 @@ export function FamilyAgendaModal({ visible, initialEventId, onClose, onNeedsAud
               </Text>
             )}
 
-            {kidsDeliveryRows.length > 0 ? (
+            {kidsDeliveryDisplayRows.length > 0 ? (
               <View style={styles.kidsDeliveryTable}>
                 <View style={[styles.kidsDeliveryRow, styles.kidsDeliveryHeader]}>
-                  <Text style={[styles.kidsDeliveryCell, styles.kidsDeliveryName, styles.kidsDeliveryHeaderText]}>
+                  <Text
+                    style={[
+                      styles.kidsDeliveryCell,
+                      styles.kidsDeliveryName,
+                      styles.kidsDeliveryHeaderText,
+                    ]}
+                  >
                     Criança
                   </Text>
-                  <Text style={[styles.kidsDeliveryCell, styles.kidsDeliveryRoom, styles.kidsDeliveryHeaderText]}>
+                  <View style={styles.kidsDeliveryStatusSlot} />
+                  <Text
+                    style={[
+                      styles.kidsDeliveryCell,
+                      styles.kidsDeliveryRoom,
+                      styles.kidsDeliveryHeaderText,
+                    ]}
+                  >
                     Sala
                   </Text>
                 </View>
-                {kidsDeliveryRows.map((row) => (
+                {kidsDeliveryDisplayRows.map((row) => (
                   <View key={row.id} style={styles.kidsDeliveryRow}>
-                    <Text style={[styles.kidsDeliveryCell, styles.kidsDeliveryName]} numberOfLines={2}>
+                    <Text
+                      style={[styles.kidsDeliveryCell, styles.kidsDeliveryName]}
+                      numberOfLines={2}
+                    >
                       {row.fullName}
                     </Text>
-                    <Text style={[styles.kidsDeliveryCell, styles.kidsDeliveryRoom]} numberOfLines={2}>
+                    <View style={styles.kidsDeliveryStatusSlot}>
+                      {row.inRoom ? (
+                        <View
+                          accessibilityLabel="Check-in na sala concluído"
+                          accessibilityRole="text"
+                          style={styles.kidsInRoomBadge}
+                        >
+                          <FontAwesome name="sign-in" size={11} color={MINIMAL_UI.onDark} />
+                          <Text style={styles.kidsInRoomBadgeText}>Na sala</Text>
+                        </View>
+                      ) : null}
+                    </View>
+                    <Text
+                      style={[styles.kidsDeliveryCell, styles.kidsDeliveryRoom]}
+                      numberOfLines={2}
+                    >
                       {row.roomLabel}
                     </Text>
                   </View>
@@ -602,12 +682,12 @@ const styles = StyleSheet.create({
   },
   kidsDeliveryRow: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     borderTopWidth: 1,
     borderTopColor: MINIMAL_UI.divider,
     paddingVertical: 10,
-    paddingHorizontal: 12,
-    gap: 12,
+    paddingHorizontal: 10,
+    gap: 8,
   },
   kidsDeliveryHeader: {
     borderTopWidth: 0,
@@ -626,13 +706,39 @@ const styles = StyleSheet.create({
     letterSpacing: 0.3,
   },
   kidsDeliveryName: {
-    flex: 1.4,
+    flex: 1,
+    minWidth: 0,
     fontWeight: '600',
   },
+  kidsDeliveryStatusSlot: {
+    width: 78,
+    flexShrink: 0,
+    alignItems: 'flex-end',
+    justifyContent: 'center',
+  },
   kidsDeliveryRoom: {
-    flex: 1,
+    width: 64,
+    flexShrink: 0,
     textAlign: 'right',
     fontWeight: '600',
     color: MINIMAL_UI.blueDark,
+    fontSize: 12,
+  },
+  kidsInRoomBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 7,
+    paddingVertical: 4,
+    borderRadius: 999,
+    backgroundColor: MINIMAL_UI.blueDark,
+    borderWidth: 1,
+    borderColor: MINIMAL_UI.blueDark,
+  },
+  kidsInRoomBadgeText: {
+    color: MINIMAL_UI.onDark,
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 0.2,
   },
 });
