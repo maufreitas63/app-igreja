@@ -46,7 +46,7 @@ type MaintenanceSalaServidorCardProps = {
   embedded?: boolean;
   panelHeight?: number;
   minimal?: boolean;
-  /** Expõe o botão do rodapé «Efetuar Check-In | ler QR Code» para o CloseFooterBar. */
+  /** Expõe o botão do rodapé «Efetuar Check-In / Check-Out | Ler QRCode» para o CloseFooterBar. */
   onCheckinQrActionChange?: (action: SalaCheckinQrAction | null) => void;
 };
 
@@ -165,8 +165,12 @@ export const MaintenanceSalaServidorCard = ({
         ? '#06b6d4'
         : '#67e8f9';
 
-  const safeKidsRegistrations = kidsRegistrations ?? [];
-  const safeTeensRegistrations = teensRegistrations ?? [];
+  const safeKidsRegistrations = (kidsRegistrations ?? []).filter(
+    (registration) => !(registration.room_released && !registration.room_entry_checked)
+  );
+  const safeTeensRegistrations = (teensRegistrations ?? []).filter(
+    (registration) => !(registration.room_released && !registration.room_entry_checked)
+  );
 
   const kidsCheckedCount = safeKidsRegistrations.filter(
     (registration) => registration.room_entry_checked
@@ -332,47 +336,76 @@ export const MaintenanceSalaServidorCard = ({
         return;
       }
 
-      const pending = matches.filter((registration) => !registration.room_entry_checked);
-      if (!pending.length) {
+      const toCheckIn = matches.filter(
+        (registration) => !registration.room_entry_checked && !registration.room_released
+      );
+      const toCheckOut = matches.filter(
+        (registration) => registration.room_entry_checked && registration.room_released
+      );
+
+      if (!toCheckIn.length && !toCheckOut.length) {
         Toast.show({
           type: 'info',
           text1: 'Já na sala',
-          text2: `Todas as crianças de ${familyId} já estão em ${roomLabel}.`,
+          text2: `Todas as crianças de ${familyId} já estão em ${roomLabel} (ainda não liberadas).`,
         });
         return;
       }
 
-      try {
-        setRoomEntryPendingIds((current) => [
-          ...current,
-          ...pending.map((registration) => registration.registration_id),
-        ]);
+      const pendingIds = [
+        ...toCheckIn.map((registration) => registration.registration_id),
+        ...toCheckOut.map((registration) => registration.registration_id),
+      ];
 
-        for (const registration of pending) {
+      try {
+        setRoomEntryPendingIds((current) => [...current, ...pendingIds]);
+
+        for (const registration of toCheckIn) {
           await setRoomEntryChecked(registration.registration_id, true);
+        }
+        for (const registration of toCheckOut) {
+          await setRoomEntryChecked(registration.registration_id, false);
         }
 
         await refetchGroupedRegistrations();
 
-        const names = pending.map((registration) => formatDisplayName(registration.full_name)).join(', ');
-        Toast.show({
-          type: 'success',
-          text1: 'Check-in registrado',
-          text2: `${names} → ${roomLabel}`,
-        });
+        const checkInNames = toCheckIn
+          .map((registration) => formatDisplayName(registration.full_name))
+          .join(', ');
+        const checkOutNames = toCheckOut
+          .map((registration) => formatDisplayName(registration.full_name))
+          .join(', ');
+
+        if (toCheckOut.length && !toCheckIn.length) {
+          Toast.show({
+            type: 'success',
+            text1: 'Check-out registrado',
+            text2: `${checkOutNames} liberados de ${roomLabel}`,
+          });
+        } else if (toCheckIn.length && !toCheckOut.length) {
+          Toast.show({
+            type: 'success',
+            text1: 'Check-in registrado',
+            text2: `${checkInNames} → ${roomLabel}`,
+          });
+        } else {
+          Toast.show({
+            type: 'success',
+            text1: 'Check-in / Check-out',
+            text2: `Entrada: ${checkInNames}. Baixa: ${checkOutNames}.`,
+          });
+        }
       } catch (error) {
         Toast.show({
           type: 'error',
-          text1: 'Erro no check-in',
+          text1: 'Erro no QR',
           text2:
             error instanceof Error
               ? error.message
-              : 'Não foi possível registrar a entrada na sala.',
+              : 'Não foi possível atualizar a entrada na sala.',
         });
       } finally {
-        setRoomEntryPendingIds((current) =>
-          current.filter((id) => !pending.some((registration) => registration.registration_id === id))
-        );
+        setRoomEntryPendingIds((current) => current.filter((id) => !pendingIds.includes(id)));
       }
     },
     [
@@ -395,8 +428,8 @@ export const MaintenanceSalaServidorCard = ({
     }
 
     onCheckinQrActionChange({
-      label: 'Efetuar Check-In | ler QR Code',
-      accessibilityLabel: 'Efetuar Check-In | ler QR Code',
+      label: 'Efetuar Check-In / Check-Out | Ler QRCode',
+      accessibilityLabel: 'Efetuar Check-In / Check-Out | Ler QRCode',
       onPress: () => setQrScannerOpen(true),
     });
 

@@ -416,7 +416,8 @@ export const useEventRegistrationsByStatus = (
             ? {
                 ...item,
                 room_entry_checked: checked,
-                room_released: checked ? item.room_released : false,
+                // Check-in limpa liberação; check-out após liberar mantém o flag (some da lista).
+                room_released: checked ? false : item.room_released,
               }
             : item
         )
@@ -427,7 +428,7 @@ export const useEventRegistrationsByStatus = (
             ? {
                 ...item,
                 room_entry_checked: checked,
-                room_released: checked ? item.room_released : false,
+                room_released: checked ? false : item.room_released,
               }
             : item
         )

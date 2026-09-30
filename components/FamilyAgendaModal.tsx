@@ -220,7 +220,8 @@ export function FamilyAgendaModal({ visible, initialEventId, onClose, onNeedsAud
   const kidsReleasedByName = useMemo(() => {
     const released = new Set<string>();
     for (const registration of [...kidsRegistrations, ...teensRegistrations]) {
-      if (!registration.room_released) {
+      // Liberado só enquanto ainda consta na sala; após check-out some o selo.
+      if (!registration.room_released || !registration.room_entry_checked) {
         continue;
       }
       const key = normalizeFullNameKey(registration.full_name);
