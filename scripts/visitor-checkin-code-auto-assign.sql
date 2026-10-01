@@ -90,13 +90,16 @@ declare
   v_actor uuid;
   v_event public.events%rowtype;
   v_today date := (timezone('America/Sao_Paulo', now()))::date;
+  v_tenant uuid;
 begin
   v_actor := public.assert_visitor_quick_checkin_actor();
+  v_tenant := public.require_session_tenant_id();
 
   select e.*
     into v_event
     from public.events e
-   where coalesce(e.is_locked, false) = false
+   where e.tenant_id = v_tenant
+     and coalesce(e.is_locked, false) = false
      and (
        (e.event_date at time zone 'America/Sao_Paulo')::date = v_today
        or (
@@ -112,7 +115,8 @@ begin
     select e.*
       into v_event
       from public.events e
-     where coalesce(e.is_locked, false) = false
+     where e.tenant_id = v_tenant
+       and coalesce(e.is_locked, false) = false
        and (e.event_date at time zone 'America/Sao_Paulo')::date
            between v_today and (v_today + 1)
      order by e.event_date asc
@@ -130,6 +134,7 @@ begin
     update public.events
        set visitor_checkin_code = public.generate_unique_visitor_checkin_code(tenant_id)
      where id = v_event.id
+       and tenant_id = v_tenant
      returning * into v_event;
   end if;
 

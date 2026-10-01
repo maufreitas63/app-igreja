@@ -4,7 +4,7 @@ import { supabase } from '@/lib/supabase';
 import { isSupabaseRpcMissingError } from '@/lib/supabaseRpc';
 
 export const VISITOR_QUICK_CHECKIN_SQL_HINT =
-  'Execute no Supabase: scripts/visitor-quick-checkin.sql e scripts/visitor-checkin-code-auto-assign.sql';
+  'Execute no Supabase: scripts/visitor-quick-checkin.sql, scripts/visitor-checkin-code-auto-assign.sql e scripts/visitor-quick-checkin-tenant-isolation.sql';
 
 export const ACCESS_VISITOR_QUICK_CHECKIN = 'dashboard.card.visitor_quick_checkin' as const;
 
