@@ -1,4 +1,4 @@
-import { pickAbigailGreeting } from '@/lib/abigailPersona';
+import { pickAbigailGreeting, pickAbigailOptimisticReply } from '@/lib/abigailPersona';
 import { loadEffectiveSessionProfile } from '@/lib/loadSessionProfile';
 import { resolveGreetingFirstName } from '@/lib/sessionGreetingName';
 import { streamAiChatMessage, type AiChatHistoryItem } from '@/lib/aiChatApi';
@@ -9,6 +9,8 @@ export type AiChatMessage = {
   role: 'user' | 'assistant';
   content: string;
   localOnly?: boolean;
+  /** Balão temporário de “aguarde” — some ao primeiro chunk real da IA. */
+  optimistic?: boolean;
 };
 
 const createMessageId = () => `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
@@ -84,9 +86,10 @@ export function useAiChat() {
       content: question,
     };
     const assistantMessageId = createMessageId();
+    const optimisticReply = pickAbigailOptimisticReply();
 
     const history: AiChatHistoryItem[] = messages
-      .filter((message) => !message.localOnly)
+      .filter((message) => !message.localOnly && !message.optimistic)
       .slice(-2)
       .map((message) => ({
         role: message.role,
@@ -94,10 +97,17 @@ export function useAiChat() {
           message.content.length > 400 ? `${message.content.slice(0, 400)}…` : message.content,
       }));
 
+    // Exibe balão otimista da Abigail antes da Edge Function.
     setMessages((current) => [
       ...current,
       userMessage,
-      { id: assistantMessageId, role: 'assistant', content: '' },
+      {
+        id: assistantMessageId,
+        role: 'assistant',
+        content: optimisticReply,
+        localOnly: true,
+        optimistic: true,
+      },
     ]);
     setDraft('');
     setStreaming(true);
@@ -113,14 +123,31 @@ export function useAiChat() {
         signal: controller.signal,
         onChunk: (chunk) => {
           setMessages((current) =>
-            current.map((message) =>
-              message.id === assistantMessageId
-                ? { ...message, content: message.content + chunk }
-                : message
-            )
+            current.map((message) => {
+              if (message.id !== assistantMessageId) {
+                return message;
+              }
+
+              // Primeiro chunk real substitui o balão temporário.
+              if (message.optimistic) {
+                return {
+                  ...message,
+                  content: chunk,
+                  localOnly: false,
+                  optimistic: false,
+                };
+              }
+
+              return { ...message, content: message.content + chunk };
+            })
           );
         },
       });
+
+      // Stream vazio: remove o balão otimista para não ficar como resposta final.
+      setMessages((current) =>
+        current.filter((entry) => !(entry.id === assistantMessageId && entry.optimistic))
+      );
     } catch (sendError) {
       const message =
         sendError instanceof Error
@@ -133,7 +160,11 @@ export function useAiChat() {
 
       setError(message);
       setMessages((current) =>
-        current.filter((entry) => entry.id !== assistantMessageId || entry.content.trim().length > 0)
+        current.filter(
+          (entry) =>
+            entry.id !== assistantMessageId
+            || (!entry.optimistic && entry.content.trim().length > 0)
+        )
       );
     } finally {
       abortRef.current = null;

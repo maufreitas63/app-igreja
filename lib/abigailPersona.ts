@@ -38,3 +38,34 @@ export function pickAbigailGreeting(firstName?: string | null) {
   lastGreetingIndex = next;
   return ABIGAIL_GREETINGS[next](name);
 }
+
+/** Resposta otimista enquanto a Edge Function / IA ainda não devolveu o texto. */
+const ABIGAIL_OPTIMISTIC_REPLIES: readonly string[] = [
+  'Recebi sua mensagem! Deixa comigo que já estou organizando tudo por aqui. Só um segundinho...',
+  'Opa, anotei o pedido. Já estou vasculhando as informações para te entregar mastigadinho. Já te chamo!',
+  'Mensagem lida com sucesso! Deixe-me cruzar os dados aqui para te dar a resposta certa. Daqui a pouco retorno...',
+  'Entendido! Já estou reunindo o material com todo o cuidado. Só um instante que já te respondo.',
+  'Legal, recebi por aqui. Deixa eu checar os detalhes no sistema para te passar a melhor resposta. Fica por perto!',
+  'Anotado! Estou processando as informações agora mesmo para não faltar nenhum detalhe. Já te dou um alô.',
+  'Chegou por aqui! Deixa comigo que já estou preparando uma resposta bem completinha para você. Um minutinho...',
+  'Perfeito! Já estou puxando os dados necessários para organizar essa resposta para você. Rapidinho estou de volta.',
+  'Recebido! Já estou juntando as pontas por aqui para te dar um retorno bem preciso. Segura aí que é rápido.',
+  'Mensagem anotada na hora! Deixa eu estruturar as informações com calma para te responder da melhor forma. Já te retorno!',
+];
+
+let lastOptimisticIndex = -1;
+
+export function pickAbigailOptimisticReply() {
+  if (ABIGAIL_OPTIMISTIC_REPLIES.length === 1) {
+    return ABIGAIL_OPTIMISTIC_REPLIES[0];
+  }
+
+  let next = Math.floor(Math.random() * ABIGAIL_OPTIMISTIC_REPLIES.length);
+
+  if (next === lastOptimisticIndex) {
+    next = (next + 1) % ABIGAIL_OPTIMISTIC_REPLIES.length;
+  }
+
+  lastOptimisticIndex = next;
+  return ABIGAIL_OPTIMISTIC_REPLIES[next];
+}
