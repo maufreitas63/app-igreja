@@ -22,6 +22,8 @@ export type PdfFolderToJpgResult = {
 
 export const PDF_TO_JPG_PROTOCOL = 'conectapdfjpg';
 
+export const PDF_TO_JPG_HELPER_ORIGIN = 'http://127.0.0.1:47821';
+
 export const isPdfFolderToJpgSupported = () =>
   Platform.OS === 'web' && typeof window !== 'undefined';
 
@@ -32,6 +34,40 @@ export function buildPdfToJpgCommand(folderPath: string) {
 
 export function buildPdfToJpgProtocolUrl(folderPath: string) {
   return `${PDF_TO_JPG_PROTOCOL}://convert?dir=${encodeURIComponent(folderPath)}`;
+}
+
+export function buildPdfToJpgHelperUrl(folderPath: string, returnTo?: string | null) {
+  const params = new URLSearchParams({
+    dir: folderPath,
+    run: '1',
+  });
+  const ret = returnTo?.trim();
+  if (ret) {
+    params.set('return', ret);
+  }
+  return `${PDF_TO_JPG_HELPER_ORIGIN}/?${params.toString()}`;
+}
+
+/** Verifica se `npm run pdf-to-jpg:helper` está escutando neste computador. */
+export async function isPdfToJpgHelperOnline(timeoutMs = 900): Promise<boolean> {
+  if (typeof fetch === 'undefined') {
+    return false;
+  }
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    const response = await fetch(`${PDF_TO_JPG_HELPER_ORIGIN}/health`, {
+      method: 'GET',
+      signal: controller.signal,
+    });
+    return response.ok;
+  } catch {
+    return false;
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 export function resolvePdfToJpgFolderPath(folderHint: string | null | undefined) {

@@ -55,6 +55,9 @@ import {
 import { isTreasuryReceiptFolderAccessSupported, pickTreasuryReceiptFolderFiles } from '@/lib/treasuryReceiptFolderAccess';
 import {
   DEFAULT_PDF_TO_JPG_DIR,
+  buildPdfToJpgHelperUrl,
+  buildPdfToJpgProtocolUrl,
+  isPdfToJpgHelperOnline,
   resolvePdfToJpgFolderPath,
 } from '@/lib/pdfFolderToJpg';
 import { isClipboardPermissionDenied, readClipboardText } from '@/lib/readClipboardText';
@@ -80,6 +83,7 @@ import {
   Image,
   Linking,
   Modal,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -955,20 +959,72 @@ export function MaintenanceFinancialsCard({
     (receiptsDir ?? '').trim() || DEFAULT_PDF_TO_JPG_DIR
   );
 
-  const handleConvertPdfFolderToJpg = () => {
+  const handleConvertPdfFolderToJpg = async () => {
     const returnTo =
       typeof window !== 'undefined' && window.location?.href
         ? window.location.href
         : '';
-    const url =
-      `http://127.0.0.1:47821/?dir=${encodeURIComponent(pdfToJpgFolderPath)}` +
-      `&run=1` +
-      (returnTo ? `&return=${encodeURIComponent(returnTo)}` : '');
 
-    if (typeof window !== 'undefined' && typeof window.open === 'function') {
-      window.open(url, '_blank');
-    } else {
-      void Linking.openURL(url);
+    const helperOnline = await isPdfToJpgHelperOnline();
+
+    if (helperOnline) {
+      const url = buildPdfToJpgHelperUrl(pdfToJpgFolderPath, returnTo);
+      if (typeof window !== 'undefined' && typeof window.open === 'function') {
+        window.open(url, '_blank');
+      } else {
+        await Linking.openURL(url);
+      }
+
+      setPdfConvertReport({
+        folderPath: pdfToJpgFolderPath,
+        pdfCount: 0,
+        ok: 0,
+        skipped: 0,
+        failed: 0,
+        pages: 0,
+        message:
+          'Conversor local aberto (http://127.0.0.1:47821). A conversão inicia automaticamente.',
+      });
+
+      Toast.show({
+        type: 'success',
+        text1: 'PDF → JPG',
+        text2: 'Conversor local aberto. Aguarde a conversão na aba nova.',
+        visibilityTime: 5000,
+      });
+      return;
+    }
+
+    // Helper desligado: usa o protocolo Windows (npm run pdf-to-jpg:install).
+    const protocolUrl = buildPdfToJpgProtocolUrl(pdfToJpgFolderPath);
+
+    try {
+      const canOpen = await Linking.canOpenURL(protocolUrl);
+      if (canOpen === false && Platform.OS !== 'web') {
+        throw new Error('Protocolo conectapdfjpg:// não registrado neste dispositivo.');
+      }
+      await Linking.openURL(protocolUrl);
+    } catch (error) {
+      setPdfConvertReport({
+        folderPath: pdfToJpgFolderPath,
+        pdfCount: 0,
+        ok: 0,
+        skipped: 0,
+        failed: 0,
+        pages: 0,
+        message:
+          error instanceof Error
+            ? error.message
+            : 'Não foi possível abrir o conversor. Rode npm run pdf-to-jpg:helper ou npm run pdf-to-jpg:install.',
+      });
+      Toast.show({
+        type: 'error',
+        text1: 'PDF → JPG',
+        text2:
+          'Helper local desligado e protocolo indisponível. Neste PC: npm run pdf-to-jpg:helper',
+        visibilityTime: 8000,
+      });
+      return;
     }
 
     setPdfConvertReport({
@@ -979,13 +1035,13 @@ export function MaintenanceFinancialsCard({
       failed: 0,
       pages: 0,
       message:
-        'Abriu o conversor local (http://127.0.0.1:47821). Se a aba não abrir, neste computador rode: npm run pdf-to-jpg:helper',
+        'Helper na porta 47821 estava desligado. Abriu o conversor via protocolo Windows (conectapdfjpg://).',
     });
 
     Toast.show({
       type: 'info',
       text1: 'PDF → JPG',
-      text2: 'Abriu o conversor neste computador. Deixe npm run pdf-to-jpg:helper ligado.',
+      text2: 'Helper desligado — iniciou via protocolo Windows. Permita abrir o app se o navegador pedir.',
       visibilityTime: 7000,
     });
   };
@@ -1567,8 +1623,9 @@ export function MaintenanceFinancialsCard({
               </Text>
             </TouchableOpacity>
             <Text style={[styles.formatHint, minimal && styles.formatHintMinimal]}>
-              A conversão roda neste computador em http://127.0.0.1:47821 (não na nuvem). Deixe
-              ligado: npm run pdf-to-jpg:helper
+              Converte os PDF da pasta neste computador (não na nuvem). Se o helper
+              (npm run pdf-to-jpg:helper) estiver ligado, abre http://127.0.0.1:47821; senão usa o
+              protocolo Windows (npm run pdf-to-jpg:install uma vez).
             </Text>
 
             {pdfConvertReport ? (
