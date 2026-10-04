@@ -526,6 +526,10 @@ export async function activateSessionTenant(
           notifyActiveTenantChange(id);
         }
       }
+
+      void import('@/lib/exitWebsiteRedirect').then(({ syncExitWebsiteRedirectCache }) =>
+        syncExitWebsiteRedirectCache()
+      );
     } catch {
       await persistTenantId(id);
     }
@@ -691,21 +695,29 @@ export async function setIgrejaSocialLinksAdmin(
   tenantId: string,
   websiteUrl: string | null | undefined,
   instagramUrl: string | null | undefined,
-  youtubeUrl: string | null | undefined
+  youtubeUrl: string | null | undefined,
+  exitRedirectWebsite?: boolean | null
 ) {
-  const { data, error } = await supabase.rpc('set_igreja_social_links_admin', {
+  const { normalizeOptionalHttpsUrl } = await import('@/lib/socialUrl');
+  const payload: Record<string, unknown> = {
     p_tenant_id: tenantId.trim(),
-    p_website_url: websiteUrl?.trim() || null,
-    p_instagram_url: instagramUrl?.trim() || null,
-    p_youtube_url: youtubeUrl?.trim() || null,
-  });
+    p_website_url: normalizeOptionalHttpsUrl(websiteUrl),
+    p_instagram_url: normalizeOptionalHttpsUrl(instagramUrl),
+    p_youtube_url: normalizeOptionalHttpsUrl(youtubeUrl),
+  };
+
+  if (typeof exitRedirectWebsite === 'boolean') {
+    payload.p_exit_redirect_website = exitRedirectWebsite;
+  }
+
+  const { data, error } = await supabase.rpc('set_igreja_social_links_admin', payload);
 
   if (error) {
     if (isSupabaseRpcMissingError(error, 'set_igreja_social_links_admin')) {
       return {
         success: false as const,
         message:
-          'RPC ausente. Execute scripts/multi-tenant-16-igreja-website-url.sql no Supabase.',
+          'RPC ausente. Execute scripts/multi-tenant-16-igreja-website-url.sql e scripts/igreja-exit-redirect-website.sql no Supabase.',
       };
     }
     return {
@@ -714,13 +726,64 @@ export async function setIgrejaSocialLinksAdmin(
     };
   }
 
-  return data as {
+  const result = data as {
     success?: boolean;
     message?: string;
     website_url?: string | null;
     instagram_url?: string | null;
     youtube_url?: string | null;
+    exit_redirect_website?: boolean;
   };
+
+  if (result?.success && typeof exitRedirectWebsite === 'boolean') {
+    const { persistExitWebsiteRedirectSettings } = await import('@/lib/exitWebsiteRedirect');
+    const activeTenantId = await getStoredTenantId();
+    if (activeTenantId && activeTenantId === tenantId.trim()) {
+      await persistExitWebsiteRedirectSettings({
+        enabled: exitRedirectWebsite,
+        websiteUrl: result.website_url ?? websiteUrl ?? null,
+      });
+    }
+  }
+
+  return result;
+}
+
+export async function listIgrejaExitRedirectAdmin(): Promise<
+  Array<{ tenantId: string; exitRedirectWebsite: boolean; websiteUrl: string | null }>
+> {
+  const { data, error } = await supabase.rpc('list_igreja_exit_redirect_admin');
+  if (error) {
+    if (isSupabaseRpcMissingError(error, 'list_igreja_exit_redirect_admin')) {
+      return [];
+    }
+    throw error;
+  }
+
+  if (!Array.isArray(data)) {
+    return [];
+  }
+
+  return data
+    .map((row) => {
+      const record = row && typeof row === 'object' ? (row as Record<string, unknown>) : null;
+      const tenantId =
+        record?.tenant_id == null ? '' : String(record.tenant_id).trim();
+      if (!tenantId) {
+        return null;
+      }
+      return {
+        tenantId,
+        exitRedirectWebsite: record?.exit_redirect_website === true,
+        websiteUrl:
+          typeof record?.website_url === 'string' && record.website_url.trim()
+            ? record.website_url.trim()
+            : null,
+      };
+    })
+    .filter((row): row is { tenantId: string; exitRedirectWebsite: boolean; websiteUrl: string | null } =>
+      Boolean(row)
+    );
 }
 
 export async function setIgrejaOfferingsAdmin(

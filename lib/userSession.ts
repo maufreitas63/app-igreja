@@ -10,7 +10,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { router } from 'expo-router';
 
-import { BackHandler, Platform } from 'react-native';
+import { BackHandler, Linking, Platform } from 'react-native';
 
 
 
@@ -550,7 +550,27 @@ const resolveConfirmedExitAction = async () => {
 export async function confirmExitApplication(): Promise<boolean> {
   const { confirmDialog } = await import('@/lib/confirmDialog');
   const exitUi = (await import('@/lib/sessionExitUi')).getExitSessionUi();
-  const onConfirmed = await resolveConfirmedExitAction();
+  const { resolveExitWebsiteRedirectUrl } = await import('@/lib/exitWebsiteRedirect');
+  const redirectUrl = await resolveExitWebsiteRedirectUrl();
+  const baseExit = await resolveConfirmedExitAction();
+
+  const onConfirmed = () => {
+    if (redirectUrl && Platform.OS === 'web' && typeof window !== 'undefined') {
+      clearUserSessionImmediately();
+      window.location.replace(redirectUrl);
+      return;
+    }
+
+    if (redirectUrl && Platform.OS !== 'web') {
+      clearUserSessionImmediately();
+      void Linking.openURL(redirectUrl).finally(() => {
+        baseExit();
+      });
+      return;
+    }
+
+    baseExit();
+  };
 
   const confirmed = await confirmDialog(
     exitUi.button,

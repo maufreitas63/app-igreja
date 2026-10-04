@@ -19,6 +19,7 @@ import {
   deleteIgrejaAdmin,
   getStoredTenantId,
   listAdminIgrejas,
+  listIgrejaExitRedirectAdmin,
   onboardIgrejaAdmin,
   setIgrejaActiveAdmin,
   setIgrejaOfferingsAdmin,
@@ -27,6 +28,8 @@ import {
   setIgrejaTotemCredentialsAdmin,
   type SessionIgreja,
 } from '@/lib/tenantSession';
+import { persistExitWebsiteRedirectSettings } from '@/lib/exitWebsiteRedirect';
+import { normalizeOptionalHttpsUrl } from '@/lib/socialUrl';
 import { setIgrejaMaeTenantAdmin } from '@/lib/alianca/aliancaApi';
 import { clearTotemPhoneCache, formatPhoneForDisplay } from '@/lib/totemDevice';
 import { AppSwitch } from '@/components/ui/AppSwitch';
@@ -44,7 +47,12 @@ import {
 } from 'react-native';
 import Toast from 'react-native-toast-message';
 
-type SocialDraft = { website: string; instagram: string; youtube: string };
+type SocialDraft = {
+  website: string;
+  instagram: string;
+  youtube: string;
+  exitRedirect: boolean;
+};
 type OfferingsDraft = {
   cnpj: string;
   pixInstitution: string;
@@ -87,7 +95,10 @@ function IgrejasAdminPanel() {
   const [totemDrafts, setTotemDrafts] = useState<Record<string, TotemDraft>>({});
   const [deleteConfirmById, setDeleteConfirmById] = useState<Record<string, string>>({});
 
-  const syncSocialDrafts = useCallback((rows: SessionIgreja[]) => {
+  const syncSocialDrafts = useCallback(async (rows: SessionIgreja[]) => {
+    const flags = await listIgrejaExitRedirectAdmin().catch(() => []);
+    const flagByTenant = new Map(flags.map((row) => [row.tenantId, row.exitRedirectWebsite]));
+
     const nextSocial: Record<string, SocialDraft> = {};
     const nextOfferings: Record<string, OfferingsDraft> = {};
     const nextMae: Record<string, string> = {};
@@ -97,6 +108,7 @@ function IgrejasAdminPanel() {
         website: church.website_url ?? '',
         instagram: church.instagram_url ?? '',
         youtube: church.youtube_url ?? '',
+        exitRedirect: flagByTenant.get(church.id) === true,
       };
       nextOfferings[church.id] = {
         cnpj: church.cnpj ?? '',
@@ -122,7 +134,7 @@ function IgrejasAdminPanel() {
     try {
       const [rows, storedTenantId] = await Promise.all([listAdminIgrejas(), getStoredTenantId()]);
       setChurches(rows);
-      syncSocialDrafts(rows);
+      await syncSocialDrafts(rows);
       setActiveTenantId(storedTenantId);
     } catch (error) {
       console.error(error);
@@ -169,6 +181,7 @@ function IgrejasAdminPanel() {
         website: church.website_url ?? '',
         instagram: church.instagram_url ?? '',
         youtube: church.youtube_url ?? '',
+        exitRedirect: prev[church.id]?.exitRedirect === true,
       },
     }));
     setTotemDrafts((prev) => ({
@@ -203,7 +216,13 @@ function IgrejasAdminPanel() {
   };
 
   const handleSaveEdit = async (church: SessionIgreja) => {
-    const draft = socialDrafts[church.id] ?? { website: '', instagram: '', youtube: '' };
+    const draft =
+      socialDrafts[church.id] ?? {
+        website: '',
+        instagram: '',
+        youtube: '',
+        exitRedirect: false,
+      };
     const offerings =
       offeringsDrafts[church.id] ?? {
         cnpj: '',
@@ -222,7 +241,8 @@ function IgrejasAdminPanel() {
         church.id,
         draft.website,
         draft.instagram,
-        draft.youtube
+        draft.youtube,
+        draft.exitRedirect
       );
       if (!social?.success) {
         Toast.show({
@@ -234,6 +254,13 @@ function IgrejasAdminPanel() {
           await load();
         }
         return;
+      }
+
+      if (activeTenantId === church.id) {
+        await persistExitWebsiteRedirectSettings({
+          enabled: draft.exitRedirect,
+          websiteUrl: normalizeOptionalHttpsUrl(social.website_url ?? draft.website),
+        });
       }
 
       const offeringsResult = await setIgrejaOfferingsAdmin(
@@ -652,7 +679,13 @@ function IgrejasAdminPanel() {
         <View style={styles.list}>
           {churches.map((church) => {
             const isEditing = editingId === church.id;
-            const draft = socialDrafts[church.id] ?? { website: '', instagram: '', youtube: '' };
+            const draft =
+              socialDrafts[church.id] ?? {
+                website: '',
+                instagram: '',
+                youtube: '',
+                exitRedirect: false,
+              };
             const offeringsDraft =
               offeringsDrafts[church.id] ?? {
                 cnpj: '',
@@ -872,22 +905,42 @@ function IgrejasAdminPanel() {
                     />
 
                     <Text style={styles.socialFieldLabel}>Site oficial (URL)</Text>
-                    <TextInput
-                      style={styles.input}
-                      value={draft.website}
-                      onChangeText={(value) =>
-                        setSocialDrafts((prev) => ({
-                          ...prev,
-                          [church.id]: { ...draft, website: value },
-                        }))
-                      }
-                      placeholder="https://www.suaigreja.org.br"
-                      placeholderTextColor={MINIMAL_UI.textMuted}
-                      autoCapitalize="none"
-                      autoCorrect={false}
-                      keyboardType="url"
-                      editable={!editBusy}
-                    />
+                    <View style={styles.websiteRow}>
+                      <TextInput
+                        style={[styles.input, styles.websiteInput]}
+                        value={draft.website}
+                        onChangeText={(value) =>
+                          setSocialDrafts((prev) => ({
+                            ...prev,
+                            [church.id]: { ...draft, website: value },
+                          }))
+                        }
+                        placeholder="https://www.suaigreja.org.br"
+                        placeholderTextColor={MINIMAL_UI.textMuted}
+                        autoCapitalize="none"
+                        autoCorrect={false}
+                        keyboardType="url"
+                        editable={!editBusy}
+                      />
+                      <View style={styles.exitRedirectBox}>
+                        <Text style={styles.exitRedirectLabel}>Ao sair</Text>
+                        <AppSwitch
+                          value={draft.exitRedirect}
+                          onValueChange={(value) =>
+                            setSocialDrafts((prev) => ({
+                              ...prev,
+                              [church.id]: { ...draft, exitRedirect: value },
+                            }))
+                          }
+                          disabled={editBusy}
+                          accessibilityLabel="Ao sair, abrir o site oficial"
+                        />
+                      </View>
+                    </View>
+                    <Text style={styles.logoHint}>
+                      Com «Ao sair» ligado, o botão Sair redireciona para este site. Pode informar
+                      www.ibnorte.com.br — o https:// é acrescentado ao salvar.
+                    </Text>
                     <Text style={styles.socialFieldLabel}>Instagram (URL)</Text>
                     <TextInput
                       style={styles.input}
@@ -1371,6 +1424,27 @@ const styles = StyleSheet.create({
   },
   geoSwitchHint: {
     flex: 1,
+  },
+  websiteRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  websiteInput: {
+    flex: 1,
+    minWidth: 0,
+  },
+  exitRedirectBox: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+    flexShrink: 0,
+    minWidth: 64,
+  },
+  exitRedirectLabel: {
+    color: MINIMAL_UI.textMuted,
+    fontSize: 11,
+    fontWeight: '700',
   },
   secondaryButton: {
     borderWidth: 1,
