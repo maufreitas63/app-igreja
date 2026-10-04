@@ -495,8 +495,6 @@ function pinDestinationAfterPush() {
   window.setTimeout(pin, 250);
 }
 
-let drawerNavMethod: 'push' | 'replace' = 'push';
-
 function openScreen(
   router: Router,
   pathname: Href,
@@ -504,35 +502,24 @@ function openScreen(
 ) {
   const path = typeof pathname === 'string' ? pathname : String(pathname);
   markDrawerNavigation(path);
-  const href = {
+  router.push({
     pathname,
     params: params ?? withFailClosedReturn(),
-  } as Href;
-
-  if (drawerNavMethod === 'replace') {
-    router.replace(href);
-  } else {
-    router.push(href);
-  }
-
+  } as Href);
   pinDestinationAfterPush();
 }
 
-const drawerNavigate = () => ({ method: drawerNavMethod });
+const DRAWER_NAVIGATE = { method: 'push' as const };
 
 export async function navigateDrawerMenuItem(
   router: Router,
-  moduleKey: AppDrawerModuleKey,
-  method: 'push' | 'replace' = 'push'
+  moduleKey: AppDrawerModuleKey
 ) {
   markDrawerNavigation();
-  const previousMethod = drawerNavMethod;
-  drawerNavMethod = method;
 
   try {
     await navigateDrawerMenuItemBody(router, moduleKey);
   } finally {
-    drawerNavMethod = previousMethod;
     pinDestinationAfterPush();
   }
 }
@@ -561,7 +548,7 @@ async function navigateDrawerMenuItemBody(
       '/manage-profile',
       ACCESS_SCREEN.manageProfile,
       withMemberCardReturn('grouped_manage'),
-      drawerNavigate()
+      DRAWER_NAVIGATE
     );
     return;
   }
@@ -572,7 +559,7 @@ async function navigateDrawerMenuItemBody(
       '/manage-members',
       ACCESS_SCREEN.manageMembers,
       withMemberCardReturn('grouped_manage'),
-      drawerNavigate()
+      DRAWER_NAVIGATE
     );
     return;
   }
@@ -597,7 +584,7 @@ async function navigateDrawerMenuItemBody(
       '/expense-report',
       ACCESS_SCREEN.expenseReport,
       withFailClosedReturn(),
-      drawerNavigate()
+      DRAWER_NAVIGATE
     );
     return;
   }
@@ -608,7 +595,7 @@ async function navigateDrawerMenuItemBody(
       '/pastoral',
       ACCESS_SCREEN.pastoral,
       withMemberCardReturn('pastoral'),
-      drawerNavigate()
+      DRAWER_NAVIGATE
     );
     return;
   }
@@ -619,7 +606,7 @@ async function navigateDrawerMenuItemBody(
       '/trilha-discipulado',
       ACCESS_SCREEN.discipleshipTrail,
       withFailClosedReturn(),
-      drawerNavigate()
+      DRAWER_NAVIGATE
     );
     return;
   }
@@ -630,7 +617,7 @@ async function navigateDrawerMenuItemBody(
       '/pequeno-grupo',
       ACCESS_DASHBOARD_CARD.smallGroup,
       withFailClosedReturn(),
-      drawerNavigate()
+      DRAWER_NAVIGATE
     );
     return;
   }
@@ -641,7 +628,7 @@ async function navigateDrawerMenuItemBody(
       '/mural-oportunidades',
       ACCESS_DASHBOARD_CARD.opportunities,
       withFailClosedReturn(),
-      drawerNavigate()
+      DRAWER_NAVIGATE
     );
     return;
   }
@@ -652,7 +639,7 @@ async function navigateDrawerMenuItemBody(
       '/mural-generosidade',
       ACCESS_SCREEN.generosityMural,
       withFailClosedReturn(),
-      drawerNavigate()
+      DRAWER_NAVIGATE
     );
     return;
   }
@@ -663,7 +650,7 @@ async function navigateDrawerMenuItemBody(
       '/apoio-mutuo',
       ACCESS_SCREEN.apoioMutuo,
       withFailClosedReturn(),
-      drawerNavigate()
+      DRAWER_NAVIGATE
     );
     return;
   }
@@ -699,7 +686,7 @@ async function navigateDrawerMenuItemBody(
       '/mapa-geolocalizacao',
       ACCESS_SCREEN.mapGeolocation,
       withFailClosedReturn(),
-      drawerNavigate()
+      DRAWER_NAVIGATE
     );
     return;
   }
@@ -710,7 +697,7 @@ async function navigateDrawerMenuItemBody(
       '/financial',
       ACCESS_SCREEN.financial,
       withReturnDashboardCard(DASHBOARD_FINANCIAL_CARD_ID),
-      drawerNavigate()
+      DRAWER_NAVIGATE
     );
     return;
   }
@@ -756,7 +743,7 @@ async function navigateDrawerMenuItemBody(
       '/livros-doados',
       ACCESS_SCREEN.livrosDoados,
       withFailClosedReturn(),
-      drawerNavigate()
+      DRAWER_NAVIGATE
     );
     return;
   }

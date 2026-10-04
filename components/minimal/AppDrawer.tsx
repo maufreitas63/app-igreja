@@ -1,6 +1,5 @@
 import { useAppDrawer } from '@/context/AppDrawerContext';
 import { useAppDrawerMenu, type AppDrawerMenuItemResolved } from '@/hooks/useAppDrawerMenu';
-import { useMemberMenuSwipe } from '@/hooks/useMemberMenuSwipe';
 import {
   APP_DRAWER_SETTINGS_GROUPS,
   DISCIPLESHIP_SETTINGS_MODULE_KEYS,
@@ -102,11 +101,6 @@ export function AppDrawer() {
   }, [isOpen, refresh]);
 
   const visibleItems = items.filter((item) => item.enabled);
-
-  useMemberMenuSwipe({
-    items: visibleItems,
-    suspended: isOpen || settingsOpen,
-  });
 
   const handlePress = (item: AppDrawerMenuItemResolved) => {
     traceClick('drawer', 'menu-item-press', {

@@ -1,5 +1,6 @@
 import { formatGeoDistanceMeters } from '@/lib/checkinGeofence';
 import type { GeoCheckinUiStatus } from '@/hooks/useGeoCheckinMonitor';
+import { MINIMAL_UI } from '@/lib/minimalUiTheme';
 import React, { memo, useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
@@ -80,7 +81,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(6, 78, 59, 0.28)',
   },
   bannerText: {
-    color: '#E2E8F0',
+    color: MINIMAL_UI.text,
     fontSize: 13,
     fontWeight: '700',
     textAlign: 'center',

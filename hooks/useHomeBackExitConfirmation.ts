@@ -5,7 +5,6 @@ import { useEffect, useRef } from 'react';
 /**
  * No Índice: gesto/ação GO_BACK/POP (inclui voltar do sistema em alguns hosts)
  * abre o diálogo Encerrar sessão em vez de sair da tela.
- * O arraste vertical do celular fica em useMemberMenuSwipe.
  * Não intercepta NAVIGATE/PUSH/REPLACE (abrir Perfil, Financeiro, etc.).
  */
 export function useHomeBackExitConfirmation() {
