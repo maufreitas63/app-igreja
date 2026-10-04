@@ -33,6 +33,12 @@ import {
   SALVAR_APP_PARAMETER_ADMIN_SQL_HINT,
   saveAppParameterValue,
 } from '@/lib/appParameters';
+import {
+  buildLgpdTermsText,
+  DEFAULT_LGPD_ENTITY_NAME,
+  LGPD_TERMOS_PARAMETER,
+  loadLgpdTermsText,
+} from '@/lib/lgpdTerms';
 import { useMaintenanceAccessControl } from '@/hooks/useMaintenanceAccessControl';
 import { useShowAclTechnicalKeys } from '@/hooks/useShowAclTechnicalKeys';
 import {
@@ -407,6 +413,74 @@ function AppAtivoParameterControls({
   );
 }
 
+type LgpdTermsParameterControlsProps = {
+  lgpdAtivo: boolean;
+  lgpdTermsText: string;
+  loadingLgpdTerms: boolean;
+  savingLgpdTerms: boolean;
+  canEdit: boolean;
+  onChangeLgpdTermsText: (value: string) => void;
+  onSaveLgpdTermsText: () => void;
+  minimal?: boolean;
+};
+
+function LgpdTermsParameterControls({
+  lgpdAtivo,
+  lgpdTermsText,
+  loadingLgpdTerms,
+  savingLgpdTerms,
+  canEdit,
+  onChangeLgpdTermsText,
+  onSaveLgpdTermsText,
+  minimal = false,
+}: LgpdTermsParameterControlsProps) {
+  const termsDisabled = !canEdit || loadingLgpdTerms || savingLgpdTerms || !lgpdAtivo;
+
+  if (!lgpdAtivo) {
+    return null;
+  }
+
+  return (
+    <View style={[styles.appAtivoSection, minimal && styles.appAtivoSectionMinimal]}>
+      <Text style={[styles.appInativoMsgLabel, minimal && styles.appInativoMsgLabelMinimal]}>
+        Texto de consentimento LGPD
+      </Text>
+      <TextInput
+        style={[styles.appInativoMsgInput, minimal && styles.appInativoMsgInputMinimal, styles.lgpdTermsInput]}
+        value={lgpdTermsText}
+        onChangeText={onChangeLgpdTermsText}
+        editable={!termsDisabled}
+        multiline
+        placeholder="Texto exibido no cadastro e na tela LGPD"
+        placeholderTextColor={minimal ? MINIMAL_UI.textMuted : '#64748B'}
+      />
+      <TouchableOpacity
+        style={[
+          styles.appInativoMsgSaveButton,
+          minimal && styles.appInativoMsgSaveButtonMinimal,
+          termsDisabled && styles.appInativoMsgSaveButtonDisabled,
+        ]}
+        onPress={onSaveLgpdTermsText}
+        disabled={termsDisabled}
+        activeOpacity={0.85}
+      >
+        {savingLgpdTerms ? (
+          <ActivityIndicator size="small" color={minimal ? MINIMAL_UI.onDark : '#0f172a'} />
+        ) : (
+          <Text
+            style={[
+              styles.appInativoMsgSaveButtonText,
+              minimal && styles.appInativoMsgSaveButtonTextMinimal,
+            ]}
+          >
+            Salvar texto LGPD
+          </Text>
+        )}
+      </TouchableOpacity>
+    </View>
+  );
+}
+
 export function MaintenanceAccessControlCard({
   isActive = true,
   panelHeight,
@@ -427,6 +501,11 @@ export function MaintenanceAccessControlCard({
   const [lgpdAtivo, setLgpdAtivo] = useState(true);
   const [loadingLgpdAtivo, setLoadingLgpdAtivo] = useState(false);
   const [savingLgpdAtivo, setSavingLgpdAtivo] = useState(false);
+  const [lgpdTermsText, setLgpdTermsText] = useState(() =>
+    buildLgpdTermsText(DEFAULT_LGPD_ENTITY_NAME)
+  );
+  const [loadingLgpdTerms, setLoadingLgpdTerms] = useState(false);
+  const [savingLgpdTerms, setSavingLgpdTerms] = useState(false);
   const [appAtivo, setAppAtivo] = useState(true);
   const [appInativoMsg, setAppInativoMsg] = useState('');
   const [loadingAppAtivo, setLoadingAppAtivo] = useState(false);
@@ -478,6 +557,7 @@ export function MaintenanceAccessControlCard({
     || savingResourceGrantKey !== null
     || savingScaleLeadershipId !== null
     || savingLgpdAtivo
+    || savingLgpdTerms
     || savingAppAtivo
     || savingAppInativoMsg;
   const hasAssignedProfileRoles = profileRoles.some((role) => role.assigned);
@@ -554,20 +634,26 @@ export function MaintenanceAccessControlCard({
 
     let active = true;
     setLoadingLgpdAtivo(true);
+    setLoadingLgpdTerms(true);
     setLoadingAppAtivo(true);
     setLoadingManagement(true);
 
     void (async () => {
       try {
-        const [lgpdValue, appAtivoValue, appInativoMsgValue, billingStatus] = await Promise.all([
-          getAppParameterValue(LGPD_ATIVO_PARAMETER),
-          getAppParameterValue(APP_ATIVO_PARAMETER),
-          getAppParameterValue(APP_INATIVO_MSG_PARAMETER),
-          getTenantBillingStatus().catch(() => null),
-        ]);
+        const [lgpdValue, lgpdTermsValue, appAtivoValue, appInativoMsgValue, billingStatus] =
+          await Promise.all([
+            getAppParameterValue(LGPD_ATIVO_PARAMETER),
+            loadLgpdTermsText(),
+            getAppParameterValue(APP_ATIVO_PARAMETER),
+            getAppParameterValue(APP_INATIVO_MSG_PARAMETER),
+            getTenantBillingStatus().catch(() => null),
+          ]);
 
         if (active) {
           setLgpdAtivo(resolveLgpdAtivoFromParameter(lgpdValue));
+          setLgpdTermsText(
+            lgpdTermsValue?.trim() || buildLgpdTermsText(DEFAULT_LGPD_ENTITY_NAME)
+          );
           setAppAtivo(resolveAppActiveFromParameter(appAtivoValue));
           setAppInativoMsg(resolveAppInactiveMessage(appInativoMsgValue));
           setManagementUnlocked(billingStatus?.managementUnlocked === true);
@@ -577,6 +663,7 @@ export function MaintenanceAccessControlCard({
       } finally {
         if (active) {
           setLoadingLgpdAtivo(false);
+          setLoadingLgpdTerms(false);
           setLoadingAppAtivo(false);
           setLoadingManagement(false);
         }
@@ -752,6 +839,60 @@ export function MaintenanceAccessControlCard({
         });
       } finally {
         setSavingAppInativoMsg(false);
+      }
+    })();
+  };
+
+  const handleSaveLgpdTermsText = () => {
+    if (
+      isSuperAdmin !== true
+      || rpcMissing
+      || busy
+      || savingLgpdTerms
+      || loadingLgpdTerms
+      || !lgpdAtivo
+    ) {
+      return;
+    }
+
+    const trimmed = lgpdTermsText.trim();
+
+    if (!trimmed) {
+      Toast.show({
+        type: 'error',
+        text1: 'Texto obrigatório',
+        text2: 'Informe o texto de consentimento LGPD desta instância.',
+        visibilityTime: 4500,
+      });
+      return;
+    }
+
+    setSavingLgpdTerms(true);
+
+    void (async () => {
+      try {
+        await saveAppParameterValue(LGPD_TERMOS_PARAMETER, trimmed);
+        setLgpdTermsText(trimmed);
+        clearAppParameterCache(LGPD_TERMOS_PARAMETER);
+        Toast.show({
+          type: 'success',
+          text1: 'Texto LGPD salvo',
+          text2: 'O consentimento desta instância foi atualizado.',
+          visibilityTime: 3500,
+        });
+      } catch (saveError) {
+        console.error('Erro ao salvar LGPD_Termos:', saveError);
+        Toast.show({
+          type: 'error',
+          text1: 'Parâmetro LGPD_Termos',
+          text2:
+            saveError instanceof Error
+              ? saveError.message
+              : `Não foi possível salvar o texto LGPD. ${SALVAR_APP_PARAMETER_ADMIN_SQL_HINT}`,
+          visibilityTime: 6000,
+        });
+      } finally {
+        setSavingLgpdTerms(false);
       }
     })();
   };
@@ -1072,6 +1213,16 @@ export function MaintenanceAccessControlCard({
           onSaveAppInativoMsg={handleSaveAppInativoMsg}
           minimal={minimal}
         />
+        <LgpdTermsParameterControls
+          lgpdAtivo={lgpdAtivo}
+          lgpdTermsText={lgpdTermsText}
+          loadingLgpdTerms={loadingLgpdTerms}
+          savingLgpdTerms={savingLgpdTerms}
+          canEdit={false}
+          onChangeLgpdTermsText={setLgpdTermsText}
+          onSaveLgpdTermsText={handleSaveLgpdTermsText}
+          minimal={minimal}
+        />
         <Text
           style={[
             maintenancePanelStyles.panelHint,
@@ -1113,6 +1264,16 @@ export function MaintenanceAccessControlCard({
         onToggleAppAtivo={handleToggleAppAtivo}
         onChangeAppInativoMsg={setAppInativoMsg}
         onSaveAppInativoMsg={handleSaveAppInativoMsg}
+        minimal={minimal}
+      />
+      <LgpdTermsParameterControls
+        lgpdAtivo={lgpdAtivo}
+        lgpdTermsText={lgpdTermsText}
+        loadingLgpdTerms={loadingLgpdTerms}
+        savingLgpdTerms={savingLgpdTerms}
+        canEdit={isSuperAdmin === true && !rpcMissing && !busy}
+        onChangeLgpdTermsText={setLgpdTermsText}
+        onSaveLgpdTermsText={handleSaveLgpdTermsText}
         minimal={minimal}
       />
       {!minimal ? <View style={maintenancePanelStyles.panelSubtitleSpacer} /> : null}
@@ -2136,6 +2297,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 10,
     textAlignVertical: 'top',
+  },
+  lgpdTermsInput: {
+    minHeight: 140,
   },
   appInativoMsgSaveButton: {
     alignSelf: 'flex-start',

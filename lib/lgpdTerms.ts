@@ -4,6 +4,9 @@ import { resolveActiveIgrejaBranding } from '@/lib/tenantSession';
 /** Fallback neutro até carregar Nome_Entidade / nome da instância. */
 export const DEFAULT_LGPD_ENTITY_NAME = 'igreja';
 
+/** Texto completo do consentimento LGPD por instância (`app_parameters`). */
+export const LGPD_TERMOS_PARAMETER = 'LGPD_Termos';
+
 const LGPD_TERMS_SUFFIX =
   'respeita a privacidade de seus membros e visitantes, comprometendo-se a coletar e tratar os dados estritamente necessários para gestão administrativa, controle de segurança, atividades eclesiásticas e para a divulgação de eventos e ações da igreja em mídias sociais e outros veículos oficiais de comunicação, sempre em estrita observância à Lei Geral de Proteção de Dados (LGPD - Lei nº 13.709/2018).';
 
@@ -35,6 +38,15 @@ export async function loadLgpdEntityName() {
 }
 
 export async function loadLgpdTermsText() {
+  try {
+    const stored = await getAppParameterValue(LGPD_TERMOS_PARAMETER);
+    if (stored?.trim()) {
+      return stored.trim();
+    }
+  } catch (error) {
+    console.error('Erro ao carregar LGPD_Termos:', error);
+  }
+
   const entityName = await loadLgpdEntityName();
   return buildLgpdTermsText(entityName);
 }
