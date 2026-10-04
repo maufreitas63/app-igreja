@@ -258,6 +258,7 @@ function IgrejasAdminPanel() {
 
       if (activeTenantId === church.id) {
         await persistExitWebsiteRedirectSettings({
+          tenantId: church.id,
           enabled: draft.exitRedirect,
           websiteUrl: normalizeOptionalHttpsUrl(social.website_url ?? draft.website),
         });
@@ -938,8 +939,8 @@ function IgrejasAdminPanel() {
                       </View>
                     </View>
                     <Text style={styles.logoHint}>
-                      Com «Ao sair» ligado, o botão Sair redireciona para este site. Pode informar
-                      www.ibnorte.com.br — o https:// é acrescentado ao salvar.
+                      «Ao sair» só redireciona nesta instância, com o switch ligado e a URL
+                      preenchida. Sem URL ou com o switch desligado, o Sair apenas encerra o app.
                     </Text>
                     <Text style={styles.socialFieldLabel}>Instagram (URL)</Text>
                     <TextInput

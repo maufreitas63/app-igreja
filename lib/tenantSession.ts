@@ -740,6 +740,7 @@ export async function setIgrejaSocialLinksAdmin(
     const activeTenantId = await getStoredTenantId();
     if (activeTenantId && activeTenantId === tenantId.trim()) {
       await persistExitWebsiteRedirectSettings({
+        tenantId: tenantId.trim(),
         enabled: exitRedirectWebsite,
         websiteUrl: result.website_url ?? websiteUrl ?? null,
       });
