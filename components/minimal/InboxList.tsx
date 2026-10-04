@@ -23,8 +23,10 @@ type Props = {
   items: InboxListItem[];
   emptyMessage?: string;
   onItemPress?: (item: InboxListItem) => void;
-  /** Altura da janela da lista em número de linhas visíveis (padrão: 4). */
+  /** Altura da janela da lista em número de linhas visíveis (padrão: 4). Ignorado com `fillAvailable`. */
   maxVisibleRows?: number;
+  /** Ocupa o espaço do pai e rola verticalmente (home mobile). */
+  fillAvailable?: boolean;
 };
 
 /** Lista de eventos — cada linha é um botão minimalista que abre detalhes. */
@@ -33,6 +35,7 @@ export function InboxList({
   emptyMessage = 'Nenhum item.',
   onItemPress,
   maxVisibleRows = INBOX_VISIBLE_EVENT_ROWS,
+  fillAvailable = false,
 }: Props) {
   if (!items.length) {
     return <Text style={styles.empty}>{emptyMessage}</Text>;
@@ -43,11 +46,15 @@ export function InboxList({
 
   return (
     <ScrollView
-      style={[styles.list, { maxHeight: listMaxHeight, minHeight: listMaxHeight }]}
+      style={[
+        styles.list,
+        fillAvailable ? styles.listFill : { maxHeight: listMaxHeight, minHeight: 0 },
+      ]}
       contentContainerStyle={styles.listContent}
       nestedScrollEnabled
       showsVerticalScrollIndicator
       keyboardShouldPersistTaps="handled"
+      bounces
     >
       {items.map((item) => (
         <Pressable
@@ -89,13 +96,27 @@ const styles = StyleSheet.create({
     backgroundColor: MINIMAL_UI.background,
     flexGrow: 0,
     overflow: 'hidden',
-    ...(Platform.OS === 'web' ? ({ boxSizing: 'border-box' } as object) : null),
+    ...(Platform.OS === 'web'
+      ? ({
+          boxSizing: 'border-box',
+          overflowY: 'auto',
+          touchAction: 'pan-y',
+          WebkitOverflowScrolling: 'touch',
+        } as object)
+      : null),
+  },
+  listFill: {
+    flex: 1,
+    flexGrow: 1,
+    minHeight: 0,
+    maxHeight: undefined,
   },
   listContent: {
     flexGrow: 0,
     width: '100%',
     maxWidth: '100%',
     gap: INBOX_EVENT_ROW_GAP,
+    paddingBottom: 8,
   },
   eventButton: {
     width: '100%',

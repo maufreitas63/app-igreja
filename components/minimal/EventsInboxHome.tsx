@@ -4,7 +4,6 @@ import { HomeInboxPagerNav } from '@/components/minimal/HomeInboxPagerNav';
 import {
   InboxList,
   INBOX_LIST_MAX_HEIGHT,
-  INBOX_VISIBLE_EVENT_ROWS,
   type InboxListItem,
 } from '@/components/minimal/InboxList';
 import { KnowledgeSectionTitle } from '@/components/knowledge/KnowledgeSectionTitle';
@@ -46,6 +45,7 @@ import {
   ActivityIndicator,
   NativeScrollEvent,
   NativeSyntheticEvent,
+  Platform,
   ScrollView,
   StyleSheet,
   Text,
@@ -319,7 +319,9 @@ export function EventsInboxHome() {
   const minPageHeight = INBOX_LIST_MAX_HEIGHT + 44;
   const pageSizeStyle = {
     width: resolvedPageWidth,
-    height: Math.max(pageHeight, minPageHeight),
+    ...(pageHeight > 0
+      ? { height: pageHeight }
+      : { minHeight: minPageHeight, flex: 1 }),
   };
 
   return (
@@ -367,7 +369,7 @@ export function EventsInboxHome() {
                 items={inboxItems}
                 emptyMessage="Nenhum evento disponível no momento."
                 onItemPress={handleItemPress}
-                maxVisibleRows={INBOX_VISIBLE_EVENT_ROWS}
+                fillAvailable
               />
             </View>
           </View>
@@ -395,6 +397,8 @@ export function EventsInboxHome() {
                   contentContainerStyle={styles.avisosListContent}
                   nestedScrollEnabled
                   showsVerticalScrollIndicator
+                  keyboardShouldPersistTaps="handled"
+                  bounces
                 >
                   {opportunityNotices.map((item) => (
                     <View key={`opportunity-${item.id}`} style={styles.avisoCard}>
@@ -504,27 +508,31 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   inboxSection: {
-    flexGrow: 1,
-    flexShrink: 0,
-    minHeight: INBOX_LIST_MAX_HEIGHT + 44,
+    flex: 1,
+    minHeight: 0,
     width: '100%',
     maxWidth: '100%',
-    overflow: 'visible',
+    overflow: 'hidden',
     backgroundColor: MINIMAL_UI.background,
   },
   avisosSection: {
-    flexGrow: 1,
-    flexShrink: 0,
-    minHeight: INBOX_LIST_MAX_HEIGHT + 44,
+    flex: 1,
+    minHeight: 0,
     width: '100%',
     maxWidth: '100%',
     overflow: 'hidden',
   },
   avisosList: {
-    flexGrow: 0,
-    minHeight: INBOX_LIST_MAX_HEIGHT,
-    maxHeight: INBOX_LIST_MAX_HEIGHT,
+    flex: 1,
+    minHeight: 0,
     width: '100%',
+    ...(Platform.OS === 'web'
+      ? ({
+          overflowY: 'auto',
+          touchAction: 'pan-y',
+          WebkitOverflowScrolling: 'touch',
+        } as object)
+      : null),
   },
   avisosListContent: {
     gap: 8,
@@ -560,6 +568,8 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: '100%',
     flexShrink: 0,
+    zIndex: 2,
+    backgroundColor: MINIMAL_UI.background,
   },
   sectionTitle: MINIMAL_SECTION_TITLE,
   loader: {
