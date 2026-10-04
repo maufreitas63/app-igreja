@@ -160,7 +160,6 @@ declare
   v_actor uuid := public.current_session_profile_id();
   v_phone text;
   v_password text;
-  v_other_code text;
 begin
   if v_actor is null then
     return jsonb_build_object('success', false, 'message', 'Sessão inválida.');
@@ -188,21 +187,9 @@ begin
     );
   end if;
 
-  if v_phone is not null then
-    select i.code
-      into v_other_code
-      from public.igrejas i
-     where i.id <> p_tenant_id
-       and public.canonical_br_phone_digits(i.cel_totem) = v_phone
-     limit 1;
-
-    if v_other_code is not null then
-      return jsonb_build_object(
-        'success', false,
-        'message', 'Este celular já é o totem da instância ' || v_other_code || '.'
-      );
-    end if;
-  end if;
+  -- Sem unicidade global entre igrejas: o login do totem já isola por tenant
+  -- (verify_totem_login + current_session_tenant_id). O mesmo aparelho pode
+  -- servir de totem em mais de uma instância.
 
   update public.igrejas
      set cel_totem = v_phone,
