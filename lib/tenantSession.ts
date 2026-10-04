@@ -704,11 +704,9 @@ export async function setIgrejaSocialLinksAdmin(
     p_website_url: normalizeOptionalHttpsUrl(websiteUrl),
     p_instagram_url: normalizeOptionalHttpsUrl(instagramUrl),
     p_youtube_url: normalizeOptionalHttpsUrl(youtubeUrl),
+    // Sempre envia o 5º parâmetro — evita cair em overload antigo de 4 args.
+    p_exit_redirect_website: exitRedirectWebsite === true,
   };
-
-  if (typeof exitRedirectWebsite === 'boolean') {
-    payload.p_exit_redirect_website = exitRedirectWebsite;
-  }
 
   const { data, error } = await supabase.rpc('set_igreja_social_links_admin', payload);
 
@@ -735,13 +733,14 @@ export async function setIgrejaSocialLinksAdmin(
     exit_redirect_website?: boolean;
   };
 
-  if (result?.success && typeof exitRedirectWebsite === 'boolean') {
+  if (result?.success) {
     const { persistExitWebsiteRedirectSettings } = await import('@/lib/exitWebsiteRedirect');
     const activeTenantId = await getStoredTenantId();
+    const savedExit = result.exit_redirect_website === true;
     if (activeTenantId && activeTenantId === tenantId.trim()) {
       await persistExitWebsiteRedirectSettings({
         tenantId: tenantId.trim(),
-        enabled: exitRedirectWebsite,
+        enabled: savedExit,
         websiteUrl: result.website_url ?? websiteUrl ?? null,
       });
     }

@@ -1,38 +1,10 @@
 -- =============================================================================
--- Site oficial: normaliza URL sem https:// + checkbox "ao sair redireciona"
+-- Corrige persistência de exit_redirect_website (overload PostgREST)
 -- =============================================================================
--- Aplica: npx supabase db query --linked -f scripts/igreja-exit-redirect-website.sql
+-- Havia duas assinaturas de set_igreja_social_links_admin; o save usava a de
+-- 4 args e ignorava o switch «Ao sair». Fica uma única função com o 5º parâmetro.
+-- Aplica: npx supabase db query --linked -f scripts/igreja-exit-redirect-persist-fix.sql
 -- =============================================================================
-
-alter table public.igrejas
-  add column if not exists exit_redirect_website boolean not null default false;
-
-comment on column public.igrejas.exit_redirect_website is
-  'Se true, ao encerrar sessão o app redireciona para website_url da instância.';
-
-create or replace function public.normalize_optional_https_url(p_url text)
-returns text
-language plpgsql
-immutable
-as $$
-declare
-  v_url text := nullif(trim(coalesce(p_url, '')), '');
-begin
-  if v_url is null then
-    return null;
-  end if;
-
-  if v_url ~* '^https?://' then
-    return v_url;
-  end if;
-
-  if left(v_url, 2) = '//' then
-    return 'https:' || v_url;
-  end if;
-
-  return 'https://' || v_url;
-end;
-$$;
 
 drop function if exists public.set_igreja_social_links_admin(uuid, text, text, text);
 drop function if exists public.set_igreja_social_links_admin(uuid, text, text, text, boolean);
@@ -80,6 +52,7 @@ begin
     return jsonb_build_object('success', false, 'message', 'URL do YouTube inválida (use https://...).');
   end if;
 
+  -- Switch ligado sem URL: não grava redirect (comportamento pedido).
   if v_exit and v_web is null then
     v_exit := false;
   end if;
@@ -111,36 +84,6 @@ $$;
 grant execute on function public.set_igreja_social_links_admin(uuid, text, text, text, boolean)
   to authenticated;
 
-create or replace function public.list_igreja_exit_redirect_admin()
-returns table (
-  tenant_id uuid,
-  exit_redirect_website boolean,
-  website_url text
-)
-language plpgsql
-stable
-security definer
-set search_path = public
-as $$
-declare
-  v_actor uuid := public.current_session_profile_id();
-begin
-  if v_actor is null or not public.profile_has_super_admin_role(v_actor) then
-    return;
-  end if;
-
-  return query
-  select
-    i.id,
-    coalesce(i.exit_redirect_website, false),
-    nullif(trim(i.website_url), '')
-  from public.igrejas i
-  order by i.name asc;
-end;
-$$;
-
-grant execute on function public.list_igreja_exit_redirect_admin() to authenticated;
-
 create or replace function public.get_session_exit_website_redirect()
 returns jsonb
 language plpgsql
@@ -154,7 +97,11 @@ declare
   v_url text := null;
 begin
   if v_tenant is null then
-    return jsonb_build_object('enabled', false, 'website_url', null);
+    return jsonb_build_object(
+      'enabled', false,
+      'website_url', null,
+      'tenant_id', null
+    );
   end if;
 
   select coalesce(i.exit_redirect_website, false), nullif(trim(i.website_url), '')
@@ -162,15 +109,20 @@ begin
     from public.igrejas i
    where i.id = v_tenant;
 
-  if not coalesce(v_enabled, false) or v_url is null then
-    return jsonb_build_object('enabled', false, 'website_url', null);
-  end if;
-
   v_url := public.normalize_optional_https_url(v_url);
+
+  if not coalesce(v_enabled, false) or v_url is null then
+    return jsonb_build_object(
+      'enabled', false,
+      'website_url', null,
+      'tenant_id', v_tenant
+    );
+  end if;
 
   return jsonb_build_object(
     'enabled', true,
-    'website_url', v_url
+    'website_url', v_url,
+    'tenant_id', v_tenant
   );
 end;
 $$;
