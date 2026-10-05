@@ -174,11 +174,30 @@ export const APP_DRAWER_SETTINGS_ITEMS: AppDrawerSettingsItem[] = [
     hint: 'Check-in de visitantes no Espaço Infantil',
   },
   {
+    letter: 'p0b',
+    label: 'Recepção Familiar',
+    moduleKey: 'family_reception',
+    group: 'pessoas',
+  },
+  {
+    letter: 'p0c',
+    label: 'Régua de Acolhimento',
+    moduleKey: 'visitor_followup',
+    group: 'pessoas',
+    hint: 'D+1 WhatsApp, D+4 célula, D+8 culto — após a Recepção Familiar',
+  },
+  {
     letter: 'p1',
     label: 'Lista de Membros',
     moduleKey: 'menu_membros',
     group: 'pessoas',
     hint: 'Diretório da comunidade',
+  },
+  {
+    letter: 'p1a',
+    label: 'Cadastro de Usuário',
+    moduleKey: 'profile_cadastro',
+    group: 'pessoas',
   },
   {
     letter: 'p1b',
@@ -225,25 +244,6 @@ export const APP_DRAWER_SETTINGS_ITEMS: AppDrawerSettingsItem[] = [
     moduleKey: 'generosity_moderation',
     group: 'pessoas',
     hint: 'Doações e pedidos de empréstimo',
-  },
-  {
-    letter: 'p7',
-    label: 'Recepção Familiar',
-    moduleKey: 'family_reception',
-    group: 'pessoas',
-  },
-  {
-    letter: 'p7b',
-    label: 'Régua de Acolhimento',
-    moduleKey: 'visitor_followup',
-    group: 'pessoas',
-    hint: 'D+1 WhatsApp, D+4 célula, D+8 culto — após a Recepção Familiar',
-  },
-  {
-    letter: 'p8',
-    label: 'Cadastro de Usuário',
-    moduleKey: 'profile_cadastro',
-    group: 'pessoas',
   },
   {
     letter: 'p9',
