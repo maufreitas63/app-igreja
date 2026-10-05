@@ -74,6 +74,7 @@ begin
       );
   end;
 
+  -- Alinha com Mudança de Papéis: só visitante efetivo conta como pendência de admissão.
   select exists (
     select 1
       from public.new_registration_inbox i
@@ -82,6 +83,7 @@ begin
        and i.reviewed_at is null
        and i.registered_at >= (timezone('America/Sao_Paulo', now()) - interval '30 days')
        and not public.profile_is_tstmax_test_profile(p.id)
+       and public.profile_is_effectively_visitor(p.id)
   )
     into v_has_new;
 

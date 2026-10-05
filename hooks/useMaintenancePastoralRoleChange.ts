@@ -13,13 +13,23 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 
 export { PASTORAL_BASIC_ROLE_OPTIONS, PASTORAL_ROLE_CHANGE_SQL_HINT };
 
-export function useMaintenancePastoralRoleChange(isActive: boolean) {
+export function useMaintenancePastoralRoleChange(
+  isActive: boolean,
+  initialRoleFilter: PastoralBasicRoleCode | null = null
+) {
   const [searchQuery, setSearchQuery] = useState('');
-  const [roleFilter, setRoleFilter] = useState<PastoralBasicRoleCode | null>(null);
+  const [roleFilter, setRoleFilter] = useState<PastoralBasicRoleCode | null>(initialRoleFilter);
   const [allProfiles, setAllProfiles] = useState<PastoralRoleChangeProfile[]>([]);
   const [loading, setLoading] = useState(false);
   const [savingProfileId, setSavingProfileId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!isActive || !initialRoleFilter) {
+      return;
+    }
+    setRoleFilter(initialRoleFilter);
+  }, [isActive, initialRoleFilter]);
 
   const loadProfiles = useCallback(async () => {
     setLoading(true);

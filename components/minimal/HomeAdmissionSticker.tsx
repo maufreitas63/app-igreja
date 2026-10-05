@@ -66,7 +66,8 @@ export function HomeAdmissionSticker() {
       return;
     }
 
-    void navigateDrawerMenuItem(router, 'mudanca_papeis');
+    // Novos visitantes: abre Mudança Papéis já filtrada em Visitante.
+    void navigateDrawerMenuItem(router, 'mudanca_papeis', { roleFilter: 'visitante' });
   };
 
   const destinationLabel = hasReceptionPending

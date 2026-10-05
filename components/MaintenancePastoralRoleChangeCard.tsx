@@ -20,9 +20,10 @@ import {
   profileHasMembershipDateLink,
 } from '@/lib/pastoralRoleChangeApi';
 import { sessionCanAccessAtribuicoes } from '@/lib/atribuicoesApi';
+import { pickRouteParam } from '@/lib/dashboardReturnNavigation';
 import { CONTAIN_WIDTH } from '@/lib/minimalPresentation';
 import { MINIMAL_SECTION_TITLE, MINIMAL_UI } from '@/lib/minimalUiTheme';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useMemo, useState } from 'react';
 import Toast from 'react-native-toast-message';
 import {
@@ -67,6 +68,16 @@ export function MaintenancePastoralRoleChangeCard({
   minimal = false,
 }: Props) {
   const router = useRouter();
+  const { roleFilter: roleFilterParam } = useLocalSearchParams<{
+    roleFilter?: string | string[];
+  }>();
+  const requestedRoleFilter = pickRouteParam(roleFilterParam);
+  const initialRoleFilter =
+    requestedRoleFilter === 'visitante'
+    || requestedRoleFilter === 'congregado'
+    || requestedRoleFilter === 'member'
+      ? requestedRoleFilter
+      : null;
   const [canOpenAtribuicoes, setCanOpenAtribuicoes] = useState(false);
   const [membershipDateEditor, setMembershipDateEditor] = useState<MembershipDateEditorState | null>(
     null
@@ -84,7 +95,7 @@ export function MaintenancePastoralRoleChangeCard({
     updateProfileRole,
     updateMembershipDate,
     reloadProfiles,
-  } = useMaintenancePastoralRoleChange(isActive);
+  } = useMaintenancePastoralRoleChange(isActive, initialRoleFilter);
 
   useEffect(() => {
     if (!isActive) {

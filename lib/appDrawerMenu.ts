@@ -513,12 +513,13 @@ const DRAWER_NAVIGATE = { method: 'push' as const };
 
 export async function navigateDrawerMenuItem(
   router: Router,
-  moduleKey: AppDrawerModuleKey
+  moduleKey: AppDrawerModuleKey,
+  extraParams?: Record<string, string>
 ) {
   markDrawerNavigation();
 
   try {
-    await navigateDrawerMenuItemBody(router, moduleKey);
+    await navigateDrawerMenuItemBody(router, moduleKey, extraParams);
   } finally {
     pinDestinationAfterPush();
   }
@@ -526,7 +527,8 @@ export async function navigateDrawerMenuItem(
 
 async function navigateDrawerMenuItemBody(
   router: Router,
-  moduleKey: AppDrawerModuleKey
+  moduleKey: AppDrawerModuleKey,
+  extraParams?: Record<string, string>
 ) {
   if (isDrawerMenuPlaceholder(moduleKey)) {
     return;
@@ -808,6 +810,7 @@ async function navigateDrawerMenuItemBody(
       params: withMinimalPresentation({
         panel: maintenancePanel,
         returnRoute: FAIL_CLOSED_REDIRECT_PATH,
+        ...(extraParams ?? {}),
       }),
     });
   }
