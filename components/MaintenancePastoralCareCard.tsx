@@ -644,6 +644,79 @@ export function MaintenancePastoralCareCard({
                   </TouchableOpacity>
                 );
               })}
+              {canCancelSelectedRequest ? (
+                <TouchableOpacity
+                  style={[
+                    styles.stageButton,
+                    styles.deleteCancellationButton,
+                    minimal && styles.stageButtonMinimal,
+                    minimal && styles.deleteCancellationButtonMinimal,
+                  ]}
+                  onPress={() => {
+                    if (!selectedRequestId || isApprovingCancellation || rpcMissing) {
+                      return;
+                    }
+
+                    void (async () => {
+                      const motivoLabel = selectedRequest?.motivo?.trim() || 'este pedido';
+                      const reasonText = selectedRequest?.cancellation_request_reason?.trim();
+                      const dialogMessage = reasonText
+                        ? `O solicitante pediu o cancelamento de "${motivoLabel}".\n\nJustificativa:\n${reasonText}\n\nDeseja excluir este pedido do banco de dados?`
+                        : `O solicitante pediu o cancelamento de "${motivoLabel}".\n\nDeseja excluir este pedido do banco de dados?`;
+                      const confirmed = await confirmDialog(
+                        'Excluir pedido',
+                        dialogMessage,
+                        'Excluir',
+                        'Voltar',
+                        { destructive: true }
+                      );
+
+                      if (!confirmed) {
+                        return;
+                      }
+
+                      const result = await approveCancellation(selectedRequestId);
+
+                      if (!result.success && result.message) {
+                        Toast.show({
+                          type: 'error',
+                          text1: 'Cuidado pastoral',
+                          text2: result.message,
+                          visibilityTime: 4500,
+                        });
+                        return;
+                      }
+
+                      Toast.show({
+                        type: 'success',
+                        text1: 'Cuidado pastoral',
+                        text2: 'Pedido excluído.',
+                        visibilityTime: 3500,
+                      });
+                    })();
+                  }}
+                  disabled={isApprovingCancellation || rpcMissing || !selectedRequestId}
+                  activeOpacity={0.85}
+                  accessibilityLabel="Excluir pedido com solicitação de cancelamento"
+                >
+                  {isApprovingCancellation ? (
+                    <ActivityIndicator
+                      color={minimal ? '#B91C1C' : '#FEE2E2'}
+                      size="small"
+                    />
+                  ) : (
+                    <Text
+                      style={[
+                        styles.stageButtonText,
+                        styles.deleteCancellationButtonText,
+                        minimal && styles.deleteCancellationButtonTextMinimal,
+                      ]}
+                    >
+                      Excluir
+                    </Text>
+                  )}
+                </TouchableOpacity>
+              ) : null}
             </View>
             {isSavingFollowUpStage ? (
               <ActivityIndicator
@@ -697,65 +770,6 @@ export function MaintenancePastoralCareCard({
                   </>
                 ) : null}
               </View>
-            ) : null}
-            {canCancelSelectedRequest ? (
-              <TouchableOpacity
-                style={[styles.cancellationButton, minimal && styles.cancellationButtonMinimal]}
-                onPress={() => {
-                  if (!selectedRequestId || isApprovingCancellation || rpcMissing) {
-                    return;
-                  }
-
-                  void (async () => {
-                    const motivoLabel = selectedRequest?.motivo?.trim() || 'este pedido';
-                    const reasonText = selectedRequest?.cancellation_request_reason?.trim();
-                    const dialogMessage = reasonText
-                      ? `O solicitante pediu o cancelamento de "${motivoLabel}".\n\nJustificativa:\n${reasonText}\n\nDeseja excluir este pedido?`
-                      : `O solicitante pediu o cancelamento de "${motivoLabel}".\n\nDeseja excluir este pedido?`;
-                    const confirmed = await confirmDialog(
-                      'Cancelar pedido',
-                      dialogMessage,
-                      'Cancelar pedido',
-                      'Voltar',
-                      { destructive: true }
-                    );
-
-                    if (!confirmed) {
-                      return;
-                    }
-
-                    const result = await approveCancellation(selectedRequestId);
-
-                    if (!result.success && result.message) {
-                      Toast.show({
-                        type: 'error',
-                        text1: 'Cuidado pastoral',
-                        text2: result.message,
-                        visibilityTime: 4500,
-                      });
-                    }
-                  })();
-                }}
-                disabled={isApprovingCancellation || rpcMissing || !selectedRequestId}
-                activeOpacity={0.85}
-                accessibilityLabel="Cancelar pedido em acompanhamento"
-              >
-                {isApprovingCancellation ? (
-                  <ActivityIndicator
-                    color={minimal ? MINIMAL_UI.onDark : '#FECACA'}
-                    size="small"
-                  />
-                ) : (
-                  <Text
-                    style={[
-                      styles.cancellationButtonText,
-                      minimal && styles.cancellationButtonTextMinimal,
-                    ]}
-                  >
-                    Cancelar pedido
-                  </Text>
-                )}
-              </TouchableOpacity>
             ) : null}
           </View>
         </ScrollView>
@@ -1224,6 +1238,21 @@ const styles = StyleSheet.create({
   stageButtonLead: {
     minWidth: 78,
   },
+  deleteCancellationButton: {
+    borderColor: 'rgba(248, 113, 113, 0.55)',
+    backgroundColor: 'rgba(127, 29, 29, 0.35)',
+    minWidth: 78,
+  },
+  deleteCancellationButtonMinimal: {
+    borderColor: '#FCA5A5',
+    backgroundColor: '#FEF2F2',
+  },
+  deleteCancellationButtonText: {
+    color: '#FEE2E2',
+  },
+  deleteCancellationButtonTextMinimal: {
+    color: '#B91C1C',
+  },
   stageButtonDone: {
     borderColor: 'rgba(34, 211, 238, 0.65)',
     backgroundColor: 'rgba(34, 211, 238, 0.2)',
@@ -1319,33 +1348,5 @@ const styles = StyleSheet.create({
   },
   cancellationRequestReasonTextMinimal: {
     color: '#78350F',
-  },
-  cancellationButton: {
-    alignSelf: 'stretch',
-    width: '100%',
-    marginTop: 10,
-    minHeight: 40,
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: '#F87171',
-    backgroundColor: 'rgba(127, 29, 29, 0.55)',
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  cancellationButtonMinimal: {
-    borderRadius: 12,
-    borderColor: '#DC2626',
-    backgroundColor: '#DC2626',
-  },
-  cancellationButtonText: {
-    color: '#FECACA',
-    fontSize: 14,
-    fontWeight: '800',
-  },
-  cancellationButtonTextMinimal: {
-    color: MINIMAL_UI.onDark,
-    fontWeight: '700',
   },
 });
