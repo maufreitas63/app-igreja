@@ -92,13 +92,25 @@ const children = [
   }),
   new Paragraph({
     alignment: AlignmentType.CENTER,
-    spacing: { after: 360 },
+    spacing: { after: 80 },
     children: [
       new TextRun({
         text: 'Mapa das telas, da navegação e das interações visíveis no aplicativo',
         font: 'Calibri',
         size: 22,
         italics: true,
+        color: C.slate600,
+      }),
+    ],
+  }),
+  new Paragraph({
+    alignment: AlignmentType.CENTER,
+    spacing: { after: 360 },
+    children: [
+      new TextRun({
+        text: 'Atualizado em 05/10/2026',
+        font: 'Calibri',
+        size: 20,
         color: C.slate600,
       }),
     ],
@@ -118,7 +130,7 @@ const children = [
   bullet('À direita, o logotipo da igreja da sessão.'),
   bullet('Quando um evento da agenda está aberto, o topo troca o título pelo nome daquele evento, sem perder o menu.'),
   h2('Menu lateral'),
-  bullet('Abre deslizando sobre a tela. Lista atalhos da vida comunitária: Início, Perfil, Financeiro, Minha Célula, Escalas, murais, Sugestões, Como faço…?, Redes Sociais e Sobre o Conecta+.'),
+  bullet('Abre deslizando sobre a tela. Lista atalhos da vida comunitária: Início, Perfil, Financeiro, Documentos oficiais, Minha Célula, Escalas, murais, Apoio Mútuo, Sugestões, Como faço…?, Redes Sociais e Sobre o Conecta+.'),
   bullet('No cabeçalho do menu há uma engrenagem. Ela abre as Configurações, agrupadas em Operação e Segurança, Gestão de Pessoas, Culto e Eventos, Finanças e Inteligência, e Governança e TI.'),
   bullet('Grupos da engrenagem expandem e recolhem. Itens mostram ícone, nome, uma frase de contexto e uma seta. Há um atalho de ajuda no topo e, quando disponível, Instâncias no rodapé das configurações.'),
   bullet('Uma barra no fim do drawer encerra a sessão.'),
@@ -127,7 +139,7 @@ const children = [
   h2('Ajuda na própria tela'),
   bullet('Muitos títulos trazem um “i” à direita. O toque abre o artigo de ajuda daquela tela, sem sair do contexto.'),
   h2('Busca Enxergar'),
-  bullet('Em listas longas, a busca pode abrir um painel no topo da tela. A pessoa digita e vê o recorte imediatamente, em vez de varrer a página inteira.'),
+  bullet('Em listas longas, o padrão Enxergar abre a busca e os resultados filtrados em um modal no topo da tela. A pessoa mantém o mesmo critério de pesquisa daquela lista e vê o recorte imediatamente, em vez de varrer a página inteira.'),
   h2('Diálogos e avisos'),
   bullet('Toasts confirmam ações, avisam ausência de dados ou pedem atenção.'),
   bullet('Caixas de confirmação pedem sim/não antes de atos irreversíveis.'),
@@ -151,6 +163,7 @@ const children = [
   bullet(
     'Convite por link: um endereço com o código da igreja grava a instância e abre o login já apontando para aquele ambiente.'
   ),
+  bullet('O mesmo telefone pode existir em igrejas diferentes. No totem, telefone e PIN são validados dentro da instância ativa, sem misturar cadastros de outros tenants.'),
 
   h1('4. Início — o centro da experiência'),
   p(
@@ -163,9 +176,16 @@ const children = [
   p(
     'As páginas seguintes do pager reúnem comunicados: avisos publicados, lembretes pastorais, campanhas, oportunidades de voluntariado, generosidade, empréstimo de livros e trocas de escala. Itens não lidos podem ser marcados como lidos. Setas ou o deslize passam de uma página a outra.'
   ),
+  h2('Admissão e celebrações do dia'),
+  p(
+    'Uma etiqueta amarela retrátil de admissão fica sempre disponível para o Super Administrador. Para Secretaria e Equipe Pastoral, aparece quando há pendência. Se houver cadastro na Recepção Familiar, abre esse painel; caso contrário, abre Mudança de Papéis já filtrada em Visitante. Sem pendências, o Super Administrador vê a confirmação de que não há novos registros aguardando admissão.'
+  ),
+  p(
+    'O bolo de celebração só aparece quando há aniversário pessoal ou aniversário de casamento naquele dia. A lista mostra as celebrações de hoje; para Secretaria e Super Administrador, oferece também a cópia da mensagem pronta de felicitação.'
+  ),
   h2('Eu quero…'),
   p(
-    'No rodapé da home, a pessoa escolhe uma intenção. Contribuir abre um submenu: Dízimos e Ofertas (informa o valor e copia o Pix), Campanhas e Projetos (Pix já identificado na campanha) e Prímicias (compromisso com um item em espécie). Ao lado, Fazer um pedido de oração abre o cuidado pastoral. Na mesma linha do título há o atalho da assistente em conversa (Abigail), em janela sobre a home, para perguntas em linguagem natural.'
+    'No rodapé da home, a pessoa escolhe uma intenção. Contribuir abre um submenu: Dízimos e Ofertas (informa o valor e copia o Pix), Campanhas e Projetos (Pix já identificado na campanha) e Prímicias (compromisso com um item em espécie). Cuidado Pastoral é o caminho publicado para pedido de oração, intercessão, conversa ou acompanhamento. Na mesma linha do título Eu quero… fica o atalho da assistente Abigail, em janela sobre a home, para perguntas em linguagem natural.'
   ),
 
   h1('5. Telas da vida da comunidade'),
@@ -204,6 +224,10 @@ const children = [
   p(
     'Doações e pedidos de empréstimo entre a comunidade, com acompanhamento do status e avisos.'
   ),
+  h3('Apoio Mútuo'),
+  p(
+    'A pessoa escolhe primeiro uma categoria de serviço, vê os nomes da comunidade que oferecem aquele trabalho e toca em um nome para abrir o cartão completo, com apresentação e meios de contato.'
+  ),
   h3('Sugestões'),
   p(
     'Canal para enviar ideias e melhorias, e acompanhar o que já foi registrado.'
@@ -218,7 +242,7 @@ const children = [
   ),
   h3('Cuidado pastoral (pedido de oração)'),
   p(
-    'Formulário para compartilhar um pedido com a equipe. Uma tela à parte mostra o histórico de atendimentos quando a pessoa já passou por horários de cuidado.'
+    'Formulário para compartilhar um pedido com a equipe. Uma tela à parte mostra o histórico e, quando o pedido já está em acompanhamento, exibe um banner para solicitar cancelamento com justificativa. A confirmação e o botão Excluir ficam reservados ao Super Administrador.'
   ),
   h3('Trilha de discipulado'),
   p(
@@ -228,9 +252,9 @@ const children = [
   p(
     'Lançar e acompanhar prestações de contas pessoais ligadas à igreja, com formulário e listagem.'
   ),
-  h3('Aniversariantes, lista de membros, mapa e administrativo'),
+  h3('Aniversariantes, lista de membros, mapa e documentos'),
   p(
-    'Diretório da comunidade, lista de aniversariantes, mapa com pins das famílias e área de atos constitutivos ou documentos administrativos da igreja — sempre como telas de consulta e, quando o fluxo permite, de edição pontual.'
+    'Diretório da comunidade, lista de aniversariantes, mapa com pins das famílias e Documentos oficiais da igreja — atas de assembleia e outros arquivos publicados — sempre como telas de consulta e, quando o fluxo permite, de edição pontual.'
   ),
   h3('Livros doados'),
   p(
@@ -260,6 +284,8 @@ const children = [
 
   h2('Gestão de Pessoas'),
   bullet('Lista de membros: diretório pesquisável da comunidade.'),
+  bullet('Lista de Famílias: diretório por núcleo familiar, com busca e consulta dos integrantes autorizados.'),
+  bullet('Visitantes — Cadastro Rápido: registra o visitante, gera o crachá/QR e prepara o compartilhamento pelo WhatsApp.'),
   bullet('Mapa de geolocalização: mapa interativo com pins das famílias.'),
   bullet('Aniversariantes: recorte por data.'),
   bullet('Cuidados pastorais: fila de pedidos e grade de horários (slots) para atendimento.'),
@@ -277,6 +303,7 @@ const children = [
   bullet('Cronograma de eventos: linha do tempo tipo Gantt com os eventos no calendário.'),
   bullet('Manutenção de avisos: comunicados que alimentam o inbox da home.'),
   bullet('Sala(s) — check-in: operação das salas no momento do culto (chamada / servidor).'),
+  bullet('Espaço Infantil: na Agenda da Família, o responsável apresenta o QR para check-in e check-out; na Sala, a equipe lê o mesmo código para registrar entrega e retirada segura.'),
   bullet('Tipos de escala: cadastro dos tipos de serviço.'),
   bullet('Servos em disponibilidade: quem se declarou disponível.'),
   bullet('Programação de escalas: montagem da escala no calendário.'),
@@ -293,16 +320,20 @@ const children = [
   bullet('Como faço…? e Base de conhecimento: leitura e edição dos artigos de ajuda.'),
   bullet('Relatórios: consultas e exportações operacionais.'),
   bullet('Controle de acesso: perfis, papéis e pessoas; interruptores de aplicativo ativo, gestão da instância e privacidade; matriz de “ver” e “editar” por tela.'),
-  bullet('Mudança de papéis: busca da pessoa e alteração do papel, com lista filtrada no topo (Enxergar).'),
+  bullet('Mudança de papéis: busca da pessoa e alteração do vínculo, com lista filtrada no topo (Enxergar). Atribuições aparece ao lado e liga ou desliga papéis operacionais sem substituir a jornada de vínculo.'),
   bullet('Transferência de membro: mover alguém entre igrejas/instâncias.'),
-  bullet('Acesso usuários: visão de quem entrou e como usa o sistema.'),
-  bullet('Modo Ghost: ver a aplicação com os olhos de outra pessoa, sem sair da sessão atual.'),
+  bullet('Acesso usuários: visão de quem entrou e como usa o sistema, exclusiva do Super Administrador.'),
+  bullet('Modo Ghost: ver a aplicação com a identidade efetiva de outra pessoa, sem sair da sessão atual. O auditor permanece na rota escolhida, sem retorno forçado ao Início e sem ser enviado à cobrança por causa do perfil-alvo.'),
   bullet(
     'Assinaturas: cartões de plano com preço e capacidade, checkout em janela segura, contratos gerados na tela, renovação e encerramento da contratação, com avisos visíveis do estado do pagamento.'
   ),
   bullet('Aliança Conecta Reino e Indicados: indicação de igrejas, acompanhamento financeiro da parceria e funil visual (kanban) dos indicados.'),
   bullet('Instâncias (Igrejas): criar e alternar ambientes.'),
   bullet('Chave da assistente: configuração da API de conversa da Abigail.'),
+  h2('Gestão comercial e bloqueios'),
+  p(
+    'Gestão Liberada desliga o paywall comercial para toda a instância, mas não concede permissões de tela. Assinaturas reúne planos, contratos, Stripe, renovação e cancelamento. Com a gestão bloqueada e sem condição comercial válida, a engrenagem respeita o bloqueio; o Super Administrador continua apto a administrar a cobrança. No Ghost, assinatura, tenant e paywall são avaliados pela identidade real do auditor, nunca pelo alvo.'
+  ),
 
   h2('Painel de manutenção'),
   p(
@@ -355,7 +386,7 @@ const children = [
   ),
   h3('Sair'),
   p(
-    'Barra Encerrar sessão no menu, ou simplesmente Fechar até o Início. Sessão expirada leva à tela de sessão encerrada e de novo ao login.'
+    'Barra Encerrar sessão no menu, ou simplesmente Fechar até o Início. Sessão expirada leva à tela de sessão encerrada e de novo ao login. Cada instância pode ligar a opção Ao sair e informar uma URL oficial; nesse caso, somente depois de limpar a sessão o app abre o site configurado. Com o switch desligado, o logout apenas volta ao login.'
   ),
 
   h1('9. O que a experiência privilegia'),

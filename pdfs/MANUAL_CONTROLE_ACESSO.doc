@@ -35,7 +35,7 @@ xmlns="http://www.w3.org/TR/REC-html40">
 <p>Este manual descreve <strong>como operar</strong> o controle de acesso no dia a dia: instalação, atribuição de papéis, ajuste de permissões, testes e resolução de problemas.</p>
 <p>Documentação técnica de referência: <a href="CONTROLE_ACESSO.md">&lt;code&gt;CONTROLE_ACESSO.md&lt;/code&gt;</a> · <a href="CAMADAS_SEGURANCA.md">&lt;code&gt;CAMADAS_SEGURANCA.md&lt;/code&gt;</a></p>
 <p><strong>Pacote:</strong> <a href="PACOTE_3_GOVERNANCA_TI.md">&lt;code&gt;PACOTE_3_GOVERNANCA_TI.md&lt;/code&gt;</a> · <strong>Índice:</strong> <a href="INDICE_DOCUMENTACAO.md">&lt;code&gt;INDICE_DOCUMENTACAO.md&lt;/code&gt;</a></p>
-<p><strong>Atualizado em:</strong> 02/07/2026</p>
+<p><strong>Atualizado em:</strong> 05/10/2026</p>
 <hr>
 <h2>1. Para quem é este manual</h2>
 <table><thead><tr>
@@ -114,6 +114,11 @@ xmlns="http://www.w3.org/TR/REC-html40">
 <td><code>super_admin</code></td>
 <td>Super administrador</td>
 <td>Configura o ACL; acesso amplo</td>
+</tr>
+<tr>
+<td><code>gestor_controle_acesso</code></td>
+<td>Gestor em Controle de Acesso</td>
+<td>Opera papéis e grants com escudo obrigatório sobre o Super Administrador</td>
 </tr>
 </tbody></table>
 <p><strong>Ordem no painel (aba Papéis e lista de papéis do perfil):</strong> Visitantes → Congregado → Membro → Responsável familiar → Líder → Administrador de eventos → <strong>Tesoureiro</strong> → Equipe pastoral → Super administrador.</p>
@@ -194,6 +199,39 @@ xmlns="http://www.w3.org/TR/REC-html40">
 <p>F --&gt; R</p>
 <p>F --&gt; P</p>
 <p>```</p>
+<h3>2.6 Modo Ghost e identidade efetiva</h3>
+<ul>
+<li>Perfil, telefone, família, ACL, listas e dados são resolvidos pela identidade do perfil-alvo.</li>
+<li>O bypass do <code>super_admin</code> real não é herdado pelo alvo simulado.</li>
+<li>O auditor permanece na rota aberta; ACL negada no alvo não força retorno ao Início nem mostra uma cobertura de “Sem acesso nesta simulação”.</li>
+<li>Apenas iniciar e encerrar o Ghost levam ao Início. Assinatura, paywall e instância usam o operador real, evitando redirecionamento para <code>/billing</code> por causa do alvo.</li>
+</ul>
+<h3>2.7 Rotas publicadas recentes</h3>
+<table><thead><tr>
+<th>Recurso de tela</th>
+<th>Uso</th>
+</tr></thead><tbody>
+<tr>
+<td><code>/lista-familias</code></td>
+<td>Diretório de famílias</td>
+</tr>
+<tr>
+<td><code>/visitantes-cadastro-rapido</code></td>
+<td>Cadastro rápido e QR do visitante</td>
+</tr>
+<tr>
+<td><code>/documentos-oficiais</code></td>
+<td>Documentos oficiais publicados</td>
+</tr>
+<tr>
+<td><code>/apoio-mutuo</code></td>
+<td>Serviços oferecidos pela comunidade</td>
+</tr>
+<tr>
+<td><code>/atribuicoes</code></td>
+<td>Atribuição de papéis operacionais, quando presente no catálogo</td>
+</tr>
+</tbody></table>
 <hr>
 <h2>3. Instalação e pré-requisitos (uma vez)</h2>
 <p>Execute no <strong>SQL Editor do Supabase</strong>, nesta ordem:</p>
@@ -341,9 +379,11 @@ xmlns="http://www.w3.org/TR/REC-html40">
 <hr>
 <h2>4. Operação pelo aplicativo (recomendado)</h2>
 <h3>4.1 Quem pode abrir a manutenção de ACL</h3>
-<p>1. Perfil com papel <strong><code>super_admin</code></strong>.</p>
+<p>1. Perfil com papel <strong><code>super_admin</code></strong> ou <strong><code>gestor_controle_acesso</code></strong>, conforme grants da instância.</p>
 <p>2. Acesso à tela <strong>Manutenção</strong> (<code>/maintenance-dashboard</code>) — normalmente só <code>super_admin</code> ou quem tiver grant explícito nessa tela.</p>
-<p>3. No carrossel de manutenção, o card <strong>Controle de Acesso</strong> só aparece para <code>super_admin</code>.</p>
+<p>3. Na engrenagem, <strong>Controle de Acesso</strong> aparece somente com o recurso <code>maintenance.card.access_control</code>.</p>
+<p>O Gestor opera sob um escudo no SQL: não lista, visualiza ou edita perfil/papel <code>super_admin</code>, não vê seus registros de acesso e não vê nem concede PIN/senha. Os filtros do cliente são apenas defesa adicional.</p>
+<!-- Proteção aplicada: Gestor não tem visibilidade do Super Administrador -->
 <h3>4.2 Aba <strong>Perfis</strong> — atribuir papéis a uma pessoa</h3>
 <p><strong>Objetivo:</strong> definir <em>quem</em> é membro, quem cuida de eventos, quem é admin, etc.</p>
 <p><strong>Passo a passo:</strong></p>
@@ -355,6 +395,7 @@ xmlns="http://www.w3.org/TR/REC-html40">
 <p><strong>Regras de segurança:</strong></p>
 <ul>
 <li>O sistema <strong>impede remover o último</strong> <code>super_admin</code> do banco.</li>
+<li>O Gestor em Controle de Acesso nunca recebe o Super Administrador na lista de perfis ou papéis e não pode contornar isso por chamada direta às RPCs.</li>
 <li>Após mudar papéis de <strong>si mesmo</strong> ou de quem está testando, peça <strong>Sair → entrar de novo</strong> no app.</li>
 </ul>
 <h3>4.3 Aba <strong>Papéis</strong> — ajustar o que cada papel pode fazer</h3>
@@ -389,6 +430,7 @@ xmlns="http://www.w3.org/TR/REC-html40">
 <td>Atribuir papel <code>events_admin</code> à pessoa (aba Perfis); revisar grants do papel em Telas/Tabelas</td>
 </tr>
 </tbody></table>
+<p><strong>Acessos de Usuários:</strong> <code>maintenance.card.profile_access_insights</code> é exclusivo de <code>super_admin</code>. O Gestor não pode abrir, consultar ou limpar esse histórico, mesmo que um grant legado esteja incorreto.</p>
 <h3>4.4 O que o membro comum experiencia (sem ser admin)</h3>
 <table><thead><tr>
 <th>Área</th>
@@ -604,6 +646,7 @@ xmlns="http://www.w3.org/TR/REC-html40">
 <h3>7.4 Ao alterar política de privacidade</h3>
 <ul>
 <li>[ ] Revisar colunas <code>profiles.cpf</code>, <code>profiles.medical_food_alerts</code>, <code>profiles.access_pin</code> no papel <code>member</code>.</li>
+<li>[ ] Revisar <code>LGPD_Ativo</code> e o texto LGPD da <strong>instância ativa</strong>; cada igreja mantém seu próprio conteúdo e aceite.</li>
 <li>[ ] Documentar internamente quem pode ver dados sensíveis.</li>
 </ul>
 <hr>
@@ -704,6 +747,21 @@ xmlns="http://www.w3.org/TR/REC-html40">
 <td>Controle de Acesso não aparece</td>
 <td>Perfil não é <code>super_admin</code></td>
 <td>Atribuir papel (seção 3.1)</td>
+</tr>
+<tr>
+<td>Gestor procura Super Administrador ou PIN</td>
+<td>Escudo de segurança funcionando</td>
+<td>Não liberar: essa invisibilidade é obrigatória e aplicada no SQL</td>
+</tr>
+<tr>
+<td>Acessos de Usuários não aparece</td>
+<td>Recurso exclusivo de <code>super_admin</code></td>
+<td>Entrar com Super Administrador; não conceder ao Gestor</td>
+</tr>
+<tr>
+<td>Ghost volta ao Início ou abre billing</td>
+<td>Fluxo usando identidade/navegação real incorretamente</td>
+<td>Conferir helpers de identidade efetiva e <code>ghostBlocksHomeBounce()</code></td>
 </tr>
 <tr>
 <td>Erro ao abrir Controle de Acesso</td>
@@ -836,7 +894,7 @@ xmlns="http://www.w3.org/TR/REC-html40">
 </tr>
 </tbody></table>
 <hr>
-<p><em>Última atualização: julho/2026 — visão por recurso no ACL, detalhe de pin no mapa, audiência com congregados, cache de navegação.</em></p>
+<p><em>Última atualização: 05/10/2026 — escudo do Gestor, identidade efetiva no Ghost, recursos publicados e LGPD por instância.</em></p>
 </div>
 </body>
 </html>

@@ -11,9 +11,9 @@ Leitura comercial de cada tela e menu do aplicativo, com o valor que entrega na 
 <p class="cover-meta">
 <strong>Solução:</strong> ecossistema app-igreja (PWA + mobile)<br>
 <strong>Público:</strong> liderança, secretaria, pastoral, tesouraria e operação<br>
-<strong>Base:</strong> código-fonte, rotas Expo Router, menu lateral, Índice, Painel e Manutenção<br>
-<strong>Data:</strong> 2 de setembro de 2026<br>
-<strong>Revisão:</strong> caminho publicado (Índice, menu, Eu quero… e engrenagem — sem carrossel do Painel); Cantinho da Leitura; Livros doados (ISBN, Bipar, CBL); empréstimos da Secretaria; Declaração de Privacidade LGPD no Sobre o Conecta+; Modo Ghost; Aliança Conecta Reino
+<strong>Base:</strong> código-fonte, rotas Expo Router, `lib/appDrawerMenu.ts`, `lib/frozenPublication.ts`, Início e engrenagem<br>
+<strong>Data:</strong> 05/10/2026<br>
+<strong>Revisão:</strong> Início + menu + Eu quero… + engrenagem (carrossel `/(tabs)/dashboard` congelado); sticker e Novos Membros; Abigail; Documentos oficiais; Apoio Mútuo; Gestão Liberada; Ghost sem bounce ao Início; PIN só por e-mail; multi-tenant; recepção e régua D+1/D+4/D+8
 </p>
 
 </div>
@@ -25,7 +25,7 @@ A plataforma concentra, em um único aplicativo, o que a igreja precisa para rec
 Há três camadas visíveis:
 
 1. **Entrada e confiança** — login, cadastro, LGPD, escolha da igreja e encerramento seguro da sessão.
-2. **Vida da família** — Índice, menu do membro, Perfil (carteirinha, família, trilha, reembolsos e Cantinho da Leitura), eventos, ofertas, pastoral, células, campanhas, voluntariado, mural de generosidade, financeiro de leitura e escalas.
+2. **Vida da família** — Início (eventos, avisos, sticker, Abigail, Eu quero…), menu do membro (Documentos oficiais, Apoio Mútuo, Perfil, murais, escalas), Agenda da Família, contribuições, pastoral, células e financeiro de leitura.
 3. **Operação e governança** — totem, salas, acervo e empréstimos de livros, manutenção, papéis, Ghost, relatórios, instâncias, assinatura e Aliança Conecta Reino.
 
 Cada tela abaixo segue o mesmo roteiro: título, valor comercial, propósito técnico e as duas perspectivas (usuário final e administração).
@@ -35,11 +35,11 @@ Cada tela abaixo segue o mesmo roteiro: título, valor comercial, propósito té
 | Momento | Telas-chave | Resultado para a igreja |
 |---|---|---|
 | Chegar | Login, cadastro, recuperar senha, selecionar igreja, LGPD | Identidade única, sem fila de senha improvisada |
-| Orientar-se | Índice, menu lateral, Painel, caixa de avisos | Atalhos claros; o que a pessoa pode ver já vem filtrado por papel |
-| Participar | Agenda, QR, salas, totem | Presença confirmada, crianças localizadas, culto fluindo |
-| Cuidar | Pastoral, agenda pastoral, aniversariantes, membros, mapa, células, Régua de Acolhimento | Cuidado pastoral, célula com datas reais, visitante acompanhado em etapas após a recepção |
-| Contribuir | Eu quero… / Contribuir, Dízimos e Ofertas, campanhas | PIX Copia e Cola com o valor; campanha identificada sem misturar com o dízimo |
-| Servir | Escalas, troca pontual, mural de vagas, mural de generosidade, estacionamento | Escala visível, substituição combinada, dons reconhecidos e doação/empréstimo entre irmãos |
+| Orientar-se | Início, menu lateral, caixa de avisos | Atalhos claros; ACL filtra menu e engrenagem |
+| Participar | Agenda (Início), carteirinha, geofence, totem, salas | Presença confirmada, crianças localizadas, culto fluindo |
+| Cuidar | Pastoral, sticker/recepção, régua, aniversariantes, membros, mapa, células | Visitante acompanhado após Recepção Familiar; pastoral com fila e slots |
+| Contribuir | Eu quero… → Dízimos, campanhas, Prímicias | PIX identificado; primícia em espécie separada do dízimo |
+| Servir | Escalas, mural de vagas, generosidade, Apoio Mútuo | Escala visível, voluntariado, serviços entre irmãos |
 | Ler | Cantinho da Leitura, Livros doados, empréstimos da Secretaria | Acervo ISBN, reserva do membro, retirada e renovação rastreadas |
 | Governar | Manutenção, ACL, papéis, transferência, Ghost, igrejas, billing, Aliança | Controle institucional com rastreio e auditoria de telas |
 
@@ -59,7 +59,7 @@ Cada tela abaixo segue o mesmo roteiro: título, valor comercial, propósito té
 
 ### Propósito e conexões
 
-Valida telefone + PIN no servidor (`verificar_login`), restaura sessão, oferece biometria no aparelho nativo (atalho, sem substituir o PIN) e encaminha conforme o estado do perfil: Índice, cadastro incompleto, LGPD pendente ou totem. Liga-se a `/register`, `/forgot-password`, `/selecionar-igreja`, LGPD e `cel_totem`.
+Valida telefone + PIN no servidor (`verificar_login`), restaura sessão, oferece biometria no aparelho nativo (atalho, sem substituir o PIN) e encaminha conforme o estado do perfil: Início, cadastro incompleto, LGPD pendente ou totem. **Primeiro acesso e recuperação:** PIN **somente por e-mail** (WhatsApp não entrega PIN de autenticação). Liga-se a `/register`, `/forgot-password`, `/selecionar-igreja`, LGPD e `cel_totem`.
 
 <div class="split">
 <div class="vision user">
@@ -137,7 +137,7 @@ A plataforma atende mais de uma instância. Esta tela deixa explícito em qual i
 
 ### Propósito e conexões
 
-Resolve o `tenant_id` da sessão, carrega branding e parâmetros da instância (prefixo familiar, PIX, totem). Alimenta Índice, ofertas, carteirinha e billing.
+Resolve o `tenant_id` da sessão, carrega branding e parâmetros da instância (prefixo familiar, PIX, totem). Alimenta Início, ofertas, carteirinha e billing (isolamento por tenant).
 
 <div class="split">
 <div class="vision user">
@@ -235,9 +235,9 @@ Fila única de acolhimento, com aceite ou recusa institucional — não um amont
 
 <div class="screen">
 
-## Índice do Aplicativo
+## Início
 
-<p class="route">Rota <code>/(tabs)</code> · tela inicial autenticada</p>
+<p class="route">Rota <code>/(tabs)</code> · tela inicial autenticada (publicada)</p>
 
 ### Descrição comercial
 
@@ -245,7 +245,7 @@ Fila única de acolhimento, com aceite ou recusa institucional — não um amont
 
 ### Propósito e conexões
 
-Atalhos e avisos na própria home (`EventsInboxHome`). Toque no culto abre a **Agenda da Família**. **Eu quero… → Contribuir** reúne Dízimos e Ofertas e Campanhas e Projetos; o pedido de oração abre o Coração Aberto. Rodapé de sessão: Encerrar sessão. A engrenagem de gestão **não** fica neste topo: só aparece depois de abrir o Menu, se o papel tiver item de manutenção. Marca d’água da instância. A caixa de avisos recarrega em tempo real e não repete o mesmo recado já visto — inclui recados do culto, trocas de escala, marcos de campanha, vagas ministeriais e **avisos do Mural de Generosidade**. **Fechar** em telas de conteúdo devolve ao Índice; só Encerrar sessão limpa o aparelho. O carrossel antigo `/(tabs)/dashboard` **não é produto publicado**: a rota só redireciona para a tela dedicada (Célula → `/pequeno-grupo`, Mural de Oportunidades → `/mural-oportunidades`).
+Pager **Próximos Eventos** e **Avisos** (`EventsInboxHome`). Toque no culto abre a **Agenda da Família**. **Eu quero… → Contribuir** reúne Dízimos e Ofertas, Campanhas e Projetos e **Prímicias**; **Cuidado Pastoral** abre o Coração Aberto. **Sticker** de admissão (`HomeAdmissionSticker`) sinaliza recepção/papéis pendentes. **Abigail** (chat IA) ao lado de Eu quero… para papéis autorizados. Bolo de aniversários do dia quando há celebração. Engrenagem no topo do Início para quem tem ACL. Marca d’água da instância. Avisos em tempo real (culto, escala, campanha, generosidade, pastoral). **Fechar** em telas de conteúdo devolve ao Início; Encerrar sessão limpa o aparelho. `/(tabs)/dashboard` **só redireciona**; `/(tabs)/explore` congelada — ver `lib/frozenPublication.ts`.
 
 <div class="split">
 <div class="vision user">
@@ -267,11 +267,11 @@ Atalhos respeitam ACL. Quem não deve ver Financeiro ou Membros simplesmente nã
 
 ### Descrição comercial
 
-É o corredor interno da plataforma, separado com clareza. Na parte de cima, só a vida do membro: Início, Perfil, Financeiro, Minha Célula, Escalas, Mural de Oportunidades, **Mural de Generosidade**, Sugestões, Redes Sociais e Sobre o Conecta+. Dízimos e Campanhas não aparecem aqui: já estão em **Eu quero… → Contribuir**. A engrenagem concentra a gestão em cinco grupos que começam recolhidos — Operação e Segurança, Gestão de Pessoas, Culto e Eventos, Finanças e Inteligência, Governança e TI. O título abre a lista. Quem não tem o papel nem vê o item — e a URL administrativa não entrega a ferramenta ao membro comum.
+É o corredor interno da plataforma. Itens publicados em `APP_DRAWER_MENU_ITEMS`: Início, Perfil, Financeiro, **Documentos oficiais**, Minha Célula, Escalas, Mural de Oportunidades, **Mural de Generosidade**, **Apoio Mútuo**, Sugestões, Como faço…?, Redes Sociais e Sobre o Conecta+. Contribuições e pastoral ficam em **Eu quero…**. A **engrenagem** (ícone no Início) lista `APP_DRAWER_SETTINGS_ITEMS` em cinco grupos recolhíveis — Operação e Segurança, Gestão de Pessoas, Culto e Eventos, Finanças e Inteligência, Governança e TI.
 
 ### Propósito e conexões
 
-Itens em `lib/appDrawerMenu.ts`, filtrados por papel, com redirecionamento fail-closed. Navega para rotas próprias ou para o carrossel da Manutenção. Configurações em `AppDrawerSettings`, nos cinco grupos acima.
+Filtragem por ACL, vínculo ativo e identidade efetiva no Ghost. Rotas dedicadas (`/documentos-oficiais`, `/apoio-mutuo`, …) — não carrossel do Painel. Manutenção em `/maintenance-dashboard` e rotas satélite (`/totem-checkin`, `/atribuicoes`, …).
 
 <div class="split">
 <div class="vision user">
@@ -293,16 +293,16 @@ A equipe entra nos módulos pela engrenagem, já agrupados. O membro comum não 
 
 ### Descrição comercial
 
-O “culto operacional” no bolso não é mais um carrossel de cards. A família agenda presença no Índice, gera QR na carteirinha, contribui e pede oração em **Eu quero…**, encontra célula, vagas, generosidade, escalas e financeiro no **menu do membro**, e a equipe opera pela **engrenagem**. Cada módulo tem tela própria, com o recorte visual da igreja, sem dez aplicativos e sem o membro “descobrir” gestão digitando URL.
+O produto publicado não é carrossel. A família agenda no **Início**, usa QR na **carteirinha**, contribui em **Eu quero…**, acessa **Documentos oficiais** e **Apoio Mútuo** no menu, e a equipe opera pela **engrenagem** agrupada por ACL.
 
 ### Propósito e conexões
 
-`lib/frozenPublication.ts`: cards do Painel antigo permanecem no repositório, congelados. Célula e Mural de Oportunidades têm rota dedicada. Deep links de card congelado resolvem para a tela viva (`resolveFrozenDashboardDeepLink` / `resolvePublishedDashboardHref`). Telas filhas devolvem ao chamador via `returnRoute` / `returnDashboardCard`. Paletas em `dashboardCardThemes`. ACL continua valendo tela a tela (`dashboard.card.*` e `ACCESS_SCREEN`).
+`lib/frozenPublication.ts` e `FROZEN_DASHBOARD_CARD_CONTENTS` (comentário only): QR, salas membro, estacionamento, cards duplicados etc. permanecem congelados. Deep links legados → `resolveFrozenDashboardDeepLink` / `resolvePublishedDashboardHref`. ACL por rota (`ACCESS_SCREEN`) e recursos de manutenção. **Não** treinar `/(tabs)/explore`.
 
 <div class="split">
 <div class="vision user">
 <h4>Visão do Usuário Final</h4>
-Encontra cada função no menu ou no rodapé, com saudação pelo nome e Fechar de volta ao Índice — sem deslizar um carrossel.
+Encontra cada função no Início, menu ou Eu quero… — sem carrossel do Painel.
 </div>
 <div class="vision admin">
 <h4>Visão da Administração</h4>
@@ -315,7 +315,7 @@ Módulos ligados ou desligados por papel. QR, salas e estacionamento não voltam
 
 ## Encerrar sessão (diálogo)
 
-<p class="route">Índice / totem · <code>confirmExitApplication</code></p>
+<p class="route">Início / totem · <code>confirmExitApplication</code></p>
 
 ### Descrição comercial
 
@@ -323,7 +323,7 @@ O botão de saída não é um “voltar” qualquer. Pede confirmação — “D
 
 ### Propósito e conexões
 
-Intercepta voltar do navegador no Índice (`AppBackHandler`). Distingue Encerrar sessão (web) de Sair do aplicativo (PWA instalado / nativo). O **Fechar** de Ofertas, Pastoral, Célula e demais conteúdos devolve ao Índice — não dispara este diálogo.
+Intercepta voltar do navegador no Início (`AppBackHandler`). Distingue Encerrar sessão (web) de Sair do aplicativo (PWA instalado / nativo). **Fechar** em Ofertas, Pastoral, Célula etc. devolve ao Início — não dispara este diálogo.
 
 <div class="split">
 <div class="vision user">
@@ -333,6 +333,110 @@ Sai quando quer, com aviso claro. Não perde a sessão ao apenas fechar uma tela
 <div class="vision admin">
 <h4>Visão da Administração</h4>
 Logout consciente em aparelhos do templo e em navegadores compartilhados.
+</div>
+</div>
+</div>
+
+<div class="screen">
+
+## Sticker de admissão
+
+<p class="route">Início · <code>HomeAdmissionSticker</code></p>
+
+### Descrição comercial
+
+Etiqueta amarela retrátil que concentra o que a recepção ainda precisa fazer — sem caçar pendência no grupo da secretaria. Prioriza **Recepção Familiar**; visitante fora da fila pode abrir **Mudança de Papéis** já filtrada em Visitante.
+
+### Propósito e conexões
+
+Inbox de novos cadastros, painel `family_reception`, régua e papéis. Super Administrador mantém atalho mesmo sem pendência; demais papéis operacionais veem quando há trabalho.
+
+<div class="split">
+<div class="vision user">
+<h4>Visão do Usuário Final</h4>
+Membro comum não é distraído; quem acolhe ganha um gesto único no Início.
+</div>
+<div class="vision admin">
+<h4>Visão da Administração</h4>
+Admissão visível no mesmo lugar em que a igreja anuncia culto e aviso.
+</div>
+</div>
+</div>
+
+<div class="screen">
+
+## Abigail (assistente IA)
+
+<p class="route">Início · modal ao lado de Eu quero…</p>
+
+### Descrição comercial
+
+Consellheira operacional para liderança: responde sobre rotas, módulos e boas práticas do Conecta+ sem tirar a pessoa do Início.
+
+### Propósito e conexões
+
+Chave Gemini por tenant (Supabase); configuração exclusiva do Super Administrador. Auditoria de perguntas/respostas conforme grant. Complementa **Como faço…?** e Base de conhecimento — não substitui Cuidado Pastoral.
+
+<div class="split">
+<div class="vision user">
+<h4>Visão do Usuário Final</h4>
+Só papéis autorizados veem o botão.
+</div>
+<div class="vision admin">
+<h4>Visão da Administração</h4>
+IA institucional, isolada por igreja, sem chave embutida no app.
+</div>
+</div>
+</div>
+
+<div class="screen">
+
+## Documentos oficiais
+
+<p class="route">Rota <code>/documentos-oficiais</code> · menu lateral</p>
+
+### Descrição comercial
+
+Canal de transparência: atas e documentos publicados pela igreja ativa, com título, tipo, data e link assinado quando disponível.
+
+### Propósito e conexões
+
+Integra atas disponibilizadas no financeiro de leitura; escopo por `tenant_id` e ACL. Distinto de **Administrativo** (engrenagem) para atos constitutivos operacionais.
+
+<div class="split">
+<div class="vision user">
+<h4>Visão do Usuário Final</h4>
+Consulta oficial no celular, sem PDF perdido no e-mail.
+</div>
+<div class="vision admin">
+<h4>Visão da Administração</h4>
+Publicação única; o menu do membro aponta para o repositório certo da instância.
+</div>
+</div>
+</div>
+
+<div class="screen">
+
+## Apoio Mútuo
+
+<p class="route">Rota <code>/apoio-mutuo</code> · menu lateral · origem em Perfil → Ofereço meus Serviços</p>
+
+### Descrição comercial
+
+Vitrine de serviços entre irmãos: categorias → nomes → cartão com contato. A igreja reconhece dons práticos (reparo, aula, cuidado) sem classificados soltos no WhatsApp.
+
+### Propósito e conexões
+
+Fluxo simples; categorias vazias desabilitadas. Selfie ou iniciais. Tenant e ACL. Separado do **Mural de Generosidade** (doação/empréstimo moderado).
+
+<div class="split">
+<div class="vision user">
+<h4>Visão do Usuário Final</h4>
+Encontra quem oferece ajuda na própria comunidade.
+</div>
+<div class="vision admin">
+<h4>Visão da Administração</h4>
+Cartões nascem do cadastro; menos planilha paralela de “prestadores”.
 </div>
 </div>
 </div>
@@ -423,7 +527,7 @@ Controle de entrada, contato imediato com o responsável e visão completa do an
 
 ## Dízimos e Ofertas
 
-<p class="route">Rota <code>/ofertas</code> · card do Painel · atalho <code>Eu quero… → Contribuir</code></p>
+<p class="route">Rota <code>/ofertas</code> · atalho <code>Início → Eu quero… → Contribuir</code></p>
 
 ### Descrição comercial
 
@@ -1585,15 +1689,15 @@ Higiene cadastral com trilha, não edição clandestina no banco.
 
 ## Recepção Familiar
 
-<p class="route">Painel <code>family_reception</code></p>
+<p class="route">Engrenagem · painel <code>family_reception</code></p>
 
 ### Descrição comercial
 
-A porta de entrada institucional da fila pública `/cadastro-familia/`. Gravar ou rejeitar em lote é acolher com processo.
+Porta institucional da fila pública `/cadastro-familia/` e dos convites. Área **Novos Membros** monta convite com pessoa já cadastrada, **`family_id`** no link e telefone preenchido. Gravar ou rejeitar em lote é acolher com processo.
 
 ### Propósito e conexões
 
-Fila do formulário standalone. Gera família/perfil oficiais. A aprovação (`processed`) dispara a **Régua de Acolhimento** para o informante (e para quem tem telefone próprio): WhatsApp no dia 1, convite à célula mais próxima no dia 4, verificação de check-in no domingo do 8º dia.
+Fila tenant-scoped. Gera/atualiza família e perfis. Aceite de visitante efetivo dispara **Régua de Acolhimento** (D+1 WhatsApp, D+4 célula, D+8 ligação pastoral). Pendências refletem no **sticker** do Início.
 
 <div class="split">
 <div class="vision user">
@@ -1667,11 +1771,11 @@ Acervo com ficha bibliográfica, empréstimo rastreado, desligado visível de ve
 
 ### Descrição comercial
 
-O coração da governança: papéis, grants, visão por papel ou por recurso. O Gestor de Controle de Acesso não vê o Super Administrador — escudo explícito. LGPD da instância liga/desliga aqui.
+Coração da governança: papéis, grants, app ativo/inativo, **LGPD Ativo** e texto LGPD por instância, **Gestão Liberada** (operação sem exigir Stripe ativo no tenant) e mensagem de indisponibilidade. Gestor em Controle de Acesso **não** vê Super Administrador, logs do SA nem PIN.
 
 ### Propósito e conexões
 
-RPCs SECURITY DEFINER amarradas à sessão do ator, matriz de grants, `assert_gestor_super_admin_shield`. Afeta todas as telas.
+RPCs SECURITY DEFINER, matriz de grants, `assert_gestor_super_admin_shield`. Afeta menu, engrenagem e rotas. Gestão Liberada distinta de instância inativa e de billing do membro.
 
 <div class="split">
 <div class="vision user">
@@ -1771,11 +1875,11 @@ Auditoria de login e navegação, com recorte de segurança entre papéis e inst
 
 ### Descrição comercial
 
-O Super Administrador vê o aplicativo **como a pessoa auditada**: menus, listas, permissões e família. Não é “login como” para operar tesouraria no nome alheio — é auditoria de ACL. Encerrar Ghost devolve a identidade real. O Gestor de Controle de Acesso não tem este item.
+Auditor vê o app **como o perfil-alvo**: menus, família, telefone, ACL e dados (RLS). Não é login compartilhado. **Sem bounce ao Início** quando o alvo não tem grant — permanece na rota escolhida (menu, Eu quero…, deep link), sem overlay “Sem acesso nesta simulação”. Paywall, `/billing` e **Selecionar igreja** usam o **operador real**. Bypass de Super Admin do operador fica desligado na ACL simulada. Iniciar Ghost → Início uma vez como alvo; encerrar → Início na identidade real.
 
 ### Propósito e conexões
 
-Toda tela em Ghost usa `loadEffectiveSessionProfile` / `resolveEffectiveProfileId` / `getEffectiveUserPhone`. `getStoredUserPhone` só para auditoria, login real, totem e encerrar Ghost. RPC `canOperateGhostMode`. Painel `maintenance.card.auditor`.
+`loadEffectiveSessionProfile`, `getEffectiveUserPhone`, `ghostBlocksHomeBounce`, `ghostPassScreenAccess`. `getStoredUserPhone` só para auditoria, login real, totem e encerrar Ghost. RPC `canOperateGhostMode`. Painel `maintenance.card.auditor`.
 
 <div class="split">
 <div class="vision user">
@@ -1907,4 +2011,4 @@ A plataforma não é um conjunto de telas soltas. É uma **jornada**:
 
 O valor para o membro é autonomia e dignidade. O valor para a administração é controle com rastreio, menos WhatsApp como sistema e um único lugar em que o culto, a família e a prestação de contas se encontram.
 
-Este documento descreve o produto como ele está no código em **31 de agosto de 2026**. Telas condicionais (QR no totem, estacionamento, servos, manutenção) aparecem somente quando o papel, o evento e os parâmetros da instância autorizam — e isso, em si, já é parte da proposta comercial: **cada pessoa vê a igreja que lhe cabe viver**. O carrossel antigo do Painel permanece congelado até ordem expressa de descongelar.
+Este documento descreve o produto publicado em **05/10/2026**: **Início**, menu, Eu quero… e engrenagem. Telas e itens de manutenção aparecem conforme papel, evento, tenant e parâmetros — **cada pessoa vê a igreja que lhe cabe viver**. O carrossel `/(tabs)/dashboard` e `/(tabs)/explore` permanecem congelados até ordem expressa de descongelar (`lib/frozenPublication.ts`).

@@ -6,7 +6,7 @@ xmlns="http://www.w3.org/TR/REC-html40">
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <meta name="ProgId" content="Word.Document">
 <meta name="Generator" content="Microsoft Word 15">
-<title>Funcionalidades do aplicativo IBN</title>
+<title>Funcionalidades do Conecta+</title>
 <style>
 
   body { font-family: Calibri, Segoe UI, sans-serif; font-size: 11pt; color: #1E293B; line-height: 1.45; }
@@ -31,472 +31,981 @@ xmlns="http://www.w3.org/TR/REC-html40">
 </head>
 <body>
 <div class="Section1">
-<h1>Funcionalidades do aplicativo IBN</h1>
-<p>Lista completa das funcionalidades do <strong>app-igreja</strong> (Igreja Batista Norte), organizada por área.</p>
-<p>Itens marcados com <em>(staff)</em> exigem permissão de manutenção ou papel administrativo.</p>
-<p><strong>Documentação relacionada:</strong> <a href="INDICE_DOCUMENTACAO.md">&lt;code&gt;INDICE_DOCUMENTACAO.md&lt;/code&gt;</a> · <a href="MANUAL_ENTREGA.md">&lt;code&gt;MANUAL_ENTREGA.md&lt;/code&gt;</a> · <a href="PACOTE_1_VISAO_GERAL.md">&lt;code&gt;PACOTE_1_VISAO_GERAL.md&lt;/code&gt;</a> · <a href="BLUEPRINT.md">&lt;code&gt;BLUEPRINT.md&lt;/code&gt;</a> · <a href="MANUAL_TREINAMENTO.md">&lt;code&gt;MANUAL_TREINAMENTO.md&lt;/code&gt;</a> · <a href="CONTROLE_ACESSO.md">&lt;code&gt;CONTROLE_ACESSO.md&lt;/code&gt;</a></p>
-<p><strong>Atualizado em:</strong> 03/07/2026</p>
+<h1>Funcionalidades do Conecta+</h1>
+<p>Referência funcional completa do <strong>Conecta+ / app-igreja</strong>, organizada pela experiência publicada e pelos públicos que operam o produto.</p>
+<p>Itens marcados como <strong>gestão</strong> dependem de papel e grant no Controle de Acesso. O conteúdo exibido também respeita a igreja ativa, a identidade efetiva da sessão e as políticas do banco.</p>
+<blockquote><strong>Estado do produto em 05/10/2026.</strong> A experiência principal não é o antigo carrossel do Painel. O caminho publicado é <strong>Início + menu lateral + Eu quero… + engrenagem de manutenção</strong>. Os cards listados em <code>FROZEN_DASHBOARD_CARD_CONTENTS</code> permanecem congelados, fora da publicação e não devem ser usados como mapa funcional.</blockquote>
+<p><strong>Documentação relacionada:</strong> <a href="INDICE_DOCUMENTACAO.md">&lt;code&gt;INDICE_DOCUMENTACAO.md&lt;/code&gt;</a> · <a href="MANUAL_ENTREGA.md">&lt;code&gt;MANUAL_ENTREGA.md&lt;/code&gt;</a> · <a href="PACOTE_1_VISAO_GERAL.md">&lt;code&gt;PACOTE_1_VISAO_GERAL.md&lt;/code&gt;</a> · <a href="MANUAL_TREINAMENTO.md">&lt;code&gt;MANUAL_TREINAMENTO.md&lt;/code&gt;</a> · <a href="MANUAL_CONTROLE_ACESSO.md">&lt;code&gt;MANUAL_CONTROLE_ACESSO.md&lt;/code&gt;</a> · <a href="CONTROLE_ACESSO.md">&lt;code&gt;CONTROLE_ACESSO.md&lt;/code&gt;</a> · <a href="BLUEPRINT.md">&lt;code&gt;BLUEPRINT.md&lt;/code&gt;</a> · <a href="DEPLOY_CLOUDFLARE.md">&lt;code&gt;DEPLOY_CLOUDFLARE.md&lt;/code&gt;</a></p>
+<p><strong>Atualizado em:</strong> 05/10/2026</p>
 <hr>
-<h2>Autenticação e sessão</h2>
-<ul>
-<li>Login por <strong>celular + PIN de 4 dígitos</strong> (validação no Supabase via <code>verificar_login</code>)</li>
-<li><strong>Primeira entrada</strong> com geração de PIN temporário <strong>exclusivamente por e-mail</strong> (<code>dispatchAuthAccessPinEmail</code> / <code>dispatch_auth_access_pin_email</code>; gateway <code>lib/authNotificationService.ts</code>) — WhatsApp <strong>bloqueado</strong> no fluxo de autenticação</li>
-<li><strong>Recuperação de senha</strong> (<code>/forgot-password</code>) — pergunta de segurança + envio de <strong>novo PIN por e-mail</strong> (passo 2 do login → <strong>Esqueci minha senha</strong>; não usa WhatsApp)</li>
-<li><strong>Modo totem</strong> — login dedicado com senha <code>9999</code> e celular <code>cel_totem</code></li>
-<li>Restauração automática de sessão ao reabrir o app</li>
-<li><strong>Logout seguro</strong> — limpa telefone e <code>profile_id</code> do aparelho (<code>Sair do aplicativo</code> / <code>Encerrar sessão</code>)</li>
-<li>Redirecionamento pós-login conforme estado do perfil e parâmetro <strong><code>LGPD_Ativo</code></strong> (dashboard, cadastro, LGPD, Índice, totem)</li>
-<li>Links para <strong>Instagram</strong> e <strong>YouTube</strong> da igreja na tela de login (<strong>somente no passo 1 — celular</strong>; ocultos no passo da senha)</li>
-<li>Tela de login <strong>sem marca d'água</strong> (demais telas autenticadas exibem marca d'água discreta)</li>
-</ul>
-<hr>
-<h2>Cadastro e perfil</h2>
-<ul>
-<li><strong>Cadastro inicial</strong> — nome, nascimento, telefone, CEP; com <strong><code>LGPD_Ativo = sim</code></strong>: selfie e aceite LGPD; com <strong><code>nao</code></strong>: fluxo simplificado (sem termos, selfie nem tela <code>/lgpd</code>)</li>
-<li><strong>Trava LGPD</strong> — rolagem obrigatória dos termos antes do aceite</li>
-<li>Upload de <strong>selfie</strong> (câmera nativa ou arquivo na web)</li>
-<li>Reserva automática de <strong>código de família</strong> (<code>family_id</code>)</li>
-<li>Card <strong>Perfil &amp; Identidade</strong> (<code>grouped_manage</code>) — atalho no Índice e no carrossel do Painel</li>
-<li><strong>Dados cadastrais</strong> — edição de perfil com seções recolhíveis (<code>/manage-profile</code>)</li>
-<li>Campos: nome, nascimento, CPF, e-mail, telefone, endereço completo</li>
-<li><strong>Sync de endereço por CEP</strong> (RPC <code>sync_profile_address_from_cep</code>)</li>
-<li><strong>Alteração de senha de acesso</strong> (PIN atual → novo PIN)</li>
-<li><strong>Selfie</strong> — captura, substituição com confirmação</li>
-<li><strong>Veículos</strong> — cadastro de placa, marca, modelo e cor</li>
-<li><strong>Vincular à família</strong> — busca por código e solicitação de vínculo</li>
-<li><strong>Trilha de Discipulado</strong> — 5 passos × 3 lições com progresso sequencial; <strong>selos coloridos</strong> por passo (céu, esmeralda, royal, laranja, dourado) + selo dourado final; galeria <strong>Minhas Conquistas / Selos</strong>; na lição <strong>5.1 Descobrindo meus Dons</strong>, o <strong>Perfil Ministerial</strong> (50 perguntas / 10 etapas); gates de conclusão no servidor (<code>upsert_my_discipleship_lesson_progress</code>); alertas pastorais por módulo e de certificado ao fechar a trilha; admin em <strong>Manutenção da Trilha</strong> (Temas, Reconhecimentos, Reset)</li>
-<li><strong>Paleta de cores</strong> — seletor no rodapé do card Perfil &amp; Identidade</li>
-<li><strong>Onboarding</strong> — fluxo guiado para completar cadastro pendente</li>
-<li><strong>Termos LGPD</strong> — tela dedicada para aceite/recusa com registro no banco</li>
-<li>Controle de colunas por <strong>ACL</strong> (campos visíveis/editáveis por papel)</li>
-</ul>
-<hr>
-<h2>Família</h2>
-<ul>
-<li><strong>Gerenciar família</strong> — CRUD de membros (<code>members</code>)</li>
-<li>Busca de perfil existente por <strong>telefone</strong> ou <strong>nome</strong> ao adicionar membro</li>
-<li><strong>Transferência entre famílias</strong> — se a pessoa já pertence a outra família, o gestor confirma a transferência para a sua</li>
-<li>Parentesco (cônjuge, filho(a), etc.)</li>
-<li><strong>Reconhecimento familiar</strong> — checkbox de aceite por membro (toggle na lista)</li>
-<li><strong>Herança de endereço completo</strong> — ao aceitar, transferir ou adicionar membro, o endereço do gestor (CEP, rua, número, complemento, bairro, cidade, estado) é copiado para o perfil do membro (<code>lib/inheritFamilyAddress.ts</code>)</li>
-<li>Sincronização de <code>family_id</code> em <code>members</code> e <code>profiles</code> via RPC <code>accept_managed_member_into_family</code> (<code>scripts/sync-managed-member-profile-family-rpc.sql</code>)</li>
-<li>Proteção do <strong>representante legal</strong> (não pode ser excluído)</li>
-<li>Detecção de duplicatas (nome + telefone na família)</li>
-<li>Indicadores visuais <strong>Kids/Teens</strong> por idade</li>
-</ul>
-<hr>
-<h2>Painel principal (Dashboard)</h2>
-<ul>
-<li>Carrossel horizontal de <strong>cards</strong> (deslize ou botões <code>‹</code> / <code>›</code> no rodapé)</li>
-<li>Indicador de posição no rodapé (<code>1 / N</code>) e badge do card ativo no cabeçalho</li>
-<li>Botões <code>‹</code> / <code>›</code> avançam 1 card a cada 500 ms enquanto pressionados</li>
-<li>Padding responsivo conforme largura da tela (<code>lib/uiTokens.ts</code>)</li>
-<li>Saudação personalizada com nome do membro</li>
-<li>Alerta visual se <strong>LGPD pendente</strong> (cabeçalho vermelho)</li>
-<li>Banner de <strong>ACL indisponível</strong> (modo estrito)</li>
-<li><strong>Índice do Aplicativo</strong> (<code>/(tabs)/index</code>) — tela inicial com etiquetas/atalhos para cada card; distribuição uniforme na altura da tela</li>
-<li>Tela de <strong>Menu/atalhos</strong> legada integrada ao índice; <strong>ícones coloridos</strong> por módulo</li>
-<li>Botão central <strong>Menu</strong> ocupa a largura útil do rodapé; ícone <strong>Configurações</strong> (manutenção) alinhado à direita quando visível</li>
-<li><strong>Cache de sessão e ACL</strong> — permissões e perfil reutilizados em memória entre cards (<code>lib/asyncResultCache.ts</code>), sem refetch completo a cada foco de tela</li>
-<li>Cards filtrados por <strong>permissão de perfil</strong> (ACL)</li>
-<li><strong>Paletas visuais distintas</strong> por tipo de card (<code>lib/dashboardCardThemes.ts</code>)</li>
-<li><strong>Retorno ao card de origem</strong> — telas abertas a partir do dashboard (perfil, família, mapa, pastoral, financeiro) voltam ao card que as chamou via parâmetro <code>returnDashboardCard</code></li>
-<li>Toasts com <strong>mensagens longas em múltiplas linhas</strong> (<code>components/ui/appToastConfig.tsx</code>)</li>
-</ul>
-<h3>Cards do dashboard (membro)</h3>
+<h2>1. Visão geral e navegação publicada</h2>
+<p>O Conecta+ é uma plataforma PWA multi-tenant para membros, famílias, visitantes, liderança, secretaria, pastoral, tesouraria, voluntários e administração de múltiplas igrejas. Reúne relacionamento comunitário, eventos, contribuições, cuidado pastoral, escalas, finanças, documentos, governança e operação.</p>
+<h3>1.1 Estrutura principal</h3>
 <table><thead><tr>
-<th>Card</th>
-<th>Funcionalidades</th>
+<th>Área</th>
+<th>Papel na experiência atual</th>
 </tr></thead><tbody>
 <tr>
-<td><strong>Agenda da Família</strong></td>
-<td>Abre pelo <strong>Início</strong> (toque no culto). Vagas, inscrição/audiência, checkbox em massa; após confirmar, <strong>Adicionar</strong> grava no Google Agenda e baixa <code>.ics</code> (Apple/Outlook) no horário da igreja</td>
+<td><strong>Início</strong></td>
+<td>Caixa de entrada de próximos eventos e avisos, agenda familiar, bolo de aniversários do dia, sticker de novos membros, Abigail e bloco <strong>Eu quero…</strong></td>
 </tr>
 <tr>
-<td><strong>Check-in / QR Code</strong></td>
-<td>Etiqueta da família, QR para totem, badges Kids/Teens, modal de seleção manual</td>
+<td><strong>Menu lateral</strong></td>
+<td>Autonomia cotidiana do membro: Perfil, Financeiro, Documentos oficiais, Minha Célula, Escalas, murais, Apoio Mútuo, Sugestões, ajuda, redes e informações do produto</td>
 </tr>
 <tr>
-<td><strong>SALA(S)</strong></td>
-<td>Monitoramento read-only de entrada Kids/Teens — <strong>somente membros da própria família</strong></td>
+<td><strong>Eu quero…</strong></td>
+<td>Ações diretas: contribuir com dízimos/ofertas, campanhas/projetos e Prímicias; solicitar Cuidado Pastoral</td>
 </tr>
 <tr>
-<td><strong>Dízimos e Ofertas</strong></td>
-<td>Sempre visível no carrossel; dados do recebedor, chave PIX, <strong>Copiar chave PIX</strong> com ícone <em>touch-app</em>, atualizar chave</td>
-</tr>
-<tr>
-<td><strong>Coração Aberto</strong></td>
-<td>Atalho para pedido pastoral</td>
-</tr>
-<tr>
-<td><strong>Lista de Membros</strong></td>
-<td>Botões <strong>Visitantes</strong> e <strong>Mapa Geral</strong> na mesma linha; alternância membros/visitantes; busca <strong>Procurar membro</strong> / <strong>Procurar visitante</strong>; tabela <strong>Nome</strong> · <strong>Família</strong> · <strong>Zap</strong> · <strong>GPS</strong>; ícone <strong>users</strong> abre modal <strong>Membros da família</strong> (código, parentesco, WhatsApp); <strong>Mapa Geral</strong> com filtros Todos / Com papel / Visitantes</td>
-</tr>
-<tr>
-<td><strong>Aniversariantes</strong></td>
-<td>Filtro por mês, lista com WhatsApp</td>
-</tr>
-<tr>
-<td><strong>Financeiro</strong></td>
-<td>Hub: relatórios (<code>/financial</code>) e <strong>Relatório de Despesas (RD)</strong> destacado (<code>/expense-report</code>); Fluxo de caixa, Categorias e Relatórios extras em breve</td>
-</tr>
-<tr>
-<td><strong>Escalas</strong></td>
-<td>Lista de tipos de escala, escala por data, WhatsApp dos servos</td>
-</tr>
-<tr>
-<td><strong>Estacionamento</strong></td>
-<td>Identificação de veículo por placa, WhatsApp do proprietário</td>
-</tr>
-<tr>
-<td><strong>Perfil &amp; Identidade</strong> (<code>grouped_manage</code>)</td>
-<td>Título do card e atalho no Índice; <strong>Dados Cadastrais</strong>, <strong>Gerenciar Família</strong>, <strong>Trilha de Discipulado</strong> (Perfil Ministerial na lição 5.1) e <strong>Paleta de cores</strong></td>
+<td><strong>Engrenagem</strong></td>
+<td>Operação, pessoas, culto/eventos, finanças/inteligência, governança e TI; cada item é filtrado pela ACL</td>
 </tr>
 </tbody></table>
-<hr>
-<h2>Eventos e check-in</h2>
+<h3>1.2 O antigo Painel</h3>
 <ul>
-<li>Listagem de eventos publicados com data, local e capacidade</li>
-<li><strong>Inscrição na audiência</strong> (pré-check-in) por integrante do núcleo familiar (membros, congregados e dependentes com <code>accepted</code> ≠ <code>false</code>)</li>
-<li>Após confirmar a audiência, modal <strong>Compromisso enviado para minha agenda</strong>: <strong>Adicionar</strong> abre o Google Agenda e baixa <code>.ics</code> (fuso America/Sao_Paulo)</li>
-<li>Suporte a fluxos: <strong>check-in automático por proximidade (geofence GPS)</strong>, <strong>totem</strong>, <strong>manual</strong>, <strong>quórum</strong></li>
-<li><strong>Check-in geofence</strong> — quando <code>geofence_ativo</code> no evento e local favorito com coordenadas: o app detecta proximidade ao templo (raio e janela configuráveis em <code>app_parameters</code>) e confirma presença automaticamente após leituras GPS estáveis; fila offline para sincronização sem rede</li>
-<li><strong>Locais favoritos</strong> — cadastro de locais com nome, endereço, CEP e coordenadas; vinculados ao campo <code>event_local</code> do evento para resolver geofence</li>
-<li><strong>Invalidação de check-ins</strong> — alterações relevantes no evento ou no local favorito (nome, coordenadas, status ativo) disparam purge automático via trigger no Supabase; toast na manutenção informa famílias afetadas</li>
-<li>Gate de pré-check-in antes de liberar card QR ou geofence</li>
-<li><strong>QR Code</strong> da família para leitura no totem</li>
-<li>Card QR visível <strong>somente no dia do evento</strong> (regra configurável)</li>
-<li><strong>Quórum</strong> — um membro por sessão; trava após confirmação no totem</li>
-<li><strong>Totem</strong> (<code>/totem-checkin</code>) — scan de QR, lookup e confirmação via RPC</li>
-<li>Backfill de check-ins ao abrir fluxo do totem (<code>ensure_totem_checkin_flow</code>)</li>
-<li>Proteção contra <strong>duplo check-in</strong> e reprocessamento (cooldown, fila local)</li>
-<li>Status: pré-check-in, confirmado, já confirmado, processando</li>
-<li>Badges <strong>IBN KIDS</strong> / <strong>IBN TEENS</strong> por evento</li>
-<li>Parâmetros: <code>check_in_geofence_raio_metros</code>, <code>check_in_geofence_tempo</code> (horas antes do evento)</li>
+<li><code>/(tabs)/dashboard</code> não é o produto publicado; redireciona para a experiência viva.</li>
+<li><code>/(tabs)/explore</code> e <code>/explore</code> estão congelados.</li>
+<li>Os cards antigos de agenda, QR, salas, ofertas, pastoral, lista de membros, aniversariantes, financeiro, escalas, estacionamento, perfil, administrativo e campanhas não formam mais um carrossel operacional.</li>
+<li>Deep links antigos são resolvidos para a rota dedicada equivalente quando ela existe; caso contrário, voltam ao Início.</li>
+<li><strong>Minha Célula</strong> e <strong>Mural de Oportunidades</strong> continuam vivos em rotas dedicadas.</li>
 </ul>
 <hr>
-<h2>Salas Kids e Teens</h2>
+<h2>2. Multi-tenant, instâncias e identidade da igreja</h2>
 <ul>
-<li>Inscrição via audiência no dashboard</li>
-<li><strong>Monitor no dashboard (membro)</strong> — contagem e status read-only, filtrado por <code>family_id</code> da sessão</li>
-<li><strong>Monitor na manutenção (staff)</strong> — exibe todos os inscritos do evento (sem filtro por família)</li>
-<li><strong>Check-in de sala</strong> <em>(staff)</em> — marcação de entrada por inscrição na manutenção</li>
-<li>WhatsApp do responsável após entrada confirmada</li>
+<li>Uma instalação atende <strong>múltiplas igrejas/instâncias</strong>.</li>
+<li>A sessão mantém uma igreja ativa (<code>tenant_id</code>); consultas, RPCs, RLS, parâmetros, arquivos e operações usam esse tenant.</li>
+<li>Um usuário vinculado a mais de uma igreja escolhe onde operar em <strong>Selecionar igreja</strong>.</li>
+<li>A troca de instância atualiza identidade visual, nome/código, parâmetros, permissões, conteúdo, cobrança e caches dependentes do tenant.</li>
+<li>Perfis, famílias, eventos, avisos, contribuições, cuidado pastoral, escalas, documentos e registros de acesso são isolados por igreja.</li>
+<li>Formulários públicos carregam o tenant explicitamente para impedir que um cadastro entre na igreja errada.</li>
+<li>O Super Administrador gerencia instâncias em <strong>Instâncias (Igrejas)</strong>: identificação, estado ativo, identidade visual, contatos, redes, site, PIX e credenciais de totem.</li>
+<li>A opção <strong>Ao sair</strong> é configurada por instância. Com o switch ligado e uma URL oficial válida, o logout encerra a sessão e abre o site da igreja; sem URL ou com o switch desligado, apenas encerra o app.</li>
+<li>O mesmo número de celular pode ser configurado como <strong>totem em igrejas diferentes</strong>. Não há unicidade global: telefone e senha são validados no contexto do tenant escolhido.</li>
 </ul>
 <hr>
-<h2>Quórum e presença <em>(staff)</em></h2>
+<h2>3. Autenticação, primeiro acesso e sessão</h2>
+<h3>3.1 Login</h3>
 <ul>
-<li>Configuração <strong>Requer Quorum</strong> no evento</li>
-<li>Tabela de registro de quórum no editor de eventos (atualização a cada 15 s)</li>
-<li><strong>Lista de Presença</strong> — documento imprimível com hora do check-in</li>
-<li>Atualização automática após confirmação no totem</li>
+<li>Login por <strong>celular + PIN de 4 dígitos</strong>.</li>
+<li>O telefone é normalizado para o padrão brasileiro e o PIN é validado no servidor.</li>
+<li>Sessões recebem token próprio e carregam <code>profile_id</code> e <code>tenant_id</code>; o banco resolve a identidade por cabeçalhos de sessão.</li>
+<li>A sessão é restaurada ao reabrir o PWA, enquanto válida.</li>
+<li>Usuários vinculados a várias igrejas passam pela seleção de instância.</li>
+<li>Instância inativa direciona usuários comuns para a seleção de igreja; o Super Administrador mantém acesso administrativo.</li>
+<li>O login reconhece o dispositivo de totem e o conduz ao fluxo dedicado.</li>
+</ul>
+<h3>3.2 Primeiro acesso e recuperação do PIN</h3>
+<ul>
+<li><strong>Primeiro acesso:</strong> o PIN temporário é enviado exclusivamente por <strong>e-mail</strong>.</li>
+<li><strong>Esqueci minha senha:</strong> a recuperação valida os dados/pergunta de segurança e envia o novo PIN por <strong>e-mail</strong>.</li>
+<li><strong>WhatsApp não é canal de entrega do PIN de autenticação.</strong></li>
+<li>WhatsApp continua sendo usado em recursos operacionais — convites, acolhimento, aniversários, escalas, murais, visitantes, reembolsos e contatos — sem participar da recuperação do PIN.</li>
+<li>O celular cadastrado como totem é bloqueado no fluxo de primeiro acesso de usuário.</li>
+<li>Em Dados Cadastrais, o usuário pode trocar o PIN mediante validação do PIN atual.</li>
+</ul>
+<h3>3.3 Encerramento e segurança de sessão</h3>
+<ul>
+<li><strong>Sair do aplicativo</strong> limpa referências locais da sessão.</li>
+<li>A URL <strong>Ao sair</strong>, quando habilitada na instância, só é aberta depois do encerramento.</li>
+<li>Totem, sessão comum, sessão Ghost e troca de igreja possuem finalidades separadas.</li>
+<li>Reparos de sessão não transformam uma linha de <code>members</code> sem perfil válido em usuário autenticado.</li>
 </ul>
 <hr>
-<h2>Pastoral</h2>
+<h2>4. Cadastro, LGPD e recepção</h2>
+<h3>4.1 Cadastro inicial</h3>
 <ul>
-<li><strong>Coração Aberto</strong> — formulário de pedido de cuidado/intercessão</li>
-<li>Seleção de <strong>Motivo</strong> e <strong>Situação</strong> em chips segmentados (layout empilhado em telas estreitas)</li>
-<li>Categorias e subcategorias de motivo (<code>scripts/pastoral-request-categories.sql</code>)</li>
-<li>Beneficiário: eu, família ou terceiro</li>
-<li>Destino: <strong>Sigilo pastoral</strong> ou <strong>Intercessão</strong></li>
-<li>Envio vinculado ao perfil logado</li>
-<li><strong>Meus pedidos</strong> — histórico com status e pull-to-refresh</li>
-<li><strong>Cuidado pastoral</strong> <em>(staff)</em> — painel de gestão de pedidos na manutenção</li>
+<li>Nome completo, data de nascimento, celular, CEP e dados complementares.</li>
+<li>Preenchimento e normalização de endereço por CEP.</li>
+<li>Reserva/vinculação de código de família.</li>
+<li>Selfie por câmera ou arquivo, quando exigida.</li>
+<li>Validação de cadastro pendente antes de liberar a experiência completa.</li>
+<li>Novo cadastro entra na <strong>inbox de novos cadastros</strong>, isolada pela igreja.</li>
+</ul>
+<h3>4.2 LGPD por instância</h3>
+<ul>
+<li><code>LGPD_Ativo</code> é um parâmetro por igreja em <code>app_parameters</code>.</li>
+<li>Com LGPD ativo, o fluxo exige termos, consentimento e etapas configuradas, incluindo selfie quando aplicável.</li>
+<li>Com LGPD inativo, o cadastro segue de forma simplificada.</li>
+<li>O <strong>texto completo do consentimento LGPD também é por instância</strong>, armazenado em <code>app_parameters</code>.</li>
+<li>O Super Administrador edita o texto em <strong>Controle de Acesso</strong>; esse conteúdo é o exibido no cadastro e na tela de LGPD.</li>
+<li>Aceites ficam registrados no banco. A interface não usa um texto global fixo para todas as igrejas.</li>
+</ul>
+<h3>4.3 Cadastro público e Recepção Familiar</h3>
+<ul>
+<li><code>/cadastro-familia</code> atende famílias sem sessão autenticada e recebe o tenant no link.</li>
+<li>O formulário coleta informante, dependentes, parentesco, telefone, nascimento, endereço, data de casamento e campos de cuidado.</li>
+<li>As submissões entram em fila antes de criar/atualizar <code>profiles</code> e <code>members</code>.</li>
+<li><strong>Recepção Familiar</strong> permite:</li>
+<li>revisar lotes e integrantes;</li>
+<li>detectar família existente por telefone, nome, nascimento e código;</li>
+<li>visualizar conflitos entre famílias;</li>
+<li>corrigir data de nascimento provisória e CEP ausente;</li>
+<li>processar ou rejeitar lotes;</li>
+<li>descartar um integrante sem rejeitar necessariamente toda a família;</li>
+<li>preservar o <code>family_id</code> detectado.</li>
+<li>A área <strong>Novos Membros</strong> permite escolher uma pessoa já cadastrada para montar convite.</li>
+<li>O convite público inclui o <strong><code>family_id</code></strong> no link e preenche o <strong>telefone</strong> do convidado; nome, igreja e celular podem ser ajustados antes do envio.</li>
+<li>O convite é aberto no WhatsApp, mas o cadastro continua sendo processado pela fila da Recepção Familiar.</li>
+</ul>
+<h3>4.4 Inbox e Régua de Acolhimento</h3>
+<ul>
+<li>Cada novo <code>profile</code> gera registro operacional na inbox, com data, papel efetivo, telefone, status de visto e vínculo com a régua.</li>
+<li>A equipe pode marcar o cadastro como visto.</li>
+<li>A régua automática só começa quando o perfil é <strong>visitante efetivo</strong>: possui papel <code>visitantes</code> e não possui <code>congregado</code>, <code>member</code> ou <code>super_admin</code>.</li>
+<li>Também exige cadastro mínimo concluído, nome válido e telefone utilizável.</li>
+<li>A promoção do visitante interrompe a régua automática correspondente.</li>
+<li>A jornada padrão cria tarefas de acolhimento: WhatsApp no dia 1, convite à célula no dia 4 e ligação pastoral no dia 8.</li>
+<li>A Régua de Acolhimento oferece quadro por visitante, tarefas, vencimentos, responsáveis e conclusão.</li>
 </ul>
 <hr>
-<h2>Financeiro</h2>
-<h3>Membro (leitura)</h3>
+<h2>5. Início</h2>
+<h3>5.1 Eventos e agenda familiar</h3>
 <ul>
-<li>Seletor de mês (REALIZADO e meses só-PLANEJADO com badge)</li>
-<li><strong>Resultado do mês</strong> — boletim com saldo acumulado e YTD</li>
-<li><strong>Comparativo mensal</strong> — mês atual vs anterior</li>
-<li><strong>Últimos 12 meses</strong> — matriz de valores</li>
-<li><strong>Planejado × Realizado</strong> — comparativo de orçamento</li>
-<li><strong>Saldo bancário</strong> — saldo final por conta (REALIZADO acumulado até o mês); contas zeradas ocultas; linha <strong>Saldo total</strong></li>
-<li>Aviso quando comentários financeiros não carregam</li>
-<li>Atalho destacado <strong>Relatório de Despesas (RD)</strong> no topo do módulo</li>
+<li>A primeira página da caixa de entrada lista <strong>Próximos Eventos</strong> com nome, local, data e horário.</li>
+<li>Tocar em um evento abre a Agenda da Família.</li>
+<li>A família seleciona integrantes, verifica vagas e realiza pré-inscrição/audiência.</li>
+<li>O compromisso pode ser adicionado ao Google Agenda e exportado em <code>.ics</code>, no fuso da igreja.</li>
+<li>Eventos podem habilitar capacidade, público, salas, totem, quórum e geofence.</li>
+<li>O check-in automático por proximidade valida janela temporal, raio, precisão e leituras GPS estáveis; possui fila para sincronização.</li>
 </ul>
-<h3>Relatórios de Despesas (RD)</h3>
+<h3>5.2 Caixa de avisos</h3>
 <ul>
-<li>Membro cria RD com itens, comprovantes (colar/galeria), valor em centavos (digitação da direita para esquerda) e chave PIX (<code>/expense-report</code>)</li>
-<li>Botão <strong>Submeter e Finalizar</strong> grava o relatório e abre WhatsApp ao tesoureiro (<code>Tesoureiro_contato</code> em <code>app_parameters</code>)</li>
-<li>Membro lista RDs, abre detalhes e <strong>exclui</strong> relatórios <strong>pendentes</strong></li>
-<li>Tesouraria concilia RD pendente a lançamento financeiro na manutenção</li>
-<li><strong>Relatórios de Despesas</strong> — lista do mês na manutenção; <strong>Remover vínculo</strong> (desconciliar)</li>
-<li>Relatório mensal: pendentes pelo mês de emissão; conciliados pelo mês do <strong>lançamento vinculado</strong></li>
+<li>A segunda página reúne avisos publicados pela igreja.</li>
+<li>A mesma inbox agrega notificações de agenda pastoral, campanhas, oportunidades de voluntariado, generosidade, empréstimos de livros e trocas de escala.</li>
+<li>Avisos pessoais suportados são marcados como lidos após a carga.</li>
+<li>Avisos gerais atualizam em tempo real.</li>
 </ul>
-<h3>Manutenção <em>(staff)</em></h3>
+<h3>5.3 Bolo de aniversários</h3>
 <ul>
-<li>Importação de lançamentos via <strong>CSV</strong> ou colar planilha</li>
-<li>Modos: substituir ou acrescentar; seletor de versão <strong>REALIZADO / PLANEJADO</strong> na carga e no esvaziar mês</li>
-<li><strong>Esvaziar mês</strong> — exclusão escopada por versão orçamentária</li>
-<li>Seções colapsáveis com accordion (apenas uma aberta por vez)</li>
-<li>Picker de mês de referência ampliado; modal de comentário sem pré-preenchimento</li>
-<li>Resumo separado por versão orçamentária</li>
-<li>Mês padrão: mês anterior (limitado até o mês corrente)</li>
+<li>O bolo aparece ao lado de <strong>Próximos Eventos somente quando há celebração hoje</strong>.</li>
+<li>Exibe aniversários pessoais e <strong>aniversários de casamento</strong> do dia.</li>
+<li>A lista mensal completa permanece na rota Aniversariantes.</li>
+<li>Conforme permissão, a mensagem de felicitação pode ser copiada.</li>
+<li>A data de casamento é mantida nos integrantes; Representante Legal e Cônjuge da mesma família são sincronizados como casal.</li>
 </ul>
-<hr>
-<h2>Escalas</h2>
-<h3>Visualização <em>(membro)</em></h3>
+<h3>5.4 Sticker de admissão</h3>
 <ul>
-<li>Lista de tipos de escala no dashboard</li>
-<li>Datas, servos e contato WhatsApp</li>
-<li>Escala de estacionamento com identificação por placa</li>
+<li>A etiqueta amarela retrátil <code>HomeAdmissionSticker</code> sinaliza novos registros.</li>
+<li>Para Super Administrador, permanece disponível mesmo sem pendências; para perfis operacionais autorizados, aparece quando há pendência.</li>
+<li>Pendência de Recepção Familiar tem prioridade e abre esse painel.</li>
+<li>Novo visitante fora da recepção abre <strong>Mudança de Papéis</strong> já filtrada em Visitante.</li>
+<li>Sem pendências, informa que não há novos registros aguardando admissão.</li>
 </ul>
-<h3>Manutenção <em>(staff)</em></h3>
-<ul>
-<li><strong>Tipos de escala</strong> — CRUD de códigos, nomes, <strong>vagas por domingo</strong> e <strong>modo do ciclo</strong> (individual/equipe)</li>
-<li><strong>Servos em disponibilidade</strong> — voluntários por tipo, ordem sequencial</li>
-<li><strong>Registro manual</strong> de escala (data + servo)</li>
-<li><strong>Gerar ciclo em bloco</strong> — preview + aplicação transacional (<code>aplicar_ciclo_escala</code>)</li>
-<li>Regras: até <code>vagas_por_servico</code> servos por domingo; modo <strong>individual</strong> (cada servo em domingo distinto no ciclo) ou <strong>equipe</strong> (preenche N vagas no mesmo domingo); ordem crescente; início após MAX(data)</li>
-<li>Remoção de voluntário com recompactação de ordem</li>
-<li>Alerta de escalas futuras ao remover servo</li>
-<li>Contexto do ciclo via RPC <code>get_scale_cycle_context</code></li>
-</ul>
-<hr>
-<h2>Mapa de geolocalização (PWA/web)</h2>
-<ul>
-<li>Mapa <strong>Leaflet</strong> com pins por CEP dos perfis</li>
-<li>Filtros: todos, com papel, visitantes</li>
-<li>Geocodificação servidor-primária + cache local (<code>geoCepCache.v8</code>)</li>
-<li>Snapshot de mapa versionado (<code>profilesMapSnapshot.v7</code>)</li>
-<li><strong>Detalhe do pin</strong> (nome, papel, endereço, WhatsApp) — recurso ACL separado <code>/mapa-geolocalizacao/detalhe-pin</code>; padrão só <code>pastoral</code> e <code>super_admin</code>; demais perfis veem o mapa sem abrir localização alheia</li>
-<li>Estatísticas: perfis, pins, CEPs inválidos</li>
-<li><strong>Atualizar mapa</strong> — sincronização sob demanda</li>
-<li>ACL de perfil no mapa (visitante vs membro)</li>
-<li>Versão nativa: placeholder informando uso via PWA</li>
-</ul>
-<hr>
-<h2>Manutenção <em>(staff)</em></h2>
+<h3>5.5 Eu quero…</h3>
 <table><thead><tr>
-<th>Módulo</th>
-<th>Funcionalidades</th>
+<th>Ação</th>
+<th>Conteúdo</th>
 </tr></thead><tbody>
 <tr>
-<td><strong>Programação de Eventos</strong></td>
-<td>CRUD, publicação, totem, quórum, geofence, locais favoritos, Kids/Teens, ofertas, capacidade</td>
+<td><strong>Contribuir → Dízimos e Ofertas</strong></td>
+<td>Informa valor, apresenta recebedor e copia a chave PIX</td>
 </tr>
 <tr>
-<td><strong>Cronograma (Gantt)</strong></td>
-<td>Visão dia/mês, toque para editar evento</td>
+<td><strong>Contribuir → Campanhas e Projetos</strong></td>
+<td>Lista campanhas ativas e gera contribuição identificada</td>
 </tr>
 <tr>
-<td><strong>Sala(s) - Check In</strong></td>
-<td>Marcação interativa de entrada nas salas</td>
-</tr>
-<tr>
-<td><strong>Tipos de Escala</strong></td>
-<td>CRUD com <strong>vagas por domingo</strong> e <strong>modo do ciclo</strong> (individual/equipe)</td>
-</tr>
-<tr>
-<td><strong>Servos</strong></td>
-<td>Voluntários e ordem sequencial</td>
-</tr>
-<tr>
-<td><strong>Programação de Escalas</strong></td>
-<td>Registro manual + <strong>Escala em bloco</strong> (preview transacional)</td>
+<td><strong>Contribuir → Prímicias</strong></td>
+<td>Compromisso com item em espécie, por categoria</td>
 </tr>
 <tr>
 <td><strong>Cuidado Pastoral</strong></td>
-<td>Gestão de pedidos</td>
+<td>Pedido de oração, intercessão, conversa ou acompanhamento</td>
+</tr>
+</tbody></table>
+<h3>5.6 Abigail</h3>
+<ul>
+<li>Botão de chat ao lado do título <strong>Eu quero…</strong>, visível apenas para papéis autorizados de liderança.</li>
+<li>A assistente responde em modal próprio, sem retirar o usuário do Início.</li>
+<li>A chave Gemini pertence à igreja, fica no Supabase e não é embutida no aplicativo.</li>
+<li>Apenas o Super Administrador configura/substitui a chave.</li>
+<li>Interações podem ser auditadas com data, usuário, papel, pergunta e resposta, conforme grant.</li>
+</ul>
+<hr>
+<h2>6. Menu lateral do membro</h2>
+<p>A fonte de verdade é <code>APP_DRAWER_MENU_ITEMS</code> em <code>lib/appDrawerMenu.ts</code>.</p>
+<table><thead><tr>
+<th>Item publicado</th>
+<th>Funcionalidade</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>Início</strong></td>
+<td>Eventos, avisos, celebrações do dia, sticker, Abigail e Eu quero…</td>
 </tr>
 <tr>
-<td><strong>Informações Financeiras</strong></td>
-<td>Carga, manutenção de lançamentos e relatórios RD do mês</td>
+<td><strong>Perfil</strong></td>
+<td>Hub pessoal e familiar</td>
 </tr>
 <tr>
-<td><strong>Lista de Presença</strong></td>
-<td>Quórum — leitura e impressão</td>
+<td><strong>Financeiro</strong></td>
+<td>Informações financeiras autorizadas e documentos financeiros</td>
 </tr>
 <tr>
-<td><strong>Cadastro de Usuário</strong></td>
-<td>Busca, correção de CEP/endereço e exclusão completa de perfil <em>(super_admin)</em></td>
+<td><strong>Documentos oficiais</strong></td>
+<td>Atas de assembleia e outros documentos publicados da igreja</td>
+</tr>
+<tr>
+<td><strong>Minha Célula</strong></td>
+<td>Dados e vida do pequeno grupo do membro</td>
+</tr>
+<tr>
+<td><strong>Escalas</strong></td>
+<td>Escalas, datas, funções, contatos e solicitações de troca</td>
+</tr>
+<tr>
+<td><strong>Mural de Oportunidades</strong></td>
+<td>Oportunidades de serviço/voluntariado</td>
+</tr>
+<tr>
+<td><strong>Mural de Generosidade</strong></td>
+<td>Doações e pedidos de empréstimo, com moderação</td>
+</tr>
+<tr>
+<td><strong>Apoio Mútuo</strong></td>
+<td>Serviços oferecidos por pessoas da comunidade</td>
+</tr>
+<tr>
+<td><strong>Sugestões</strong></td>
+<td>Envio e acompanhamento de sugestões e melhorias</td>
+</tr>
+<tr>
+<td><strong>Como faço…?</strong></td>
+<td>Ajuda contextual e base de conhecimento para o uso do produto</td>
+</tr>
+<tr>
+<td><strong>Redes Sociais</strong></td>
+<td>Links oficiais configurados pela igreja</td>
+</tr>
+<tr>
+<td><strong>Sobre o Conecta+</strong></td>
+<td>Informações institucionais e do produto</td>
+</tr>
+</tbody></table>
+<p>Os itens são filtrados por ACL, vínculo ativo quando exigido e identidade efetiva no Modo Ghost.</p>
+<hr>
+<h2>7. Perfil, família e comunidade</h2>
+<h3>7.1 Hub Perfil</h3>
+<ul>
+<li><strong>Dados Cadastrais:</strong> nome, nascimento, CPF, e-mail, telefone, endereço, CEP, selfie, veículos e alteração de PIN.</li>
+<li><strong>Ofereço meus Serviços:</strong> cria o cartão que alimenta o Apoio Mútuo.</li>
+<li><strong>Gerenciar Família:</strong> integrantes, parentesco, reconhecimento, vínculos e transferências.</li>
+<li><strong>Carteirinha Digital:</strong> identificação do usuário.</li>
+<li><strong>Trilha de Discipulado:</strong> 5 passos, lições sequenciais, selos e reconhecimentos; Perfil Ministerial na lição 5.1.</li>
+<li><strong>Reembolsos:</strong> criação e consulta de Relatórios de Despesas.</li>
+<li><strong>Cantinho da Leitura:</strong> livros retirados pelo usuário.</li>
+<li>As ações aparecem conforme grants da identidade efetiva.</li>
+</ul>
+<h3>7.2 Gerenciar Família</h3>
+<ul>
+<li>CRUD de integrantes, sem permitir exclusão indevida do Representante Legal.</li>
+<li>Busca de perfil por telefone ou nome.</li>
+<li>Detecção de duplicidade e confirmação de transferência entre famílias.</li>
+<li>Sincronização de <code>family_id</code> entre <code>members</code> e <code>profiles</code>.</li>
+<li>Herança do endereço completo do responsável nos fluxos autorizados.</li>
+<li>Campos de parentesco, nascimento, telefone, aceite e data de casamento.</li>
+<li>Campos de cuidado infantil: <strong>restrição alimentar/alertas médicos</strong>, <strong>necessidades específicas</strong> e <strong>observações adicionais</strong>.</li>
+</ul>
+<h3>7.3 Lista de Famílias</h3>
+<ul>
+<li>Diretório da igreja agrupado pelo código de família.</li>
+<li>Busca uma família por <strong>código ou nome de qualquer integrante</strong>.</li>
+<li>Exibe integrantes ordenados por parentesco, nome completo e papel.</li>
+<li>Permite abrir a edição do integrante dentro do contexto familiar.</li>
+<li>A consulta é escopada ao tenant e exige vínculo ativo/permissão do diretório.</li>
+</ul>
+<h3>7.4 Lista de membros, visitantes e mapa</h3>
+<ul>
+<li>Diretório com alternância entre membros e visitantes, busca, família, WhatsApp e localização.</li>
+<li>Modal de integrantes da família.</li>
+<li>Mapa web com pins por CEP, filtros e estatísticas.</li>
+<li>Abrir detalhes de um pin exige recurso ACL próprio; ver o mapa não concede automaticamente acesso aos dados detalhados.</li>
+</ul>
+<h3>7.5 Apoio Mútuo</h3>
+<ul>
+<li>Fluxo deliberadamente simples: <strong>categorias → nomes → cartão</strong>.</li>
+<li>Primeiro mostra categorias de serviços em ordem alfabética; categorias sem oferta ficam desabilitadas.</li>
+<li>Ao escolher a categoria, abre os nomes e títulos dos ofertantes.</li>
+<li>Ao escolher a pessoa, abre cartão com serviço, apresentação, contato e ações disponíveis.</li>
+<li>Usa selfie ou iniciais e dados da própria igreja.</li>
+<li>O membro publica/edita sua oferta em <strong>Perfil → Ofereço meus Serviços</strong>.</li>
+</ul>
+<h3>7.6 Enxergar</h3>
+<ul>
+<li><strong>Enxergar</strong> é o padrão de busca ampliada aplicado a campos selecionados.</li>
+<li>Em pickers, combina pesquisa e lista filtrada em modal no topo.</li>
+<li>Em listas próprias, abre <code>EnxergarSearchModal</code> sem alterar o critério original.</li>
+<li>O usuário pesquisa com o mesmo campo de domínio — nome, telefone, código etc. — e seleciona o resultado com mais contexto.</li>
+<li>Está presente, entre outros fluxos, em Controle de Acesso, Atribuições, Mudança de Papéis, Recepção Familiar, membros e Acessos de Usuários.</li>
+</ul>
+<hr>
+<h2>8. Contribuições, campanhas e financeiro</h2>
+<h3>8.1 Dízimos, ofertas e campanhas</h3>
+<ul>
+<li>Exibe dados do recebedor e chave PIX da instância.</li>
+<li>Permite informar valor e copiar o PIX.</li>
+<li>Campanhas/projetos ativos possuem período, meta e identificação para conciliação.</li>
+<li>Prímicias registra compromissos com itens em espécie por categoria.</li>
+<li>Gestão de Campanhas cria, publica, conclui e acompanha fundos.</li>
+<li>Gestão de Prímicias mantém categorias, itens, quantidades e compromissos.</li>
+</ul>
+<h3>8.2 Financeiro para o membro</h3>
+<ul>
+<li>Resultado mensal e acumulado.</li>
+<li>Comparativo com mês anterior.</li>
+<li>Matriz dos últimos 12 meses.</li>
+<li>Planejado × Realizado.</li>
+<li>Saldos bancários por conta e saldo total.</li>
+<li>Atas de assembleias disponibilizadas no módulo também alimentam <strong>Documentos oficiais</strong>.</li>
+</ul>
+<h3>8.3 Reembolsos / Relatório de Despesas</h3>
+<ul>
+<li>RD com múltiplos itens, valores, comprovantes e chave PIX.</li>
+<li>Submissão final e contato com tesouraria.</li>
+<li>Consulta de histórico e detalhes.</li>
+<li>Exclusão pelo autor enquanto o relatório permanece pendente e elegível.</li>
+<li>Tesouraria concilia o RD com lançamento financeiro e pode remover o vínculo.</li>
+</ul>
+<h3>8.4 Manutenção financeira</h3>
+<ul>
+<li>Importação por CSV ou conteúdo colado.</li>
+<li>Versões REALIZADO e PLANEJADO.</li>
+<li>Substituição, acréscimo e esvaziamento mensal escopado.</li>
+<li>Comentários, resumos, orçamento e relatórios de despesas.</li>
+<li>Modelo Preditivo apresenta inteligência conforme dados e grant disponíveis.</li>
+</ul>
+<hr>
+<h2>9. Cuidado Pastoral</h2>
+<ul>
+<li>Pedido para o próprio usuário, família ou terceiro.</li>
+<li>Motivo, situação, categorias e subcategorias.</li>
+<li>Destino em <strong>Sigilo Pastoral</strong> ou <strong>Ministério de Intercessão</strong>.</li>
+<li>Equipe de intercessão não recebe automaticamente pedidos sigilosos.</li>
+<li><strong>Meus pedidos</strong> mostra status e histórico.</li>
+<li>Antes do início do atendimento, o solicitante pode usar <strong>Excluir</strong> quando a regra permitir.</li>
+<li>Depois que o Cuidado Pastoral inicia o acompanhamento, o membro solicita cancelamento e informa justificativa.</li>
+<li>O pedido fica aguardando análise; somente <code>super_admin</code> confirma a exclusão por <code>approve_pastoral_cancellation</code>.</li>
+<li>O painel de gestão possui fila, responsável, status, agenda e slots de atendimento.</li>
+<li>Notificações de agenda pastoral chegam à inbox do Início.</li>
+</ul>
+<hr>
+<h2>10. Eventos, Espaço Infantil e presença</h2>
+<h3>10.1 Programação e check-in</h3>
+<ul>
+<li>Eventos com nome, local, período, capacidade, publicação, público, ofertas e salas.</li>
+<li>Audiência/pré-check-in por integrante da família.</li>
+<li>Check-in por QR/totem, manual, quórum ou geofence.</li>
+<li>Locais favoritos guardam CEP, endereço e coordenadas.</li>
+<li>Alterações críticas em evento/local invalidam check-ins incompatíveis.</li>
+<li>Proteções contra confirmação duplicada e reprocessamento.</li>
+</ul>
+<h3>10.2 Visitantes / Cadastro Rápido</h3>
+<ul>
+<li>Identifica o culto ativo e seu código de 4 dígitos.</li>
+<li>Consulta o celular do responsável e diferencia novo visitante, visitante recorrente e membro ativo.</li>
+<li>Para novo visitante, cadastra responsável, filhos e aceite de imagem/LGPD.</li>
+<li>Para recorrente, pré-carrega responsável e crianças já conhecidos.</li>
+<li>Cada criança recebe nascimento ou idade, restrição alimentar, necessidades específicas e observações.</li>
+<li>Ao concluir, cria/preserva <code>family_id</code>, gera QR e envia no WhatsApp link do crachá e imagem do código.</li>
+</ul>
+<h3>10.3 Espaço Infantil — QR de entrada e saída</h3>
+<ul>
+<li>O QR da família/visitante identifica o grupo no Espaço Infantil.</li>
+<li>A equipe realiza <strong>check-in de entrada</strong> e valida o mesmo vínculo na <strong>saída/retirada</strong>.</li>
+<li>A tela de sala usa as inscrições do evento e as salas habilitadas.</li>
+<li>O responsável recebe o QR pelo Cadastro Rápido e pode reapresentá-lo na retirada.</li>
+<li>Dados de cuidado acompanham a criança para apoiar os professores: alimentação/alertas médicos, necessidades específicas e observações adicionais.</li>
+<li>A visualização do membro é limitada à própria família; a equipe autorizada enxerga a operação do evento.</li>
+</ul>
+<h3>10.4 Quórum</h3>
+<ul>
+<li>Eventos podem exigir registro formal de quórum.</li>
+<li>A confirmação alimenta Lista de Presença com horário.</li>
+<li>A gestão consulta e imprime a presença.</li>
+</ul>
+<hr>
+<h2>11. Células, murais, livros e escalas</h2>
+<h3>11.1 Pequenos grupos</h3>
+<ul>
+<li><strong>Minha Célula</strong> exibe o vínculo do membro.</li>
+<li>Gestão de Pequenos Grupos mantém grupos, liderança, participantes e acompanhamento.</li>
+<li>Relatórios do grupo podem alimentar o Cuidado Pastoral.</li>
+</ul>
+<h3>11.2 Murais</h3>
+<ul>
+<li><strong>Mural de Oportunidades:</strong> vagas de voluntariado, candidatura/participação e avisos.</li>
+<li><strong>Mural de Generosidade:</strong> doações e pedidos de empréstimo.</li>
+<li><strong>Mural de Voluntários:</strong> gestão das oportunidades.</li>
+<li><strong>Moderação do Mural:</strong> análise e estado das publicações de generosidade.</li>
+<li>Atualizações relevantes chegam à inbox.</li>
+</ul>
+<h3>11.3 Livros</h3>
+<ul>
+<li><strong>Livros doados:</strong> acervo, busca ISBN e cadastro manual.</li>
+<li><strong>Cantinho da Leitura:</strong> empréstimos do usuário.</li>
+<li>Avisos de empréstimo podem aparecer no Início.</li>
+</ul>
+<h3>11.4 Escalas</h3>
+<ul>
+<li>Membro consulta tipo, data, função, equipe e contatos.</li>
+<li>Solicitações/trocas produzem avisos na Home.</li>
+<li><strong>Tipos de Escala:</strong> código, nome, vagas por serviço e modo individual/equipe.</li>
+<li><strong>Servos em Disponibilidade:</strong> voluntários e ordem.</li>
+<li><strong>Programação de Escalas:</strong> registro manual e geração de ciclo em bloco, com prévia e aplicação transacional.</li>
+</ul>
+<hr>
+<h2>12. Documentos oficiais e administrativo</h2>
+<ul>
+<li><strong>Documentos oficiais</strong> é item direto do menu.</li>
+<li>Exibe documentos publicados da igreja ativa; atualmente integra as atas de assembleia disponíveis no Financeiro.</li>
+<li>Cada registro informa título, tipo, data e link assinado quando disponível.</li>
+<li>Acesso é destinado a membros e respeita identidade efetiva/tenant.</li>
+<li><strong>Administrativo</strong> concentra atos constitutivos e conteúdo administrativo autorizado.</li>
+<li><strong>Autorização de imagem e voz</strong> gerencia termos e confirmação por e-mail.</li>
+</ul>
+<hr>
+<h2>13. Engrenagem de manutenção</h2>
+<p>A fonte de verdade é <code>APP_DRAWER_SETTINGS_ITEMS</code> em <code>lib/appDrawerMenu.ts</code>. A tabela abaixo inclui <strong>todos os itens</strong>, inclusive rotas dedicadas que não são cards internos de <code>/maintenance-dashboard</code>.</p>
+<h3>13.1 Operação e Segurança</h3>
+<table><thead><tr>
+<th>Item</th>
+<th>Função</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>Configuração de salas</strong></td>
+<td>Nomes afetivos, capacidade/configuração e atribuição de membros às salas</td>
+</tr>
+<tr>
+<td><strong>Totem de check-in</strong></td>
+<td>Leitor QR no hall e operação dedicada de presença</td>
+</tr>
+<tr>
+<td><strong>Autorização de imagem e voz</strong></td>
+<td>Termos, LGPD e confirmação por e-mail</td>
+</tr>
+</tbody></table>
+<h3>13.2 Gestão de Pessoas</h3>
+<table><thead><tr>
+<th>Item</th>
+<th>Função</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>Visitantes / Cadastro Rápido</strong></td>
+<td>Check-in de visitantes e crianças, QR/crachá e dados de cuidado</td>
 </tr>
 <tr>
 <td><strong>Recepção Familiar</strong></td>
-<td>Fila do formulário público <code>/cadastro-familia/</code> — gravar ou rejeitar em lote</td>
+<td>Fila pública, inspeção de família, convites com <code>family_id</code>, processamento e rejeição</td>
 </tr>
 <tr>
-<td><strong>Controle de Acesso</strong></td>
-<td>Papéis, grants; visão por papel <strong>ou por recurso</strong> (toque no marcador colorido); seleção de perfil por dropdown <em>(super_admin)</em></td>
+<td><strong>Régua de Acolhimento</strong></td>
+<td>Inbox de novos cadastros e jornadas D+1/D+4/D+8</td>
 </tr>
 <tr>
-<td><strong>Mudança de Papéis</strong></td>
-<td>Alterar visitante/congregado/membro; contagem de <strong>membros ativos</strong> e <strong>congregados ativos</strong> (<code>membership_out</code> efetiva, herança familiar) <em>(pastoral, super_admin)</em></td>
+<td><strong>Lista de Membros</strong></td>
+<td>Diretório da comunidade</td>
+</tr>
+<tr>
+<td><strong>Cadastro de Usuário</strong></td>
+<td>Busca, correções cadastrais e administração autorizada</td>
+</tr>
+<tr>
+<td><strong>Lista de Famílias</strong></td>
+<td>Famílias e integrantes por código</td>
+</tr>
+<tr>
+<td><strong>Mapa de geolocalização</strong></td>
+<td>Pins das famílias e filtros</td>
+</tr>
+<tr>
+<td><strong>Aniversariantes</strong></td>
+<td>Aniversários pessoais e de casamento</td>
+</tr>
+<tr>
+<td><strong>Cuidados Pastorais</strong></td>
+<td>Fila, sigilo/intercessão, responsáveis, slots e cancelamentos</td>
+</tr>
+<tr>
+<td><strong>Gestão de Pequenos Grupos</strong></td>
+<td>Células, líderes, participantes e acompanhamento</td>
+</tr>
+<tr>
+<td><strong>Mural de Voluntários</strong></td>
+<td>Oportunidades de serviço</td>
+</tr>
+<tr>
+<td><strong>Moderação do Mural</strong></td>
+<td>Doações e pedidos de empréstimo</td>
+</tr>
+<tr>
+<td><strong>Administrativo</strong></td>
+<td>Atos constitutivos</td>
+</tr>
+<tr>
+<td><strong>Livros doados</strong></td>
+<td>Acervo, ISBN e cadastro manual</td>
+</tr>
+</tbody></table>
+<h3>13.3 Culto e Eventos</h3>
+<table><thead><tr>
+<th>Item</th>
+<th>Função</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>Programação de Eventos</strong></td>
+<td>CRUD, publicação, capacidade, salas, totem, quórum e geofence</td>
+</tr>
+<tr>
+<td><strong>Cronograma de Eventos</strong></td>
+<td>Visão temporal/Gantt e abertura para edição</td>
+</tr>
+<tr>
+<td><strong>Manutenção de Avisos</strong></td>
+<td>Comunicados publicados na Home</td>
+</tr>
+<tr>
+<td><strong>Sala(s) - Check In</strong></td>
+<td>Entrada/saída do Espaço Infantil</td>
+</tr>
+<tr>
+<td><strong>Tipos de Escala</strong></td>
+<td>Tipos, vagas e ciclo</td>
+</tr>
+<tr>
+<td><strong>Servos em Disponibilidade</strong></td>
+<td>Voluntários por escala</td>
+</tr>
+<tr>
+<td><strong>Programação de Escalas</strong></td>
+<td>Agenda manual e geração em bloco</td>
+</tr>
+<tr>
+<td><strong>Presença</strong></td>
+<td>Quórum, lista e impressão</td>
+</tr>
+</tbody></table>
+<h3>13.4 Finanças e Inteligência</h3>
+<table><thead><tr>
+<th>Item</th>
+<th>Função</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>Informações Financeiras</strong></td>
+<td>Lançamentos, importação, orçamento, comentários e RD</td>
+</tr>
+<tr>
+<td><strong>Gestão de Campanhas</strong></td>
+<td>Campanhas, projetos, metas, período e publicação</td>
+</tr>
+<tr>
+<td><strong>Prímicias</strong></td>
+<td>Itens em espécie e compromissos</td>
+</tr>
+<tr>
+<td><strong>Modelo Preditivo</strong></td>
+<td>Análises e projeções autorizadas</td>
+</tr>
+</tbody></table>
+<h3>13.5 Governança e TI</h3>
+<table><thead><tr>
+<th>Item</th>
+<th>Função</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>Temas da Trilha</strong></td>
+<td>Textos, vídeos e reflexões das lições</td>
+</tr>
+<tr>
+<td><strong>Trilha — Reconhecimentos</strong></td>
+<td>Alunos prontos para reconhecimento/certificado</td>
+</tr>
+<tr>
+<td><strong>Resetar Trilha</strong></td>
+<td>Reinício controlado do progresso na igreja</td>
+</tr>
+<tr>
+<td><strong>Como faço…?</strong></td>
+<td>Ajuda das telas da engrenagem</td>
+</tr>
+<tr>
+<td><strong>Base de conhecimento</strong></td>
+<td>Edição dos artigos da ajuda in-app</td>
 </tr>
 <tr>
 <td><strong>Relatórios</strong></td>
-<td>Catálogo analítico (7 relatórios): membros ativos/inativos, necessidades pastorais, saúde infantil (LGPD), quórum, estacionamento, sugestões e melhorias, inscritos por evento — <strong>sem</strong> Faixa Etária</td>
+<td>Catálogo analítico autorizado</td>
 </tr>
 <tr>
-<td><strong>Modo Ghost (Auditor)</strong></td>
-<td>Simula sessão de outro perfil para auditoria de permissões — grant <strong>explícito</strong> em <code>maintenance.card.auditor</code> ou <code>super_admin</code> (<code>can_operate_ghost_mode</code>; script <code>access-control-ghost-mode.sql</code>)</td>
+<td><strong>Controle de Acesso</strong></td>
+<td>Papéis, grants, parâmetros, app ativo, Gestão Liberada e LGPD</td>
 </tr>
 <tr>
-<td><strong>Acessos de Usuários</strong></td>
-<td>Histórico de logins e telas por sessão; limpeza global <em>(super_admin)</em></td>
+<td><strong>Mudança Papéis</strong></td>
+<td>Promoção/transição entre visitante, congregado e membro</td>
+</tr>
+<tr>
+<td><strong>Transferência de Membro</strong></td>
+<td>Transferência entre igrejas/famílias conforme fluxo</td>
+</tr>
+<tr>
+<td><strong>Acesso Usuários</strong></td>
+<td>Logins e telas por sessão; exclusivo de <code>super_admin</code></td>
+</tr>
+<tr>
+<td><strong>Modo Ghost</strong></td>
+<td>Auditoria pela identidade efetiva de outro perfil</td>
+</tr>
+<tr>
+<td><strong>Assinaturas</strong></td>
+<td>Planos, contratos, Stripe e cobrança da igreja</td>
+</tr>
+<tr>
+<td><strong>Aliança Conecta Reino</strong></td>
+<td>Indicações, passivo e baixa de ofertas; Super Administrador</td>
+</tr>
+<tr>
+<td><strong>Indicados</strong></td>
+<td>Funil Kanban exclusivo do Super Administrador</td>
+</tr>
+<tr>
+<td><strong>Instâncias (Igrejas)</strong></td>
+<td>Criação, configuração e alternância de tenants</td>
+</tr>
+<tr>
+<td><strong>Chave Gemini</strong></td>
+<td>Chave da Abigail e auditoria de IA; configuração pelo Super Administrador</td>
 </tr>
 </tbody></table>
-<hr>
-<h2>Identidade visual</h2>
+<h3>13.6 Atribuições</h3>
 <ul>
-<li><strong>Marca d'água</strong> global (<code>AppShell</code> + <code>WatermarkSurface</code>) em telas autenticadas</li>
-<li>Excluída na tela de login; altura alinhada ao card central do dashboard</li>
-<li>Opacidade discreta; não interfere na leitura nem substitui ACL</li>
+<li><strong>Atribuições</strong> fica ao lado de <strong>Mudança Papéis</strong> dentro dessa experiência, com acesso da Equipe Pastoral e do Super Administrador.</li>
+<li>Seleciona um papel operacional e lista as pessoas da igreja.</li>
+<li>Permite ligar/desligar o papel com <strong>Sim/Não</strong>.</li>
+<li>Oferece busca Enxergar por nome, filtro por atribuídos/não atribuídos e paginação.</li>
+<li>Não substitui Mudança de Papéis: esta trata a jornada de vínculo; Atribuições trata papéis operacionais.</li>
 </ul>
 <hr>
-<h2>Controle de acesso (ACL)</h2>
+<h2>14. Controle de acesso (ACL)</h2>
 <ul>
-<li>Papéis: <code>visitantes</code>, <code>congregado</code>, <code>member</code>, <code>family_acceptor</code>, <code>lider</code>, <code>events_admin</code>, <strong><code>tesoureiro</code></strong>, <code>pastoral</code>, <code>super_admin</code></li>
-<li>Permissões por <strong>tela</strong>, <strong>card do dashboard</strong>, <strong>tabela</strong> e <strong>coluna</strong></li>
-<li>RPC <code>profile_has_access</code> com modo estrito (<code>EXPO_PUBLIC_ACL_STRICT</code>)</li>
-<li>Guards de rota em telas sensíveis</li>
-<li>RLS no Supabase com header <code>x-profile-id</code></li>
-<li>UI administrativa de papéis e grants <em>(super_admin)</em></li>
-<li>Fail-closed em erros reais de ACL; colunas de perfil bloqueadas até carregar permissões</li>
+<li>Recursos por <code>screen</code>, <code>dashboard_card</code>, <code>table</code> e <code>column</code>, com ações como <code>view</code> e <code>update</code>.</li>
+<li>UI filtra menu, engrenagem, ações e campos; o banco aplica RLS e RPCs <code>SECURITY DEFINER</code>.</li>
+<li>Guards de rota operam em modo fail-closed fora do Ghost.</li>
+<li>Controle de Acesso oferece visão por pessoa/papel e por recurso.</li>
+<li>Parâmetros administrativos incluem aplicação ativa/inativa, mensagem de indisponibilidade, <strong>Gestão Liberada</strong>, <code>LGPD_Ativo</code> e texto LGPD.</li>
+<li>Papéis incluem visitante, congregado, membro, secretaria/operação, liderança, eventos, tesouraria, pastoral, Gestor em Controle de Acesso e Super Administrador, conforme configuração da instância.</li>
 </ul>
-<h3>Telas protegidas por ACL</h3>
+<h3>14.1 Gestor em Controle de Acesso</h3>
+<ul>
+<li>A proteção autoritativa está no SQL (<code>assert_gestor_super_admin_shield</code>, visibilidade do ator e RPCs).</li>
+<li>O Gestor <strong>não lista, visualiza nem edita</strong> o perfil ou papel <code>super_admin</code>.</li>
+<li>Não vê registros de acesso do Super Administrador.</li>
+<li>Não vê nem concede acesso a PIN/senha (<code>access_pin</code>, <code>password</code>, <code>senha</code>).</li>
+<li>O cliente repete os filtros como defesa em profundidade.</li>
+</ul>
+<h3>14.2 Acessos de Usuários</h3>
+<ul>
+<li>Painel exclusivo de <code>super_admin</code>.</li>
+<li>Lista usuários que possuem login registrado, último acesso e total de acessos.</li>
+<li>Abre histórico das telas visitadas, agrupado por sessão, do acesso mais recente ao mais antigo.</li>
+<li>Permite busca Enxergar, atualização e limpeza global do histórico.</li>
+</ul>
+<hr>
+<h2>15. Assinaturas, Stripe e Gestão Liberada</h2>
+<ul>
+<li>Planos possuem código, nome, descrição, capacidade e preço Stripe.</li>
+<li>Checkout é criado pela API do Cloudflare; o retorno sincroniza assinatura e pagamento.</li>
+<li>O módulo acompanha status, período, cancelamento ao fim do ciclo, capacidade, membros/congregados ativos e contratos SaaS.</li>
+<li>O cliente pode solicitar cancelamento ou retomada da assinatura.</li>
+<li>O gate comercial considera instância ativa, assinatura e rotas administrativas.</li>
+<li><strong>Gestão Liberada</strong> é um switch por tenant no Controle de Acesso.</li>
+<li>Quando ligado, toda a instância opera sem exigir plano Stripe ativo.</li>
+<li>O Super Administrador pode liberar ou bloquear a gestão e não é preso pelo paywall.</li>
+<li>Instância inativa e cobrança são estados distintos.</li>
+<li>No Modo Ghost, paywall, billing e escolha de instância usam o <strong>operador real</strong>, nunca o perfil simulado.</li>
+</ul>
+<hr>
+<h2>16. Modo Ghost</h2>
+<ul>
+<li>Disponível ao Super Administrador ou a quem possui grant explícito de auditor.</li>
+<li>O operador escolhe um perfil-alvo e passa a navegar com sua <strong>identidade efetiva</strong>.</li>
+<li>Perfil, telefone, <code>family_id</code>, ACL de telas e dados são resolvidos pelo alvo.</li>
+<li>O bypass de Super Administrador do operador fica desligado para a ACL simulada.</li>
+<li>O auditor pode abrir e permanecer na rota escolhida por menu, Eu quero… ou deep link.</li>
+<li>Negação de grant do alvo não provoca bounce para o Início e não cobre a tela com “Sem acesso nesta simulação”; dados/RLS seguem a identidade efetiva.</li>
+<li>O Ghost não injeta histórico extra nem cancela navegação ao fechar modais.</li>
+<li>Iniciar Ghost leva ao Início uma única vez já como o alvo; encerrar retorna ao Início na identidade real.</li>
+<li>Cobrança, assinatura, tenant e paywall continuam vinculados ao operador real.</li>
+</ul>
+<hr>
+<h2>17. Segurança e infraestrutura</h2>
+<ul>
+<li>Expo/React Native com PWA web; build de produção em <code>dist/</code>.</li>
+<li>Supabase/PostgreSQL com RLS, RPCs e Storage.</li>
+<li>Sessão customizada com token, perfil e tenant; dados críticos não confiam apenas em estado local.</li>
+<li>Escritas sensíveis usam RPCs transacionais e <code>SECURITY DEFINER</code>.</li>
+<li>PIN não é exibido em listagens administrativas.</li>
+<li>CPF, consentimento, alertas médicos, necessidades especiais, pastoral sigiloso e dados financeiros têm controles específicos.</li>
+<li>Isolamento tenant é aplicado tanto na sessão quanto nas consultas/RPCs.</li>
+<li>Operações financeiras, recepção, ACL, Ghost, IA e acessos mantêm trilhas/auditoria quando previstas.</li>
+<li>Caches de perfil, ACL e tenant são invalidados em troca de identidade/instância.</li>
+<li>PWA é publicado via Cloudflare Pages; APIs Stripe executam no ambiente Cloudflare.</li>
+</ul>
+<hr>
+<h2>18. Mapa de rotas</h2>
 <table><thead><tr>
-<th>Tela</th>
 <th>Rota</th>
+<th>Uso atual</th>
 </tr></thead><tbody>
 <tr>
-<td>Dashboard</td>
-<td><code>/(tabs)/dashboard</code></td>
-</tr>
-<tr>
-<td>Dados cadastrais</td>
-<td><code>/manage-profile</code></td>
-</tr>
-<tr>
-<td>Gerenciar família</td>
-<td><code>/manage-members</code></td>
-</tr>
-<tr>
-<td>Coração Aberto</td>
-<td><code>/pastoral</code></td>
-</tr>
-<tr>
-<td>Meus pedidos</td>
-<td><code>/pastoral-history</code></td>
-</tr>
-<tr>
-<td>Financeiro</td>
-<td><code>/financial</code></td>
-</tr>
-<tr>
-<td>Relatório de despesas</td>
-<td><code>/expense-report</code></td>
-</tr>
-<tr>
-<td>Mapa</td>
-<td><code>/mapa-geolocalizacao</code></td>
-</tr>
-<tr>
-<td>Detalhe de pin no mapa</td>
-<td><code>/mapa-geolocalizacao/detalhe-pin</code></td>
-</tr>
-<tr>
-<td>LGPD</td>
-<td><code>/lgpd</code></td>
-</tr>
-<tr>
-<td>Manutenção</td>
-<td><code>/maintenance-dashboard</code></td>
-</tr>
-</tbody></table>
-<h3>Telas sem ACL de tela</h3>
-<table><thead><tr>
-<th>Tela</th>
-<th>Observação</th>
-</tr></thead><tbody>
-<tr>
+<td><code>/</code></td>
 <td>Login</td>
-<td>Público</td>
 </tr>
 <tr>
-<td>Cadastro</td>
-<td>Público (com <code>?phone=</code>)</td>
+<td><code>/forgot-password</code></td>
+<td>Recuperação do PIN por e-mail</td>
 </tr>
 <tr>
-<td>Totem</td>
-<td>Aparelho dedicado</td>
+<td><code>/register</code></td>
+<td>Cadastro inicial</td>
+</tr>
+<tr>
+<td><code>/selecionar-igreja</code></td>
+<td>Escolha da instância</td>
+</tr>
+<tr>
+<td><code>/(tabs)</code> / <code>/(tabs)/index</code></td>
+<td>Início publicado</td>
+</tr>
+<tr>
+<td><code>/(tabs)/dashboard</code></td>
+<td>Redirecionamento legado para tela viva</td>
+</tr>
+<tr>
+<td><code>/(tabs)/explore</code></td>
+<td>Congelada/não publicada</td>
+</tr>
+<tr>
+<td><code>/perfil</code></td>
+<td>Hub do perfil</td>
+</tr>
+<tr>
+<td><code>/manage-profile</code></td>
+<td>Dados cadastrais</td>
+</tr>
+<tr>
+<td><code>/manage-members</code></td>
+<td>Gerenciar família</td>
+</tr>
+<tr>
+<td><code>/lista-familias</code></td>
+<td>Lista de Famílias</td>
+</tr>
+<tr>
+<td><code>/membros</code></td>
+<td>Membros e visitantes</td>
+</tr>
+<tr>
+<td><code>/aniversariantes</code></td>
+<td>Aniversários pessoais e de casamento</td>
+</tr>
+<tr>
+<td><code>/ofertas</code></td>
+<td>Dízimos, ofertas, campanhas e projetos</td>
+</tr>
+<tr>
+<td><code>/primicias</code></td>
+<td>Compromissos em espécie</td>
+</tr>
+<tr>
+<td><code>/pastoral</code></td>
+<td>Cuidado Pastoral</td>
+</tr>
+<tr>
+<td><code>/pastoral-history</code></td>
+<td>Meus pedidos</td>
+</tr>
+<tr>
+<td><code>/agenda-cancelar</code></td>
+<td>Ação pública/controlada de agenda</td>
+</tr>
+<tr>
+<td><code>/pequeno-grupo</code></td>
+<td>Minha Célula</td>
+</tr>
+<tr>
+<td><code>/mural-oportunidades</code></td>
+<td>Mural de Oportunidades</td>
+</tr>
+<tr>
+<td><code>/mural-generosidade</code></td>
+<td>Mural de Generosidade</td>
+</tr>
+<tr>
+<td><code>/apoio-mutuo</code></td>
+<td>Apoio Mútuo</td>
+</tr>
+<tr>
+<td><code>/escalas</code></td>
+<td>Escalas do membro</td>
+</tr>
+<tr>
+<td><code>/financial</code></td>
+<td>Financeiro</td>
+</tr>
+<tr>
+<td><code>/expense-report</code></td>
+<td>Reembolsos/RD</td>
+</tr>
+<tr>
+<td><code>/documentos-oficiais</code></td>
+<td>Documentos oficiais</td>
+</tr>
+<tr>
+<td><code>/administrativo</code></td>
+<td>Administrativo</td>
+</tr>
+<tr>
+<td><code>/mapa-geolocalizacao</code></td>
+<td>Mapa</td>
+</tr>
+<tr>
+<td><code>/visitantes-cadastro-rapido</code></td>
+<td>Cadastro Rápido e QR do visitante</td>
+</tr>
+<tr>
+<td><code>/cracha-visitante</code></td>
+<td>Crachá/QR público do visitante</td>
+</tr>
+<tr>
+<td><code>/trilha-discipulado</code></td>
+<td>Trilha</td>
+</tr>
+<tr>
+<td><code>/livros-doados</code></td>
+<td>Acervo</td>
+</tr>
+<tr>
+<td><code>/suggestions-improvements</code></td>
+<td>Sugestões</td>
+</tr>
+<tr>
+<td><code>/como-faco</code></td>
+<td>Ajuda</td>
+</tr>
+<tr>
+<td><code>/conhecimento</code></td>
+<td>Base de conhecimento</td>
+</tr>
+<tr>
+<td><code>/redes-sociais</code></td>
+<td>Redes oficiais</td>
+</tr>
+<tr>
+<td><code>/sobre-conecta</code></td>
+<td>Sobre o produto</td>
+</tr>
+<tr>
+<td><code>/maintenance-dashboard</code></td>
+<td>Painéis de manutenção</td>
+</tr>
+<tr>
+<td><code>/atribuicoes</code></td>
+<td>Atribuições operacionais</td>
+</tr>
+<tr>
+<td><code>/configuracao-salas</code></td>
+<td>Configuração de salas</td>
+</tr>
+<tr>
+<td><code>/totem-checkin</code></td>
+<td>Totem e leitura de QR</td>
+</tr>
+<tr>
+<td><code>/autorizacao-midia</code></td>
+<td>Autorização de imagem e voz</td>
+</tr>
+<tr>
+<td><code>/billing</code></td>
+<td>Assinaturas/Stripe</td>
+</tr>
+<tr>
+<td><code>/igrejas</code></td>
+<td>Instâncias</td>
+</tr>
+<tr>
+<td><code>/alianca-conecta-reino</code></td>
+<td>Aliança</td>
+</tr>
+<tr>
+<td><code>/alianca-indicados</code></td>
+<td>Indicados</td>
+</tr>
+<tr>
+<td><code>/cadastro-familia</code></td>
+<td>Formulário público familiar</td>
+</tr>
+<tr>
+<td><code>/lgpd</code></td>
+<td>Consentimento LGPD</td>
+</tr>
+<tr>
+<td><code>/sessao-encerrada</code></td>
+<td>Encerramento de sessão</td>
+</tr>
+<tr>
+<td><code>/admin/orquestrador</code></td>
+<td>Orquestração administrativa autorizada</td>
 </tr>
 </tbody></table>
 <hr>
-<h2>Comunicação e integrações</h2>
-<ul>
-<li>Abertura de <strong>WhatsApp</strong> — aniversariantes, membros, servos de escala, proprietários de veículo, família</li>
-<li><strong>PIX</strong> — exibição e cópia da chave de ofertas</li>
-<li>Parâmetros globais em <code>app_parameters</code> (PIX, prefixo família, totem, <strong><code>LGPD_Ativo</code></strong>, <strong><code>Parm_entidade</code></strong>, etc.)</li>
-<li><strong><code>Parm_entidade</code></strong> — prefixo exibido na interface (cards SALA(S), textos com marca da entidade); valor padrão <strong>IBN</strong> quando não configurado</li>
-<li><strong><code>LGPD_Ativo</code></strong> (<code>sim</code> / <code>nao</code>) — alternado no card <strong>Controle de Acesso</strong> (super_admin); quando <strong><code>sim</code></strong>, liga termos LGPD, selfie no cadastro, tela <code>/lgpd</code> e cabeçalho vermelho de pendência; quando <strong><code>nao</code></strong>, a igreja opta por <strong>não exigir</strong> reconhecimento LGPD — cadastro simplificado e sem alerta vermelho</li>
-<li>Redes sociais na tela de login</li>
-</ul>
-<hr>
-<h2>Segurança e infraestrutura</h2>
-<ul>
-<li>Backend <strong>Supabase</strong> (PostgreSQL + RPCs + Storage)</li>
-<li>Projeto: <code>bldbrsuiwctoaxzcrjoc</code></li>
-<li>PIN validado no servidor; atualização de PIN via RPC dedicada</li>
-<li>Campos sensíveis protegidos (CPF, PIN, LGPD, alertas médicos)</li>
-<li>Escritas críticas via RPC <code>security definer</code></li>
-<li>INSERT direto em <code>escalas_log</code> bloqueado no cliente</li>
-<li>Sessão local com reparo automático de referência de perfil</li>
-<li>PWA exportável (<code>npm run build:web</code> → <code>dist/</code>)</li>
-<li>Ícones do app (favicon, splash, Android) gerados pela arte da marca d'água (<code>npm run generate:icons</code>)</li>
-<li>Purga de caches legados do mapa</li>
-<li>Política de geocodificação documentada (servidor-primário)</li>
-</ul>
-<hr>
-<h2>Mapa de rotas</h2>
-<p>```</p>
-<p>/                      → Login</p>
-<p>/register              → Cadastro inicial</p>
-<p>/(tabs)/dashboard      → Painel principal</p>
-<p>/(tabs)                → Menu de atalhos</p>
-<p>/manage-profile        → Dados cadastrais</p>
-<p>/manage-members        → Gerenciar família</p>
-<p>/pastoral              → Coração Aberto</p>
-<p>/pastoral-history      → Meus pedidos</p>
-<p>/financial             → Financeiro (leitura)</p>
-<p>/expense-report        → Relatório de Despesas (RD)</p>
-<p>/cadastro-familia/     → Formulário público de cadastro familiar (sem login)</p>
-<p>/mapa-geolocalizacao   → Mapa (PWA)</p>
-<p>/lgpd                  → Termos LGPD</p>
-<p>/maintenance-dashboard → Manutenção</p>
-<p>/totem-checkin         → Totem de check-in</p>
-<p>```</p>
-<hr>
-<h2>Resumo por público</h2>
+<h2>19. Resumo por público</h2>
 <table><thead><tr>
 <th>Público</th>
 <th>Principais funcionalidades</th>
 </tr></thead><tbody>
 <tr>
-<td><strong>Membro</strong></td>
-<td>Login, cadastro, perfil, família, eventos, check-in QR, salas (leitura), ofertas, pastoral, aniversariantes, financeiro (leitura), RD (reembolso), escalas (leitura), mapa</td>
+<td><strong>Visitante</strong></td>
+<td>Primeiro acesso, cadastro, eventos permitidos, cuidado pastoral e acolhimento</td>
 </tr>
 <tr>
-<td><strong>Totem</strong></td>
-<td>Scan QR, confirmação de check-in</td>
+<td><strong>Membro / congregado</strong></td>
+<td>Início, Perfil, família, contribuições, documentos, células, escalas, murais, Apoio Mútuo, pastoral, financeiro e ajuda conforme ACL</td>
 </tr>
 <tr>
-<td><strong>Equipe</strong></td>
-<td>Manutenção: eventos, salas, quórum, escalas, financeiro, pastoral, recepção familiar</td>
+<td><strong>Família</strong></td>
+<td>Integrantes, agenda, audiência, QR, Espaço Infantil, dados de cuidado e celebrações</td>
 </tr>
 <tr>
-<td><strong>Pastoral</strong></td>
-<td>Cuidado pastoral, mudança de papéis básicos</td>
+<td><strong>Recepção / secretaria</strong></td>
+<td>Cadastro Rápido, Recepção Familiar, novos cadastros, régua, diretórios, eventos, salas, avisos e escalas conforme grants</td>
 </tr>
 <tr>
-<td><strong>Super admin</strong></td>
-<td>Controle de acesso, cadastro de usuários</td>
+<td><strong>Voluntário / líder</strong></td>
+<td>Escalas, oportunidades, pequenos grupos e módulos delegados</td>
+</tr>
+<tr>
+<td><strong>Equipe pastoral</strong></td>
+<td>Cuidados Pastorais, Mudança de Papéis, Atribuições, acolhimento e alertas</td>
+</tr>
+<tr>
+<td><strong>Tesouraria</strong></td>
+<td>Informações financeiras, campanhas, Prímicias, RD e conciliação</td>
+</tr>
+<tr>
+<td><strong>Gestor em Controle de Acesso</strong></td>
+<td>Gestão delegada de papéis/grants, sem qualquer visibilidade de Super Administrador ou PIN</td>
+</tr>
+<tr>
+<td><strong>Super Administrador</strong></td>
+<td>Instâncias, billing, Gestão Liberada, ACL, LGPD, Ghost, Acessos de Usuários, IA, Aliança e configurações críticas</td>
+</tr>
+<tr>
+<td><strong>Totem / Espaço Infantil</strong></td>
+<td>QR de presença, entrada e retirada no tenant selecionado</td>
 </tr>
 </tbody></table>
 <hr>
-<p><em>Documento gerado a partir do código-fonte e do <a href="BLUEPRINT.md">&lt;code&gt;BLUEPRINT.md&lt;/code&gt;</a>.</em></p>
+<p><em>Documento funcional do Conecta+ gerado a partir da experiência publicada e do código-fonte em 05/10/2026. Para visão técnica e procedimentos de entrega, consulte <a href="MANUAL_ENTREGA.md">&lt;code&gt;MANUAL_ENTREGA.md&lt;/code&gt;</a> e <a href="INDICE_DOCUMENTACAO.md">&lt;code&gt;INDICE_DOCUMENTACAO.md&lt;/code&gt;</a>.</em></p>
 </div>
 </body>
 </html>

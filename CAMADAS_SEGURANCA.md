@@ -2,7 +2,7 @@
 
 Documento de referência do modelo de **defesa em profundidade** do **app-igreja** (Igreja Batista Norte).
 
-**Atualizado em:** 02/07/2026
+**Atualizado em:** 05/10/2026
 
 **Documentação relacionada:** [`BLUEPRINT.md`](BLUEPRINT.md) · [`CONTROLE_ACESSO.md`](CONTROLE_ACESSO.md) · [`MANUAL_CONTROLE_ACESSO.md`](MANUAL_CONTROLE_ACESSO.md) · [`PACOTE_3_GOVERNANCA_TI.md`](PACOTE_3_GOVERNANCA_TI.md)
 
@@ -50,6 +50,8 @@ flowchart TB
 | **Não confiar só no cliente** | RLS + RPC validam `profile_has_access` no servidor |
 | **Dados sensíveis fora da UI padrão** | `access_pin`, `cpf`, alertas médicos — coluna ACL + RPC de escrita |
 | **Sessão reparável** | `repairUserSessionReference()` corrige `user_profile_id` inconsistente |
+| **Isolamento por tenant** | Sessão, LGPD, telefone e dados são resolvidos dentro da instância ativa |
+| **Administração protegida** | Gestor de acesso não enxerga Super Administrador, seus acessos ou PIN/senha |
 
 ### 1.2 Granularidade do ACL (dentro da Camada 2 e 4)
 
@@ -125,6 +127,11 @@ Validações e filtros executados no app antes e durante a navegação.
 | Mapa (web) | `/mapa-geolocalizacao` | `/mapa-geolocalizacao` | `useScreenAccessGuard` |
 | LGPD | `/lgpd` | `/lgpd` | `useScreenAccessGuard` (skip com `?phone=`) |
 | Manutenção | `/maintenance-dashboard` | `/maintenance-dashboard` | `useScreenAccessGuard` + verificação no foco |
+| Lista de Famílias | `/lista-familias` | `/lista-familias` | `useScreenAccessGuard` / ACL de tela |
+| Visitantes — Cadastro Rápido | `/visitantes-cadastro-rapido` | `/visitantes-cadastro-rapido` | ACL de tela + RPCs do tenant |
+| Documentos oficiais | `/documentos-oficiais` | `/documentos-oficiais` | ACL de tela + leitura publicada |
+| Apoio Mútuo | `/apoio-mutuo` | `/apoio-mutuo` | ACL de tela + identidade efetiva |
+| Atribuições | `/atribuicoes` | `/atribuicoes` | RPC autoritativa; pastoral/super_admin |
 | Totem | `/totem-checkin` | — | **Sem ACL** — aparelho dedicado |
 
 ### 3.3 Cards do dashboard
@@ -152,6 +159,13 @@ Validações e filtros executados no app antes e durante a navegação.
 - Overlay visual global via `AppShell` + `WatermarkSurface`
 - **Excluída** na tela de login (`/` e `/index` raiz)
 - Não substitui ACL; apenas identidade visual
+
+### 3.7 Modo Ghost
+
+- `loadEffectiveSessionProfile`, `resolveEffectiveProfileId` e `getEffectiveUserPhone` definem a identidade do alvo para telas, listas, família, ACL e dados.
+- O bypass do `super_admin` operador é desligado para a simulação.
+- O auditor permanece na rota escolhida: negação do alvo não causa bounce ao Início nem cobertura de “Sem acesso nesta simulação”.
+- Iniciar e encerrar Ghost são as únicas navegações automáticas ao Início. `AppBillingGate` usa o operador real e não redireciona o alvo para billing.
 
 ---
 
@@ -220,6 +234,7 @@ Operações que **não** podem ser feitas por INSERT/UPDATE direto:
 | Financeiro | carga/exclusão em lote | `financials-maintenance-rpc.sql` |
 | RD (despesas) | criar, conciliar, listar período | `expense-reports-rpc.sql` |
 | ACL admin | grants e papéis | `access-control-admin-rpc.sql` |
+| Escudo do Gestor | visibilidade de perfis/papéis/logs | `access-control-gestor-controle-acesso.sql` |
 
 Tesouraria de RD valida `session_can_manage_expense_reports_treasury()` nas RPCs de listagem e conciliação.
 
@@ -233,6 +248,8 @@ Tesouraria de RD valida `session_can_manage_expense_reports_treasury()` nas RPCs
 | `medical_food_alerts` | Coluna ACL restrita |
 | `escalas_log` | Sem INSERT direto pelo app |
 
+O estado `LGPD_Ativo`, o texto apresentado e o aceite pertencem à instância ativa. Cadastros com o mesmo telefone em igrejas diferentes não compartilham texto, sessão ou consentimento.
+
 ---
 
 ## 6. Papéis canônicos
@@ -240,7 +257,7 @@ Tesouraria de RD valida `session_can_manage_expense_reports_treasury()` nas RPCs
 Ordem de exibição (`lib/accessRoleDisplayOrder.ts`):
 
 ```text
-visitantes → congregado → member → family_acceptor → lider → events_admin → pastoral → super_admin
+visitantes → congregado → member → family_acceptor → acolhimento_recepcao → acolhimento_estacionamento → ministerio_infantil → secretaria → tesoureiro → pastoral → gestor_controle_acesso → super_admin
 ```
 
 | Papel | Uso típico |
@@ -250,12 +267,21 @@ visitantes → congregado → member → family_acceptor → lider → events_ad
 | `lider` | Escalas por tipo (`access-control-lider-escala.sql`) |
 | `events_admin` | Manutenção de eventos |
 | `pastoral` | Triagem pastoral |
+| `gestor_controle_acesso` | Gestão de papéis e grants, sem visibilidade do Super Administrador |
 | `super_admin` | ACL, cadastro de usuários, manutenção completa |
 | `visitantes` / `congregado` | Perfis restritos / visitantes no mapa |
 
 ---
 
 ## 7. Fluxos críticos (trilha de auditoria)
+
+### 7.0 Administração de acesso
+
+- **Acessos de Usuários** (`maintenance.card.profile_access_insights`) é exclusivo de `super_admin`, tanto na UI quanto nas RPCs de consulta e limpeza.
+- `assert_gestor_super_admin_shield` e os filtros SQL impedem o Gestor de listar, visualizar ou editar perfil/papel `super_admin`, registros de acesso do Super Administrador e campos `access_pin`/senha.
+- `lib/gestorControleAcessoSecurity.ts` repete o filtro no cliente como defesa em profundidade.
+
+<!-- Proteção aplicada: Gestor não tem visibilidade do Super Administrador -->
 
 ### 7.1 Login membro
 
@@ -287,6 +313,16 @@ Membro cria RD → expense_reports (pending)
 Tesoureiro concilia → RPC conciliar_relatorio_despesas(financial_id)
 Listagem mensal manutenção → mês do lançamento financeiro (conciliados)
                           ou mês de emissão (pendentes)
+```
+
+### 7.5 Navegação no Modo Ghost
+
+```text
+Operador inicia Ghost → Início uma vez, já como alvo
+Menu / Eu quero / deep link → permanece na rota escolhida
+ACL e dados → identidade efetiva do alvo
+Billing / tenant / paywall → identidade real do operador
+Encerrar Ghost → Início com identidade real
 ```
 
 ---
@@ -341,4 +377,4 @@ O modelo não depende de uma única barreira: um bypass no cliente ainda encontr
 
 ---
 
-*App IBN · Igreja Batista Norte · Especificação de segurança v2026-06-23*
+*App IBN · Igreja Batista Norte · Especificação de segurança v2026-10-05*

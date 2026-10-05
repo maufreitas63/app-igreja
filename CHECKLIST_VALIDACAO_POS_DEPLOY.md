@@ -1,8 +1,67 @@
 # Checklist de validação pós-deploy
 
-Conferência em produção dos **pedidos** feitos ao app. Marque cada item após testar.
+Conferência em produção do **Conecta+ publicado** (Início, menu, Eu quero…, engrenagem). Marque cada item após testar.
 
 **Planilha Excel por papel:** [`pdfs/CHECKLIST_VALIDACAO_POR_PAPEL.xlsx`](pdfs/CHECKLIST_VALIDACAO_POR_PAPEL.xlsx) — combina este checklist com o mapa ACL para teste prático (uma aba por papel). Regenerar: `npm run build:validation-checklist-xlsx`.
+
+> Itens abaixo que citam **carrossel do dashboard** são legado (`/(tabs)/dashboard` congelado). Priorize validação nas rotas dedicadas e no Início.
+
+**Atualizado em:** 05/10/2026
+
+---
+
+## Navegação publicada (05/10/2026)
+
+- [ ] **Início** (`/(tabs)`) exibe Próximos Eventos, Avisos, Eu quero… e engrenagem (se ACL)
+- [ ] Toque em evento abre **Agenda da Família** (não carrossel Card 1)
+- [ ] Menu inclui **Documentos oficiais** e **Apoio Mútuo** quando o papel permite
+- [ ] Deep link `/(tabs)/dashboard` redireciona para rota viva equivalente
+
+---
+
+## Gestão Liberada e billing
+
+- [ ] Em **Controle de Acesso**, interruptor **Gestão Liberada** grava por tenant (`app_parameters`)
+- [ ] Com **Gestão Liberada** ligada: engrenagem e operação seguem sem exigir assinatura Stripe ativa
+- [ ] Com **Gestão Liberada** desligada: gate comercial respeita plano/instância conforme política
+- [ ] Super Administrador acessa **Assinaturas** (`/billing`) independentemente do paywall do membro
+
+---
+
+## Modo Ghost (auditores)
+
+- [ ] Iniciar Ghost → vai ao Início **uma vez** já como o alvo
+- [ ] Com Ghost ativo, abrir rota sem grant do **alvo** **não** redireciona para Início (sem “home bounce”)
+- [ ] Não aparece overlay “Sem acesso nesta simulação” no lugar da tela
+- [ ] Paywall, `/billing` e **Selecionar igreja** usam identidade do **operador real**
+- [ ] Encerrar Ghost → Início na identidade real
+
+---
+
+## Sticker de admissão (Início)
+
+- [ ] Etiqueta amarela retrátil visível para papéis autorizados quando há pendência
+- [ ] Pendência de **Recepção Familiar** abre painel correto
+- [ ] Visitante fora da recepção pode abrir **Mudança de Papéis** filtrada em Visitante
+- [ ] Sem pendências: mensagem clara (Super Admin pode manter atalho)
+
+---
+
+## Isolamento multi-tenant
+
+- [ ] Dados listados (eventos, membros, recepção, avisos, finanças) correspondem à **igreja ativa**
+- [ ] Troca em **Selecionar igreja** altera conteúdo, marca e parâmetros
+- [ ] Link `/cadastro-familia` com tenant A não grava na igreja B
+- [ ] Relatórios e RPCs sensíveis não retornam registros de outro `tenant_id`
+
+---
+
+## PIN e e-mail (autenticação)
+
+- [ ] **Primeiro acesso:** PIN temporário chega **somente por e-mail** (não WhatsApp)
+- [ ] **Esqueci minha senha:** novo PIN por e-mail após validação
+- [ ] Totem (`cel_totem`) não usa fluxo de primeiro acesso de membro
+- [ ] Gestor / Gestor em Controle de Acesso **não** visualiza PIN de terceiros na UI
 
 ---
 
@@ -306,14 +365,15 @@ Conferência em produção dos **pedidos** feitos ao app. Marque cada item após
 
 ---
 
-## Coração Aberto
+## Coração Aberto e pastoral — Excluir
 
 **Pedido:** em **Meus pedidos**, borracha por pedido para excluir só os ainda não iniciados pelo Cuidado Pastoral.
 
 - [ ] Ícone de borracha no topo do formulário continua limpando o rascunho (novo pedido)
-- [ ] Em **Meus pedidos**, cada card tem borracha individual
+- [ ] Em **Meus pedidos** (`/pastoral-history`), cada card expõe ação **Excluir** (ou borracha equivalente)
 - [ ] Pedido com status **Novo** (ou sem Acolher/Apoiar/Acompanhar) pode ser excluído após confirmação
-- [ ] Pedido já iniciado pelo Cuidado Pastoral (Acolher, Apoiar, Acompanhar ou em andamento) → borracha bloqueada e mensagem explicativa
+- [ ] Pedido já iniciado pelo Cuidado Pastoral (Acolher, Apoiar, Acompanhar ou em andamento) → **Excluir** bloqueado e mensagem explicativa
+- [ ] Após início do acompanhamento: membro solicita cancelamento com justificativa; confirmação de exclusão conforme regra (`approve_pastoral_cancellation` / super_admin)
 - [ ] **SQL em produção:** `scripts/pastoral-request-delete-rpc.sql`
 
 ---
@@ -374,4 +434,4 @@ Conferência em produção dos **pedidos** feitos ao app. Marque cada item após
 
 ---
 
-*Atualizado em 23/06/2026*
+*Atualizado em 05/10/2026*

@@ -1,337 +1,285 @@
-# Descritivo Técnico Completo — App Igreja (IBNorte)
+# Descritivo Técnico — Conecta+
 
-**Sistema:** Aplicativo digital da Igreja Batista Norte  
-**Repositório:** `maufreitas63/app-igreja`  
-**Versão do app:** 1.0.0  
-**Data deste documento:** 30 de julho de 2026
-
-**Documentação de entrega:** [`MANUAL_ENTREGA.md`](MANUAL_ENTREGA.md) · [`INDICE_DOCUMENTACAO.md`](INDICE_DOCUMENTACAO.md)
+**Sistema:** app-igreja / Conecta+
+**Versão:** 1.0.0
+**Data de referência:** 05/10/2026
 
 ---
 
 ## 1. Resumo executivo
 
-O **app-igreja** é uma plataforma **PWA (Progressive Web App)** e **mobile** (Expo/React Native) que centraliza a operação digital da igreja: login de membros (primeira entrada por WhatsApp; **recuperação de senha por e-mail**), cadastro e LGPD, dashboard com cards operacionais (incluindo **Perfil & Identidade** com **Trilha de Discipulado**, selos coloridos e **perfil ministerial** na lição 5.1), check-in em eventos (totem com QR Code, **check-in automático por proximidade/geofence**), gestão familiar, módulo pastoral, financeiro, escalas, mapa de geolocalização por CEP, painel de manutenção administrativa (relatórios, **Manutenção da Trilha**, **Modo Ghost** com grant explícito) e controle de acesso granular (ACL).
+O Conecta+ é uma plataforma Expo/React Native com canal principal PWA, backend Supabase e publicação Cloudflare Pages. Uma única base atende múltiplas igrejas com isolamento por `tenant_id`. O produto cobre identidade, família, eventos, presença, recepção, acolhimento, Espaço Infantil, pastoral, voluntariado, documentos, finanças, controle de acesso, auditoria, IA e cobrança SaaS.
 
-Não há servidor de API próprio: o cliente comunica-se diretamente com o **Supabase** (PostgreSQL, RPCs, RLS, Storage) via HTTPS. O deploy de produção é automático via **Cloudflare Pages** a cada push na branch `main`.
-
----
-
-## 2. Programas, linguagens e ferramentas utilizados
-
-### 2.1 Runtime e linguagens
-
-| Item | Versão / detalhe |
-|------|------------------|
-| **Node.js** | ≥ 20.19.4 (build, scripts, deploy) |
-| **TypeScript** | ~5.9.2 (modo `strict`) |
-| **JavaScript (ESM)** | Scripts `.mjs` de build, importação e testes |
-| **SQL (PostgreSQL)** | Schema, RPCs, RLS, seeds — execução manual no Supabase |
-| **PowerShell** | Watchdog Metro LAN (desenvolvimento local) |
-
-### 2.2 Frameworks e bibliotecas principais
-
-| Camada | Tecnologia |
-|--------|------------|
-| **UI mobile/web** | Expo SDK ~54, React 19.1, React Native 0.81.5 |
-| **Roteamento** | Expo Router ~6 (file-based, export estático web) |
-| **Backend-as-a-Service** | Supabase (`@supabase/supabase-js` ^2.106) |
-| **Formulários** | React Hook Form + Zod |
-| **Mapas (web)** | Leaflet, react-leaflet, markercluster |
-| **Mapas (nativo)** | react-native-maps, react-native-map-clustering |
-| **Estilo** | Tailwind CSS, class-variance-authority, Radix UI (web) |
-| **Standalone** | Vite 6 (formulário público de cadastro familiar) |
-| **PDF/docs** | md-to-pdf, docx, xlsx (geração de documentação) |
-| **Ícones** | @expo/vector-icons (FontAwesome, FontAwesome5) |
-
-### 2.3 Infraestrutura e serviços externos
-
-| Serviço | Uso |
-|---------|-----|
-| **Supabase** | Banco PostgreSQL, autenticação customizada via RPC, Storage, Realtime |
-| **Cloudflare Pages** | Hospedagem HTTPS do PWA (`npm run build:web` → `dist/`) |
-| **GitHub** | Repositório e trigger de deploy |
-| **Google Maps Geocoding** | Opcional — geocodificação de CEP |
-| **ViaCEP + OpenStreetMap** | Fallback gratuito de endereço/geolocalização |
-| **dailyverses.net** | Fonte dos versículos bíblicos por tema (importação via script) |
-| **EAS (Expo)** | Build/distribuição mobile (project ID configurado em `app.json`) |
-
-### 2.4 Comandos de build e operação
-
-| Comando | Função |
-|---------|--------|
-| `npm run build:web` | Build de produção (PWA + formulário familiar) |
-| `npm start` / `npm run web` | Desenvolvimento local |
-| `npm run apply:bible-verses` | Aplica scripts SQL de versículos no Supabase |
-| `npm run build:docs:pdf` | Gera PDFs da documentação existente |
-| `npm run lint` | ESLint (Expo config) |
+A navegação publicada parte de **Início**, **menu lateral**, **Eu quero…**, **Perfil** e **engrenagem**. O carrossel antigo não é uma superfície ativa de produto.
 
 ---
 
-## 3. Bancos de dados e modelo de dados
+## 2. Stack e execução
 
-### 3.1 Supabase (PostgreSQL)
+| Item | Tecnologia |
+|---|---|
+| Runtime de build | Node.js >= 20.19.4 |
+| Linguagem | TypeScript 5.9, JavaScript ESM e PostgreSQL SQL |
+| Aplicação | Expo SDK 54.0.37 |
+| UI | React 19.1, React Native 0.81.5 e React Native Web |
+| Rotas | Expo Router 6.0.24 |
+| Estado/formulários | hooks React, React Hook Form e Zod |
+| Banco/API | Supabase/PostgreSQL, PostgREST, RPCs, RLS, Storage e Realtime |
+| Mapas | Leaflet web e react-native-maps |
+| Formulário público | Vite 6 |
+| Hospedagem | Cloudflare Pages |
+| Pagamentos | Stripe, mediado por endpoints no Cloudflare |
+| IA | Gemini com chave por tenant no Supabase |
 
-Único banco de produção. Principais domínios de tabelas:
-
-| Domínio | Tabelas / objetos (exemplos) |
-|---------|-------------------------------|
-| **Perfis e sessão** | `profiles`, `profile_sessions`, RPC `verificar_login`, `issue_profile_session` |
-| **Família e membros** | `members`, `families`, sincronização com `profiles` |
-| **Controle de acesso** | `access_resources`, `access_roles`, `access_grants`, `profile_access_roles` |
-| **Eventos e check-in** | `events`, `checkins`, `event_favorite_locations`, totem, geofence (`geofence_ativo`), purge triggers |
-| **Pastoral** | Solicitações, categorias, histórico |
-| **Financeiro** | Lançamentos, importação, relatórios de despesas |
-| **Escalas** | Tipos, voluntários, ciclos, vigilância |
-| **Geolocalização** | `cep_geolocation`, endereços sincronizados por CEP |
-| **Parâmetros** | `app_parameters` (LGPD ativo, totem, etc.) |
-| **Versículos** | `bible_themes`, `bible_verses_by_theme`, RPC `get_random_bible_verse` |
-| **Perfil ministerial** | `ministerial_perguntas`, `ministerial_opcoes`, `ministerial_respostas`, `ministerial_resultados`; RPCs `listar_questionario_ministerial`, `obter_resultado_questionario_ministerial`, `submeter_questionario_ministerial` |
-| **Trilha de Discipulado** | `discipleship_modules`, `discipleship_lessons`, `user_discipleship_progress`, `user_discipleship_badges` (com `badge_color` / `step_order`), `discipleship_pastoral_alerts`; RPCs `upsert_my_discipleship_lesson_progress`, `evaluate_discipleship_achievements`, admin Temas/Reset |
-| **Recepção familiar** | Fila de cadastros públicos |
-
-### 3.2 Armazenamento local (dispositivo)
-
-| Mecanismo | Dados |
-|-----------|-------|
-| **AsyncStorage** | `user_phone`, `user_profile_id`, `user_session_token` |
-| **Sem Supabase Auth session** | Cliente configurado com `persistSession: false` |
-
-### 3.3 Scripts SQL
-
-- **144 arquivos `.sql`** em `scripts/` (incluindo 15 partes de dados bíblicos).
-- Categorias: ACL (~33), perfis/sessão (~35), família/membros (~35), eventos/check-in/geo (~17), financeiro (~10), pastoral (~7), escalas (~8), CEP/geo (~8), versículos bíblicos (~18), diagnóstico, seeds de teste (TSTMAX), entre outros.
-- **Geofence (jun/2026):** `events-geofence-ativo.sql`, `event-favorite-locations.sql`, `geo-checkin-automatic.sql`, `geo-checkin-purge-on-event-update.sql` — RPCs atômicas, `normalize_location_key`, triggers de invalidação, RLS restrito em locais favoritos.
-- **Perfil ministerial (jul/2026):** `ministerial-profile-questionnaire.sql`, `ministerial-profile-questionnaire-seed.sql`, `ministerial-profile-questionnaire-session-fix.sql`.
-- **Trilha de Discipulado (jul/2026):** `discipleship-trail-schema.sql`, `discipleship-trail-badges-alerts.sql`, `discipleship-trail-themes-admin.sql`, `discipleship-trail-reset-admin.sql`, `discipleship-trail-progress-gates.sql`, `discipleship-trail-badge-colors.sql`, `discipleship-trail-tenant-scope-fix.sql`.
-- **Modo Ghost (jul/2026):** `access-control-ghost-mode.sql` — `can_operate_ghost_mode` exige grant explícito em `maintenance.card.auditor` ou `super_admin`.
-- **Recuperação de senha por e-mail:** `password-recovery-security.sql`, `password-recovery-email-flow.sql`.
-- **Execução:** manual no SQL Editor do Supabase ou via scripts Node (`apply-bible-verses-supabase.mjs`).
+O cliente Supabase opera com `persistSession: false`; a aplicação mantém sua própria referência de sessão e token.
 
 ---
 
-## 4. Quantidade de código e linhas
+## 3. Arquitetura lógica
 
-Métricas levantadas em **17/06/2026** (excluindo `node_modules`, `dist`, `.expo`, `package-lock.json`):
+```text
+PWA / Expo
+  ├─ app/          rotas e composição
+  ├─ components/   UI e painéis
+  ├─ hooks/        estado e efeitos
+  └─ lib/          domínio, sessão, ACL e APIs
+       │ HTTPS + anon key + cabeçalhos de sessão
+       ▼
+Supabase
+  ├─ PostgREST/RPC
+  ├─ PostgreSQL + RLS + triggers
+  ├─ Storage
+  └─ Realtime
 
-### 4.1 Visão geral
-
-| Métrica | Valor |
-|---------|-------|
-| **Arquivos no repositório** | ~715 |
-| **Arquivos TypeScript/TSX** | 287 |
-| **Linhas TS/TSX (código aplicativo)** | **61.517** |
-| **Arquivos SQL** | 144 |
-| **Linhas SQL (lógica/schema/RPC)** | **25.031** |
-| **Linhas SQL (dados bíblicos)** | **11.067** |
-| **Linhas SQL (total)** | **~36.098** |
-| **Scripts Node (.mjs)** | 35 arquivos / **4.264 linhas** |
-| **Documentação Markdown** | 32 arquivos / **~11.986 linhas** |
-
-### 4.2 Por camada / pasta
-
-| Pasta | Arquivos | Linhas (aprox.) |
-|-------|----------|-----------------|
-| `app/` (rotas Expo Router) | 22 | 20.574 |
-| `components/` | 67 | 17.694 |
-| `lib/` (regras de negócio) | 147 | 17.635 |
-| `hooks/` | 43 | 5.335 |
-| `scripts/` (total) | 190 | — |
-| `standalone/cadastro-familia/` | 5 | incluído em TS |
-
-### 4.3 Dependências npm
-
-| Tipo | Quantidade |
-|------|------------|
-| **Produção** | 60 pacotes |
-| **Desenvolvimento** | 16 pacotes |
-
-**Total estimado de linhas de código-fonte relevante (TS + SQL lógica + scripts):** **~91.000 linhas**  
-(com dados bíblicos em SQL: **~102.000 linhas**)
-
----
-
-## 5. Arquitetura em camadas
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│  Camada 1 — Dispositivo (PIN, AsyncStorage, câmera, totem) │
-├─────────────────────────────────────────────────────────────┤
-│  Camada 2 — Cliente (telas, guards ACL, filtros de cards)   │
-├─────────────────────────────────────────────────────────────┤
-│  Camada 3 — Transporte (HTTPS, headers de sessão, anon key)│
-├─────────────────────────────────────────────────────────────┤
-│  Camada 4 — Supabase (RLS, RPC SECURITY DEFINER, grants)    │
-└─────────────────────────────────────────────────────────────┘
+Cloudflare Pages
+  ├─ conteúdo estático dist/
+  └─ APIs de checkout/webhook Stripe
 ```
 
-### 5.1 Camada de apresentação (UI)
-
-- **Rotas:** `app/` — Expo Router (file-based).
-- **Componentes:** `components/` — cards do dashboard, painéis de manutenção, formulários, mapa, UI compartilhada.
-- **Contexto:** `context/EntityPrefixContext.tsx` — prefixo de entidade para IDs.
-- **Constantes visuais:** `constants/theme.ts`.
-
-**Telas principais:**
-
-| Rota | Função |
-|------|--------|
-| `/` | Login em 2 passos (celular → PIN); totem dedicado |
-| `/forgot-password` | Recuperação de senha — e-mail + pergunta de segurança |
-| `/register` | Cadastro inicial de perfil |
-| `/(tabs)/index` | Índice de atalhos do membro |
-| `/(tabs)/dashboard` | Dashboard com carrossel de cards |
-| `/maintenance-dashboard` | Painel administrativo |
-| `/manage-profile` | Dados cadastrais |
-| `/manage-members` | Gestão de membros da família |
-| `/pastoral`, `/pastoral-history` | Módulo pastoral |
-| `/financial`, `/expense-report` | Módulo financeiro |
-| `/mapa-geolocalizacao` | Mapa por CEP |
-| `/totem-checkin` | Check-in em totem (QR/câmera) |
-| `/lgpd` | Aceite LGPD |
-| `/cadastro-familia` | Formulário público (standalone Vite) |
-| `/sessao-encerrada` | Tela pós-logout no PWA instalado |
-
-### 5.2 Camada de hooks
-
-- `hooks/` — 43 arquivos: guards de ACL (`useScreenAccessGuard`), dados de manutenção, check-in, financeiro, PWA install, eventos selecionados.
-
-### 5.3 Camada de domínio / serviços (`lib/`)
-
-- **147 módulos** com regras de negócio puras e integração Supabase.
-- Exemplos: `accessControl.ts`, `userSession.ts`, `verificarLogin.ts`, `family*.ts`, `pastoralRequest.ts`, `financial*.ts`, `geoMapGeocoding.ts`, `bibleVerseByTheme.ts`.
-- **Sem servidor intermediário** — chamadas diretas `supabase.from()` e `supabase.rpc()`.
-
-### 5.4 Camada de dados (servidor)
-
-- PostgreSQL no Supabase com **RLS** habilitado nas tabelas sensíveis.
-- **RPCs `SECURITY DEFINER`** para operações que exigem validação centralizada.
-- Políticas de leitura/escrita baseadas em `profile_has_access` e papéis (`access_roles`).
-
-### 5.5 Camada de tooling (`scripts/`)
-
-- Geração de build info, ícones PWA, importação de versículos, aplicação SQL, testes automatizados de fluxos, geração de documentação PDF/XLSX, seeds de teste.
-
-### 5.6 Aplicação standalone
-
-- **`standalone/cadastro-familia/`** — formulário Vite/React reutilizando `FamilyRegistrationForm`.
-- Publicado em `/cadastro-familia/` no mesmo domínio Cloudflare.
-- Submissão via RPC pública `submit-family-registration-public`.
+Não há servidor Express intermediário para a lógica de acesso. Autorização autoritativa está no PostgreSQL/RPC; a UI replica filtros para usabilidade e defesa em profundidade.
 
 ---
 
-## 6. Segurança da aplicação
+## 4. Navegação e rotas
 
-### 6.1 Modelo de defesa em profundidade (4 camadas)
+### 4.1 Superfícies publicadas
 
-Documentado em `CAMADAS_SEGURANCA.md`:
+- **Início (`/(tabs)`):** eventos, avisos, aniversário do dia, Agenda, sticker, Abigail e Eu quero….
+- **Menu:** itens de autonomia definidos em `APP_DRAWER_MENU_ITEMS`.
+- **Engrenagem:** módulos de gestão definidos em `APP_DRAWER_SETTINGS_ITEMS` e agrupados em cinco domínios.
+- **Rotas dedicadas:** telas vivas acessíveis pelo menu, ações e deep links.
 
-1. **Dispositivo** — PIN de 4 dígitos validado no servidor; sessão em AsyncStorage; totem isolado do fluxo de membro; permissões de câmera explícitas.
-2. **Cliente** — Guards de tela (`sessionHasAccess`); cards do dashboard filtrados por ACL; colunas sensíveis com ACL de coluna; modo `EXPO_PUBLIC_ACL_STRICT=true` (fail-closed se RPC de ACL ausente); `TotemDeviceRouteGuard`; **cache em memória** de ACL e perfil (`lib/asyncResultCache.ts`) para navegação instantânea entre cards.
-3. **Transporte** — HTTPS; header `x-session-token` ou `x-profile-id` em toda requisição; apenas chave **anon** no app (sem `service_role`).
-4. **Servidor** — RLS; RPCs com validação de permissão; grants por papel; escritas sensíveis somente via RPC.
+### 4.2 Rotas principais
 
-### 6.2 Controle de acesso (ACL)
+| Domínio | Rotas |
+|---|---|
+| Acesso | `/`, `/forgot-password`, `/register`, `/lgpd`, `/selecionar-igreja`, `/sessao-encerrada` |
+| Home | `/(tabs)`, `/avisos` |
+| Perfil/família | `/perfil`, `/manage-profile`, `/manage-members`, `/lista-familias`, `/membros`, `/aniversariantes` |
+| Comunidade | `/pequeno-grupo`, `/escalas`, `/mural-oportunidades`, `/mural-generosidade`, `/apoio-mutuo` |
+| Eu quero… | `/ofertas`, `/primicias`, `/pastoral`, `/pastoral-history` |
+| Financeiro/documentos | `/financial`, `/expense-report`, `/documentos-oficiais`, `/administrativo` |
+| Eventos | `/visitantes-cadastro-rapido`, `/cracha-visitante`, `/totem-checkin`, `/configuracao-salas`, `/agenda-cancelar` |
+| Conteúdo | `/trilha-discipulado`, `/livros-doados`, `/suggestions-improvements`, `/como-faco`, `/conhecimento` |
+| Administração | `/maintenance-dashboard`, `/atribuicoes`, `/billing`, `/igrejas`, `/alianca-conecta-reino`, `/alianca-indicados`, `/admin/orquestrador` |
+| Público | `/cadastro-familia` redireciona ao standalone |
 
-| Nível | Exemplo | Onde se aplica |
-|-------|---------|----------------|
-| Tela | `screen:/financial` | Guard de rota |
-| Card | `screen:dashboard.card.financial` | Filtro do carrossel |
-| Tabela | `table:profiles` | RLS |
-| Coluna | `column:profiles.access_pin` | Dados cadastrais |
+### 4.3 Publicação congelada
 
-### 6.3 Rotas públicas (sem guard de ACL)
-
-`/`, `/register`, `/totem-checkin`, `/cadastro-familia`, `/sessao-encerrada` — documentado em `docs/SECURITY-PUBLIC-ROUTES.md`.
-
-### 6.4 Sessão e autenticação
-
-- Login: telefone + PIN → RPC `verificar_login`.
-- Token de sessão: `issue_profile_session` → header `x-session-token`.
-- Logout: limpa AsyncStorage e redireciona com `?signedOut=1`.
-
-### 6.5 Headers HTTP (Cloudflare)
-
-- HTML: `Cache-Control: must-revalidate` (atualizações de deploy).
-- Assets com hash: cache longo.
-- `X-Content-Type-Options: nosniff`.
-
-### 6.6 Dados sensíveis
-
-- PIN, CPF, alertas médicos: protegidos por ACL de coluna + RPC de escrita.
-- LGPD: fluxo de aceite obrigatório quando parâmetro ativo.
-
-### 6.7 Riscos e boas práticas observadas
-
-| Aspecto | Situação |
-|---------|----------|
-| Chave anon no código | Valores padrão em `lib/supabaseConfig.ts` — esperado para cliente; segurança depende de RLS |
-| Scripts SQL | Execução manual — requer governança de quem aplica no Supabase |
-| Service role | **Não** embutida no app |
-| PWA instalado | Sessão persiste localmente — protegida pelo PIN |
+`lib/frozenPublication.ts` contém a lista autoritativa. `/(tabs)/dashboard` redireciona para a experiência viva; `/(tabs)/explore` e `/explore` estão congelados. Deep links de cards antigos são resolvidos para rotas dedicadas quando existe equivalente. `small_group` e `opportunity_mural_card` continuam vivos em `/pequeno-grupo` e `/mural-oportunidades`.
 
 ---
 
-## 7. Fluxo de deploy
+## 5. Módulos funcionais
 
+### Identidade e família
+Login celular/PIN, e-mail de primeiro acesso, recuperação, onboarding, LGPD por tenant, perfil, endereço, selfie, PIN, família, carteira digital e transferência.
+
+### Início e comunicação
+Eventos/avisos, agenda familiar, celebrações do dia, notificações pessoais, sticker de admissão, Abigail e ações Eu quero….
+
+### Recepção e acolhimento
+Formulário público, convite com tenant/`family_id`, Novos Membros, fila, matching, conflitos, inbox, Régua D+1/D+4/D+8 e mudança de papéis.
+
+### Eventos e presença
+CRUD/publicação, audiência, capacidade, calendário, totem QR, quórum, geofence, locais, check-in do Espaço Infantil e Cadastro Rápido.
+
+### Pastoral
+Pedidos com sigilo/intercessão, histórico, estágios, responsável, agenda/slots, cancelamento e exclusão confirmada por Super Administrador.
+
+### Comunidade
+Células, escalas, oportunidades, generosidade, Apoio Mútuo, sugestões, livros, Trilha e documentos oficiais.
+
+### Finanças
+Dízimos/ofertas, campanhas, Primícias, leitura do membro, importação/planejamento, comentários, RD e conciliação.
+
+### Governança
+ACL, papéis, Atribuições, mudança/transferência, relatórios, logs de acesso, Ghost, tenants, Gemini e parâmetros.
+
+### Comercial
+Planos, preços Stripe, checkout, assinaturas, pagamentos, capacidade, contrato, cancelamento/retomada, Gestão Liberada, Aliança e Indicados.
+
+---
+
+## 6. Modelo multi-tenant
+
+A igreja ativa é parte da sessão. Dados operacionais incluem `tenant_id` ou são resolvidos por associação autoritativa. RPCs devem chamar helpers de sessão/tenant e rejeitar mistura entre instâncias.
+
+Princípios:
+
+- listagens sempre filtradas pela igreja ativa;
+- formulários públicos recebem tenant explícito;
+- `family_id` não substitui `tenant_id`;
+- parâmetros, branding, PIX, Gemini, LGPD e billing são por tenant;
+- troca de igreja invalida caches dependentes;
+- mesmo telefone pode existir em tenants diferentes;
+- Super Administrador pode administrar instâncias, sem remover o isolamento de dados em fluxos comuns.
+
+---
+
+## 7. Sessão, autenticação e identidade efetiva
+
+### 7.1 Sessão normal
+
+1. `verificar_login` valida celular/PIN no servidor.
+2. `profile_sessions` emite token quando disponível.
+3. AsyncStorage mantém telefone, perfil, token e contexto necessário.
+4. `supabaseSessionFetch` injeta headers.
+5. PostgreSQL resolve ator e tenant.
+
+PIN não é recuperado/exibido por listagens. Primeiro acesso e recuperação usam e-mail.
+
+### 7.2 Ghost
+
+A identidade efetiva é resolvida por `loadEffectiveSessionProfile`, `resolveEffectiveProfileId` e telefone efetivo. Perfil, família, ACL e dados pertencem ao alvo. Identidade real só é usada para auditoria, início/fim da simulação, cobrança e escolha de tenant.
+
+No Ghost:
+
+- sem bypass do Super Admin para ACL simulada;
+- sem bounce ao Início por grant negado;
+- sem história artificial que desfaça navegação;
+- início e fim são os únicos redirects automáticos ao Início.
+
+---
+
+## 8. Segurança em camadas
+
+| Camada | Controles |
+|---|---|
+| Dispositivo | PIN, armazenamento local, SecureStore quando aplicável, permissões e logout |
+| Cliente | guards, menu/ações filtrados, ACL de coluna, fail-closed e identidade efetiva |
+| Transporte | HTTPS, anon key, session token e profile/ghost headers controlados |
+| Banco | RLS, tenant, RPC `SECURITY DEFINER`, validação de ator/alvo e transações |
+| Infraestrutura | Cloudflare, headers/cache, segredos fora do bundle e webhooks verificados |
+
+### Blindagem do Gestor
+
+A camada SQL aplica `assert_gestor_super_admin_shield` e filtros de visibilidade. Gestor não lista, visualiza ou edita Super Administrador; não vê seus logs; não vê PIN/senha. O cliente repete o bloqueio.
+
+### Dados sensíveis
+
+CPF, PIN, consentimento, selfie, alertas médicos, necessidades específicas, pastoral sigiloso, finanças e logs exigem grants e finalidade. Service role nunca é embutida no cliente.
+
+---
+
+## 9. RPCs e transações
+
+Famílias, check-in, escala, financeiro, ACL, billing, pastoral e recepção usam RPCs para manter invariantes. Exemplos de responsabilidades:
+
+- emitir/validar sessão e identidade;
+- verificar acesso a recurso;
+- promover lote familiar de modo transacional;
+- confirmar totem/geofence sem duplicidade;
+- aplicar ciclo de escala em lote;
+- importar lançamentos e conciliar RD;
+- avaliar/cancelar pedido pastoral;
+- criar checkout/sincronizar assinatura;
+- aplicar proteção do Gestor e isolamento tenant.
+
+Triggers sincronizam família/endereço, invalidam check-ins incompatíveis e criam eventos operacionais como inbox/régua quando os critérios são atendidos.
+
+---
+
+## 10. Recepção, inbox e régua
+
+A submissão pública permanece `pending` até decisão. Matching não usa telefone sozinho. Convite de Novos Membros leva `family_id` e pré-preenche celular. Promoção cria/atualiza `profiles` e `members` no tenant.
+
+A inbox registra novos perfis. A régua automática exige visitante efetivo (`visitantes` sem `congregado`, `member` ou `super_admin`), cadastro mínimo e telefone. Promoção interrompe a jornada. Sticker da Home prioriza Recepção e depois Mudança Papéis.
+
+---
+
+## 11. Stripe, billing e Gestão Liberada
+
+- planos possuem código, capacidade e preço Stripe;
+- checkout é criado no backend Cloudflare;
+- retorno/webhook sincroniza assinatura e pagamento;
+- gate considera tenant ativo, assinatura, capacidade e exceções administrativas;
+- Gestão Liberada desativa exigência comercial para o tenant;
+- Gestão Liberada não concede grants;
+- Ghost nunca usa a assinatura do alvo.
+
+---
+
+## 12. Build, deploy e SQL
+
+### Desenvolvimento
+
+```bash
+npm install
+npm run web
+npm run lint
+npm run build:web
 ```
-Alterações locais → git commit → git push origin main → GitHub → Cloudflare Pages
-  → npm install → npm run build:web → publicação em dist/ (HTTPS)
+
+### Produção
+
+`git push origin main` aciona Cloudflare Pages, que executa `npm run build:web` e publica `dist/`.
+
+### Banco
+
+SQL fica versionado em `scripts/` e é aplicado no projeto linkado:
+
+```bash
+npx supabase db query --linked -f "scripts/arquivo.sql"
 ```
 
-| Configuração Cloudflare | Valor |
-|-------------------------|-------|
-| Build command | `npm run build:web` |
-| Output directory | `dist` |
-| Node | 20 |
-| Branch | `main` |
-
-O build gera `public/build-info.json` com hash do commit para rastreabilidade.
+Build web não aplica SQL automaticamente. Alterações de cliente e banco devem ser coordenadas e validadas.
 
 ---
 
-## 8. Funcionalidades por módulo
+## 13. Documentação e geração
 
-| Módulo | Descrição |
-|--------|-----------|
-| **Acesso e sessão** | Login PIN, restauração de sessão, logout, reparo de referência de perfil |
-| **LGPD** | Aceite de termos, bloqueio de fluxo se pendente |
-| **Dashboard membro** | Carrossel: eventos, QR check-in, kids/teens, ofertas, pastoral, membros, aniversariantes, financeiro, escalas, estacionamento, Perfil & Identidade |
-| **Trilha de Discipulado** | 5×3 lições, selos coloridos, Perfil Ministerial na 5.1, alertas pastorais, admin Temas/Reconhecimentos/Reset |
-| **Índice** | Atalhos filtrados por ACL; versículo bíblico aleatório por tema |
-| **Manutenção** | Gantt de eventos, quorum, escalas, ACL, financeiro, pastoral, recepção familiar, monitor de salas, **Manutenção da Trilha** |
-| **Família** | CRUD membros, transferência entre famílias, reconhecimento familiar |
-| **Check-in / Totem** | QR Code, câmera, confirmação de audiência familiar |
-| **Pastoral** | Abertura e histórico de solicitações |
-| **Financeiro** | Visão mensal, boletins, relatórios de despesas |
-| **Mapa** | Geolocalização por CEP com clusters (Leaflet web) |
-| **Versículos** | 161 temas, 5.247 versículos (dailyverses.net) |
-| **Cadastro público** | Formulário familiar sem login (fila recepção) |
+| Comando | Resultado |
+|---|---|
+| `npm run build:docs:md` | pacotes Markdown e ilustrações |
+| `npm run build:docs:pdf` | PDFs, Manual de Entrega e Descritivo |
+| `npm run build:docs` | build web + documentação completa |
+| `npm run build:docs:doc` | Word institucional |
+| `npm run build:access-roles-pdf` | mapa visual ACL |
+| `npm run build:validation-checklist-xlsx` | checklist por papel |
 
 ---
 
-## 9. Documentação existente no repositório
+## 14. Riscos técnicos controlados
 
-| Documento | Conteúdo |
-|-----------|----------|
-| `ARQUITETURA_BLUEPRINT_PWA.md` | Blueprint técnico completo |
-| `CAMADAS_SEGURANCA.md` | Especificação de segurança |
-| `CONTROLE_ACESSO.md` | Modelo ACL |
-| `DEPLOY_CLOUDFLARE.md` | Guia de deploy |
-| `FUNCIONALIDADES.md` | Lista de funcionalidades |
-| `PACOTE_*` / manuais | Pacotes operacionais e treinamento |
-
----
-
-## 10. Informações complementares
-
-- **Nome PWA:** Igreja Batista Norte (IBNorte)
-- **Orientação:** Portrait
-- **Plataformas alvo:** Web (PWA), Android, iOS (via Expo)
-- **Repositório Git:** https://github.com/maufreitas63/app-igreja
-- **Testes automatizados:** Scripts Node em `scripts/test-*.mjs` (fluxos específicos, não suite Jest completa)
-- **Geração de documentação:** `npm run build:docs:pdf` converte ~27 markdowns em PDF na pasta `pdfs/`
+- incompatibilidade entre cliente e RPC: mitigada por SQL versionado e mensagens de RPC ausente;
+- vazamento entre tenants: mitigado por sessão/tenant, RLS, RPC e testes de isolamento;
+- privilégio no Ghost: mitigado por identidade efetiva e bypass desligado;
+- Gestor alcançar Super Admin: mitigado autoritativamente no SQL;
+- duplicidade de presença/família: constraints, matching e transações;
+- replay/webhook Stripe: validação e sincronização idempotente;
+- cache PWA: HTML revalidável, assets hash e hard refresh pós-deploy;
+- cards legados voltarem à publicação: lista congelada e resolução centralizada.
 
 ---
 
-*Documento gerado automaticamente com base na análise do repositório app-igreja em 17/06/2026.*
+## 15. Estado técnico em 05/10/2026
+
+- Expo 54 e PWA Cloudflare operacionais;
+- 57 arquivos de rota TSX no diretório `app/` na revisão;
+- navegação por Home/menu/engrenagem publicada;
+- multi-tenant, billing, Ghost, Abigail e Recepção integrados;
+- cards legados congelados;
+- documentação-fonte atualizada; artefatos derivados precisam ser regenerados após mudanças.
+
+*Conecta+ · Descritivo Técnico · revisão de 05/10/2026.*

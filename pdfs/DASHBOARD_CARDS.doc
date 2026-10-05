@@ -6,7 +6,7 @@ xmlns="http://www.w3.org/TR/REC-html40">
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <meta name="ProgId" content="Word.Document">
 <meta name="Generator" content="Microsoft Word 15">
-<title>Cards do Dashboard</title>
+<title>Cards do Dashboard (legado / congelado)</title>
 <style>
 
   body { font-family: Calibri, Segoe UI, sans-serif; font-size: 11pt; color: #1E293B; line-height: 1.45; }
@@ -31,336 +31,113 @@ xmlns="http://www.w3.org/TR/REC-html40">
 </head>
 <body>
 <div class="Section1">
-<h1>Cards do Dashboard</h1>
-<p>Lista dos cards do carrossel horizontal em <code>app/(tabs)/dashboard.tsx</code>.</p>
-<p><strong>Documentação:</strong> <a href="PACOTE_4_ANEXO_TECNICO.md">&lt;code&gt;PACOTE_4_ANEXO_TECNICO.md&lt;/code&gt;</a> · <a href="INDICE_DOCUMENTACAO.md">&lt;code&gt;INDICE_DOCUMENTACAO.md&lt;/code&gt;</a></p>
-<p><strong>Atualizado em:</strong> 02/07/2026</p>
-<h2>Índice do Aplicativo (<code>/(tabs)/index</code>)</h2>
-<p>Tela inicial após o login com <strong>etiquetas</strong> (atalhos) para cada módulo do Painel:</p>
-<ul>
-<li>Distribuição uniforme na altura útil da tela</li>
-<li>Subitens aninhados (ex.: Sala(s) e QR Code sob Painel de Eventos)</li>
-<li>Ícones coloridos por módulo; atalhos desabilitados quando o fluxo não se aplica (sem evento, sem QR, etc.)</li>
-<li>Toque na etiqueta navega para <code>/(tabs)/dashboard</code> com parâmetro <code>dashboardCard</code></li>
-<li>Marca d'água visível (login não exibe marca d'água)</li>
-</ul>
+<h1>Cards do Dashboard (legado / congelado)</h1>
+<p><strong>Documentação:</strong> <a href="PACOTE_4_ANEXO_TECNICO.md">&lt;code&gt;PACOTE_4_ANEXO_TECNICO.md&lt;/code&gt;</a> · <a href="INDICE_DOCUMENTACAO.md">&lt;code&gt;INDICE_DOCUMENTACAO.md&lt;/code&gt;</a> · <a href="lib/frozenPublication.ts">&lt;code&gt;lib/frozenPublication.ts&lt;/code&gt;</a></p>
+<p><strong>Atualizado em:</strong> 05/10/2026</p>
 <hr>
-<h2>Navegação do carrossel</h2>
-<ul>
-<li>Deslize horizontalmente no card <strong>ou</strong> use os botões <code>‹</code> / <code>›</code> no rodapé (<code>CarouselFooterNav</code>).</li>
-</ul>
-<ul>
-<li>O rodapé exibe a posição atual (<code>1 / N</code>) e o botão central <strong>Menu</strong> (largura expandida entre as setas).</li>
-<li>No <strong>Índice</strong>, <strong>Encerrar sessão</strong> / <strong>Sair</strong> centralizado; ícone <strong>Configurações</strong> (manutenção) com <code>trailingAccessory</code> <strong>alinhado à direita</strong> do rodapé.</li>
-</ul>
-<ul>
-<li>Segurar <code>‹</code> ou <code>›</code> avança card a card automaticamente (500 ms).</li>
-</ul>
-<ul>
-<li>O cabeçalho mostra o título do card ativo (<code>ActiveScreenBadge</code>).</li>
-</ul>
-<ul>
-<li>Cards visíveis dependem de <strong>ACL</strong> (<code>dashboard.card.*</code>) e de flags de evento/escala/estacionamento.</li>
-</ul>
-<ul>
-<li>Cada card usa <strong>paleta visual própria</strong> (fundo, borda, sombra e acentos) definida em <code>lib/dashboardCardThemes.ts</code>.</li>
-</ul>
-<ul>
-<li>Telas filhas abertas a partir do dashboard propagam <code>returnDashboardCard</code>; ao voltar, o carrossel restaura o card de origem sem passar por cards intermediários.</li>
-</ul>
-<h2>Todos os cards (por número)</h2>
+<h2>Estado de publicação</h2>
+<p>O carrossel horizontal em <code>app/(tabs)/dashboard.tsx</code> <strong>não é o caminho de uso publicado</strong>. A experiência atual é:</p>
 <table><thead><tr>
-<th>Número</th>
-<th>Nome</th>
-<th>Posição padrão*</th>
-<th>Conteúdo (<code>content</code>)</th>
-<th>Visibilidade</th>
+<th>Superfície</th>
+<th>Função</th>
 </tr></thead><tbody>
+<tr>
+<td><strong>Início</strong> <code>/(tabs)</code></td>
+<td>Eventos, avisos, Agenda da Família, bolo, sticker, Eu quero…, Abigail</td>
+</tr>
+<tr>
+<td><strong>Menu lateral</strong></td>
+<td>Vida do membro (Perfil, Financeiro, Documentos, Célula, Escalas, murais, Apoio Mútuo, etc.)</td>
+</tr>
+<tr>
+<td><strong>Engrenagem</strong></td>
+<td>Operação da igreja (grupos em <code>lib/appDrawerMenu.ts</code>)</td>
+</tr>
+<tr>
+<td><strong>Perfil</strong> <code>/perfil</code></td>
+<td>Dados, família, carteirinha, trilha, serviços, reembolsos</td>
+</tr>
 </tbody></table>
+<p><code>dashboard.tsx</code> apenas <strong>redireciona</strong> deep links de cards congelados para rotas dedicadas (<code>resolveFrozenDashboardDeepLink</code> / <code>resolvePublishedDashboardHref</code>).</p>
+<h3>Cards congelados (<code>FROZEN_DASHBOARD_CARD_CONTENTS</code>)</h3>
+<p><code>event_alt</code>, <code>qr</code>, <code>kids_teens</code>, <code>offerings</code>, <code>pastoral</code>, <code>members_list</code>, <code>birthdays</code>, <code>financial</code>, <code>vigilance_scales</code>, <code>parking_vehicle_v2</code>, <code>scale_roster</code>, <code>grouped_manage</code>, <code>administrativo</code>, <code>campaign_card</code>.</p>
+<p>Código antigo em comentário: <code>lib/frozen-dashboard-cards.comment.ts</code> (não importar).</p>
+<h3>Cards ainda vivos com rota dedicada (<code>LIVE_DASHBOARD_CARD_CONTENTS</code>)</h3>
 <table><thead><tr>
-<th>1</th>
-<th>Agenda da Família</th>
-<th>1</th>
-<th><code>event_alt</code></th>
-<th>Sempre (com ACL)</th>
+<th>Content</th>
+<th>Rota</th>
 </tr></thead><tbody>
+<tr>
+<td><code>small_group</code></td>
+<td><code>/pequeno-grupo</code></td>
+</tr>
+<tr>
+<td><code>opportunity_mural_card</code></td>
+<td><code>/mural-oportunidades</code></td>
+</tr>
 </tbody></table>
-<table><thead><tr>
-<th>2</th>
-<th>Check In</th>
-<th>2</th>
-<th><code>qr</code></th>
-<th>Parâmetro <code>qr_code</code> ≠ <code>nao</code></th>
-</tr></thead><tbody>
-</tbody></table>
-<table><thead><tr>
-<th>4</th>
-<th>SALA(S)</th>
-<th>3</th>
-<th><code>kids_teens</code></th>
-<th>Sempre (com ACL) — <strong>só inscrições da família do usuário</strong></th>
-</tr></thead><tbody>
-</tbody></table>
-<table><thead><tr>
-<th>3</th>
-<th>Dízimos e Ofertas</th>
-<th>4</th>
-<th><code>offerings</code></th>
-<th><strong>Sempre</strong> (com ACL) — independente de <code>parm_ofertas</code> do evento</th>
-</tr></thead><tbody>
-</tbody></table>
-<table><thead><tr>
-<th>5</th>
-<th>Coração Aberto</th>
-<th>5</th>
-<th><code>pastoral</code></th>
-<th>Sempre (com ACL)</th>
-</tr></thead><tbody>
-</tbody></table>
-<table><thead><tr>
-<th>10</th>
-<th>Lista de Membros</th>
-<th>6</th>
-<th><code>members_list</code></th>
-<th>Sempre (com ACL)</th>
-</tr></thead><tbody>
-</tbody></table>
-<table><thead><tr>
-<th>7</th>
-<th>Aniversariantes</th>
-<th>7</th>
-<th><code>birthdays</code></th>
-<th>Sempre (com ACL)</th>
-</tr></thead><tbody>
-</tbody></table>
-<table><thead><tr>
-<th>11</th>
-<th>Financeiro</th>
-<th>8</th>
-<th><code>financial</code></th>
-<th>Sempre (com ACL) — hub: <code>/financial</code> (relatórios + saldo bancário) e <code>/expense-report</code> (RD)</th>
-</tr></thead><tbody>
-</tbody></table>
-<table><thead><tr>
-<th>8</th>
-<th>Escalas</th>
-<th>9</th>
-<th><code>vigilance_scales</code></th>
-<th>Sempre (com ACL)</th>
-</tr></thead><tbody>
-</tbody></table>
-<table><thead><tr>
-<th>12</th>
-<th>Servos em escala</th>
-<th>10</th>
-<th><code>scale_roster</code></th>
-<th>Quando há escala selecionada com servos</th>
-</tr></thead><tbody>
-</tbody></table>
-<table><thead><tr>
-<th>9</th>
-<th>Estacionamento</th>
-<th>11</th>
-<th><code>parking_vehicle_v2</code></th>
-<th>Painel de estacionamento ativo</th>
-</tr></thead><tbody>
-</tbody></table>
-<table><thead><tr>
-<th>6</th>
-<th>Perfil &amp; Identidade</th>
-<th>12</th>
-<th><code>grouped_manage</code></th>
-<th>Sempre (com ACL) — título na UI; atalhos Dados Cadastrais, Gerenciar Família, Trilha de Discipulado e Paleta de cores</th>
-</tr></thead><tbody>
-</tbody></table>
-<p>\* Posição na ordem do carrossel quando <strong>todos</strong> os cards condicionais estão visíveis.</p>
-<h2>Ordem no carrossel (cenário completo)</h2>
-<table><thead><tr>
-<th>Posição</th>
-<th>Número</th>
-<th>Nome</th>
-</tr></thead><tbody>
-</tbody></table>
-<table><thead><tr>
-<th>1</th>
-<th>1</th>
-<th>Agenda da Família</th>
-</tr></thead><tbody>
-</tbody></table>
-<table><thead><tr>
-<th>2</th>
-<th>2</th>
-<th>Check In</th>
-</tr></thead><tbody>
-</tbody></table>
-<table><thead><tr>
-<th>3</th>
-<th>4</th>
-<th>SALA(S)</th>
-</tr></thead><tbody>
-</tbody></table>
-<table><thead><tr>
-<th>4</th>
-<th>3</th>
-<th>Dízimos e Ofertas</th>
-</tr></thead><tbody>
-</tbody></table>
-<table><thead><tr>
-<th>5</th>
-<th>5</th>
-<th>Coração Aberto</th>
-</tr></thead><tbody>
-</tbody></table>
-<table><thead><tr>
-<th>6</th>
-<th>10</th>
-<th>Lista de Membros</th>
-</tr></thead><tbody>
-</tbody></table>
-<table><thead><tr>
-<th>7</th>
-<th>7</th>
-<th>Aniversariantes</th>
-</tr></thead><tbody>
-</tbody></table>
-<table><thead><tr>
-<th>8</th>
-<th>11</th>
-<th>Financeiro</th>
-</tr></thead><tbody>
-</tbody></table>
-<table><thead><tr>
-<th>9</th>
-<th>8</th>
-<th>Escalas</th>
-</tr></thead><tbody>
-</tbody></table>
-<table><thead><tr>
-<th>10</th>
-<th>12</th>
-<th>Servos em escala <em>(condicional)</em></th>
-</tr></thead><tbody>
-</tbody></table>
-<table><thead><tr>
-<th>11</th>
-<th>9</th>
-<th>Estacionamento <em>(condicional)</em></th>
-</tr></thead><tbody>
-</tbody></table>
-<table><thead><tr>
-<th>12</th>
-<th>6</th>
-<th>Perfil &amp; Identidade</th>
-</tr></thead><tbody>
-</tbody></table>
-<h2>Ordem mínima (sem cards condicionais)</h2>
-<p>Quando Check In, Estacionamento e Servos em escala estão ocultos:</p>
-<table><thead><tr>
-<th>Posição</th>
-<th>Número</th>
-<th>Nome</th>
-</tr></thead><tbody>
-</tbody></table>
-<table><thead><tr>
-<th>1</th>
-<th>1</th>
-<th>Agenda da Família</th>
-</tr></thead><tbody>
-</tbody></table>
-<table><thead><tr>
-<th>2</th>
-<th>4</th>
-<th>SALA(S)</th>
-</tr></thead><tbody>
-</tbody></table>
-<table><thead><tr>
-<th>3</th>
-<th>3</th>
-<th>Dízimos e Ofertas</th>
-</tr></thead><tbody>
-</tbody></table>
-<table><thead><tr>
-<th>4</th>
-<th>5</th>
-<th>Coração Aberto</th>
-</tr></thead><tbody>
-</tbody></table>
-<table><thead><tr>
-<th>5</th>
-<th>10</th>
-<th>Lista de Membros</th>
-</tr></thead><tbody>
-</tbody></table>
-<table><thead><tr>
-<th>6</th>
-<th>7</th>
-<th>Aniversariantes</th>
-</tr></thead><tbody>
-</tbody></table>
-<table><thead><tr>
-<th>7</th>
-<th>11</th>
-<th>Financeiro</th>
-</tr></thead><tbody>
-</tbody></table>
-<table><thead><tr>
-<th>8</th>
-<th>8</th>
-<th>Escalas</th>
-</tr></thead><tbody>
-</tbody></table>
-<table><thead><tr>
-<th>9</th>
-<th>6</th>
-<th>Perfil &amp; Identidade</th>
-</tr></thead><tbody>
-</tbody></table>
-<h2>Card SALA(S) — escopo no dashboard</h2>
-<p>No <strong>Painel do membro</strong>, o card lista apenas inscrições Kids/Teens de <strong>membros da própria família</strong> (<code>familyId</code> da sessão). Na <strong>Manutenção → Sala(s) - Check In</strong>, a equipe vê <strong>todos</strong> os inscritos do evento.</p>
-<p>Mensagens quando vazio:</p>
-<ul>
-<li>Família não identificada: <em>&quot;Não foi possível identificar a família do seu cadastro…&quot;</em></li>
-</ul>
-<ul>
-<li>Sem inscritos da família: <em>&quot;Nenhum membro da sua família inscrito em IBN KIDS/TEENS.&quot;</em></li>
-</ul>
-<h2>Navegação por parâmetro</h2>
-<p>Outras telas podem abrir um card via <code>dashboardCard</code>:</p>
-<ul>
-<li>Por <strong>número</strong>: <code>'1'</code>, <code>'2'</code>, … <code>'12'</code>, <code>'6'</code></li>
-</ul>
-<ul>
-<li>Por <strong>conteúdo</strong>: ex. <code>'pastoral'</code> (card 5), <code>'members_list'</code> (card 10), <code>'offerings'</code> (card 3)</li>
-</ul>
-<p>Constante usada para o menu: <code>DASHBOARD_MENU_CARD_ID = '6'</code>.</p>
+<h3>Rotas congeladas</h3>
+<p><code>/(tabs)/explore</code>, <code>/explore</code>.</p>
 <hr>
-<h2>Card Lista de Membros (<code>members_list</code>)</h2>
-<ul>
-<li>Botões <strong>Visitantes</strong> (ou <strong>Membros</strong>, conforme a lista ativa) e <strong>Mapa Geral</strong> dividem a mesma linha (<code>flex: 1</code> cada).</li>
-<li><strong>Mapa Geral</strong> abre <code>/mapa-geolocalizacao</code> preservando <code>returnDashboardCard</code>.</li>
-<li>Título alterna entre <em>LISTA DE MEMBROS</em> e <em>LISTA DE VISITANTES</em>.</li>
-</ul>
+<h2>Mapa de equivalência (legado → publicado)</h2>
+<table><thead><tr>
+<th>Card antigo</th>
+<th>Destino publicado</th>
+</tr></thead><tbody>
+<tr>
+<td>Agenda / <code>event_alt</code></td>
+<td>Início → tocar o culto → Agenda da Família</td>
+</tr>
+<tr>
+<td>QR / <code>qr</code></td>
+<td>Agenda / Carteirinha Digital / Totem</td>
+</tr>
+<tr>
+<td>Ofertas / Campanhas</td>
+<td>Eu quero… → Contribuir → <code>/ofertas</code></td>
+</tr>
+<tr>
+<td>Pastoral</td>
+<td>Eu quero… → Cuidado Pastoral → <code>/pastoral</code></td>
+</tr>
+<tr>
+<td>Perfil &amp; Identidade</td>
+<td>Menu → Perfil → <code>/perfil</code></td>
+</tr>
+<tr>
+<td>Aniversariantes</td>
+<td>Home (bolo do dia) e Engrenagem → Aniversariantes</td>
+</tr>
+<tr>
+<td>Escalas</td>
+<td>Menu → Escalas → <code>/escalas</code></td>
+</tr>
+<tr>
+<td>Lista de Membros</td>
+<td>Engrenagem → Lista de Membros → <code>/membros</code></td>
+</tr>
+<tr>
+<td>Financeiro</td>
+<td>Menu → Financeiro → <code>/financial</code></td>
+</tr>
+<tr>
+<td>Administrativo</td>
+<td>Engrenagem → Administrativo</td>
+</tr>
+<tr>
+<td>Célula</td>
+<td>Menu → Minha Célula</td>
+</tr>
+<tr>
+<td>Mural de Oportunidades</td>
+<td>Menu → Mural de Oportunidades</td>
+</tr>
+</tbody></table>
 <hr>
-<h2>Card Perfil &amp; Identidade (<code>grouped_manage</code>)</h2>
-<ul>
-<li>Título exibido: <strong>Perfil &amp; Identidade</strong> (identificador interno do card permanece <code>grouped_manage</code>; atalho no Índice do Aplicativo com o mesmo nome).</li>
-<li>Botões com ícones: <strong>Dados Cadastrais</strong> → <code>/manage-profile</code>; <strong>Gerenciar Família</strong> → <code>/manage-members</code>; <strong>Trilha de Discipulado</strong> → painel da jornada (5×3), selos coloridos e, na lição 5.1, <strong>Perfil Ministerial</strong> (questionário de 50 perguntas; RPCs <code>listar_questionario_ministerial</code>, <code>obter_resultado_questionario_ministerial</code>, <code>submeter_questionario_ministerial</code>).</li>
-<li>Rodapé: seletor de <strong>Paleta de cores</strong> (<code>GroupedManagePaletteFooter</code>).</li>
-<li>Atalhos de tela propagam <code>returnDashboardCard</code> para retorno ao card 6.</li>
-</ul>
+<h2>Índice legado</h2>
+<p>Documentos de treinamento e manuais <strong>não</strong> devem ensinar o carrossel como fluxo principal. Use <a href="MANUAL_DASHBOARD_MEMBRO.md">&lt;code&gt;MANUAL_DASHBOARD_MEMBRO.md&lt;/code&gt;</a> e <a href="FUNCIONALIDADES.md">&lt;code&gt;FUNCIONALIDADES.md&lt;/code&gt;</a>.</p>
 <hr>
-<h2>Card Dízimos e Ofertas (<code>offerings</code>)</h2>
-<ul>
-<li>Botão <strong>Copiar chave PIX</strong> usa ícone Material <em>touch-app</em> para reforçar a ação de toque no PWA.</li>
-</ul>
-<hr>
-<h2>Card Financeiro (<code>financial</code>)</h2>
-<ul>
-<li>Recurso ACL: <code>dashboard.card.financial</code> (card) + telas <code>/financial</code> e <code>/expense-report</code>.</li>
-<li>Toque abre hub com atalho destacado <strong>Relatório de Despesas (RD)</strong> → <code>/expense-report</code>.</li>
-<li>Tela <code>/financial</code>: Resultado do mês, Comparativo, Últimos 12 meses, Planejado × Realizado, <strong>Saldo bancário</strong>.</li>
-<li>Itens Fluxo de caixa, Categorias e Relatórios extras aparecem como <strong>em breve</strong> no hub.</li>
-</ul>
+<p><em>Anexo técnico · estado congelado documentado em 05/10/2026.</em></p>
 </div>
 </body>
 </html>

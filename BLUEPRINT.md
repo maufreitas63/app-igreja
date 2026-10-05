@@ -1,748 +1,412 @@
-# Blueprint completo — app-igreja (Igreja Batista Norte)
+# Blueprint — Conecta+
 
-Documento de referência da solução implementada: telas, controles, fluxos de negócio, mensagens ao usuário e camadas de segurança.
+Referência de arquitetura, navegação, módulos, fluxos e segurança do `app-igreja`.
 
-**Índice da documentação:** [`INDICE_DOCUMENTACAO.md`](INDICE_DOCUMENTACAO.md) · Pacote técnico: [`PACOTE_3_GOVERNANCA_TI.md`](PACOTE_3_GOVERNANCA_TI.md) · Anexo: [`PACOTE_4_ANEXO_TECNICO.md`](PACOTE_4_ANEXO_TECNICO.md)
-
-**Atualizado em:** 23/06/2026
-
----
-
-## 1. Visão geral da solução
-
-| Aspecto | Descrição |
-|---------|-----------|
-| **Produto** | PWA / app Expo (React Native + Web) para membros e equipe da igreja |
-| **Backend** | **Supabase** (PostgreSQL + PostgREST + RPCs + Storage) |
-| **Projeto Supabase** | `bldbrsuiwctoaxzcrjoc` — URL `https://bldbrsuiwctoaxzcrjoc.supabase.co` |
-| **Identidade** | Login por **celular + PIN de 4 dígitos** (`profiles.access_pin`); sessão local com `user_phone` e `user_profile_id` |
-| **Autorização** | ACL via RPC `profile_has_access` + RLS com header `x-profile-id` |
-| **Deploy web** | `npm run build:web` → pasta `dist/` (PWA estático em HTTPS) |
-| **Modo totem** | Aparelho dedicado: celular configurado em `app_parameters.cel_totem`, senha fixa `9999`, rota `/totem-checkin` |
-
-### Mapa de telas (rotas)
-
-```
-/                      → Login
-/register              → Cadastro inicial
-/(tabs)/dashboard      → Painel principal (carrossel de módulos)
-/manage-profile        → Dados cadastrais
-/manage-members        → Gerenciar família
-/pastoral              → Coração Aberto (novo pedido)
-/pastoral-history      → Meus pedidos pastorais
-/financial             → Financeiro (leitura)
-/mapa-geolocalizacao   → Mapa de geolocalização (PWA/web)
-/lgpd                  → Termos LGPD
-/maintenance-dashboard → Manutenção (equipe)
-/totem-checkin         → Totem de check-in (quiosque)
-```
-
-### Documentação relacionada
-
-| Documento | Conteúdo |
-|-----------|----------|
-| [`CONTROLE_ACESSO.md`](CONTROLE_ACESSO.md) | Modelo ACL, inventário de recursos, status de implementação |
-| [`MANUAL_CONTROLE_ACESSO.md`](MANUAL_CONTROLE_ACESSO.md) | Manual operacional do ACL |
-| [`scripts/`](scripts/) | Scripts SQL versionados para deploy no Supabase |
+**Atualizado em:** 05/10/2026
+**Fontes de verdade de publicação:** `lib/appDrawerMenu.ts` e `lib/frozenPublication.ts`.
 
 ---
 
-## 2. Segurança da informação — camadas e confiança
+## 1. Visão do sistema
 
-**Especificação completa:** [`CAMADAS_SEGURANCA.md`](CAMADAS_SEGURANCA.md)
+| Aspecto | Implementação |
+|---|---|
+| Produto | PWA/app Expo multi-tenant para igrejas |
+| Cliente | Expo 54, React 19, React Native 0.81, TypeScript |
+| Rotas | Expo Router 6 |
+| Backend | Supabase/PostgreSQL, PostgREST, RPC, RLS, Storage e Realtime |
+| Sessão | celular + PIN, token de sessão e tenant ativo |
+| Deploy | Cloudflare Pages, `npm run build:web` → `dist/` |
+| Pagamentos | Stripe por endpoints Cloudflare |
+| IA | Gemini por tenant |
 
-### 2.1 Camadas de proteção (defesa em profundidade)
+---
 
-```mermaid
-flowchart TB
-  subgraph L1 [Camada 1 — Dispositivo]
-    PIN[PIN 4 dígitos]
-    AsyncStorage[Sessão local AsyncStorage]
-    Camera[Permissões câmera]
-    TotemIso[Totem isolado do fluxo membro]
-  end
-  subgraph L2 [Camada 2 — Cliente app]
-    ScreenACL[Guard de tela sessionHasAccess]
-    CardACL[Cards do dashboard filtrados por ACL]
-    ColumnACL[Colunas do perfil view/update]
-    Strict[EXPO_PUBLIC_ACL_STRICT fail-closed]
-  end
-  subgraph L3 [Camada 3 — Transporte]
-    HTTPS[HTTPS Supabase]
-    Header[x-profile-id em toda requisição]
-    AnonKey[Chave anon — sem service_role no app]
-  end
-  subgraph L4 [Camada 4 — Servidor Supabase]
-    RPC[RPCs security definer]
-    RLS[Row Level Security]
-    Grants[access_grants + profile_access_roles]
-    NoDirect[INSERT escalas_log / PIN só via RPC]
-  end
-  L1 --> L2 --> L3 --> L4
+## 2. Blueprint de navegação publicada
+
+```text
+Login / seleção de igreja / onboarding
+                  │
+                  ▼
+                Início
+       ┌──────────┼──────────────┐
+       ▼          ▼              ▼
+ Menu lateral  Eu quero…     Engrenagem
+       │          │              │
+       ▼          ▼              ▼
+ Perfil e      Contribuir     Operação e Segurança
+ módulos       Pastoral       Gestão de Pessoas
+ do membro     Primícias      Culto e Eventos
+                              Finanças e Inteligência
+                              Governança e TI
 ```
 
-### 2.2 Banco de dados e guarda de informações
+### 2.1 Início
 
-| Item | Detalhe |
-|------|---------|
-| **SGBD** | PostgreSQL 15+ (gerenciado pelo Supabase) |
-| **Schema** | `public` |
-| **Tabelas principais** | `profiles`, `members`, `events`, `event_registrations`, `checkins`, `financials`, `pastoral_requests`, `escalas_log`, `tipos_escala`, `access_resources`, `access_roles`, `access_grants`, `profile_access_roles`, `app_parameters`, `cep_geolocations`, etc. |
-| **Dados sensíveis** | `access_pin` (crítico), `cpf`, `lgpd_*`, `medical_food_alerts` — ocultos na UI padrão; escrita via RPC com `can_update` |
-| **Autenticação Supabase Auth** | Opcional (`profiles.auth_user_id`); maioria dos usuários **não** usa `auth.users` |
-| **Validação de login** | RPC `verificar_login` — PIN nunca comparado em texto claro no cliente |
-| **Sessão no app** | `user_profile_id` + `user_phone` em AsyncStorage; reparada via `repairUserSessionReference()` se inconsistente |
-| **RLS** | Políticas consultam `profile_has_access` + header `x-profile-id` injetado por `lib/supabaseSessionFetch.ts` |
-| **Modo estrito ACL** | `EXPO_PUBLIC_ACL_STRICT=true` em produção: nega acesso se RPC ACL ausente (banner no dashboard) |
-| **Totem** | Sem ACL de tela; confiança no aparelho físico + parâmetro `cel_totem` + PIN `9999`; confirmação só via RPC com pré-check-in |
-| **Geolocalização** | CEP → coordenadas no servidor (`cep_geolocations`); cache local versionado (`geoCepCache.v8`) |
-| **LGPD** | Aceite registrado em `profiles.lgpd_accepted`; termos carregados de `app_parameters`; scroll obrigatório antes do aceite |
-| **Confiança operacional** | Dados em nuvem Supabase (SOC 2); app não embute `service_role`; scripts SQL versionados em `scripts/`; PWA servido em HTTPS |
+- próximos eventos e Agenda da Família;
+- avisos e notificações pessoais;
+- bolo de aniversários pessoais/casamento do dia;
+- sticker de novos registros;
+- Abigail para papéis autorizados;
+- faixa Eu quero….
 
-### 2.3 Papéis de acesso (ACL)
+### 2.2 Menu lateral do membro
 
-Papéis canônicos (ordem de exibição em `lib/accessRoleDisplayOrder.ts`):
+1. Início
+2. Perfil
+3. Financeiro
+4. Documentos oficiais
+5. Minha Célula
+6. Escalas
+7. Mural de Oportunidades
+8. Mural de Generosidade
+9. Apoio Mútuo
+10. Sugestões
+11. Como faço…?
+12. Redes Sociais
+13. Sobre o Conecta+
 
-`visitantes` → `congregado` → `member` → `family_acceptor` → `lider` → `events_admin` → `pastoral` → `super_admin`
+### 2.3 Engrenagem
 
-Recursos protegidos:
+| Grupo | Módulos |
+|---|---|
+| Operação e Segurança | Configuração de salas, Totem, Autorização de imagem/voz |
+| Gestão de Pessoas | Cadastro Rápido, Recepção, Régua, membros, usuários, famílias, mapa, aniversários, pastoral, células, murais, administrativo, livros |
+| Culto e Eventos | Programação, Gantt, avisos, salas, tipos/voluntários/programação de escala, presença |
+| Finanças e Inteligência | Informações Financeiras, Campanhas, Primícias, Modelo Preditivo |
+| Governança e TI | Trilha, ajuda, conhecimento, relatórios, ACL, papéis, transferência, logs, Ghost, billing, Aliança, instâncias, Gemini |
 
-- **Telas** — `screen:/dashboard`, `screen:/manage-profile`, etc.
-- **Cards** — `screen:dashboard.card.*`
-- **Tabelas** — `table:profiles`, `table:members`, etc.
-- **Colunas** — `column:profiles.cpf`, `column:profiles.access_pin`, etc.
-
-### 2.4 Matriz de guards por tela
-
-| Tela | Mecanismo | Resource key |
-|------|-----------|--------------|
-| Login `/` | Público | — |
-| Cadastro `/register` | Público (com `?phone=`) | — |
-| Dashboard | Cards filtrados por ACL | `screen:/dashboard` + `dashboard.card.*` |
-| Dados cadastrais | `sessionHasAccess` manual | `/manage-profile` |
-| Gerenciar família | `useScreenAccessGuard` | `/manage-members` |
-| Coração Aberto | `useScreenAccessGuard` | `/pastoral` |
-| Meus pedidos | `useScreenAccessGuard` | `/pastoral-history` |
-| Financeiro | `useScreenAccessGuard` | `/financial` |
-| Mapa (web) | `useScreenAccessGuard` | `/mapa-geolocalizacao` |
-| LGPD | `useScreenAccessGuard` (skip com `?phone=`) | `/lgpd` |
-| Manutenção | `useScreenAccessGuard` | `/maintenance-dashboard` |
-| Totem | **Sem ACL** — aparelho dedicado | — |
+Itens são filtrados por vínculo, papel, grant, tenant e identidade efetiva.
 
 ---
 
-## 3. Telas — descrição completa
+## 3. Legado congelado
+
+O antigo Painel não é o produto publicado.
+
+### Cards congelados
+
+`event_alt`, `qr`, `kids_teens`, `offerings`, `pastoral`, `members_list`, `birthdays`, `financial`, `vigilance_scales`, `parking_vehicle_v2`, `scale_roster`, `grouped_manage`, `administrativo` e `campaign_card`.
+
+### Rotas congeladas
+
+- `/(tabs)/explore`
+- `/explore`
+
+### Regras
+
+- `/(tabs)/dashboard` redireciona para a experiência viva;
+- não importar `frozen-dashboard-cards.comment.ts`;
+- deep links antigos usam `resolveFrozenDashboardDeepLink`;
+- quando há substituta, abrem rota dedicada; sem substituta, abrem Início;
+- Minha Célula e Mural de Oportunidades são exceções vivas em rotas dedicadas.
 
 ---
 
-### 3.1 Tela de Login (`/` — `app/index.tsx`)
+## 4. Mapa de rotas
 
-**Esta tela serve para:** autenticar membros em **dois passos** (celular → PIN) ou abrir o modo totem em aparelho dedicado; restaurar sessão existente; links para redes sociais.
-
-#### Modo membro (padrão) — fluxo em 2 passos
-
-| Passo | Elemento | Função |
-|-------|----------|--------|
-| **1** | **Campo Celular** | Máscara `(00) 00000-0000`; botão **Continuar** avança ao passo 2 |
-| **1** | **Botão X (celular)** | Limpa o número digitado |
-| **1** | Texto de ajuda | Orientação para primeira vez (Ministério de Acolhimento) |
-| **2** | **Campo Senha de acesso** | 4 dígitos, ocultos; auto-submit ao completar |
-| **2** | **Receber código por e-mail** | Gera e envia PIN temporário — **somente primeira entrada** (sem PIN cadastrado); canal imutável **e-mail** (`lib/authNotificationService.ts`) |
-| **2** | **Esqueci minha senha** | Visível **apenas no passo 2** → `/forgot-password` (e-mail + pergunta de segurança; **não** usa WhatsApp) |
-| **2** | Texto de hint (PIN) | Orienta envio exclusivo por e-mail |
-| **2** | **Botão "Entrar"** / **Acessar** | Valida e autentica |
-| — | **Logo IBNORTE**, **Boas-Vindas** | Identidade visual e cabeçalho |
-| — | **Instagram / YouTube** | Abre links externos da igreja |
-
-**PIN de autenticação:** gateway único `dispatchAuthAccessPinEmail` / RPC `dispatch_auth_access_pin_email` (`scripts/auth-pin-email-only.sql`). WhatsApp está **bloqueado** (`AUTH_CHANNEL_BLOCKED`) em `sendAccessPinViaWhatsApp` e no gateway. WhatsApp permanece apenas para contatos operacionais (aniversariantes, membros, etc.), **fora** de autenticação.
-
-**Recuperação de senha** (`/forgot-password`): membro já cadastrado confirma e-mail, responde pergunta de segurança e recebe novo PIN por **e-mail** (RPCs em `scripts/password-recovery-*.sql`).
-
-#### Modo totem (quando celular = `cel_totem`)
-
-| Elemento | Função |
-|----------|--------|
-| **Título "Totem — Check-in"** | Identifica modo quiosque |
-| **Campo Senha do totem** | Apenas PIN; sem campo celular |
-| **Botão "Abrir tela do totem"** | Senha `9999` → `/totem-checkin` |
-| **Hint** | Informa que não usa cadastro/LGPD/PIN de membro |
-
-#### Restauração de sessão
-
-- Ao abrir: se há `user_phone` salvo e é o totem → redireciona direto para `/totem-checkin`.
-- Parâmetro `?signedOut=1` após logout impede restauração automática.
-
-#### Mensagens interativas (Alert)
-
-| Título | Quando |
-|--------|--------|
-| **Atenção** — celular inválido | WhatsApp ou entrar sem celular completo |
-| **WhatsApp indisponível** | `psw_mngr`/`psw_user` mal configurado |
-| **Erro ao gerar código** | Falha em `prepareAccessPinDraft` |
-| **Gestor não configurado** | `psw_user=nao` sem `psw_mngr` |
-| **Não foi possível gerar o código** | Perfil/RPC ausente no Supabase |
-| **Código gerado** | PIN preparado; mensagem copiada para área de transferência |
-| **Código necessário** | Primeira entrada sem passar pelo WhatsApp |
-| **Senha incorreta** | Totem: PIN diferente de 9999 |
-| **Totem não configurado** | `cel_totem` ausente |
-| **Validação indisponível** | RPC `verificar_login` não instalada |
-| **Erro** — Número ou senha inválidos | Credenciais incorretas; no passo 2, oferece **Esqueci minha senha** (e-mail) |
-| **Erro de Acesso** | Falha de rede ou perfil não continuável |
-| **Erro** — link social | Falha ao abrir Instagram/YouTube |
-
-#### Quem inicia / termina
-
-- **Inicia:** passo 1 — celular e **Continuar**; passo 2 — PIN (ou PIN via WhatsApp na primeira entrada; ou **Esqueci minha senha** → e-mail).
-- **Termina:** app grava sessão (`persistUserSession`) e redireciona para dashboard, cadastro, LGPD ou totem conforme estado do perfil.
+| Rota | Responsabilidade |
+|---|---|
+| `/` | login, restauração e entrada do totem |
+| `/forgot-password` | recuperação por e-mail |
+| `/register` | cadastro inicial |
+| `/selecionar-igreja` | escolha do tenant |
+| `/lgpd` | consentimento/selfie |
+| `/(tabs)` | Início |
+| `/perfil` | hub pessoal |
+| `/manage-profile` | dados cadastrais |
+| `/manage-members` | família |
+| `/lista-familias`, `/membros`, `/mapa-geolocalizacao` | diretórios |
+| `/ofertas`, `/primicias` | contribuições |
+| `/pastoral`, `/pastoral-history` | cuidado pastoral |
+| `/financial`, `/expense-report` | finanças/RD |
+| `/documentos-oficiais`, `/administrativo` | documentos |
+| `/pequeno-grupo` | Minha Célula |
+| `/mural-oportunidades`, `/mural-generosidade` | murais |
+| `/apoio-mutuo` | serviços comunitários |
+| `/escalas` | escala do membro |
+| `/visitantes-cadastro-rapido`, `/cracha-visitante` | visitante e QR |
+| `/totem-checkin` | confirmação de presença |
+| `/configuracao-salas` | configuração infantil |
+| `/trilha-discipulado` | jornada formativa |
+| `/livros-doados` | acervo |
+| `/como-faco`, `/conhecimento` | ajuda |
+| `/maintenance-dashboard` | painéis de gestão |
+| `/atribuicoes` | papéis operacionais |
+| `/billing` | planos/assinatura |
+| `/igrejas` | tenants |
+| `/alianca-conecta-reino`, `/alianca-indicados` | rede/parceria |
+| `/cadastro-familia` | redirecionamento ao formulário público |
 
 ---
 
-### 3.2 Tela de Cadastro (`/register` — `app/register.tsx`)
-
-**Esta tela serve para:** primeiro cadastro de perfil após receber PIN; coleta nome, nascimento, selfie, aceite LGPD; cria `profiles` + `family_id`.
-
-| Elemento | Função |
-|----------|--------|
-| **Nome completo** | Capitalização automática por palavra |
-| **Data nascimento** | Máscara DD/MM/AAAA |
-| **Telefone** | Somente leitura (vem da rota `?phone=`) |
-| **Caixa LGPD rolável** | Termos carregados do banco; exige scroll até o fim |
-| **Checkbox "Li e aceito"** | Marca `lgpd_accepted=true` |
-| **Checkbox "Li e não concordo"** | Marca recusa (com alerta de privacidade) |
-| **Botão selfie / câmera** | Abre captura (nativo) ou seletor de arquivo (web) |
-| **Estágio CAMERA** | Preview frontal, botão "Capturar Selfie" |
-| **Estágio CONFIRM** | Revisão da foto + confirmar cadastro |
-| **Botão final** | Grava perfil, upload selfie no Storage, reserva `family_id` |
-
-**Rejeição totem:** `useRejectTotemPhoneFromMemberRoutes` redireciona celular totem para login.
-
-#### Mensagens
-
-| Mensagem | Quando |
-|----------|--------|
-| Preencha Nome e Nascimento | LGPD sem formulário válido |
-| Role os termos até o final | Aceite sem scroll completo |
-| Privacidade (declínio LGPD) | `buildLgpdDeclineMessage` |
-| Permissão necessária (câmera) | Selfie sem permissão |
-| Erro na câmera | Falha de hardware |
-| Sucesso — cadastro concluído | Redireciona para completar dados |
-| Erro | Falha insert/update |
-
-#### Fluxo
-
-- **Inicia:** gestor/sistema gera PIN → membro entra com PIN → rota de onboarding leva ao cadastro.
-- **Termina:** perfil criado → sessão gravada → próxima tela (`manage-profile` ou LGPD).
-
----
-
-### 3.3 Painel Principal / Dashboard (`/(tabs)/dashboard`)
-
-**Esta tela serve para:** hub central do membro — carrossel de módulos conforme evento selecionado e permissões ACL.
-
-#### Cabeçalho global
-
-| Elemento | Função |
-|----------|--------|
-| **"Boas-Vindas, {nome}"** | Saudação; fundo vermelho se LGPD pendente |
-| **Título do card ativo** | Nome do módulo atual |
-| **Banner ACL** | `ACL_UNAVAILABLE_MESSAGE` se RPC ACL ausente em modo estrito |
-
-#### Rodapé (`CarouselFooterNav`)
-
-| Elemento | Função |
-|----------|--------|
-| **‹ / ›** | Navega cards (segurar = avança a cada 500 ms) |
-| **Indicador 1 / N** | Posição atual no carrossel |
-| **Menu** (centro) | Abre tela de atalhos `/(tabs)` com ícones coloridos |
-| **Engrenagem** | Manutenção — só com `view` em `/maintenance-dashboard`; duplo toque evita clique acidental |
-
----
-
-#### Card 1 — Agenda da Família (`event_alt`)
-
-**Serve para:** escolher evento e registrar **audiência** (pré-check-in) dos membros da família.
-
-| Elemento | Função |
-|----------|--------|
-| **Evento selecionado** | Nome, data/hora, local, badges Kids/Teens |
-| **Vagas** | Inscritos / capacidade |
-| **Trocar Evento** | Chips horizontais (`FamilyEventSelector`) |
-| **Lista de audiência** | Checkboxes por integrante (`FamilyRegistrationList`) — membros, congregados e dependentes não rejeitados |
-| **Checkbox em massa** | Marca/desmarca todos (exceto quórum bloqueado) |
-
-**Hints inline (sem Alert):**
-
-- Selecione um evento…
-- Quórum: só membro da sessão ativa
-- Quórum + totem confirmado: audiência travada
-- Quórum pendente: marque audiência para liberar QR
-- Check-in automático (geofence) / QR só no dia do evento
-- Geofence: banner `GeoCheckinStatusBanner` — detectando, sincronizando, confirmado
-- Erro de gate pré-check-in (`preCheckinGateError`)
-
-**Quem inicia / termina o pré-check-in:**
-
-- **Inicia:** membro marca checkbox na audiência.
-- **Termina (totem/quórum):** membro apresenta QR no totem → RPC confirma → checkbox trava.
-- **Staff:** não participa desta etapa; apenas configura evento na manutenção.
-
----
-
-#### Card 2 — Check-in QR (`qr`)
-
-**Serve para:** exibir etiqueta (código família) e QR para leitura no totem ou entrada manual.
-
-| Elemento | Função |
-|----------|--------|
-| **Toque no card** | Abre `CheckinModal` (seleção manual — **ainda sem gravação no banco**) |
-| **Etiqueta** | `family_id` / `codigo_membro` |
-| **QR Code** | Codifica identificador da família |
-| **Badges Kids/Teens** | Se evento tem salas |
-
-**Visibilidade:** dia do evento + pré-check-in feito + ACL + tipo de fluxo (totem/quórum/manual).
-
-**Quem termina check-in no totem:**
-
-- **Membro** mostra QR na tela do **totem** (outro aparelho, `/totem-checkin`).
-- **Totem** escaneia → `lookup_totem_checkin` → `confirm_totem_checkin`.
-- **Sistema** atualiza `checkins.status` para `confirmado`.
-
----
-
-#### Card 2b — Check-in geofence (automático por proximidade)
-
-**Serve para:** confirmar presença via GPS quando `events.geofence_ativo = true`.
-
-| Elemento | Função |
-|----------|--------|
-| **`useGeoCheckinMonitor`** | Watch GPS, 3 leituras dentro do raio, dispara RPC |
-| **`GeoCheckinStatusBanner`** | Feedback visual no dashboard |
-| **`confirm_geo_family_checkin_atomic`** | RPC atômica no Supabase |
-| **Coordenadas** | `event_local` → `event_favorite_locations` (normalize_location_key) |
-| **Janela** | `check_in_geofence_tempo` horas antes + fim do dia (America/Sao_Paulo) |
-| **Raio** | `check_in_geofence_raio_metros` (padrão 30 m) + buffer de precisão GPS |
-| **Offline** | `checkinOfflineQueue.ts` enfileira e drena ao reconectar |
-
-**Visibilidade:** geofence ativo + coordenadas resolvidas + janela temporal + audiência + sem check-in confirmado.
-
-**Invalidação:** trigger `events_purge_geofence_checkins_on_update` e `event_favorite_locations_purge_geofence_checkins` removem check-ins quando evento ou local favorito muda.
-
----
-
-#### Card 3 — SALA(S) (`kids_teens`)
-
-**Serve para:** monitorar entrada nas salas Kids/Teens (somente leitura para o membro).
-
-| Elemento | Função |
-|----------|--------|
-| **Chips IBN KIDS / IBN TEENS** | Contagem check-in/total |
-| **Lista de inscritos** | ✓ se `room_entry_checked` — **apenas membros da família do usuário** |
-
-**Escopo:** no dashboard, filtro por `familyId` da sessão. Na manutenção, a equipe vê todos os inscritos.
-
-**Quem termina check-in na sala:**
-
-- **Staff** marca entrada em **Manutenção → Sala(s) - Check In**.
-- Membro apenas **visualiza** status aqui.
-
----
-
-#### Card 4 — Dízimos e Ofertas (`offerings`)
-
-**Visibilidade:** sempre presente no carrossel (com ACL); independente de `parm_ofertas` do evento.
-
-| Elemento | Função |
-|----------|--------|
-| **Dados do recebedor** | Informações institucionais |
-| **Chave PIX** | Exibição + **Copiar chave PIX** |
-| **Atualizar chave PIX** | Recarrega de `app_parameters` |
-
-**Mensagens:** Chave PIX indisponível; Erro ao copiar; sucesso inline 3 s.
-
----
-
-#### Card 5 — Coração Aberto (`pastoral`)
-
-| Elemento | Função |
-|----------|--------|
-| **Toque** | Navega para `/pastoral` |
-
----
-
-#### Card 6 — Lista de Membros (`members_list`)
-
-| Elemento | Função |
-|----------|--------|
-| **Mapa** | `/mapa-geolocalizacao` |
-| **Busca** | Filtra por nome |
-| **Tabela** | Nome, família, WhatsApp |
-| **Ícone users** | Modal "Membros da família" |
-| **Ícone Zap** | Abre WhatsApp do membro |
-
----
-
-#### Card 7 — Aniversariantes (`birthdays`)
-
-| Elemento | Função |
-|----------|--------|
-| **Seletor de mês** | Picker |
-| **Lista** | Data + nome + WhatsApp |
-
----
-
-#### Card 8 — Financeiro (`financial`)
-
-| Elemento | Função |
-|----------|--------|
-| **Toque** | `/financial` (somente leitura) |
-
----
-
-#### Card 9 — Escalas (`vigilance_scales` + `scale_roster`)
-
-| Elemento | Função |
-|----------|--------|
-| **Lista de tipos** | Radio → abre escala do tipo |
-| **Roster** | Datas + servos + WhatsApp |
-| **Estacionamento** | Se tipo = parking → painel de placa |
-| **Voltar** | Retorna à lista de tipos |
-
----
-
-#### Card 10 — Perfil & Identidade (`grouped_manage`)
-
-Título na UI e no Índice: **Perfil & Identidade** (recurso ACL `dashboard.card.grouped_manage`).
-
-| Elemento | Função |
-|----------|--------|
-| **Dados Cadastrais** | `/manage-profile` |
-| **Gerenciar Família** | `/manage-members` |
-| **Perfil Ministerial** | Modal com questionário (50 perguntas / 10 etapas); RPCs `listar_questionario_ministerial`, `obter_resultado_questionario_ministerial`, `submeter_questionario_ministerial`; tabelas `ministerial_perguntas`, `ministerial_opcoes`, `ministerial_respostas`, `ministerial_resultados`; scripts `ministerial-profile-questionnaire.sql`, seed e `ministerial-profile-questionnaire-session-fix.sql` |
-| **Paleta de cores** | Rodapé do card (`GroupedManagePaletteFooter`) |
-
----
-
-#### Modais do dashboard
-
-**CheckinModal:** lista membros, Confirmar Presença / Cancelar — *implementação de persistência pendente*.
-
-**Modal família:** lista membros, WhatsApp, Fechar.
-
----
-
-### 3.4 Dados Cadastrais (`/manage-profile`)
-
-**Serve para:** autogestão completa do perfil — dados pessoais, contato, endereço (CEP), selfie, veículos, vínculo familiar, PIN, LGPD.
-
-| Seção / controle | Função |
-|------------------|--------|
-| **Selfie** | Captura/substituição com confirmação |
-| **Dados Pessoais** | Nome, nascimento, CPF (se permitido) — edição inline |
-| **Contato** | E-mail, telefone (com `changePhoneEverywhere`) |
-| **Endereço** | CEP com sync automático de logradouro |
-| **Senha de acesso** | PIN atual / novo / confirmar (4 dígitos) |
-| **Veículos** | CRUD placa, marca, modelo, cor |
-| **Vincular família** | Busca por código + solicitação |
-| **LGPD** | Atalho se pendente |
-| **Voltar** | Dashboard card grouped_manage |
-
-**ACL:** guard manual por tela; **colunas** filtradas por `canViewProfileColumn` / `canUpdateProfileColumn`; campos bloqueados até ACL carregar.
-
-**Mensagens principais:** Acesso negado; Complete seu cadastro (onboarding); Campo protegido; Senha atualizada; erros de CEP/câmera/veículo/família.
-
----
-
-### 3.5 Gerenciar Família (`/manage-members`)
-
-**Serve para:** CRUD de membros da família (`members`), reconhecimento familiar (aceite), transferência entre famílias e herança de endereço completo.
-
-| Controle | Função |
-|----------|--------|
-| **Formulário recolhível** | Adicionar/editar membro |
-| **Busca por nome ou telefone** | Vincula perfil existente; permite transferir de outra família |
-| **Parentesco** | Chips (Cônjuge, Filho(a), etc.) |
-| **Checkbox aceite** | Reconhecimento na família; dispara herança de endereço |
-| **Editar / Salvar / Excluir** | Por membro |
-| **Banner family_id** | Somente leitura |
-
-**Fluxos especiais:**
-
-- **Transferência:** se membro está em outra `family_id`, diálogo de confirmação → `accept_managed_member_into_family` → cópia de endereço (`inheritFamilyAddressToAcceptedMember`).
-- **Herança de endereço:** CEP, rua, número, complemento, bairro, cidade, estado do gestor → perfil do membro (aceitar, transferir ou adicionar). Falha na cópia não desfaz o vínculo familiar.
-
-**Regra:** representante legal não pode ser excluído.
-
-**Mensagens:** Acesso negado; duplicata de telefone/membro; confirmação de transferência/exclusão; aviso se endereço não pôde ser copiado; RLS/accepted column errors.
-
-**SQL:** `scripts/sync-managed-member-profile-family-rpc.sql`, `scripts/profiles-sync-address-from-cep-rpc.sql` (`update_profile_field`).
-
----
-
-### 3.6 Coração Aberto (`/pastoral`)
-
-**Serve para:** enviar pedido de cuidado pastoral / intercessão.
-
-| Controle | Função |
-|----------|--------|
-| **Motivo / Situação** | Chips segmentados (`SegmentChipRow`); categorias de `pastoral_reason_categories` |
-| **Beneficiário** | Eu / família / terceiro (+ campos condicionais) |
-| **Destino** | Sigilo pastoral / Intercessão |
-| **Seu pedido** | Texto livre |
-| **Histórico (ícone)** | `/pastoral-history` |
-| **Enviar pedido** | RPC `submitPastoralRequest` |
-
----
-
-### 3.7 Meus Pedidos (`/pastoral-history`)
-
-**Serve para:** listar pedidos do perfil logado com status; pull-to-refresh.
-
-| Controle | Função |
-|----------|--------|
-| **Tentar novamente** | Em erro de carga |
-| **Fazer um pedido / Novo pedido** | Volta ao formulário |
-
----
-
-### 3.8 Financeiro (`/financial`)
-
-**Serve para:** relatórios financeiros **somente leitura** — REALIZADO mensal, comparativo, 12 meses, planejado × realizado.
-
-| Controle | Função |
-|----------|--------|
-| **Seletor de mês** | Meses com REALIZADO e/ou PLANEJADO; badge **(só planejado)** |
-| **Hint só planejado** | Explica resultado REALIZADO vazio |
-| **Resultado do mês** | Boletim com saldo acumulado até o mês + YTD |
-| **Comparativo mensal** | Mês atual vs anterior |
-| **Últimos 12 meses** | Matriz |
-| **Planejado × Realizado** | Bloqueado se sem orçamento planejado |
-| **Atualizar** | Em erro de carga |
-| **Aviso amarelo** | `commentsWarning` se comentários não carregaram |
-
-**Edição financeira:** apenas em **Manutenção → Informações Financeiras** (staff).
-
----
-
-### 3.9 Mapa de Geolocalização (`/mapa-geolocalizacao` — web)
-
-**Serve para:** mapa Leaflet com pins por CEP dos perfis; filtros visitante/membro.
-
-| Controle | Função |
-|----------|--------|
-| **Filtros** | Todos / Com papel / Visitantes |
-| **Atualizar mapa** | Sincroniza snapshot + geocodificação |
-| **Pin clicável** | Detalhe (nome, telefone, endereço) só com ACL `/mapa-geolocalizacao/detalhe-pin` — padrão pastoral/super_admin |
-| **Voltar** | Lista de membros no dashboard |
-
-**Nativo (app mobile):** placeholder informando que mapa é só na PWA.
-
----
-
-### 3.10 Termos LGPD (`/lgpd`)
-
-**Serve para:** exibir termos e registrar aceite/recusa em `profiles.lgpd_accepted`.
-
-| Controle | Função |
-|----------|--------|
-| **Scroll obrigatório** | Gate antes dos checkboxes |
-| **Li e aceito / não concordo** | Escolha |
-| **Confirmar / Concluir** | Grava preferência |
-
-ACL ignorado quando `?phone=` (fluxo cadastro).
-
----
-
-### 3.11 Totem Check-in (`/totem-checkin`)
-
-**Serve para:** quiosque — escanear QR da família e confirmar presença no evento do dia.
-
-| Controle | Função |
-|----------|--------|
-| **Seleção automática de evento** | Hoje + `totem_ativo` ou `requer_quorum` + publicado |
-| **Ativar câmera** | Gate de permissão |
-| **Scanner QR** | `CameraView` modo QR |
-| **Banner de status** | Sucesso / erro / aviso |
-| **Encerrar sessão** | Logout totem |
-
-**Sem ACL de tela** — modelo de aparelho dedicado.
-
-**Fluxo completo do check-in (totem/quórum):**
-
-```
-1. STAFF cria evento (Manutenção) com totem e/ou quórum
-2. MEMBRO marca audiência no Dashboard (pré-check-in)
-3. MEMBRO abre card QR no dia do evento
-4. TOTEM escaneia QR → lookup → confirm
-5. SISTEMA grava confirmado; trava audiência se quórum
-6. STAFF consulta Lista de Presença (Manutenção) — somente leitura
+## 5. Arquitetura de componentes
+
+```text
+app/_layout
+  ├─ restauração de sessão
+  ├─ seleção de tenant
+  ├─ gate de app/billing
+  ├─ roteamento de onboarding
+  └─ providers globais
+
+app/(tabs)/index (Início)
+  ├─ eventos / agenda
+  ├─ avisos
+  ├─ admission sticker
+  ├─ Abigail
+  ├─ Eu quero…
+  └─ drawer
+
+app/maintenance-dashboard
+  ├─ resolve panel
+  ├─ ACL/identidade efetiva
+  └─ componentes Maintenance*
 ```
 
-**Mensagens (Toast + banners):**
-
-- Pré-check-in não encontrado
-- Confirmação realizada com sucesso
-- Já confirmado (`TOTEM_CHECKIN_ALREADY_CONFIRMED_MESSAGE`)
-- Câmera bloqueada / permissão necessária
-- Evento indisponível (vários motivos + hints SQL)
-- Aponte para o QR Code da família…
+`appDrawerMenu.ts` resolve item → rota ou painel. `navigateWithScreenAccess` aplica gate; no Ghost, helpers específicos impedem bounce ao Início.
 
 ---
 
-### 3.12 Manutenção (`/maintenance-dashboard`)
+## 6. Domínios de dados
 
-**Serve para:** operação interna — eventos, salas, quórum, escalas, pastoral, financeiro, ACL, cadastro de usuários.
+| Domínio | Entidades principais |
+|---|---|
+| Identidade | profiles, members, famílias, profile_sessions |
+| Tenant | instâncias, vínculos, app_parameters, branding |
+| ACL | resources, roles, grants, profile roles, logs |
+| Eventos | events, registrations, checkins, locations, rooms |
+| Recepção | lotes, integrantes, inbox e visitor follow-up |
+| Pastoral | requests, categories, assignments, slots |
+| Financeiro | financials, campaigns, Primícias, expense reports |
+| Escalas | tipos, voluntários, programação e trocas |
+| Conteúdo | documentos, livros, trilha, conhecimento, avisos |
+| Comercial | plans, subscriptions, payments, contracts, referrals |
+| IA | configuração Gemini e logs de interação |
 
-#### Menu de módulos (atalhos)
-
-| Módulo | Componente | Quem acessa |
-|--------|------------|-------------|
-| **Programação de Eventos** | Lista + editor | Staff com acesso manutenção |
-| **Cronograma de Eventos** | Gantt | Idem |
-| **Sala(s) - Check In** | `MaintenanceSalaMonitorCard` | Staff — **marca entrada Kids/Teens** |
-| **Lista de Presença** | `MaintenanceQuorumPresenceCard` | Staff — leitura pós-totem |
-| **Tipos de Escala** | `MaintenanceScaleTypesCard` — vagas/domingo e modo ciclo | ACL escala |
-| **Servos em Disponibilidade** | `MaintenanceScaleVolunteersCard` | ACL escala |
-| **Programação de Escalas** | `MaintenanceScalesCard` | Ciclo em bloco via `aplicar_ciclo_escala` |
-| **Cuidado Pastoral** | `MaintenancePastoralCareCard` | Papel pastoral |
-| **Informações Financeiras** | `MaintenanceFinancialsCard` | Import CSV, esvaziar mês REALIZADO |
-| **Controle de Acesso** | `MaintenanceAccessControlCard` | `super_admin` |
-| **Cadastro de Usuário** | `MaintenanceProfileCadastroCard` | `super_admin` |
-
-#### Editor de eventos (campos)
-
-| Campo | Função |
-|-------|--------|
-| Nome, data/hora, local | Identificação |
-| Capacidade | Vagas obrigatórias |
-| Chips Kids / Teens / Ofertas | Recursos do evento |
-| **Ativação de Totem** | Habilita fluxo totem |
-| **Requer Quorum** | Fluxo quórum + lista de presença |
-| **Publicação** | Publicado / Rascunho |
-| **Tabela quórum** | Registro em tempo real (poll 15 s) |
-| **Salvar / Apagar / Cancelar** | CRUD |
-
-**Toasts:** evento criado/atualizado/apagado; erros de formulário/RLS.
+Todas as entidades operacionais devem ser tenant-scoped.
 
 ---
 
-## 4. Fluxos de negócio — quem inicia e quem termina
+## 7. Fluxos críticos
 
-| Processo | Inicia | Termina | Onde |
-|----------|--------|---------|------|
-| **Login membro** | Usuário | App grava sessão | `/` |
-| **Primeiro PIN** | Usuário (WhatsApp) | RPC grava PIN temporário | `/` |
-| **Cadastro inicial** | Sistema redireciona | Perfil + family_id criados | `/register` |
-| **Completar perfil** | Onboarding | Membro salva campos | `/manage-profile` |
-| **Audiência / pré-check-in** | Membro (checkbox) | Membro ou totem (quórum trava) | Dashboard Agenda |
-| **Check-in totem** | Membro mostra QR | Totem confirma via RPC | `/totem-checkin` |
-| **Check-in sala Kids/Teens** | Membro inscreve na audiência | **Staff** marca checkbox | Manutenção Salas |
-| **Quórum lista presença** | Totem confirma | Staff imprime/consulta | Manutenção Lista Presença |
-| **Pedido pastoral** | Membro envia | Equipe pastoral (fora do app) | `/pastoral` |
-| **Financeiro leitura** | Membro consulta | — | `/financial` |
-| **Financeiro carga** | Staff importa CSV | RPC manutenção | Manutenção Financeiro |
-| **Escala ciclo** | Staff preview + confirma | RPC `aplicar_ciclo_escala` | Manutenção Escalas |
-| **ACL papéis** | Super admin | Grants no Supabase | Manutenção ACL |
-| **Mapa geolocalização** | Membro/staff abre mapa | Sync CEP → pins | PWA mapa |
-| **Logout** | Usuário (Sair) | Sessão limpa | Dashboard / totem |
+### 7.1 Login e onboarding
 
-### Diagrama — check-in completo (totem + salas)
-
-```mermaid
-sequenceDiagram
-  participant Staff as Staff (Manutenção)
-  participant Membro as Membro (Dashboard)
-  participant Totem as Totem (Quiosque)
-  participant DB as Supabase
-
-  Staff->>DB: Cria evento (totem/quórum/salas)
-  Membro->>DB: Marca audiência (pré-check-in)
-  Membro->>Membro: Exibe QR no card Check-in
-  Totem->>DB: lookup_totem_checkin
-  Totem->>DB: confirm_totem_checkin
-  DB-->>Membro: Audiência travada (quórum)
-  Staff->>DB: Marca entrada sala Kids/Teens
-  Staff->>DB: Consulta Lista de Presença
+```text
+celular → verificar_login → sessão/token + tenant
+ → múltiplos tenants? selecionar igreja
+ → cadastro mínimo?
+ → LGPD ativo e pendente?
+ → Início
 ```
 
----
+Primeiro PIN/recuperação: e-mail. WhatsApp é operacional.
 
-## 5. Catálogo consolidado de mensagens interativas
+### 7.2 Evento e presença
 
-### Alerts (bloqueantes)
+```text
+staff publica evento
+ → Início lista evento
+ → família abre Agenda
+ → marca audiência
+ → [totem QR | geofence | quórum]
+ → checkin confirmado
+```
 
-Login, cadastro, ACL negado, validações de formulário, confirmações destrutivas (excluir membro/evento), erros de RPC ausente, PIX, WhatsApp, câmera, PIN, totem, pastoral, perfil, família, veículos.
+Geofence valida janela, raio, precisão e coordenadas. Alteração crítica do evento/local invalida presença incompatível.
 
-### Toasts (totem + manutenção)
+### 7.3 Espaço Infantil
 
-Confirmação check-in, já confirmado, sucesso/erro de salvamento em manutenção.
+```text
+família/visitante cadastra criança + cuidado
+ → audiência/QR
+ → equipe lê QR na sala
+ → confirma entrada
+ → responsável reapresenta QR
+ → equipe confirma retirada
+```
 
-### Banners / hints inline (não bloqueantes)
+### 7.4 Recepção Familiar
 
-Gate pré-check-in, quórum, LGPD pendente (header vermelho), ACL indisponível, meses só planejado, comentários financeiros, schema SQL pendente na manutenção, cache do mapa, estados vazios de listas.
+```text
+convite livre ou Novos Membros
+ → tenant + family_id + celular
+ → formulário público
+ → lote pending
+ → revisão/conflitos
+ → processar ou rejeitar
+ → profiles/members + inbox
+ → régua somente visitante efetivo
+ → sticker orienta admissão
+```
 
-### Confirmações (dupla ação)
+### 7.5 Pastoral
 
-Apagar evento (Sim, apagar / Não), excluir membro, substituir selfie.
+```text
+membro envia pedido
+ → fila por destino/sigilo
+ → responsável e estágio
+ → encerramento
+ou
+ → solicitação de cancelamento
+ → Super Admin confirma Excluir
+```
 
----
+### 7.6 Billing
 
-## 6. Scripts SQL e dependências de deploy
+```text
+instância escolhe plano
+ → checkout Stripe
+ → retorno/webhook
+ → assinatura/pagamento sincronizados
+ → gate por status/capacidade
+```
 
-Ordem recomendada no Supabase:
+Se Gestão Liberada estiver ativa, o gate comercial é dispensado; ACL continua ativa.
 
-1. `scripts/access-control-role-display-order.sql`
-2. `scripts/access-control-schema.sql` + seeds ACL
-3. `scripts/escalas-multi-vagas.sql`
-4. `scripts/escalas-integrity-constraints.sql`
-5. `scripts/escalas-apply-cycle-batch.sql` (inclui `aplicar_ciclo_escala` + `get_scale_cycle_context`)
-6. `scripts/escalas-tipos-maintenance-rpc.sql`
-7. `scripts/escalas-volunteers-rpc.sql`
-8. `scripts/escalas-maintenance-rpc.sql`
-9. `scripts/checkins-totem-flow.sql` + `scripts/events-quorum-registry.sql`
-10. `scripts/profiles-sync-address-from-cep-rpc.sql`
-11. `scripts/access-control-map-screen.sql`
-12. `scripts/financials-maintenance-rpc.sql`
-13. `scripts/verificar-login.sql`, scripts PIN/LGPD conforme ambiente
+### 7.7 Ghost
 
-**Produção:**
+```text
+operador real seleciona alvo
+ → sessão registra target
+ → Início uma vez como alvo
+ → perfil/família/ACL/dados do alvo
+ → encerra Ghost
+ → Início na identidade real
+```
 
-- `EXPO_PUBLIC_ACL_STRICT=true`
-- Deploy PWA: `npm run build:web` → publicar `dist/` em HTTPS
-
----
-
-## 7. Resumo de confiança e proteção
-
-A solução combina:
-
-- **Autenticação por PIN** validado no servidor (`verificar_login`)
-- **Autorização granular** (tela / card / coluna / tabela) via `profile_has_access`
-- **RLS no PostgreSQL** com identidade transportada por header `x-profile-id`
-- **RPCs `security definer`** para operações sensíveis (PIN, check-in, escala em lote, exclusão financeira escopada)
-- **Isolamento do totem** (aparelho dedicado, sem ACL de tela)
-- **LGPD** com registro auditável (`lgpd_accepted`)
-- **Separação leitura (membro) vs escrita (manutenção)** em finanças e eventos
-
-Dados residem no Supabase (PostgreSQL gerenciado). O app cliente **nunca** recebe chave `service_role`.
-
----
-
-## 8. Inventário de cards do dashboard (ACL)
-
-| `resource_key` | Card | Rota / destino |
-|----------------|------|----------------|
-| `screen:dashboard.card.event_alt` | Agenda da Família | Inline no dashboard |
-| `screen:dashboard.card.qr` | Check In / QR Totem / Quórum | Inline + modal |
-| `screen:dashboard.card.kids_teens` | SALA(S) | Inline (leitura) |
-| `screen:dashboard.card.offerings` | Dízimos e Ofertas | Inline |
-| `screen:dashboard.card.pastoral` | Coração Aberto | `/pastoral` |
-| `screen:dashboard.card.members_list` | Lista de Membros | Inline + `/mapa-geolocalizacao` |
-| `screen:dashboard.card.birthdays` | Aniversariantes | Inline |
-| `screen:dashboard.card.financial` | Financeiro | `/financial` |
-| `screen:dashboard.card.vigilance_scales` | Escalas | Inline (roster) |
-| `screen:dashboard.card.parking_vehicle_v2` | Estacionamento | Inline |
-| `screen:dashboard.card.grouped_manage` | Dados + Família | `/manage-profile`, `/manage-members` |
+Cobrança e tenant permanecem vinculados ao operador real.
 
 ---
 
-*Documento gerado a partir do código-fonte e da documentação do projeto app-igreja.*
+## 8. Segurança e confiança
+
+### 8.1 Camadas
+
+1. dispositivo e sessão local;
+2. cliente, guards e filtros;
+3. HTTPS e cabeçalhos de sessão;
+4. PostgreSQL com RLS/RPC/tenant;
+5. infraestrutura Cloudflare/Supabase/Stripe.
+
+### 8.2 ACL
+
+Recursos: `screen`, `dashboard_card`, `table`, `column`; ações `view` e `update`. A UI oculta o que não está concedido, mas o servidor é autoritativo.
+
+### 8.3 Gestor de Controle de Acesso
+
+A proteção SQL impede o Gestor de:
+
+- listar/ver/editar `super_admin`;
+- ver registros de acesso do Super Administrador;
+- ver ou conceder acesso a `access_pin`, password ou senha.
+
+### 8.4 Multi-tenant
+
+RPCs obtêm tenant da sessão e validam alvo. Formulários públicos não devem depender de default global. Storage, documentos, billing, IA e parâmetros também são escopados.
+
+### 8.5 Ghost
+
+O alvo é a identidade efetiva. Operador real não fura ACL. Grant negado no Ghost não provoca redirect automático nem overlay de “sem acesso nesta simulação”; RLS e dados continuam como alvo.
+
+---
+
+## 9. Regras operacionais por módulo
+
+### Recepção
+- nunca unir pessoa apenas por telefone;
+- preservar `family_id` consistente;
+- conflito impede promoção;
+- inbox e fila são conceitos diferentes;
+- régua automática só para visitante efetivo.
+
+### Pastoral
+- sigilo não é distribuído à intercessão por padrão;
+- cancelamento acompanhado exige justificativa;
+- Excluir definitivo é reservado ao Super Administrador no estado válido.
+
+### Financeiro
+- membro é leitura;
+- escrita é tesouraria/RPC;
+- RD finalizado tem regras próprias de exclusão/conciliação;
+- dados sempre por tenant.
+
+### Billing
+- instância ativa não é sinônimo de assinatura ativa;
+- Gestão Liberada não é Super Admin e não é grant;
+- Ghost não altera paywall.
+
+---
+
+## 10. Menu técnico de manutenção
+
+| `moduleKey` | Destino |
+|---|---|
+| `family_reception` | painel `family_reception` |
+| `visitor_followup` | painel `visitor_followup` |
+| `pastoral_care` | painel `pastoral_care` |
+| `financials` | painel `financials` |
+| `access_control` | painel `access_control` |
+| `mudanca_papeis` | painel `mudanca_papeis` |
+| `profile_access_insights` | painel `profile_access_insights` |
+| `auditor` | painel `auditor` |
+| `menu_billing` | `/billing` |
+| `menu_igrejas` | `/igrejas` |
+| `menu_salas` | `/configuracao-salas` |
+| `menu_totem` | `/totem-checkin` |
+
+Outros itens seguem o mapa completo de `APP_DRAWER_SETTINGS_ITEMS`.
+
+---
+
+## 11. Build e implantação
+
+### Web
+
+```text
+git push main → Cloudflare Pages → npm run build:web → dist/
+```
+
+### Banco
+
+```bash
+npx supabase db query --linked -f "scripts/arquivo.sql"
+```
+
+### Validação
+
+- lint/build proporcional à mudança;
+- aplicar SQL antes de depender da RPC;
+- smoke test por papel e tenant;
+- validar Ghost, Gestor e billing quando tocados;
+- aguardar Success no Cloudflare e fazer hard refresh.
+
+---
+
+## 12. Critérios para alteração futura
+
+1. Nova navegação do membro entra em `APP_DRAWER_MENU_ITEMS` ou Eu quero….
+2. Nova gestão entra em grupo de `APP_DRAWER_SETTINGS_ITEMS`.
+3. Toda rota recebe política explícita de sessão/ACL/tenant.
+4. Escrita sensível usa RPC transacional.
+5. Ghost usa identidade efetiva.
+6. Billing nunca usa alvo simulado.
+7. Não reconectar cards congelados sem decisão explícita de publicação.
+8. Atualizar `FUNCIONALIDADES.md`, manuais, Blueprint e índice.
+
+---
+
+## 13. Status de publicação
+
+| Superfície | Estado |
+|---|---|
+| Início | Publicada |
+| Menu lateral | Publicado |
+| Eu quero… | Publicado |
+| Perfil | Publicado |
+| Engrenagem | Publicada e filtrada por ACL |
+| Rotas dedicadas | Publicadas conforme grant |
+| Dashboard antigo | Congelado/redirecionado |
+| Explore antigo | Congelado |
+
+*Conecta+ · Blueprint técnico e funcional · revisão de 05/10/2026.*

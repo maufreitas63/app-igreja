@@ -6,7 +6,7 @@ Documentação técnica de referência: [`CONTROLE_ACESSO.md`](CONTROLE_ACESSO.m
 
 **Pacote:** [`PACOTE_3_GOVERNANCA_TI.md`](PACOTE_3_GOVERNANCA_TI.md) · **Índice:** [`INDICE_DOCUMENTACAO.md`](INDICE_DOCUMENTACAO.md)
 
-**Atualizado em:** 02/07/2026
+**Atualizado em:** 05/10/2026
 
 ---
 
@@ -43,6 +43,7 @@ Um perfil pode ter **vários papéis** ao mesmo tempo (ex.: `member` + `events_a
 | `tesoureiro` | Tesoureiro | Card **Financeiro**, manutenção financeira, eventos retroativos e numeração **RD** (prefixo AAMM) |
 | `pastoral` | Equipe pastoral | Triagem de pedidos pastorais |
 | `super_admin` | Super administrador | Configura o ACL; acesso amplo |
+| `gestor_controle_acesso` | Gestor em Controle de Acesso | Opera papéis e grants com escudo obrigatório sobre o Super Administrador |
 
 **Ordem no painel (aba Papéis e lista de papéis do perfil):** Visitantes → Congregado → Membro → Responsável familiar → Líder → Administrador de eventos → **Tesoureiro** → Equipe pastoral → Super administrador.
 
@@ -114,6 +115,23 @@ flowchart TB
   F --> R
   F --> P
 ```
+
+### 2.6 Modo Ghost e identidade efetiva
+
+- Perfil, telefone, família, ACL, listas e dados são resolvidos pela identidade do perfil-alvo.
+- O bypass do `super_admin` real não é herdado pelo alvo simulado.
+- O auditor permanece na rota aberta; ACL negada no alvo não força retorno ao Início nem mostra uma cobertura de “Sem acesso nesta simulação”.
+- Apenas iniciar e encerrar o Ghost levam ao Início. Assinatura, paywall e instância usam o operador real, evitando redirecionamento para `/billing` por causa do alvo.
+
+### 2.7 Rotas publicadas recentes
+
+| Recurso de tela | Uso |
+|-----------------|-----|
+| `/lista-familias` | Diretório de famílias |
+| `/visitantes-cadastro-rapido` | Cadastro rápido e QR do visitante |
+| `/documentos-oficiais` | Documentos oficiais publicados |
+| `/apoio-mutuo` | Serviços oferecidos pela comunidade |
+| `/atribuicoes` | Atribuição de papéis operacionais, quando presente no catálogo |
 
 ---
 
@@ -197,9 +215,13 @@ select p.id, ar.id
 
 ### 4.1 Quem pode abrir a manutenção de ACL
 
-1. Perfil com papel **`super_admin`**.
+1. Perfil com papel **`super_admin`** ou **`gestor_controle_acesso`**, conforme grants da instância.
 2. Acesso à tela **Manutenção** (`/maintenance-dashboard`) — normalmente só `super_admin` ou quem tiver grant explícito nessa tela.
-3. No carrossel de manutenção, o card **Controle de Acesso** só aparece para `super_admin`.
+3. Na engrenagem, **Controle de Acesso** aparece somente com o recurso `maintenance.card.access_control`.
+
+O Gestor opera sob um escudo no SQL: não lista, visualiza ou edita perfil/papel `super_admin`, não vê seus registros de acesso e não vê nem concede PIN/senha. Os filtros do cliente são apenas defesa adicional.
+
+<!-- Proteção aplicada: Gestor não tem visibilidade do Super Administrador -->
 
 ### 4.2 Aba **Perfis** — atribuir papéis a uma pessoa
 
@@ -217,6 +239,7 @@ select p.id, ar.id
 **Regras de segurança:**
 
 - O sistema **impede remover o último** `super_admin` do banco.
+- O Gestor em Controle de Acesso nunca recebe o Super Administrador na lista de perfis ou papéis e não pode contornar isso por chamada direta às RPCs.
 - Após mudar papéis de **si mesmo** ou de quem está testando, peça **Sair → entrar de novo** no app.
 
 ### 4.3 Aba **Papéis** — ajustar o que cada papel pode fazer
@@ -243,6 +266,8 @@ select p.id, ar.id
 | Membro não vê PIN | Papel `member` → Colunas → `profiles.access_pin` → Ver/Editar desligados |
 | Só tesouraria vê financeiro | Tirar `dashboard.card.financial` e `/financial` do `member`; criar papel `finance_admin` (futuro) ou grant direto ao perfil |
 | Equipe de eventos mantém agenda | Atribuir papel `events_admin` à pessoa (aba Perfis); revisar grants do papel em Telas/Tabelas |
+
+**Acessos de Usuários:** `maintenance.card.profile_access_insights` é exclusivo de `super_admin`. O Gestor não pode abrir, consultar ou limpar esse histórico, mesmo que um grant legado esteja incorreto.
 
 ### 4.4 O que o membro comum experiencia (sem ser admin)
 
@@ -472,6 +497,7 @@ select p.id, p.full_name, p.phone
 ### 7.4 Ao alterar política de privacidade
 
 - [ ] Revisar colunas `profiles.cpf`, `profiles.medical_food_alerts`, `profiles.access_pin` no papel `member`.
+- [ ] Revisar `LGPD_Ativo` e o texto LGPD da **instância ativa**; cada igreja mantém seu próprio conteúdo e aceite.
 - [ ] Documentar internamente quem pode ver dados sensíveis.
 
 ---
@@ -521,6 +547,9 @@ select public.update_profile_access_pin('(11) 99999-9999', '1234', '5678');
 | Edição falha com mensagem de permissão | Sem `can_update` na coluna ou RPC | Aba Papéis; conferir script 9d aplicado |
 | Mudança de papel não surte efeito | Sessão antiga | **Sair → entrar** |
 | Controle de Acesso não aparece | Perfil não é `super_admin` | Atribuir papel (seção 3.1) |
+| Gestor procura Super Administrador ou PIN | Escudo de segurança funcionando | Não liberar: essa invisibilidade é obrigatória e aplicada no SQL |
+| Acessos de Usuários não aparece | Recurso exclusivo de `super_admin` | Entrar com Super Administrador; não conceder ao Gestor |
+| Ghost volta ao Início ou abre billing | Fluxo usando identidade/navegação real incorretamente | Conferir helpers de identidade efetiva e `ghostBlocksHomeBounce()` |
 | Erro ao abrir Controle de Acesso | RPC admin não instalada | Executar `access-control-admin-rpc.sql` |
 | SELECT/UPDATE falha com RLS | `access-control-table-rls.sql` não aplicado ou sem header | Script 9f; app atualizado com `supabaseSessionFetch` |
 | Tudo liberado indevidamente | Nenhum grant em `access_grants` (modo legado) | Executar seed em `access-control-schema.sql` |
@@ -583,4 +612,4 @@ Se a tabela `access_grants` estiver **vazia**, `profile_has_access` retorna **`t
 
 ---
 
-*Última atualização: julho/2026 — visão por recurso no ACL, detalhe de pin no mapa, audiência com congregados, cache de navegação.*
+*Última atualização: 05/10/2026 — escudo do Gestor, identidade efetiva no Ghost, recursos publicados e LGPD por instância.*

@@ -33,7 +33,7 @@ xmlns="http://www.w3.org/TR/REC-html40">
 <div class="Section1">
 <h1>Especificação das Camadas de Segurança — App IBN</h1>
 <p>Documento de referência do modelo de <strong>defesa em profundidade</strong> do <strong>app-igreja</strong> (Igreja Batista Norte).</p>
-<p><strong>Atualizado em:</strong> 02/07/2026</p>
+<p><strong>Atualizado em:</strong> 05/10/2026</p>
 <p><strong>Documentação relacionada:</strong> <a href="BLUEPRINT.md">&lt;code&gt;BLUEPRINT.md&lt;/code&gt;</a> · <a href="CONTROLE_ACESSO.md">&lt;code&gt;CONTROLE_ACESSO.md&lt;/code&gt;</a> · <a href="MANUAL_CONTROLE_ACESSO.md">&lt;code&gt;MANUAL_CONTROLE_ACESSO.md&lt;/code&gt;</a> · <a href="PACOTE_3_GOVERNANCA_TI.md">&lt;code&gt;PACOTE_3_GOVERNANCA_TI.md&lt;/code&gt;</a></p>
 <hr>
 <h2>1. Visão geral</h2>
@@ -90,6 +90,14 @@ xmlns="http://www.w3.org/TR/REC-html40">
 <tr>
 <td><strong>Sessão reparável</strong></td>
 <td><code>repairUserSessionReference()</code> corrige <code>user_profile_id</code> inconsistente</td>
+</tr>
+<tr>
+<td><strong>Isolamento por tenant</strong></td>
+<td>Sessão, LGPD, telefone e dados são resolvidos dentro da instância ativa</td>
+</tr>
+<tr>
+<td><strong>Administração protegida</strong></td>
+<td>Gestor de acesso não enxerga Super Administrador, seus acessos ou PIN/senha</td>
 </tr>
 </tbody></table>
 <h3>1.2 Granularidade do ACL (dentro da Camada 2 e 4)</h3>
@@ -296,6 +304,36 @@ xmlns="http://www.w3.org/TR/REC-html40">
 <td><code>useScreenAccessGuard</code> + verificação no foco</td>
 </tr>
 <tr>
+<td>Lista de Famílias</td>
+<td><code>/lista-familias</code></td>
+<td><code>/lista-familias</code></td>
+<td><code>useScreenAccessGuard</code> / ACL de tela</td>
+</tr>
+<tr>
+<td>Visitantes — Cadastro Rápido</td>
+<td><code>/visitantes-cadastro-rapido</code></td>
+<td><code>/visitantes-cadastro-rapido</code></td>
+<td>ACL de tela + RPCs do tenant</td>
+</tr>
+<tr>
+<td>Documentos oficiais</td>
+<td><code>/documentos-oficiais</code></td>
+<td><code>/documentos-oficiais</code></td>
+<td>ACL de tela + leitura publicada</td>
+</tr>
+<tr>
+<td>Apoio Mútuo</td>
+<td><code>/apoio-mutuo</code></td>
+<td><code>/apoio-mutuo</code></td>
+<td>ACL de tela + identidade efetiva</td>
+</tr>
+<tr>
+<td>Atribuições</td>
+<td><code>/atribuicoes</code></td>
+<td><code>/atribuicoes</code></td>
+<td>RPC autoritativa; pastoral/super_admin</td>
+</tr>
+<tr>
 <td>Totem</td>
 <td><code>/totem-checkin</code></td>
 <td>—</td>
@@ -337,6 +375,13 @@ xmlns="http://www.w3.org/TR/REC-html40">
 <li>Overlay visual global via <code>AppShell</code> + <code>WatermarkSurface</code></li>
 <li><strong>Excluída</strong> na tela de login (<code>/</code> e <code>/index</code> raiz)</li>
 <li>Não substitui ACL; apenas identidade visual</li>
+</ul>
+<h3>3.7 Modo Ghost</h3>
+<ul>
+<li><code>loadEffectiveSessionProfile</code>, <code>resolveEffectiveProfileId</code> e <code>getEffectiveUserPhone</code> definem a identidade do alvo para telas, listas, família, ACL e dados.</li>
+<li>O bypass do <code>super_admin</code> operador é desligado para a simulação.</li>
+<li>O auditor permanece na rota escolhida: negação do alvo não causa bounce ao Início nem cobertura de “Sem acesso nesta simulação”.</li>
+<li>Iniciar e encerrar Ghost são as únicas navegações automáticas ao Início. <code>AppBillingGate</code> usa o operador real e não redireciona o alvo para billing.</li>
 </ul>
 <hr>
 <h2>4. Camada 3 — Transporte</h2>
@@ -467,6 +512,11 @@ xmlns="http://www.w3.org/TR/REC-html40">
 <td>grants e papéis</td>
 <td><code>access-control-admin-rpc.sql</code></td>
 </tr>
+<tr>
+<td>Escudo do Gestor</td>
+<td>visibilidade de perfis/papéis/logs</td>
+<td><code>access-control-gestor-controle-acesso.sql</code></td>
+</tr>
 </tbody></table>
 <p>Tesouraria de RD valida <code>session_can_manage_expense_reports_treasury()</code> nas RPCs de listagem e conciliação.</p>
 <h3>5.5 Dados sensíveis no banco</h3>
@@ -495,11 +545,12 @@ xmlns="http://www.w3.org/TR/REC-html40">
 <td>Sem INSERT direto pelo app</td>
 </tr>
 </tbody></table>
+<p>O estado <code>LGPD_Ativo</code>, o texto apresentado e o aceite pertencem à instância ativa. Cadastros com o mesmo telefone em igrejas diferentes não compartilham texto, sessão ou consentimento.</p>
 <hr>
 <h2>6. Papéis canônicos</h2>
 <p>Ordem de exibição (<code>lib/accessRoleDisplayOrder.ts</code>):</p>
 <p>```text</p>
-<p>visitantes → congregado → member → family_acceptor → lider → events_admin → pastoral → super_admin</p>
+<p>visitantes → congregado → member → family_acceptor → acolhimento_recepcao → acolhimento_estacionamento → ministerio_infantil → secretaria → tesoureiro → pastoral → gestor_controle_acesso → super_admin</p>
 <p>```</p>
 <table><thead><tr>
 <th>Papel</th>
@@ -526,6 +577,10 @@ xmlns="http://www.w3.org/TR/REC-html40">
 <td>Triagem pastoral</td>
 </tr>
 <tr>
+<td><code>gestor_controle_acesso</code></td>
+<td>Gestão de papéis e grants, sem visibilidade do Super Administrador</td>
+</tr>
+<tr>
 <td><code>super_admin</code></td>
 <td>ACL, cadastro de usuários, manutenção completa</td>
 </tr>
@@ -536,6 +591,13 @@ xmlns="http://www.w3.org/TR/REC-html40">
 </tbody></table>
 <hr>
 <h2>7. Fluxos críticos (trilha de auditoria)</h2>
+<h3>7.0 Administração de acesso</h3>
+<ul>
+<li><strong>Acessos de Usuários</strong> (<code>maintenance.card.profile_access_insights</code>) é exclusivo de <code>super_admin</code>, tanto na UI quanto nas RPCs de consulta e limpeza.</li>
+<li><code>assert_gestor_super_admin_shield</code> e os filtros SQL impedem o Gestor de listar, visualizar ou editar perfil/papel <code>super_admin</code>, registros de acesso do Super Administrador e campos <code>access_pin</code>/senha.</li>
+<li><code>lib/gestorControleAcessoSecurity.ts</code> repete o filtro no cliente como defesa em profundidade.</li>
+</ul>
+<!-- Proteção aplicada: Gestor não tem visibilidade do Super Administrador -->
 <h3>7.1 Login membro</h3>
 <p>```text</p>
 <p>Celular + PIN → RPC verificar_login → grava user_phone + user_profile_id</p>
@@ -559,6 +621,14 @@ xmlns="http://www.w3.org/TR/REC-html40">
 <p>Tesoureiro concilia → RPC conciliar_relatorio_despesas(financial_id)</p>
 <p>Listagem mensal manutenção → mês do lançamento financeiro (conciliados)</p>
 <p>ou mês de emissão (pendentes)</p>
+<p>```</p>
+<h3>7.5 Navegação no Modo Ghost</h3>
+<p>```text</p>
+<p>Operador inicia Ghost → Início uma vez, já como alvo</p>
+<p>Menu / Eu quero / deep link → permanece na rota escolhida</p>
+<p>ACL e dados → identidade efetiva do alvo</p>
+<p>Billing / tenant / paywall → identidade real do operador</p>
+<p>Encerrar Ghost → Início com identidade real</p>
 <p>```</p>
 <hr>
 <h2>8. Exceções e limitações conhecidas</h2>
@@ -673,7 +743,7 @@ xmlns="http://www.w3.org/TR/REC-html40">
 </tbody></table>
 <p>O modelo não depende de uma única barreira: um bypass no cliente ainda encontra RLS e RPCs no servidor; um aparelho totem dedicado opera fora do ACL de tela, mas permanece preso a RPCs de check-in e pré-check-in obrigatório.</p>
 <hr>
-<p><em>App IBN · Igreja Batista Norte · Especificação de segurança v2026-06-23</em></p>
+<p><em>App IBN · Igreja Batista Norte · Especificação de segurança v2026-10-05</em></p>
 </div>
 </body>
 </html>

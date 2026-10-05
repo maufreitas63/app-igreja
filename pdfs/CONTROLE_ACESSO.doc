@@ -37,7 +37,7 @@ xmlns="http://www.w3.org/TR/REC-html40">
 <p><strong>Manual operacional (dia a dia):</strong> <a href="MANUAL_CONTROLE_ACESSO.md">&lt;code&gt;MANUAL_CONTROLE_ACESSO.md&lt;/code&gt;</a></p>
 <p><strong>Pacote:</strong> <a href="PACOTE_3_GOVERNANCA_TI.md">&lt;code&gt;PACOTE_3_GOVERNANCA_TI.md&lt;/code&gt;</a> · <strong>Índice:</strong> <a href="INDICE_DOCUMENTACAO.md">&lt;code&gt;INDICE_DOCUMENTACAO.md&lt;/code&gt;</a> · <strong>Camadas de segurança:</strong> <a href="CAMADAS_SEGURANCA.md">&lt;code&gt;CAMADAS_SEGURANCA.md&lt;/code&gt;</a></p>
 <hr>
-<h2>Status da implementação (atualizado em 09/06/2026)</h2>
+<h2>Status da implementação (atualizado em 05/10/2026)</h2>
 <p>Documento de encerramento da sessão: o que já está pronto, o que falta e qual é o <strong>próximo passo</strong> recomendado.</p>
 <h3>Concluído no Supabase (Passos 1–7)</h3>
 <table><thead><tr>
@@ -151,6 +151,14 @@ xmlns="http://www.w3.org/TR/REC-html40">
 <tr>
 <td><strong>Acessos de Usuários</strong></td>
 <td><code>maintenance.card.profile_access_insights</code> — histórico de logins e telas visitadas <em>(super_admin)</em></td>
+</tr>
+<tr>
+<td><strong>Gestor em Controle de Acesso</strong></td>
+<td>Opera papéis e grants sem listar, visualizar ou editar Super Administrador, seus acessos ou PIN/senha</td>
+</tr>
+<tr>
+<td><strong>Modo Ghost</strong></td>
+<td>ACL, perfil, telefone, família e dados usam a identidade efetiva do alvo; cobrança e instância permanecem na identidade real</td>
 </tr>
 <tr>
 <td><strong>Sessão assinada</strong></td>
@@ -269,6 +277,13 @@ xmlns="http://www.w3.org/TR/REC-html40">
 <li>Não use só <code>auth.users.id</code> — pedidos pastorais e RPCs já documentam o desvio (<code>pastoral-requests-fields.sql</code>).</li>
 <li>O app pode resolver <code>profile_id</code> a partir do telefone da sessão (<code>find_profile_id_by_phone</code> / SELECT em <code>profiles</code>).</li>
 </ul>
+<h3>2.1 Identidade efetiva no Modo Ghost</h3>
+<ul>
+<li>Telas, listas e permissões resolvem o alvo com <code>loadEffectiveSessionProfile</code>, <code>resolveEffectiveProfileId</code> e <code>getEffectiveUserPhone</code>.</li>
+<li>O bypass de <code>super_admin</code> do operador fica desligado para a ACL simulada.</li>
+<li>O auditor entra e permanece na rota escolhida; grant negado do alvo não provoca retorno ao Início nem bloqueio “Sem acesso nesta simulação”.</li>
+<li>Iniciar/encerrar Ghost são as únicas transições automáticas para o Início. Billing, paywall e seleção de instância continuam vinculados ao operador real.</li>
+</ul>
 <hr>
 <h2>3. Inventário de telas (<code>resource_type = 'screen'</code>)</h2>
 <table><thead><tr>
@@ -331,6 +346,31 @@ xmlns="http://www.w3.org/TR/REC-html40">
 <td><code>app/lgpd.tsx</code></td>
 <td>Termos LGPD</td>
 </tr>
+<tr>
+<td><code>screen:/lista-familias</code></td>
+<td><code>app/lista-familias.tsx</code></td>
+<td>Diretório de famílias</td>
+</tr>
+<tr>
+<td><code>screen:/visitantes-cadastro-rapido</code></td>
+<td><code>app/visitantes-cadastro-rapido.tsx</code></td>
+<td>Cadastro rápido e QR do visitante</td>
+</tr>
+<tr>
+<td><code>screen:/documentos-oficiais</code></td>
+<td><code>app/documentos-oficiais.tsx</code></td>
+<td>Documentos publicados da igreja</td>
+</tr>
+<tr>
+<td><code>screen:/apoio-mutuo</code></td>
+<td><code>app/apoio-mutuo.tsx</code></td>
+<td>Serviços da comunidade</td>
+</tr>
+<tr>
+<td><code>screen:/atribuicoes</code></td>
+<td><code>app/atribuicoes.tsx</code></td>
+<td>Papéis operacionais; pastoral e super_admin</td>
+</tr>
 </tbody></table>
 <h3>Cards do dashboard (<code>screen:dashboard.card.*</code>)</h3>
 <table><thead><tr>
@@ -390,6 +430,14 @@ xmlns="http://www.w3.org/TR/REC-html40">
 </tr>
 </tbody></table>
 <p>Visibilidade condicional de cards (parâmetros/evento) continua no app; o ACL define se o usuário <strong>pode</strong> ver o card quando ele estaria disponível.</p>
+<p>As rotas dedicadas e o menu/“Eu quero…” são a navegação publicada. O antigo carrossel do Painel não deve ser usado como inventário do produto.</p>
+<h3>Recursos administrativos restritos</h3>
+<ul>
+<li><code>maintenance.card.profile_access_insights</code> (<strong>Acessos de Usuários</strong>) é exclusivo de <code>super_admin</code>, inclusive nas RPCs de listar e limpar histórico.</li>
+<li>O papel <code>gestor_controle_acesso</code> pode administrar o ACL, mas o escudo autoritativo SQL (<code>assert_gestor_super_admin_shield</code> e filtros de visibilidade) impede qualquer acesso ao perfil/papel <code>super_admin</code>, aos registros de acesso desse perfil e às colunas de PIN/senha.</li>
+<li>O cliente aplica os mesmos filtros em <code>lib/gestorControleAcessoSecurity.ts</code> como defesa em profundidade.</li>
+</ul>
+<!-- Proteção aplicada: Gestor não tem visibilidade do Super Administrador -->
 <hr>
 <h2>4. Inventário de tabelas (<code>resource_type = 'table'</code>)</h2>
 <p>Tabelas usadas pelo app (Supabase <code>public</code>):</p>
@@ -443,6 +491,7 @@ xmlns="http://www.w3.org/TR/REC-html40">
 </tr>
 </tbody></table>
 <p>Atualizar a lista após <code>information_schema.tables</code> no projeto se houver tabelas só no banco.</p>
+<p>O texto e a ativação da LGPD são por instância/tenant. A tela deve carregar o conteúdo da igreja ativa; não se reutiliza texto de outra instância, mesmo quando o mesmo telefone existe em mais de uma igreja.</p>
 <hr>
 <h2>5. Inventário de campos (<code>resource_type = 'column'</code>)</h2>
 <p>Formato: <code>column:&lt;tabela&gt;.&lt;coluna&gt;</code>.</p>

@@ -1,10 +1,10 @@
-# Pacote 6 — Manual do Painel de Manutenção (uso pela equipe)
+# Pacote 6 — Manual da Engrenagem (manutenção)
 
 Documentação **autocontida** para quem gerencia o aplicativo: secretaria, líderes, pastoral, financeiro e TI.
 
-**Atualizado em:** 23/06/2026
+**Atualizado em:** 05/10/2026
 
-Conteúdo integrado: acesso via engrenagem, ACL (incl. interruptor **LGPD Ativo/Inativo**), papel **Tesoureiro**, todos os cards de maintenance-dashboard, com ilustrações em **largura integral (100%)**, resultado esperado e efeito no app dos membros.
+Conteúdo integrado: grupos da engrenagem, Recepção/Régua/sticker, Cuidados Pastorais (Excluir), Atribuições, Ghost, Assinaturas/Gestão Liberada, Controle de Acesso e operação de culto.
 
 ---
 
@@ -12,1087 +12,2137 @@ Conteúdo integrado: acesso via engrenagem, ACL (incl. interruptor **LGPD Ativo/
 
 ---
 
-# Manual do Painel de Manutenção — Uso pela Equipe
+# Manual do Conecta+ — Engrenagem e Gestão da Igreja
 
-**App IBN · Igreja Batista Norte**
+Manual operacional detalhado de todos os itens publicados na **engrenagem**.
 
-Manual **autocontido** para quem **gerencia** o aplicativo: secretaria, líderes de escala, equipe pastoral, financeiro e administradores de TI. Cobre **acesso à manutenção, todos os cards do painel de manutenção** e o que cada ação produz no app dos membros.
+**Público:** secretaria, recepção, pastoral, líderes, tesouraria, gestores de acesso e super administradores.
+**Organização:** **Operação e Segurança**, **Gestão de Pessoas**, **Culto e Eventos**, **Finanças e Inteligência** e **Governança e TI**.
+**Atualizado em:** 05/10/2026.
 
-**Público:** equipe com permissão de manutenção (não é manual do membro).  
-**Formato:** passo a passo por card, com **resultado esperado** em cada ação.  
-**Tempo estimado:** 60 a 90 minutos na primeira leitura completa.
-
-**Pacote:** [`PACOTE_6_MANUAL_MANUTENCAO.md`](PACOTE_6_MANUAL_MANUTENCAO.md) · **Índice:** [`INDICE_DOCUMENTACAO.md`](INDICE_DOCUMENTACAO.md) · **Membros:** [`PACOTE_5_MANUAL_PAINEL.md`](PACOTE_5_MANUAL_PAINEL.md)
-
-**Atualizado em:** 03/07/2026
+> A engrenagem é filtrada por papel e grant. A ausência de um item pode ser uma regra de acesso, não um defeito.
 
 ---
 
-## Como usar este manual
-
-| Símbolo | Significado |
-|---------|-------------|
-| **Objetivo** | O que você vai conseguir fazer |
-| **Caminho** | Onde tocar na tela |
-| **Passo a passo** | Ações numeradas |
-| **Resultado esperado** | O que você deve **ver** ou **confirmar** ao concluir — e o efeito no app dos membros |
-| **Dica** | Atalho ou cuidado útil |
-| **Ilustração** | Captura da tela com **marcadores numerados** (①②③…); tabela **Ref.** explica cada ponto |
-| **Se der erro** | Mensagens comuns e o que fazer |
-
-Itens em **negrito** são botões, títulos ou áreas da interface.
-
-> **Cards que não aparecem no seu perfil**  
-> A igreja define permissões por papel. Escalas, pastoral, financeiro e telas de super administrador só aparecem para quem tem acesso. Sem engrenagem no Índice → peça liberação ao administrador.
-
-> **Diferença do Pacote 5**  
-> O [Pacote 5](PACOTE_5_MANUAL_PAINEL.md) ensina o **painel do membro**. Este manual ensina o **painel de manutenção** (fundo âmbar/escuro, ícone engrenagem).
-
----
-
-# Parte 0 — Acesso e navegação na manutenção
-
-## 0.1 Entrar na manutenção (engrenagem)
+## 1. Acesso, navegação e segurança
 
 ### Objetivo
-Abrir o painel de manutenção a partir do app, com sua conta de equipe.
+
+Entrar na gestão correta, reconhecer a igreja ativa e operar sem expor dados.
 
 ### Caminho
-**Índice do Aplicativo** → rodapé → ícone **engrenagem** (Configurações) → **Manutenção**.
 
-### Ilustração — Acesso pela engrenagem
+**Login → Início → engrenagem → grupo → módulo**
 
-![Acesso pela engrenagem — captura anotada](docs/manual-manutencao/screens/m00-acesso-engrenagem.png)
-
-| Ref. | Elemento indicado na imagem |
-|:----:|------------------------------|
-| ① | Ícone **engrenagem** ao lado de encerrar sessão |
-| ② | Botão **Encerrar sessão** / sair do aplicativo |
-
-
+![Acesso pela engrenagem — referência visual](docs/manual-manutencao/screens/m00-acesso-engrenagem.png)
 
 ### Passo a passo
 
-1. Faça login normalmente (celular + senha de 4 dígitos).
-2. No **Índice**, localize a **engrenagem** ao lado de **Encerrar sessão** / **Sair do aplicativo**.
-3. Toque na engrenagem.
-4. Aguarde a checagem de permissão (indicador âmbar).
+1. Entre com celular e PIN próprios.
+2. Confira nome e identidade visual da igreja.
+3. Toque na **engrenagem**.
+4. Leia os grupos disponíveis.
+5. Abra o grupo da tarefa.
+6. Toque no módulo.
+7. Aguarde o carregamento antes de editar.
+8. Confira novamente igreja, registro e pessoa.
+9. Execute a operação.
+10. Leia a confirmação.
+11. Use **Fechar/Voltar** para retornar.
+12. Encerre a sessão em aparelho compartilhado.
 
 ### Resultado esperado
 
-- Tela de manutenção com cabeçalho **Boas-Vindas, {seu nome}** e badge **Manutenção**.
-- Fundo em tons âmbar/ardósia (visual diferente do painel do membro).
-- Card inicial **Módulos de manutenção** com atalhos para cada módulo.
+A gestão abre apenas os módulos autorizados da igreja ativa.
+
+### Dicas
+
+- Não ensine a engrenagem como carrossel de cards.
+- Mudança de papel ou grant geralmente exige sair e entrar.
+- Nunca compartilhe PIN.
+- Em ação destrutiva, confira nome, data e igreja duas vezes.
+- O Gestor de Controle de Acesso não vê nem edita Super Administrador, seus logs ou credenciais.
 
 ### Se der erro
 
 | Situação | O que fazer |
-|----------|-------------|
-| Não há engrenagem no Índice | Seu perfil não tem acesso à rota `/maintenance-dashboard` — fale com o **super administrador** |
-| Alerta *Sem permissão* | Mesmo caso; peça papel com acesso à manutenção |
-| *Redirecionando…* e volta ao painel | Tentativa de abrir manutenção sem permissão |
-
-### Dica
-O super administrador libera acesso em **Controle de Acesso** (Parte 12) ou via scripts SQL de ACL.
+|---|---|
+| Engrenagem não aparece | Confira papel e grant com o responsável. |
+| Módulo sumiu após alteração | Encerre a sessão e entre novamente. |
+| Dados de outra igreja | Pare, volte e selecione a instância correta. |
+| Tela vazia | Confira ACL, filtros e existência de registros. |
+| Salvamento falhou | Não repita várias vezes; leia a mensagem e valide a conexão. |
 
 ---
 
-## 0.2 Navegar entre os módulos (carrossel âmbar)
+# Grupo 1 — Operação e Segurança
+
+## 2. Configuração de salas
 
 ### Objetivo
-Alternar entre os cards de manutenção e voltar ao Índice ou ao menu interno.
+
+Definir nomes das salas, finalidade e pessoas associadas ao Espaço Infantil.
 
 ### Caminho
-Rodapé **‹** · **Menu** ou **Voltar** · **›** + contador **N / M** (âmbar).
 
-### Ilustração — Menu de módulos
-
-![Menu de módulos — captura anotada](docs/manual-manutencao/screens/m01-menu-modulos.png)
-
-| Ref. | Elemento indicado na imagem |
-|:----:|------------------------------|
-| ① | Atalhos dos **Módulos de manutenção** |
-| ② | Rodapé **‹ Menu ›** do carrossel âmbar |
-| ③ | Contador **1 / N** — posição no painel |
-
-
-
-### Ordem dos módulos (quando todos visíveis no seu perfil)
-
-| # | Nome no painel | Função resumida |
-|---|----------------|-----------------|
-| 0 | **Manutenção** | Menu de atalhos |
-| 1 | **Programação de Eventos** | Criar/editar cultos e eventos |
-| 2 | **Cronograma de Eventos** | Visão em linha do tempo |
-| 3 | **Sala(s) - Check In** | Entrada Kids/Teens |
-| 4 | **Tipos de Escala** | Cadastro de tipos de serviço |
-| 5 | **Servos em Disponibilidade** | Quem pode servir em cada escala |
-| 6 | **Programação de Escalas** | Datas e ciclo em bloco |
-| 7 | **Cuidado Pastoral** | Acompanhar pedidos do Coração Aberto |
-| 8 | **Informações Financeiras** | CSV, lançamentos, RD |
-| 9 | **Lista de Presença** | Documento de quórum |
-| 10 | **Cadastro de Usuário** | Busca, CEP/endereço, exclusão *(super_admin)* |
-| 11 | **Recepção Familiar** | Fila do formulário público `/cadastro-familia/` |
-| 12 | **Controle de Acesso** | Papéis e grants *(super_admin)* |
-| 13 | **Mudança de Papéis** | Visitante / congregado / membro *(pastoral, super_admin)* |
-| 14 | **Acessos de Usuários** | Histórico de logins e telas visitadas *(super_admin)* |
+**Engrenagem → Operação e Segurança → Configuração de salas**
 
 ### Passo a passo
 
-1. No card **0**, toque no atalho desejado (ícone + nome).
-2. Use **‹** e **›** para mudar de card (segurar avança automaticamente).
-3. No card **0**, **Menu** → volta ao **Índice** do aplicativo.
-4. Nos demais cards, **Voltar** → retorna ao card **0** (menu de módulos).
-5. Leia o contador **1 / N** — **N** depende das permissões do seu perfil.
+1. Abra o módulo.
+2. Consulte as salas existentes.
+3. Toque em criar ou editar.
+4. Informe o nome afetivo da sala.
+5. Defina faixa etária ou finalidade.
+6. Associe membros/equipe quando disponível.
+7. Revise duplicidades.
+8. Salve.
+9. Abra um evento compatível e valide a sala.
 
 ### Resultado esperado
 
-- Badge do cabeçalho mostra o nome do módulo ativo (ex.: **Programação de Eventos**, **Novo evento**, **Editar evento**).
-- Atalho selecionado no menu fica destacado.
-- Ao salvar um evento, a lista e o cronograma refletem a alteração.
+A sala fica disponível para configuração de evento e check-in infantil.
 
----
+### Dicas
 
-# Parte 1 — Programação de Eventos
-
-### Objetivo
-Publicar cultos e eventos para que os **membros** vejam na Agenda, marquem audiência, usem QR e salas.
-
-### Caminho
-**Programação de Eventos** → **Novo evento** ou toque em evento da lista.
-
-### Ilustração — Programação de Eventos
-
-![Programação de Eventos — captura anotada](docs/manual-manutencao/screens/m02-programacao-eventos.png)
-
-| Ref. | Elemento indicado na imagem |
-|:----:|------------------------------|
-| ① | Botão **Novo evento** |
-| ② | Lista **Eventos cadastrados** |
-| ③ | Badge **Publicado** / **Rascunho** |
-
-
-
-### Passo a passo — criar evento
-
-### Ilustração — Editor de evento
-
-![Editor de evento — captura anotada](docs/manual-manutencao/screens/m03-editor-evento.png)
-
-| Ref. | Elemento indicado na imagem |
-|:----:|------------------------------|
-| ① | **Nome do evento** e data/hora |
-| ② | **Capacidade (vagas)** obrigatória |
-| ③ | Chips **Kids** · **Teens** · **Totem** · **Quórum** |
-| ④ | Botão **Salvar** no rodapé do formulário |
-
-
-
-### Resultado esperado
-
-- Toast **Evento criado** ou **Evento atualizado** — *Alterações gravadas com sucesso.*
-- Na lista: badge **Publicado** (verde) ou **Rascunho** (laranja).
-- **Publicado** → membros veem o evento no card **Agenda da Família** e podem marcar audiência.
-- **Rascunho** → oculto para membros até publicar.
-- Metadados na lista: data, local, vagas, selos **Kids** · **Teens** · **Totem** · **Quórum** · **Geofence**.
-
-### Passo a passo — check-in por proximidade (geofence)
-
-1. Cadastre **locais favoritos** com nome, endereço e **latitude/longitude** (picker de locais no editor de evento).
-2. Ao criar/editar evento, selecione o **local** correspondente ao favorito e ative **Check-in por proximidade (geofence)**.
-3. Publique o evento. No dia, membros com audiência marcada e GPS liberado recebem confirmação automática ao chegar ao templo.
-4. Parâmetros globais em `app_parameters`: `check_in_geofence_raio_metros` (padrão 30) e `check_in_geofence_tempo` (horas antes do início).
-
-### Resultado esperado — geofence
-
-- Membros veem banner de status de proximidade no dashboard (detectando / confirmado).
-- Ao salvar alteração relevante no evento com geofence ativo, toast pode informar *N check-in(s) removido(s)* — famílias precisam validar novamente.
-- Scripts Supabase: `events-geofence-ativo.sql`, `event-favorite-locations.sql`, `geo-checkin-automatic.sql`, `geo-checkin-purge-on-event-update.sql`.
-
-### Passo a passo — replicar evento (+7 dias)
-
-1. Abra um evento **já cadastrado** (edição).
-2. Toque em **+7**.
-3. Confirme **Criar cópia** no diálogo *Replicar evento (+7)*.
-
-### Resultado esperado
-
-- Toast **Evento replicado** — *1 rascunho criado para daqui a 7 dias.*
-- Novo item na lista como **Rascunho**; evento original **não muda**.
-
-### Passo a passo — excluir evento
-
-1. Na edição, **Apagar evento** → confirme **Sim, apagar**.
-
-### Resultado esperado
-
-- Toast **Evento apagado**; item some da lista e do cronograma.
-- Se houver inscrições vinculadas, pode falhar — leia a mensagem de erro.
-
-### Passo a passo — conferir quórum no editor
-
-1. Com **Requer Quorum = Sim**, role até **Registro de check-in (quórum)**.
-2. Veja tabela com nome, contato e status (**Confirmado**, **Pré check-in**, **Inscrito**).
-
-### Resultado esperado
-
-- Visão operacional antes de gerar a **Lista de Presença** (Parte 9).
-
-### Se der erro
-
-| Toast / mensagem | Causa comum |
-|------------------|-------------|
-| *Informe o nome do evento* | Campo vazio |
-| *Informe a capacidade (vagas)* | Vagas obrigatórias |
-| *Não é possível publicar: a data … é anterior a hoje* | Evento no passado com publicação ligada |
-| **Erro ao salvar** | Permissão RLS, vínculos com inscrições |
-| Toast *check-ins antigos no banco* | Execute `scripts/geo-checkin-purge-on-event-update.sql` no Supabase |
-
-### Dica
-No dia do culto, confira **data, local, vagas e salas** antes dos membros abrirem o app — evita confusão no card SALA(S) do membro.
-
----
-
-# Parte 2 — Cronograma de Eventos
-
-### Objetivo
-Visualizar eventos no tempo e abrir a edição rapidamente.
-
-### Caminho
-**Cronograma de Eventos**.
-
-### Ilustração — Cronograma de Eventos
-
-![Cronograma de Eventos — captura anotada](docs/manual-manutencao/screens/m04-cronograma.png)
-
-| Ref. | Elemento indicado na imagem |
-|:----:|------------------------------|
-| ① | Barras do **Cronograma de Eventos** |
-| ② | Toque na barra abre a **edição** do evento (ex.: **Maurício de Freitas** no cronograma) |
-
-
-
-### Passo a passo
-
-1. Alterne **Por dia** ou **Por mês**.
-2. Leia a legenda: **Publicado** vs **Rascunho**.
-3. Toque numa linha de evento para abrir o editor (Parte 1).
-
-### Resultado esperado
-
-- Contagem *N evento(s) · M dia(s)/mês(es)*.
-- Rascunhos em laranja; publicados visíveis aos membros.
-- Vazio: **Nenhum evento ativo agendado** + orientação para cadastrar.
-
-### Dica
-Use antes do culto da semana para ver buracos na agenda e publicar rascunhos pendentes.
-
----
-
-# Parte 3 — Sala(s) - Check In
-
-### Objetivo
-Registrar a **entrada física** de crianças e adolescentes nas salas — o que faz o **✓** aparecer no card SALA(S) do pai/mãe.
-
-### Caminho
-**Sala(s) - Check In** (após selecionar evento na Agenda do membro).
-
-### Ilustração — Sala(s) - Check In
-
-![Sala(s) - Check In — captura anotada](docs/manual-manutencao/screens/m05-sala-checkin.png)
-
-| Ref. | Elemento indicado na imagem |
-|:----:|------------------------------|
-| ① | Chips **IBN KIDS** / **IBN TEENS** |
-| ② | Botão **Confirmar entrada** por criança/adolescente |
-
-
-
-### Pré-requisito
-
-- No **painel do membro**, alguém da equipe (ou o próprio gestor) deve ter selecionado o culto em **Agenda da Família** — este card lê o **evento ativo** desse contexto.
-
-### Passo a passo
-
-1. Abra **Sala(s) - Check In**.
-2. Confira o bloco **Evento ativo (card 1 — Agenda)** — nome e data do culto.
-3. Escolha **IBN KIDS** ou **IBN TEENS**.
-4. Na lista de inscritos, toque no **checkbox** ao lado do nome para marcar entrada.
-5. Se necessário, use **WhatsApp** ao lado do nome com entrada marcada.
-
-### Resultado esperado
-
-- Contador no chip atualiza: `marcados/total`.
-- Checkbox com **✓** = entrada registrada.
-- No app do responsável (Pacote 5, Parte 3): o mesmo nome mostra **✓** no card **SALA(S)**.
-- Copo de **Vagas** reflete ocupação do evento.
-
-### Se der erro ou aviso
-
-| Mensagem | Significado |
-|----------|-------------|
-| *Nenhum evento ativo no dashboard…* | Selecione o evento na **Agenda da Família** (painel membro) primeiro |
-| *…não possui salas Kids ou Teens ativas* | Edite o evento e ative **Kids**/**Teens** (Parte 1) |
-| *Nenhum inscrito em IBN KIDS/TEENS* | Famílias ainda não marcaram audiência/inscrição |
-| **Erro** ao marcar | Falha de rede ou permissão — tente de novo |
-
-### Dica
-Operação típica no **domingo**: uma pessoa mantém a Agenda com o culto selecionado; outra opera este card na recepção das salas.
-
----
-
-# Parte 4 — Tipos de Escala
-
-### Objetivo
-Cadastrar **tipos de serviço** (vigilância, estacionamento, intercessão, etc.) com vagas por domingo e modo de ciclo.
-
-### Caminho
-**Tipos de Escala** *(requer permissão de card de escala)*.
-
-### Ilustração — Tipos de Escala
-
-![Tipos de Escala — captura anotada](docs/manual-manutencao/screens/m06-tipos-escala.png)
-
-| Ref. | Elemento indicado na imagem |
-|:----:|------------------------------|
-| ① | Seção **Cadastrar tipo** de escala |
-| ② | Lista de **Tipos cadastrados** |
-
-
-
-### Passo a passo
-
-1. Abra **Novo tipo de escala** (accordion).
-2. Preencha **Código** (ex.: `vigilancia_estacionamento`), **Nome**, **Vagas por domingo** (1–50).
-3. Escolha **Modo do ciclo em bloco**:
-   - **Individual** — cada servo em domingo distinto no ciclo automático.
-   - **Equipe** — até N servos no **mesmo** domingo antes de avançar.
-4. Toque em **Cadastrar**.
-5. Para editar: ícone **lápis** na lista **Escalas cadastradas** → **Salvar alterações**.
-6. Para inativar/excluir: ícone **lixeira** → confirme (remove servos e registros vinculados em cascata).
-
-### Resultado esperado
-
-- Linha na lista: `{código} · {N} vaga(s) · individual|equipe`.
-- Toast **Tipos de Escala** com confirmação.
-- Tipo aparece nos chips dos cards **Servos** e **Programação de Escalas**.
-- Membros veem o nome no card **Escalas** do painel.
-
-### Se der erro
-
-- *Informe o código da escala* / *Informe o nome da escala* — campos obrigatórios.
-
----
-
-# Parte 5 — Servos em Disponibilidade
-
-### Objetivo
-Associar **pessoas** (perfis) a cada tipo de escala, na ordem em que entrarão no ciclo.
-
-### Caminho
-**Servos em Disponibilidade** → título interno **Servos das escalas**.
-
-### Ilustração — Servos em Disponibilidade
-
-![Servos em Disponibilidade — captura anotada](docs/manual-manutencao/screens/m07-servos-disponibilidade.png)
-
-| Ref. | Elemento indicado na imagem |
-|:----:|------------------------------|
-| ① | Seletor **Tipo de escala** |
-| ② | Coluna **Disponível** por servo |
-
-
-
-### Passo a passo
-
-1. Selecione o **tipo de escala** no chip horizontal.
-2. Em **Associar servos**, digite **Nome completo** (mínimo 2 letras).
-3. Toque no resultado da busca para associar.
-4. Em **Já associados**, confira a **ordem** (1, 2, 3…) — importante para o ciclo em bloco.
-5. Para remover: **lixeira** → confirme **Remover**.
-
-### Resultado esperado
-
-- Nome na lista **Já associados** com número de ordem.
-- Toast **Servos** confirmando cadastro.
-- Servos passam a aparecer no card **Escalas** do membro nas datas programadas (Parte 6).
-
-### Se der erro
-
-| Mensagem | Causa |
-|----------|-------|
-| *Cadastre tipos de escala no card Tipos de Escala* | Nenhum tipo criado (Parte 4) |
-| *Este servo já está cadastrado neste tipo* | Duplicata |
-| *Nenhum perfil com esse nome* | Nome não encontrado — verifique cadastro em **Dados Cadastrais** |
-
-### Dica
-Sem **ordem sequencial** definida, o **Escala em bloco** (Parte 6) não gera prévia válida.
-
----
-
-# Parte 6 — Programação de Escalas
-
-### Objetivo
-Definir **quem serve em qual domingo** — manualmente ou em bloco — para o membro ver no card **Escalas**.
-
-### Caminho
-**Programação de Escalas** → título interno **Manutenção de escalas**.
-
-### Ilustração — Programação de Escalas
-
-![Programação de Escalas — captura anotada](docs/manual-manutencao/screens/m08-programacao-escalas.png)
-
-| Ref. | Elemento indicado na imagem |
-|:----:|------------------------------|
-| ① | **Escala** e **Data** do serviço |
-| ② | Botão **Salvar programação** |
-
-
-
-### Passo a passo — escala individual
-
-1. Selecione o tipo de escala no chip.
-2. Toque em **Nova escala**.
-3. Escolha **Servo** e **Data do serviço** (`DD/MM/AA`).
-4. **Salvar escala**.
-
-### Resultado esperado
-
-- Toast **Escala** com sucesso.
-- Linha no **Histórico** com data e nome.
-- No painel do membro: card **Escalas** → tipo → nome na data correspondente.
-
-### Passo a passo — escala em bloco (ciclo automático)
-
-1. Com tipo configurado (**Equipe** ou **Individual**, vagas e servos ordenados — Partes 4 e 5).
-2. Toque em **Escala em bloco**.
-3. Leia a **Prévia — escala em bloco** (datas, ordem, quantidade).
-4. **Gravar bloco** → confirme no diálogo.
-
-### Resultado esperado
-
-- Toast **Escala em bloco** — *N escala(s) gravada(s)*.
-- Prévia mostra, no modo **Equipe**, **vários servos na mesma data** até o limite de vagas.
-- Membro responde: *“Quem está escalado neste domingo?”* — nomes listados no card **Escalas**.
-
-### Passo a passo — excluir escala
-
-1. No **Histórico**, toque na **lixeira** da linha.
-2. Confirme **Excluir escala**.
-
-### Resultado esperado
-
-- Toast **Escala removida**; data some do histórico e do painel do membro.
-
-### Se der erro
-
-- *Selecione um servo* / *Informe uma data válida* — formulário incompleto.
-- *Nenhum tipo de escala ativo* — cadastre em Parte 4.
-
----
-
-# Parte 7 — Cuidado Pastoral
-
-### Objetivo
-Receber e **acompanhar pedidos** enviados pelo card **Coração Aberto** dos membros — eles veem o status em **Meus pedidos**.
-
-### Caminho
-**Cuidado Pastoral** *(requer permissão `maintenance.card.pastoral_care`)*.
-
-### Ilustração — Cuidado Pastoral
-
-![Cuidado Pastoral — captura anotada](docs/manual-manutencao/screens/m09-cuidado-pastoral.png)
-
-| Ref. | Elemento indicado na imagem |
-|:----:|------------------------------|
-| ① | Seletor **Solicitante** |
-| ② | Detalhe do **pedido** selecionado |
-| ③ | Campo **Estágio** de acompanhamento |
-
-
-
-### Passo a passo
-
-1. Em **Quem enviou o pedido**, use o **dropdown** para filtrar por solicitante (ou *Todos*).
-2. A lista abaixo resume os pedidos **por usuário** (contagem de pedidos).
-3. Se houver vários pedidos da mesma pessoa, use o **chip de data/hora**.
-4. Leia **Motivo**, **Situação**, **Descrição**, **Pedido para**, **Encaminhado para**.
-5. Em **Acompanhamento**, avance **um estágio por vez**:
-   - **Acolher** (primeiro)
-   - **Apoiar** (após Acolher)
-   - **Acompanhar** (após Apoiar)
-6. Use **WhatsApp** se houver telefone no perfil.
-
-### Resultado esperado
-
-- Estágio tocado fica destacado em **azul piscina**; estágios futuros permanecem bloqueados até a vez deles.
-- Estágios já concluídos permanecem destacados.
-- No app do membro (Pacote 5): **Meus pedidos** mostra status **Acolher**, **Apoiar** ou **Acompanhar** — confirma que o pedido **está sendo acompanhado**.
-- Loader rosa breve durante gravação; toast **Cuidado pastoral** em sucesso.
-
-### Se der erro
-
-- Toast com mensagem da API — verifique scripts `pastoral-maintenance-rpc.sql` em produção.
-- *Nenhum pedido pastoral cadastrado* — nenhum envio ainda pelo Coração Aberto.
-
-### Dica
-Não pule estágios — o sistema só libera o próximo após o anterior.
-
----
-
-# Parte 8 — Informações Financeiras
-
-### Objetivo
-Importar movimentação, comentar lançamentos, anexar comprovantes e conciliar **Relatórios de Despesas (RD)**.
-
-### Caminho
-**Informações Financeiras** *(requer permissão financeira de manutenção — papel **`tesoureiro`**, **`super_admin`** ou grants equivalentes)*.
-
-### Ilustração — Informações Financeiras
-
-![Informações Financeiras — captura anotada](docs/manual-manutencao/screens/m10-financeiro-manut.png)
-
-| Ref. | Elemento indicado na imagem |
-|:----:|------------------------------|
-| ① | Seção **Período** (mês) |
-| ② | **Importação CSV** do extrato |
-| ③ | **Relatórios RD** pendentes |
-
-
-
-### Passo a passo — importar CSV do mês
-
-1. Em **Mês de referência**, escolha o **Mês** e a **versão** (ex.: REALIZADO).
-2. Abra **Carga em lote**.
-3. Cole o CSV na área de texto (**Colar** / **Limpar**).
-4. Leia a prévia: *N linha(s) válida(s) · M com erro*.
-5. Escolha **Limpar versão antes** ou **Só acrescentar**.
-6. **Importar para {mês}** → confirme no diálogo se for substituir.
-
-### Resultado esperado
-
-- Toast **Financeiro** com quantidade importada.
-- Resumo: *N realizado(s) · R$ … · M planejado(s)*.
-- Membros com permissão veem totais no card **Financeiro** (somente leitura).
-
-### Passo a passo — comentário e comprovante
-
-1. Em **Lançamentos · {mês}**, toque **Adicionar** ou **Editar** comentário.
-2. No modal: digite **Comentário / observação**.
-3. **Anexar Comprovante** → **Colar da Área de Transferência** ou **Selecionar da Galeria**.
-4. **Salvar**.
-
-### Resultado esperado
-
-- Linha mostra *Comentário: …* e *Comprovante anexado*.
-- Toast **Comprovante** ou **Financeiro** confirmando.
-
-### Passo a passo — vincular RD a um lançamento
-
-1. Em **Lançamentos · {mês}**, toque **Adicionar** ou **Editar** no lançamento desejado.
-2. No modal, toque **Vincular RD**.
-3. Na lista de RDs pendentes, confira número, valor, membro, telefone, data, quantidade de itens e **descrição de cada despesa**.
-4. Toque **Vincular a este lançamento** no RD correto.
-
-### Resultado esperado
-
-- Modal **Vincular RD** mostra uma linha por descrição de item do relatório.
-- Toast *RD vinculado ao lançamento*; na seção **Relatórios de Despesas · {mês}** o status passa a **Conciliado**.
-- Membro que enviou o RD vê andamento no fluxo de reembolso.
-
-### Passo a passo — desconciliar RD
-
-1. Em **Relatórios de Despesas · {mês}**, localize RD **Conciliado**.
-2. Toque **Remover vínculo** e confirme.
-
-### Resultado esperado
-
-- RD volta para **Pendente** e pode ser vinculado novamente.
-
-### Passo a passo — esvaziar mês (destrutivo)
-
-1. **Esvaziar {versão} · {mês}** → confirme ciente da exclusão.
-
-### Resultado esperado
-
-- Lançamentos daquela versão/mês removidos; use com cautela.
-
-### Se der erro
-
-- Clipboard vazia ao colar comprovante.
-- Erro de importação CSV — revise formato e colunas.
-
----
-
-# Parte 9 — Lista de Presença (Quórum)
-
-### Objetivo
-Gerar o **documento formal** de presença para assembleias com **Requer Quorum = Sim**.
-
-### Caminho
-**Lista de Presença** — após configurar quórum no evento (Parte 1).
-
-### Ilustração — Lista de Presença
-
-![Lista de Presença — captura anotada](docs/manual-manutencao/screens/m11-lista-presenca.png)
-
-| Ref. | Elemento indicado na imagem |
-|:----:|------------------------------|
-| ① | Seletor de **evento com quórum** |
-| ② | **Gerar lista de presença** |
-| ③ | Tabela de **status** de check-in |
-
-
-
-### Passo a passo
-
-1. Em **Programação de Eventos**, crie/edite evento com **Requer Quorum = Sim** e publique.
-2. Membros fazem check-in (Agenda + QR/totem — Pacote 5).
-3. Abra **Lista de Presença**.
-4. Selecione o evento no chip horizontal.
-5. Role o documento **Lista de Presença – Assembleia Geral**.
-
-### Resultado esperado
-
-- Cabeçalho com **Data**, **Horário**, **Local** e texto estatutário.
-- Tabela **#**, **Nome**, **Hora do check-in** preenchida conforme confirmações.
-- Atualização automática a cada ~15 s enquanto a tela está aberta.
-- Vazio: *Nenhum check-in registrado para este evento até o momento.*
-
-### Se der erro
-
-- *Nenhum evento com Requer Quorum = Sim* — ative a flag no evento.
-- *Registro de quórum indisponível no Supabase* — execute scripts SQL de quórum em produção.
-
----
-
-# Parte 10 — Cadastro de Usuário *(super_admin)*
-
-### Objetivo
-Localizar perfil de membro, **corrigir CEP/endereço** e, quando necessário, **excluir o usuário** e todas as referências dele no sistema.
-
-### Caminho
-**Cadastro de Usuário** — visível apenas para **super_admin**.
-
-### Ilustração — Cadastro de Usuário
-
-![Cadastro de Usuário — captura anotada](docs/manual-manutencao/screens/m12-cadastro-usuario.png)
-
-| Ref. | Elemento indicado na imagem |
-|:----:|------------------------------|
-| ① | Campo **Buscar** perfil |
-| ② | Dados cadastrais e **CEP/endereço** |
-
-
-
-### Passo a passo
-
-1. Em **Buscar usuário**, digite **Nome** (mín. 2 letras).
-2. Use **X** na busca para limpar o nome e os dados exibidos do usuário selecionado.
-3. Toque no resultado.
-4. Leia **Dados pessoais** (somente leitura): nome, telefone, e-mail, CPF, nascimento.
-5. Edite **CEP**, **Número**, **Complemento** — a prévia **Endereço que será gravado** atualiza via CEP.
-6. **Salvar CEP e endereço**.
-7. Para remover alguém do sistema: role até **Excluir usuário** → confirme no diálogo (ação **irreversível**).
-
-### Resultado esperado
-
-- Toast **Cadastro de usuário** — *Endereço atualizado com sucesso.*
-- Mensagem verde: *CEP e endereço gravados em profiles…*
-- Mapa e endereço do membro refletem a alteração.
-- Após exclusão: toast de confirmação; perfil some da busca; remove dados em `profiles`, `members`, inscrições, RD, pedidos pastorais, veículos e demais referências (RPC `excluir_usuario_completo`).
-
-### Se der erro
-
-- *Apenas super administradores podem excluir usuários* — perfil da sessão não é `super_admin`.
-- *Não é possível excluir o próprio usuário da sessão* — use outra conta admin.
-- *Não é possível excluir o único super administrador*.
-- RPC ausente — execute `scripts/delete-profile-complete-rpc.sql` no Supabase.
-
-### Dica
-Não é cadastro completo de novo usuário — para primeiro acesso do membro, use o fluxo WhatsApp + Cadastro (Pacote 5).
-
----
-
-# Parte 11 — Recepção Familiar
-
-### Objetivo
-Processar cadastros enviados pelo formulário público **`/cadastro-familia/`** antes de virarem perfis e membros no sistema.
-
-### Caminho
-**Recepção Familiar** — equipe com permissão `maintenance.card.profile_cadastro` (mesmo recurso do Cadastro de Usuário).
-
-### Ilustração — Recepção Familiar
-
-![Recepção Familiar — captura anotada](docs/manual-manutencao/screens/m13-recepcao-familiar.png)
-
-| Ref. | Elemento indicado na imagem |
-|:----:|------------------------------|
-| ① | Itens da **fila** do `/cadastro-familia/` |
-| ② | Status **Aguardando triagem** / análise |
-
-
-
-### Passo a passo
-
-1. Abra **Recepção Familiar** na manutenção.
-2. Revise a fila de submissões pendentes (nome, telefone, data, família).
-3. Marque uma ou mais linhas (ou **Selecionar todos**).
-4. **Gravar selecionados** — cria/atualiza `profiles` e `members` quando não há conflito de família.
-5. **Rejeitar selecionados** — descarta submissões inválidas ou duplicadas.
-
-### Resultado esperado
-
-- Toast **Recepção familiar** confirma gravação ou rejeição em lote.
-- Cadastros gravados somem da fila e passam a existir no ecossistema (mapa, família, etc.).
-- Conflito de código familiar exige revisão manual antes de gravar.
-
-### Se der erro
-
-- RPC ausente — execute `scripts/recepcao-cadastro-familiar.sql` no Supabase.
-
-### Dica
-Envie o link `https://{seu-dominio}/cadastro-familia/` para famílias novas; a recepção valida antes do primeiro login.
-
----
-
-# Parte 12 — Controle de Acesso *(super_admin)*
-
-### Objetivo
-Definir **quem vê e edita** cada tela, card e coluna — incluindo manutenção e painel do membro.
-
-### Caminho
-**Controle de Acesso** — apenas **super_admin**.
-
-### Ilustração — Controle de Acesso
-
-![Controle de Acesso — captura anotada](docs/manual-manutencao/screens/m14-controle-acesso.png)
-
-| Ref. | Elemento indicado na imagem |
-|:----:|------------------------------|
-| ① | Título compacto **Controle de Acesso** |
-| ② | Interruptor **LGPD Ativo / LGPD Inativo** (parâmetro `LGPD_Ativo`) |
-| ③ | Aba **Papéis** — grants por recurso (Telas / Tabelas / Colunas) |
-| ④ | Seletor de **Papel** (chips de papéis cadastrados) |
-| ⑤ | Filtro **Telas** na lista de grants |
-| ⑥ | Interruptor **Ver** — concede visualização do recurso ao papel |
-
-
-
-### Controle global — módulo LGPD
-
-### Ilustração — LGPD inativado (resultado do clique)
-
-![LGPD inativado (resultado do clique) — captura anotada](docs/manual-manutencao/screens/m14b-lgpd-modulo-inativo.png)
-
-| Ref. | Elemento indicado na imagem |
-|:----:|------------------------------|
-| ① | Estado **LGPD Inativo** (vermelho) após o clique |
-| ② | Toast **LGPD inativado** — confirma gravação em `app_parameters` |
-| ③ | Mensagem: o alerta de LGPD pendente deixa de ser exibido no painel do membro |
-
-
-
-### Passo a passo — interruptor LGPD (reconhecimento opcional)
-
-1. Em **Controle de Acesso**, localize o interruptor **LGPD Ativo / LGPD Inativo** (② na ilustração).
-2. **LGPD Ativo** (`LGPD_Ativo = sim`):
-   - Cadastro inicial exige termos roláveis, selfie biométrica e registro de aceite/recusa.
-   - Membros com pendência veem cabeçalho **vermelho** no painel até regularizar em **Dados Cadastrais → LGPD** ou `/lgpd`.
-   - A igreja **opta por** exigir reconhecimento formal de privacidade.
-3. **LGPD Inativo** (`LGPD_Ativo = nao`):
-   - Cadastro simplificado: nome, nascimento e CEP → **Continuar** direto ao **Índice** (ver Pacote 5, seção **0.2b**).
-   - Sem tela `/lgpd`, sem selfie obrigatória, sem alerta vermelho.
-   - A igreja **opta por não** exigir esse critério no app; o parâmetro fica gravado em `app_parameters`.
-4. Ao alternar, aguarde toast **LGPD ativado** ou **LGPD inativado** (② na ilustração **m14b**).
-
-### Resultado esperado — LGPD
-
-| Estado | Efeito no app do membro (Pacote 5) |
-|--------|-------------------------------------|
-| **Ativo** | Fluxo completo de privacidade (0.2, 0.3) |
-| **Inativo** | Fluxo simplificado (0.2b); membros existentes deixam de ver alerta vermelho |
-
-> Somente **super_admin** altera este parâmetro. Scripts: `salvar-app-parameter-admin.sql`, `app-parameter-lgpd-ativo.sql`.
-
-
-
-### Aba Perfis — passo a passo
-
-1. Em **Selecionar perfil**, abra o **dropdown** e escolha o usuário na lista completa (nome · telefone/código).
-2. Aguarde carregar **Papéis do perfil** e **Liderança por tipo de escala**.
-3. Em **Papéis do perfil**, marque/desmarque papéis (ex.: membro, lider, pastoral).
-4. Em **Liderança por tipo de escala**, ative tipos que o perfil pode gerenciar *(requer papel lider)*.
-5. Aguarde toast **Papéis do perfil** ou **Liderança de escala**.
-
-### Resultado esperado
-
-- Perfil sem papéis → tratado como **visitante** (*Sem papéis atribuídos…*).
-- Membro ganha cards no painel conforme papel.
-- Líder ganha acesso aos cards de escala na manutenção.
-
-### Aba Papéis — passo a passo
-
-1. Selecione um **papel** no chip.
-2. Filtre **Telas**, **Tabelas** ou **Colunas**.
-3. Use a busca: *Buscar recurso (ex.: relatórios financeiros, /financial)*.
-4. Alterne **Ver** e **Editar** por recurso.
-   - Telas do **produto principal** = marcador azul.
-   - Telas de **manutenção** = marcador âmbar.
-5. **Visão por recurso:** toque no **marcador colorido** ou no **nome do recurso** → cada papel vira uma linha com **Ver** / **Editar**; **Voltar** retorna à visão por papel.
-
-### Resultado esperado
-
-- **Editar** só habilita se **Ver** estiver ligado.
-- Após salvar, usuário precisa **sair e entrar** no app para ver novos cards.
-- Engrenagem aparece quando há `view` em `/maintenance-dashboard`.
-
-### Se der erro
-
-- *Apenas perfis com o papel super_admin podem gerenciar permissões.*
-
-### Dica
-Scripts SQL em `scripts/` complementam recursos novos (financeiro, pastoral, mapa, escalas) — rode em produção após deploy.
-
-Mapa visual dos papéis: `npm run build:access-roles-pdf` → `pdfs/PAPEIS_CONTROLE_ACESSO.pdf`.
-
----
-
-# Parte 13 — Mudança de Papéis *(pastoral, super_admin)*
-
-### Objetivo
-Alterar o papel básico de um perfil entre **visitante**, **congregado** e **membro** sem abrir a aba Papéis do Controle de Acesso.
-
-### Caminho
-**Mudança de Papéis** — perfis com papel `pastoral` ou `super_admin`.
-
-### Ilustração — Mudança de Papéis
-
-![Mudança de Papéis — captura anotada](docs/manual-manutencao/screens/m15-mudanca-papeis.png)
-
-| Ref. | Elemento indicado na imagem |
-|:----:|------------------------------|
-| ① | Seletor de **Membro** |
-| ② | Segmentos **Visitante** / **Congregado** / **Membro** |
-| ③ | **Aplicar mudança** |
-
-
-
-### Passo a passo
-
-1. Abra **Mudança de Papéis**.
-2. Opcional: filtre por nome, telefone ou código na busca.
-3. Toque nos cabeçalhos **Visitante**, **Congregado** ou **Membro** para filtrar pelo papel atual.
-4. Na linha do perfil, toque no papel desejado para aplicar a mudança.
-
-### Resultado esperado
-
-- Toast **Mudança de Papéis** confirma a atualização.
-- Cards do dashboard e permissões refletem o novo papel após o usuário sair e entrar novamente.
-
-### Se der erro
-
-- RPC ausente — execute `scripts/access-control-pastoral-role-change.sql` no Supabase.
-
----
-
-# Parte 14 — Acessos de Usuários *(super_admin)*
-
-### Objetivo
-Consultar **quantos logins** cada usuário fez no app e **quais telas/cards** visitou em cada sessão, para auditoria operacional.
-
-### Caminho
-**Acessos de Usuários** — último card do carrossel; apenas **super_admin** (ou grant explícito em `maintenance.card.profile_access_insights`).
-
-### Ilustração — Acessos de Usuários
-
-![Acessos de Usuários — captura anotada](docs/manual-manutencao/screens/m16-acessos-usuarios.png)
-
-| Ref. | Elemento indicado na imagem |
-|:----:|------------------------------|
-| ① | Campo **Buscar perfil** |
-| ② | Ícone **histórico** por sessão de login |
-| ③ | Balão com **telas visitadas** na sessão |
-
-
-
-### O que o sistema registra
-
-| Dado | Onde fica | Quando grava |
-|------|-----------|--------------|
-| **Login / sessão** | `profile_app_access_events` | Cada emissão de sessão (`profile_sessions`) |
-| **Telas visitadas** | `profile_app_access_screen_visits` | Rotas, cards do dashboard e painéis da manutenção enquanto logado |
-
-**Não entram no histórico de telas:** rótulos genéricos **Dashboard** e **Manutenção** (os cards específicos do carrossel são registrados no lugar).
-
-### Passo a passo — lista de acessos
-
-1. Abra **Acessos de Usuários**.
-2. Opcional: filtre por nome em **Filtrar lista**.
-3. Leia a tabela: **Nome curto**, **Último acesso**, **Total** (quantidade de logins).
-4. Toque **Atualizar lista** para recarregar do servidor.
-
-### Passo a passo — histórico de telas por login
-
-1. Na linha do usuário, toque o ícone de **histórico** (à direita do total).
-2. No balão, leia blocos do **login mais recente ao mais antigo**:
-   - **Data e hora** do acesso
-   - Lista de **telas visitadas** naquela sessão (ordem de navegação)
-3. Toque **Fechar** ou fora do balão.
-
-### Passo a passo — limpar histórico
-
-1. Toque **Limpar histórico**.
-2. Confirme no diálogo (ação irreversível).
-3. Aguarde toast de sucesso com quantidade removida.
-
-### Resultado esperado
-
-- Lista mostra só usuários com **pelo menos um login** registrado (exceto visitante).
-- Balão agrupa telas por sessão; sessões sem navegação aparecem com *Nenhuma tela registrada neste acesso*.
-- **Limpar histórico** apaga `profile_app_access_events` e `profile_app_access_screen_visits`.
-- Novos logins e navegações voltam a ser gravados após a limpeza.
+- Use nomes curtos e reconhecíveis pela recepção.
+- Não reutilize a mesma sala para faixas incompatíveis sem revisar o evento.
 
 ### Se der erro
 
 | Situação | Ação |
-|----------|------|
-| Aviso amarelo pedindo SQL | Execute no Supabase: `scripts/access-control-profile-access-insights.sql` e `scripts/profile-access-insights.sql` (ou `profile-access-insights-screen-visits-patch.sql`) |
-| Limpeza falha (FK / truncate) | Execute `scripts/profile-access-insights-clear-fix.sql` |
-| Lista vazia após uso | Usuário precisa **entrar de novo** e **navegar** após deploy do app e SQL |
-
-### Dica
-O card fica **por último** no carrossel de manutenção para não atrapalhar a operação diária.
+|---|---|
+| Sala não aparece no evento | Confira se foi salva e se está ativa. |
+| Criança vai para faixa errada | Revise faixa, nascimento e configuração do evento. |
 
 ---
 
-# Rotinas recomendadas (resumo operacional)
-
-## No dia do culto
-
-| Ordem | Ação | Resultado para a igreja |
-|-------|------|-------------------------|
-| 1 | Conferir evento **Publicado** (Parte 1) | Membros veem culto na Agenda |
-| 2 | Selecionar evento na **Agenda** (painel membro) | Salas e QR usam o culto certo |
-| 3 | Operar **Sala(s) - Check In** (Parte 3) | Pais veem **✓** no card SALA(S) |
-| 4 | Totem na entrada (Pacote 5) | Check-in confirmado; quórum alimentado |
-
-## Semanal
-
-- Cadastrar cultos da semana (**+7** para replicar domingo anterior).
-- Programar **Escalas** (Partes 4–6) para o domingo.
-- Revisar **Cuidado Pastoral** (Parte 7).
-
-## Mensal
-
-- **Informações Financeiras** — importar extrato (Parte 8).
-- **Recepção Familiar** — esvaziar fila do formulário público (Parte 11).
-- **Controle de Acesso** — conferir novos voluntários (Parte 12).
-
----
-
-# Apêndice — Scripts SQL frequentes (produção)
-
-| Necessidade | Script (pasta `scripts/`) |
-|-------------|---------------------------|
-| ACL financeiro | `financial-module-access.sql` |
-| Pastoral — equipe | `access-control-pastoral-role-grants.sql` |
-| Excluir pedido (membro) | `pastoral-request-delete-rpc.sql` |
-| Pastoral — manutenção | `pastoral-maintenance-rpc.sql` |
-| Escalas — tipos/servos | `escalas-tipos-maintenance-rpc.sql`, `escalas-volunteers-rpc.sql` |
-| Mapa / GPS membros | `access-control-map-pin-roles.sql` |
-| Quórum | scripts de quórum citados na UI da Lista de Presença |
-| RD (relatórios de despesas) | `expense-reports-schema.sql`, `expense-reports-rpc.sql` |
-| Recepção familiar | `recepcao-cadastro-familiar.sql` |
-| Mudança de papéis | `access-control-pastoral-role-change.sql`, `access-control-pastoral-congregado-membership.sql` |
-| Modo Ghost (auditor) | `access-control-ghost-mode.sql` — grant explícito em `maintenance.card.auditor` ou `super_admin` |
-| Perfil ministerial (membro) | `ministerial-profile-questionnaire.sql`, `ministerial-profile-questionnaire-seed.sql`, `ministerial-profile-questionnaire-session-fix.sql` |
-| Relatórios de manutenção | `maintenance-reports-access.sql`, `maintenance-reports-rpc.sql` (catálogo na UI: **7** relatórios; Faixa Etária removida) |
-| Recuperação de senha (e-mail) | `password-recovery-security.sql`, `password-recovery-email-flow.sql` |
-| Histórico de acessos / telas | `access-control-profile-access-insights.sql`, `profile-access-insights.sql` ou `profile-access-insights-screen-visits-patch.sql`; hotfix limpeza: `profile-access-insights-clear-fix.sql` |
-| Excluir perfil completo | `delete-profile-complete-rpc.sql` |
-| Trilha de Discipulado | `discipleship-trail-schema.sql`, `discipleship-trail-badges-alerts.sql`, `discipleship-trail-themes-admin.sql`, `discipleship-trail-reset-admin.sql`, `discipleship-trail-progress-gates.sql`, `discipleship-trail-badge-colors.sql`, `discipleship-trail-tenant-scope-fix.sql` |
-
----
-
-# Parte 15 — Manutenção da Trilha de Discipulado
+## 3. Totem de check-in
 
 ### Objetivo
-Gerir o conteúdo da Trilha por igreja, acompanhar a evolução dos discípulos (passos e certificado) e, se necessário, resetar o progresso.
+
+Operar um leitor fixo de QR no hall para registrar presença.
 
 ### Caminho
-**Engrenagem (Configurações)** → **Manutenção da Trilha** → **Temas** / **Reconhecimentos** / **Resetar Trilha** (este último só **super_admin**).
 
-### Quem pode usar
-- **Temas** e **Reconhecimentos:** pastoral, líderes e super admin (ACL `maintenance.card.discipleship_themes` / `discipleship_alerts`).
-- **Resetar Trilha:** somente **super_admin**.
+**Engrenagem → Operação e Segurança → Totem de check-in**
 
-### 15.1 Temas da Trilha
-1. Abra **Temas**.
-2. Expanda um passo (módulo) para editar título, descrição e lições.
-3. Em cada lição: conteúdo, URL de vídeo (quando houver), pergunta de reflexão e ativo/inativo.
-4. Na lição **5.1 Descobrindo meus Dons**, o vídeo é substituído pela atividade **Perfil Ministerial** (não edite URL de vídeo nesse item).
-5. Use **Nova lição neste passo** ou **Novo passo (módulo)** se a igreja precisar de conteúdo extra.
-6. Salve módulo/lição — as alterações valem **somente para a igreja da sessão**.
+### Passo a passo
 
-### 15.2 Reconhecimentos
-1. Abra **Reconhecimentos**.
-2. Filtros **Novos** / **Todos**.
-3. Alertas de **Evolução — passo concluído** (cada módulo 100%) e de **Certificado / reconhecimento** (trilha 100%).
-4. **Marcar como visto** → depois **Fechar (certificado feito)** quando o reconhecimento público for concluído.
-5. Use **Guia do Processo** para orientação pedagógica dos 5 passos.
-
-### 15.3 Resetar Trilha *(super_admin)*
-1. Busque o membro por nome ou telefone.
-2. Confirme o reset — apaga progresso, selos e alertas **dessa igreja**.
-3. A pessoa recomeça do passo 1.
-
-### Selos coloridos (referência)
-| Passo | Cor |
-|:-----:|-----|
-| 1 | Azul céu |
-| 2 | Verde esmeralda |
-| 3 | Azul royal |
-| 4 | Laranja / âmbar |
-| 5 + trilha completa | Dourado |
-
-### Resultado esperado
-- Conteúdo da Trilha alinhado à igreja.
-- Pastoral acompanha evolução e certificados na mesma fila.
-- Reset disponível apenas para super admin, com confirmação.
-
----
-
-# Encerramento — Sair da manutenção
-
-### Objetivo
-Voltar ao Índice ou encerrar sessão com segurança.
-
-### Caminho
-Card **Manutenção** → **Menu** → Índice → **Encerrar sessão**; ou use **Voltar** entre cards.
+1. Abra o módulo no aparelho destinado ao totem.
+2. Entre com o celular e PIN configurados.
+3. Confira a igreja ativa.
+4. Autorize a câmera.
+5. Selecione ou confirme o evento elegível.
+6. Posicione o aparelho de forma estável.
+7. Peça ao membro o QR da Carteirinha ou Agenda.
+8. Enquadre todo o código.
+9. Aguarde a confirmação.
+10. Leia a mensagem antes de chamar a próxima família.
+11. Encerre a sessão ao final.
 
 ### Resultado esperado
 
-- **Menu** no card 0 → Índice do aplicativo.
-- **Encerrar sessão** → tela de login; dados locais limpos.
+O participante com pré-check-in válido tem a presença registrada.
+
+### Dicas
+
+- Teste câmera e internet antes da abertura das portas.
+- Aumente a iluminação sem gerar reflexo.
+- O mesmo celular pode existir em mais de uma igreja; confirme a instância.
+
+### Se der erro
+
+| Mensagem | Ação |
+|---|---|
+| Pré-check-in não encontrado | Oriente a marcar audiência no evento correto. |
+| Câmera bloqueada | Permita câmera em HTTPS e feche outro aplicativo que a utiliza. |
+| QR não reconhecido | Limpe a lente, aumente o brilho e tente novamente. |
 
 ---
 
-## Resumo — o que a equipe deve conseguir após este manual
+## 4. Autorização de imagem e voz
 
-| Necessidade da igreja | Onde fazer |
-|------------------------|------------|
-| Membros veem culto e vagas | Parte 1 — evento **Publicado** + vagas |
-| Pai vê filho aceito na sala | Parte 3 — checkbox entrada → **✓** no app do membro |
-| Lista oficial de assembleia | Parte 1 (Quórum) + Parte 9 |
-| Quem serve no domingo | Partes 4–6 — escalas |
-| Pedido pastoral acompanhado | Parte 7 — Acolher → Apoiar → Acompanhar |
-| Finanças do mês atualizadas | Parte 8 — importação CSV |
-| Novo líder com acesso | Parte 11 — papéis e permissões |
-| Trilha: editar temas / selos / reset | Parte 15 — Manutenção da Trilha |
-| Discípulo pronto para certificado | Parte 15 — Reconhecimentos |
+### Objetivo
+
+Solicitar, registrar e consultar o termo específico de uso de imagem e voz.
+
+### Caminho
+
+**Engrenagem → Operação e Segurança → Autorização de imagem e voz**
+
+### Passo a passo
+
+1. Abra o módulo.
+2. Pesquise a pessoa ou família.
+3. Confira o perfil selecionado.
+4. Leia o termo aplicável.
+5. Inicie a solicitação.
+6. Confirme o e-mail do destinatário.
+7. Envie.
+8. Oriente a pessoa a consultar a caixa de entrada.
+9. Aguarde a confirmação.
+10. Consulte o estado atualizado.
+
+### Resultado esperado
+
+O consentimento ou a recusa fica vinculado ao termo de mídia.
+
+### Dicas
+
+- Este termo não substitui o aceite geral de LGPD.
+- Não registre aceite verbal como confirmação digital sem regra formal.
+
+### Se der erro
+
+Se o e-mail não chegar, confira endereço, spam e configuração do remetente antes de reenviar.
 
 ---
 
-*App IBN · Igreja Batista Norte · Manual de Manutenção v2026-07-30*
+# Grupo 2 — Gestão de Pessoas
+
+## 5. Visitantes / Cadastro Rápido
+
+### Objetivo
+
+Cadastrar rapidamente visitante e crianças para o check-in do Espaço Infantil.
+
+### Caminho
+
+**Engrenagem → Gestão de Pessoas → Visitantes / Cadastro Rápido**
+
+![Visitantes — Cadastro Rápido](docs/manual-manutencao/screens/visitantes-cadastro-rapido.png)
+
+### Passo a passo
+
+1. Abra o módulo.
+2. Pergunte se a família já frequentou.
+3. Pesquise antes de criar.
+4. Se encontrar, selecione o registro correto.
+5. Se não encontrar, informe nome do responsável.
+6. Informe celular com DDD.
+7. Preencha os demais campos obrigatórios.
+8. Adicione cada criança.
+9. Confira nome e data de nascimento.
+10. Confirme a sala elegível.
+11. Toque em **Cadastrar e gerar QR** ou **Gerar QR / Check-in**.
+12. Revise o QR.
+13. Use o WhatsApp para enviar link do crachá e imagem, quando necessário.
+14. Oriente o responsável sobre entrada e retirada.
+
+### Resultado esperado
+
+O visitante fica identificado e recebe o QR necessário ao fluxo infantil.
+
+### Dicas
+
+- Pesquisar antes evita perfil e família duplicados.
+- Confirme o telefone lendo os últimos dígitos para o responsável.
+- Não use este fluxo para substituir o cadastro familiar completo.
+
+### Se der erro
+
+| Situação | Ação |
+|---|---|
+| Família já existe | Reutilize o registro; não duplique. |
+| Sala não aparece | Confira idade, evento e configuração da sala. |
+| WhatsApp não abre | Copie o link e envie pelo contato validado. |
+
+---
+
+## 6. Recepção Familiar
+
+### Objetivo
+
+Convidar uma família, vincular novos membros e processar formulários públicos antes da gravação definitiva.
+
+### Caminho
+
+**Engrenagem → Gestão de Pessoas → Recepção Familiar**
+
+![Recepção Familiar — referência visual](docs/manual-manutencao/screens/m13-recepcao-familiar.png)
+
+### Enviar convite — passo a passo
+
+1. Abra **Recepção Familiar**.
+2. Confirme a igreja ativa.
+3. Localize **Recepção — Cadastro Familiar**.
+4. Informe nome do contato.
+5. Informe celular com DDD.
+6. Pergunte se existe representante cadastrado.
+7. Se existir, toque em **Novos Membros**.
+8. Abra a busca **Enxergar**.
+9. Digite conforme o critério da tela.
+10. Selecione a pessoa correta.
+11. Confira o código familiar exibido.
+12. Volte ao convite.
+13. Toque em **WhatsApp — convite**.
+14. Confira destinatário e texto.
+15. Envie o link.
+
+### Processar fila — passo a passo
+
+1. Abra **Fila pendente**.
+2. Expanda a primeira submissão.
+3. Confira o informante.
+4. Confira todos os integrantes.
+5. Valide telefones com DDD.
+6. Revise datas de nascimento.
+7. Trate a data provisória `01/01/1900`.
+8. Confira CEP, número e complemento.
+9. Pesquise possíveis duplicidades.
+10. Analise conflitos de código familiar.
+11. Corrija ou separe registros com problema.
+12. Marque somente os registros válidos.
+13. Toque em **Gravar selecionados**.
+14. Leia o resumo.
+15. Confirme.
+16. Para inválidos, marque-os separadamente.
+17. Toque em **Rejeitar selecionados**.
+18. Confirme a rejeição.
+
+### Resultado esperado
+
+Registros válidos viram perfis/membros corretos; conflitos permanecem para análise ou são rejeitados.
+
+### Dicas
+
+- A fila pública não é perfil definitivo até ser gravada.
+- Não grave lote com conflito apenas para “limpar” a fila.
+- O sticker da Home prioriza esta fila.
+- Use **Novos Membros** para levar o código familiar correto no convite.
+
+### Se der erro
+
+| Situação | Ação |
+|---|---|
+| Duplicidade provável | Pare e compare nome, telefone, nascimento e família. |
+| Código familiar conflitante | Não crie outro; valide com representante e secretaria. |
+| Data `01/01/1900` | Corrija antes de gravar. |
+| CEP ausente | Complete ou devolva para correção conforme o procedimento local. |
+
+---
+
+## 7. Régua de Acolhimento
+
+### Objetivo
+
+Acompanhar **visitantes** depois da recepção com ações D+1, D+4 e D+8.
+
+### Caminho
+
+**Engrenagem → Gestão de Pessoas → Régua de Acolhimento**
+
+### Passo a passo
+
+1. Abra o módulo.
+2. Filtre visitantes pendentes.
+3. Selecione uma pessoa.
+4. Confirme que o papel atual é **visitante**.
+5. Leia a etapa sugerida.
+6. No D+1, faça o contato de acolhimento por WhatsApp.
+7. Registre o resultado real.
+8. No D+4, apresente célula ou próximo passo adequado.
+9. Registre a ação.
+10. No D+8, faça o convite para o culto.
+11. Registre resposta e observação necessária.
+12. Avance somente após a ação.
+13. Ao mudar para congregado ou membro, conclua a régua.
+
+### Resultado esperado
+
+O visitante possui histórico claro de acolhimento sem ser mantido indevidamente na fila.
+
+### Dicas
+
+- Régua é para **visitante**, não membro ou congregado.
+- Registro deve ser objetivo e respeitoso.
+- Não marque contato como feito se não ocorreu.
+
+### Se der erro
+
+Se membro aparecer na régua, confira o papel e conclua/corrija o processo em vez de continuar o acompanhamento de visitante.
+
+---
+
+## 8. Lista de Membros
+
+### Objetivo
+
+Consultar o diretório da comunidade conforme a autorização.
+
+### Caminho
+
+**Engrenagem → Gestão de Pessoas → Lista de Membros**
+
+### Passo a passo
+
+1. Abra a lista.
+2. Use a busca por nome.
+3. Selecione a pessoa correta.
+4. Confira família e contatos permitidos.
+5. Abra WhatsApp somente para finalidade autorizada.
+6. Consulte mapa apenas quando necessário.
+7. Feche os detalhes ao terminar.
+
+### Resultado esperado
+
+O diretório exibe apenas pessoas e campos permitidos.
+
+### Dicas
+
+- Não exporte nem compartilhe a lista informalmente.
+- Confirme homônimos pelo vínculo familiar.
+
+### Se der erro
+
+Se alguém não aparecer, confira filtros, igreja ativa, papel da pessoa e ACL do operador.
+
+---
+
+## 9. Cadastro de Usuário
+
+### Objetivo
+
+Revisar e corrigir o cadastro de um perfil existente.
+
+### Caminho
+
+**Engrenagem → Gestão de Pessoas → Cadastro de Usuário**
+
+![Cadastro de Usuário — referência visual](docs/manual-manutencao/screens/m12-cadastro-usuario.png)
+
+### Passo a passo
+
+1. Abra o módulo.
+2. Pesquise pelo nome.
+3. Selecione o perfil correto.
+4. Confira celular e igreja.
+5. Revise dados pessoais.
+6. Corrija CEP.
+7. Corrija número e complemento.
+8. Atualize apenas campos autorizados.
+9. Salve.
+10. Leia a confirmação.
+11. Para exclusão completa, confira vínculos e autorização.
+12. Execute ação destrutiva somente após dupla conferência.
+
+### Resultado esperado
+
+O perfil fica atualizado sem criar duplicidade ou romper vínculos válidos.
+
+### Dicas
+
+- Antes de excluir, verifique família, eventos, pastoral e histórico.
+- Prefira correção a recriação.
+
+### Se der erro
+
+Em conflito de telefone, não substitua às cegas; compare os dois perfis e peça decisão responsável.
+
+---
+
+## 10. Lista de Famílias
+
+### Objetivo
+
+Consultar composição, representante e pendências por código familiar.
+
+### Caminho
+
+**Engrenagem → Gestão de Pessoas → Lista de Famílias**
+
+### Passo a passo
+
+1. Abra o módulo.
+2. Pesquise por código, representante ou integrante.
+3. Selecione a família correta.
+4. Expanda os detalhes.
+5. Confira representante principal.
+6. Confira integrantes e parentescos.
+7. Compare telefones e datas quando houver suspeita de duplicidade.
+8. Identifique pendências.
+9. Use contato apenas para finalidade pastoral/administrativa.
+10. Feche a família antes de abrir outra.
+
+### Resultado esperado
+
+A equipe reconhece a composição familiar e os vínculos usados pela Agenda e pelo QR.
+
+### Dicas
+
+- O código familiar é uma chave de vínculo; não o troque sem análise.
+- Criança sem telefone pode ser integrante válida.
+
+### Se der erro
+
+| Situação | Ação |
+|---|---|
+| Integrante em duas famílias | Pare e valide com responsáveis antes de corrigir. |
+| Representante incorreto | Use o procedimento autorizado; não remova o principal diretamente. |
+| Busca não encontra | Tente código, nome completo ou outro integrante. |
+
+---
+
+## 11. Mapa de geolocalização
+
+### Objetivo
+
+Visualizar pins de famílias para planejamento autorizado.
+
+### Caminho
+
+**Engrenagem → Gestão de Pessoas → Mapa de geolocalização**
+
+### Passo a passo
+
+1. Abra o mapa.
+2. Aguarde a carga dos pins.
+3. Ajuste zoom e área.
+4. Use os filtros permitidos.
+5. Toque em um pin.
+6. Consulte somente os detalhes necessários.
+7. Feche o detalhe.
+
+### Resultado esperado
+
+Endereços elegíveis são representados conforme ACL.
+
+### Dicas
+
+- Detalhes de pin podem exigir grant adicional.
+- Use dados geográficos apenas para a finalidade informada.
+
+### Se der erro
+
+Pin ausente normalmente indica endereço incompleto, geocodificação pendente, filtro ou falta de acesso.
+
+---
+
+## 12. Aniversariantes
+
+### Objetivo
+
+Consultar aniversários pessoais e de casamento por período.
+
+### Caminho
+
+**Engrenagem → Gestão de Pessoas → Aniversariantes**
+
+### Passo a passo
+
+1. Abra o módulo.
+2. Escolha mês ou período.
+3. Aplique filtros.
+4. Confira os nomes.
+5. Diferencie aniversário pessoal e casamento.
+6. Use contato autorizado quando necessário.
+7. Revise a mensagem antes de enviar.
+
+### Resultado esperado
+
+A lista do período é exibida conforme dados e permissões.
+
+### Dicas
+
+- O bolo da Home mostra apenas o dia.
+- Data ausente ou incorreta deve ser corrigida no cadastro.
+
+### Se der erro
+
+Confira período, data de nascimento/casamento e consentimentos aplicáveis.
+
+---
+
+## 13. Cuidados Pastorais
+
+### Objetivo
+
+Receber, atribuir e acompanhar pedidos com sigilo.
+
+### Caminho
+
+**Engrenagem → Gestão de Pessoas → Cuidados Pastorais**
+
+![Cuidados Pastorais — referência visual](docs/manual-manutencao/screens/m09-cuidado-pastoral.png)
+
+### Acompanhar — passo a passo
+
+1. Abra o módulo.
+2. Filtre por estado ou solicitante.
+3. Selecione a pessoa.
+4. Se houver mais de um pedido, use o chip de data/hora.
+5. Confira motivo e situação.
+6. Leia quem é o beneficiário.
+7. Confira destino e nível de sigilo.
+8. Leia a descrição.
+9. Defina responsável, quando aplicável.
+10. Registre o primeiro contato.
+11. Avance para **Acolher**.
+12. Registre apoio realizado.
+13. Avance para **Apoiar**.
+14. Registre continuidade.
+15. Avance para **Acompanhar**.
+16. Encerre apenas quando o ciclo terminar.
+
+### Excluir após solicitação do membro
+
+1. Selecione o pedido correto pela data/hora.
+2. Localize **Solicitação de cancelamento**.
+3. Leia a justificativa do membro.
+4. Confirme que a solicitação pertence ao pedido aberto.
+5. Como **super_admin**, localize **Excluir** ao lado de **Acompanhar**.
+6. Toque em **Excluir**.
+7. Leia o diálogo que repete motivo e justificativa.
+8. Confirme apenas se estiver correto.
+9. Aguarde a remoção.
+
+### Resultado esperado
+
+O pedido evolui com rastreabilidade; cancelamento válido é excluído apenas pelo Super Administrador.
+
+### Dicas
+
+- Não copie conteúdo sigiloso para grupos.
+- Use WhatsApp somente quando o destino do pedido permitir.
+- **Excluir** não é ação pastoral comum.
+
+### Se der erro
+
+| Situação | Explicação |
+|---|---|
+| Excluir não aparece | Exige super_admin e solicitação válida do membro. |
+| Pedido errado abriu | Selecione outro chip de data/hora. |
+| Cancelamento sem justificativa | Não prossiga até confirmar a solicitação correta. |
+
+---
+
+## 14. Atribuições
+
+### Objetivo
+
+Marcar responsabilidades operacionais ou pastorais autorizadas para uma pessoa.
+
+### Caminho
+
+**Engrenagem → Gestão de Pessoas / fluxo autorizado → Atribuições**
+
+### Passo a passo
+
+1. Abra **Atribuições**.
+2. Toque no campo de pessoa.
+3. Use a busca **Enxergar**.
+4. Digite respeitando o critério existente.
+5. Selecione o perfil correto no modal superior.
+6. Confira nome, telefone e igreja.
+7. Leia as atribuições atuais.
+8. Marque a nova atribuição.
+9. Desmarque somente o que deve ser removido.
+10. Revise o conjunto completo.
+11. Salve.
+12. Leia a confirmação.
+13. Oriente a pessoa a sair e entrar, se necessário.
+
+### Resultado esperado
+
+As atribuições ficam associadas ao perfil correto sem alterar papéis indevidos.
+
+### Dicas
+
+- Enxergar muda a apresentação, não o critério da busca.
+- Não conceda atribuição “por teste” em produção.
+- Registre o motivo conforme a política local.
+
+### Se der erro
+
+Se a pessoa não aparecer, confira igreja ativa, mínimo de caracteres e visibilidade do seu papel.
+
+---
+
+## 15. Gestão de Pequenos Grupos
+
+### Objetivo
+
+Manter células, lideranças, locais e vínculos.
+
+### Caminho
+
+**Engrenagem → Gestão de Pessoas → Gestão de Pequenos Grupos**
+
+### Passo a passo
+
+1. Abra o módulo.
+2. Pesquise o grupo.
+3. Crie ou edite.
+4. Informe nome, dia e horário.
+5. Informe local permitido.
+6. Defina liderança.
+7. Revise integrantes.
+8. Salve.
+9. Valide em **Menu → Minha Célula** com perfil apropriado.
+
+### Resultado esperado
+
+O pequeno grupo fica disponível aos membros vinculados.
+
+### Dicas
+
+- Valide endereço antes de publicar.
+- Não exponha endereço residencial a perfis indevidos.
+
+### Se der erro
+
+Confira liderança ativa, vínculo da pessoa e grants da tela do membro.
+
+---
+
+## 16. Mural de Voluntários
+
+### Objetivo
+
+Publicar oportunidades e organizar disponibilidade de serviço.
+
+### Caminho
+
+**Engrenagem → Gestão de Pessoas → Mural de Voluntários**
+
+### Passo a passo
+
+1. Abra o módulo.
+2. Consulte oportunidades existentes.
+3. Crie uma oportunidade.
+4. Informe título e descrição.
+5. Defina requisitos e período.
+6. Informe contato responsável.
+7. Revise.
+8. Publique.
+9. Confira no Mural de Oportunidades.
+
+### Resultado esperado
+
+A oportunidade publicada aparece aos perfis autorizados.
+
+### Dicas
+
+- Retire oportunidades encerradas.
+- Seja explícito sobre horário e habilidade necessária.
+
+### Se der erro
+
+Se não aparecer ao membro, confira publicação, período e ACL.
+
+---
+
+## 17. Moderação do Mural
+
+### Objetivo
+
+Revisar doações e pedidos antes da publicação.
+
+### Caminho
+
+**Engrenagem → Gestão de Pessoas → Moderação do Mural**
+
+### Passo a passo
+
+1. Abra a fila.
+2. Escolha um item pendente.
+3. Leia descrição e categoria.
+4. Confira contato e condições.
+5. Verifique conteúdo inadequado ou dados excessivos.
+6. Aprove, solicite correção ou rejeite.
+7. Registre o motivo quando necessário.
+8. Confirme.
+
+### Resultado esperado
+
+Somente itens adequados aparecem no Mural de Generosidade.
+
+### Dicas
+
+- Não aprove anúncio com informação bancária aberta.
+- Diferencie doação, empréstimo e pedido.
+
+### Se der erro
+
+Se o item aprovado não aparecer, confira estado, prazo e filtro da tela pública.
+
+---
+
+## 18. Administrativo
+
+### Objetivo
+
+Consultar e manter atos constitutivos e registros institucionais autorizados.
+
+### Caminho
+
+**Engrenagem → Gestão de Pessoas → Administrativo**
+
+### Passo a passo
+
+1. Abra o módulo.
+2. Escolha a categoria.
+3. Localize o registro.
+4. Abra para consulta.
+5. Crie ou edite somente com autorização.
+6. Anexe a versão correta.
+7. Revise data e título.
+8. Salve.
+
+### Resultado esperado
+
+O acervo administrativo fica organizado por igreja.
+
+### Dicas
+
+- Preserve versão e data do documento.
+- Não substitua ato oficial sem validação.
+
+### Se der erro
+
+Confira formato, tamanho do arquivo, permissão e instância.
+
+---
+
+## 19. Livros doados
+
+### Objetivo
+
+Cadastrar e consultar o acervo doado.
+
+### Caminho
+
+**Engrenagem → Gestão de Pessoas → Livros doados**
+
+### Passo a passo
+
+1. Abra o módulo.
+2. Pesquise pelo título ou ISBN.
+3. Se encontrado, confira antes de duplicar.
+4. Para novo livro, use a busca ISBN.
+5. Revise os dados retornados.
+6. Complete manualmente o que faltar.
+7. Informe quantidade e estado quando disponível.
+8. Salve.
+
+### Resultado esperado
+
+O livro entra no acervo com identificação consistente.
+
+### Dicas
+
+- ISBN reduz erros de título e autoria.
+- Cadastre manualmente somente após a busca.
+
+### Se der erro
+
+Se o ISBN não retornar, confira os dígitos e use o cadastro manual.
+
+---
+
+# Grupo 3 — Culto e Eventos
+
+## 20. Programação de Eventos
+
+### Objetivo
+
+Criar, revisar e publicar cultos e eventos.
+
+### Caminho
+
+**Engrenagem → Culto e Eventos → Programação de Eventos**
+
+![Programação de Eventos](docs/manual-manutencao/screens/m02-programacao-eventos.png)
+
+### Passo a passo
+
+1. Abra o módulo.
+2. Toque em criar evento ou abra um existente.
+3. Informe nome.
+4. Defina data e hora.
+5. Informe local.
+6. Defina capacidade.
+7. Configure público.
+8. Ative Kids/Teens quando aplicável.
+9. Associe salas.
+10. Configure totem.
+11. Configure quórum ou proximidade quando necessário.
+12. Revise todos os campos.
+13. Salve como rascunho.
+14. Faça uma segunda revisão.
+15. Publique.
+16. Confira em **Início → Próximos Eventos**.
+
+### Resultado esperado
+
+O evento publicado aparece no Início; o rascunho permanece oculto.
+
+### Dicas
+
+- Use rascunho até concluir a revisão.
+- Ao replicar para +7 dias, revise data, equipe e salas.
+- Não publique capacidade ou local incorretos.
+
+### Se der erro
+
+| Situação | Ação |
+|---|---|
+| Evento não aparece | Confira se está publicado e dentro do período. |
+| Sala não disponível | Volte à Configuração de salas. |
+| Data replicada errada | Edite antes de publicar. |
+
+---
+
+## 21. Cronograma de Eventos
+
+### Objetivo
+
+Visualizar eventos no tempo e abrir rapidamente uma edição.
+
+### Caminho
+
+**Engrenagem → Culto e Eventos → Cronograma de Eventos**
+
+### Passo a passo
+
+1. Abra o cronograma.
+2. Escolha período.
+3. Aplique filtros.
+4. Percorra as datas.
+5. Identifique sobreposições.
+6. Toque no evento.
+7. Abra a edição.
+8. Corrija e salve, se necessário.
+
+### Resultado esperado
+
+O calendário operacional mostra eventos e conflitos visuais.
+
+### Dicas
+
+- Use o cronograma para revisão, não para presumir publicação.
+- Confirme estado do evento na edição.
+
+### Se der erro
+
+Verifique período, filtros e igreja ativa.
+
+---
+
+## 22. Manutenção de Avisos
+
+### Objetivo
+
+Publicar comunicados exibidos no Início.
+
+### Caminho
+
+**Engrenagem → Culto e Eventos → Manutenção de Avisos**
+
+### Passo a passo
+
+1. Abra o módulo.
+2. Consulte avisos ativos.
+3. Crie ou edite.
+4. Informe título.
+5. Escreva texto claro.
+6. Defina início e fim.
+7. Defina público quando disponível.
+8. Revise links e datas.
+9. Salve.
+10. Confira no Início.
+
+### Resultado esperado
+
+O aviso aparece no período e para o público configurado.
+
+### Dicas
+
+- Evite manter aviso vencido.
+- Não publique dados pessoais.
+
+### Se der erro
+
+Confira período, estado ativo, público e cache da página.
+
+---
+
+## 23. Sala(s) — Check In
+
+### Objetivo
+
+Registrar entrada e retirada de crianças por QR ou código.
+
+### Caminho
+
+**Engrenagem → Culto e Eventos → Sala(s) — Check In**
+
+![Sala(s) — Check In — referência visual](docs/manual-manutencao/screens/m05-sala-checkin.png)
+
+### Entrada — passo a passo
+
+1. Abra o módulo.
+2. Confirme a igreja.
+3. Selecione o evento.
+4. Selecione a sala.
+5. Confira a equipe responsável.
+6. No rodapé, toque em **Ler QR Code**.
+7. Autorize a câmera.
+8. Peça o QR ao responsável.
+9. Enquadre o código.
+10. Confira família e crianças elegíveis.
+11. Selecione a criança correta.
+12. Confirme a entrada.
+13. Verifique o estado **Na sala**.
+
+### Retirada — passo a passo
+
+1. Peça novamente o QR ao responsável.
+2. Leia o código.
+3. Confira nome e sala.
+4. Confirme a pessoa autorizada conforme procedimento local.
+5. Registre a saída.
+6. Verifique o estado **Liberado**.
+7. Entregue a criança somente após a confirmação.
+
+### Código digitado
+
+1. Toque em **Digitar Código**.
+2. Informe o código familiar.
+3. Confira a família retornada.
+4. Continue a entrada ou retirada.
+
+### Resultado esperado
+
+Entrada e saída ficam registradas na sala e aparecem para o responsável.
+
+### Dicas
+
+- Nunca pule a conferência do nome.
+- Mantenha evento e sala visíveis à equipe.
+- Teste o leitor antes do culto.
+
+### Se der erro
+
+| Situação | Ação |
+|---|---|
+| QR ilegível | Use brilho maior ou **Digitar Código**. |
+| Criança não aparece | Confira audiência, idade, sala e família. |
+| Sala errada | Não confirme; volte e selecione a correta. |
+| Estado não muda | Não entregue até obter confirmação ou aplicar protocolo manual autorizado. |
+
+---
+
+## 24. Tipos de Escala
+
+### Objetivo
+
+Definir modelos de escala, vagas e ciclo.
+
+### Caminho
+
+**Engrenagem → Culto e Eventos → Tipos de Escala**
+
+### Passo a passo
+
+1. Abra o módulo.
+2. Consulte tipos existentes.
+3. Crie ou edite.
+4. Informe código e nome.
+5. Defina número de vagas.
+6. Escolha ciclo individual ou equipe.
+7. Revise.
+8. Salve.
+
+### Resultado esperado
+
+O tipo fica disponível para voluntários e programação.
+
+### Dicas
+
+- Planeje nomes estáveis.
+- Alterar tipo em uso pode afetar programações futuras.
+
+### Se der erro
+
+Verifique código duplicado e campos obrigatórios.
+
+---
+
+## 25. Servos em Disponibilidade
+
+### Objetivo
+
+Associar voluntários aos tipos de escala e organizar sua ordem.
+
+### Caminho
+
+**Engrenagem → Culto e Eventos → Servos em Disponibilidade**
+
+### Passo a passo
+
+1. Abra o módulo.
+2. Escolha o tipo de escala.
+3. Pesquise o voluntário.
+4. Confirme o perfil.
+5. Associe à disponibilidade.
+6. Ajuste ordem quando permitido.
+7. Revise a lista.
+8. Salve.
+
+### Resultado esperado
+
+Os voluntários ficam disponíveis para a Programação de Escalas.
+
+### Dicas
+
+- Confirme disponibilidade real antes de associar.
+- Não confunda papel de acesso com função na escala.
+
+### Se der erro
+
+Se a pessoa não aparecer, confira cadastro, igreja, filtros e permissão.
+
+---
+
+## 26. Programação de Escalas
+
+### Objetivo
+
+Gerar e manter escalas individuais ou em bloco.
+
+### Caminho
+
+**Engrenagem → Culto e Eventos → Programação de Escalas**
+
+### Passo a passo
+
+1. Abra o módulo.
+2. Escolha período ou evento.
+3. Escolha o tipo.
+4. Confira vagas.
+5. Selecione voluntários.
+6. Use geração em bloco quando adequada.
+7. Revise conflitos e repetições.
+8. Ajuste manualmente.
+9. Salve.
+10. Confira em **Menu → Escalas** com perfil de teste autorizado.
+
+### Resultado esperado
+
+A escala publicada fica visível aos voluntários.
+
+### Dicas
+
+- Configure Tipos e Servos antes.
+- Revise feriados e indisponibilidades.
+
+### Se der erro
+
+Confira período, tipo, disponibilidade e conflito de vaga.
+
+---
+
+## 27. Presença
+
+### Objetivo
+
+Registrar e consultar presença formal em eventos com quórum.
+
+### Caminho
+
+**Engrenagem → Culto e Eventos → Presença**
+
+### Passo a passo
+
+1. Abra o módulo.
+2. Escolha o evento formal.
+3. Confira data e quórum.
+4. Consulte participantes elegíveis.
+5. Registre ou valide presença.
+6. Revise ausências e duplicidades.
+7. Salve.
+8. Consulte o resumo.
+
+### Resultado esperado
+
+O evento mantém lista formal e contagem de quórum.
+
+### Dicas
+
+- Não altere presença sem evidência.
+- Eventos formais podem bloquear desmarcação pelo membro.
+
+### Se der erro
+
+Confirme evento, horário, regra de quórum e pré-check-in.
+
+---
+
+# Grupo 4 — Finanças e Inteligência
+
+## 28. Informações Financeiras
+
+### Objetivo
+
+Importar extratos, manter versões, anexar evidências e conciliar RDs.
+
+### Caminho
+
+**Engrenagem → Finanças e Inteligência → Informações Financeiras**
+
+![Informações Financeiras](docs/manual-manutencao/screens/m10-financeiro-manut.png)
+
+### Passo a passo
+
+1. Abra o módulo.
+2. Escolha mês e versão.
+3. Selecione importação por CSV ou colagem.
+4. Carregue os dados.
+5. Leia a prévia.
+6. Corrija erros de coluna, data ou valor.
+7. Escolha substituir versão ou acrescentar.
+8. Revise o efeito da escolha.
+9. Importe.
+10. Confira totais.
+11. Adicione comentários.
+12. Anexe comprovantes permitidos.
+13. Localize o RD correspondente.
+14. Vincule ao lançamento.
+15. Revise a conciliação.
+16. Remova vínculo somente quando incorreto.
+
+### Resultado esperado
+
+O período financeiro fica importado e conciliado na versão escolhida.
+
+### Dicas
+
+- Guarde o arquivo original.
+- Não substitua versão sem conferir o impacto.
+- Use valores e datas no formato esperado.
+
+### Se der erro
+
+| Situação | Ação |
+|---|---|
+| Colunas inválidas | Ajuste o CSV conforme o modelo. |
+| Total diverge | Interrompa e compare prévia com arquivo. |
+| RD não aparece | Confira igreja, período e estado do relatório. |
+
+---
+
+## 29. Gestão de Campanhas
+
+### Objetivo
+
+Configurar campanhas mostradas no fluxo de contribuição.
+
+### Caminho
+
+**Engrenagem → Finanças e Inteligência → Gestão de Campanhas**
+
+### Passo a passo
+
+1. Abra o módulo.
+2. Consulte campanhas.
+3. Crie ou edite.
+4. Informe nome e finalidade.
+5. Defina período.
+6. Configure dados de recebimento autorizados.
+7. Revise.
+8. Publique.
+9. Confira em **Eu quero… → Contribuir**.
+
+### Resultado esperado
+
+A campanha vigente aparece ao público configurado.
+
+### Dicas
+
+- Valide recebedor antes de publicar.
+- Encerre campanhas concluídas.
+
+### Se der erro
+
+Confira vigência, estado de publicação e dados financeiros.
+
+---
+
+## 30. Prímicias
+
+### Objetivo
+
+Registrar itens em espécie vinculados a uma campanha.
+
+### Caminho
+
+**Engrenagem → Finanças e Inteligência → Prímicias**
+
+### Passo a passo
+
+1. Abra o módulo.
+2. Escolha a campanha.
+3. Registre o item.
+4. Informe quantidade e unidade.
+5. Identifique origem quando permitido.
+6. Revise.
+7. Salve.
+8. Atualize destino ou baixa conforme o fluxo.
+
+### Resultado esperado
+
+O item em espécie fica rastreado na campanha correta.
+
+### Dicas
+
+- Não registre valor monetário como item físico.
+- Padronize unidades.
+
+### Se der erro
+
+Confirme campanha ativa, campos obrigatórios e unidade.
+
+---
+
+## 31. Modelo Preditivo
+
+### Objetivo
+
+Consultar indicadores de apoio à liderança sem automatizar decisões humanas.
+
+### Caminho
+
+**Engrenagem → Finanças e Inteligência → Modelo Preditivo**
+
+### Passo a passo
+
+1. Abra o módulo.
+2. Escolha período.
+3. Leia a definição de cada indicador.
+4. Compare tendências.
+5. Verifique qualidade e atualização dos dados.
+6. Registre a análise fora de dados pessoais desnecessários.
+7. Leve decisões sensíveis à liderança.
+
+### Resultado esperado
+
+Indicadores autorizados apoiam análise, sem substituir discernimento e validação.
+
+### Dicas
+
+- Correlação não prova causa.
+- Não use previsão para rotular pessoas.
+
+### Se der erro
+
+Se não houver dados suficientes, não conclua tendência; ajuste período ou aguarde base adequada.
+
+---
+
+# Grupo 5 — Governança e TI
+
+## 32. Temas da Trilha
+
+### Objetivo
+
+Manter textos, vídeos e reflexões dos módulos de discipulado.
+
+### Caminho
+
+**Engrenagem → Governança e TI → Temas da Trilha**
+
+### Passo a passo
+
+1. Abra o módulo.
+2. Escolha módulo e lição.
+3. Edite título e texto.
+4. Revise links de vídeo.
+5. Configure reflexão.
+6. Confira ordem.
+7. Salve.
+8. Valide na Trilha com perfil autorizado.
+
+### Resultado esperado
+
+O conteúdo atualizado aparece na etapa correta.
+
+### Dicas
+
+- Preserve numeração e pré-requisitos.
+- Revise ortografia antes de publicar.
+
+### Se der erro
+
+Confira campos obrigatórios, link e ordem da lição.
+
+---
+
+## 33. Trilha — Reconhecimentos
+
+### Objetivo
+
+Identificar pessoas com etapa concluída e prontas para reconhecimento.
+
+### Caminho
+
+**Engrenagem → Governança e TI → Trilha — Reconhecimentos**
+
+### Passo a passo
+
+1. Abra o módulo.
+2. Filtre etapa ou período.
+3. Consulte alunos com 100%.
+4. Abra o perfil.
+5. Confirme requisitos.
+6. Registre certificado ou reconhecimento.
+7. Salve.
+
+### Resultado esperado
+
+O reconhecimento fica associado à conclusão válida.
+
+### Dicas
+
+- Percentual sozinho não substitui conferência dos critérios.
+
+### Se der erro
+
+Confira igreja, etapa, sincronização do progresso e filtros.
+
+---
+
+## 34. Resetar Trilha
+
+### Objetivo
+
+Reiniciar o progresso de uma pessoa na igreja ativa.
+
+### Caminho
+
+**Engrenagem → Governança e TI → Resetar Trilha**
+
+### Passo a passo
+
+1. Abra o módulo como Super Administrador.
+2. Pesquise a pessoa.
+3. Confirme perfil e igreja.
+4. Leia o progresso atual.
+5. Registre o motivo.
+6. Toque em resetar.
+7. Leia o aviso destrutivo.
+8. Confirme.
+9. Verifique o novo estado.
+
+### Resultado esperado
+
+O progresso daquela pessoa é reiniciado somente na igreja selecionada.
+
+### Dicas
+
+- Use apenas com autorização e motivo claro.
+- A ação pode ser irreversível.
+
+### Se der erro
+
+Não repita; confirme se o primeiro reset foi processado e se a pessoa/igreja estão corretas.
+
+---
+
+## 35. Como faço…?
+
+### Objetivo
+
+Consultar ajuda operacional das telas da engrenagem.
+
+### Caminho
+
+**Engrenagem → Governança e TI → Como faço…?**
+
+### Passo a passo
+
+1. Abra o catálogo de manutenção.
+2. Pesquise pelo módulo.
+3. Abra o artigo.
+4. Siga a sequência.
+5. Volte para outro assunto.
+
+### Resultado esperado
+
+A ajuda contextual de gestão é exibida.
+
+### Dicas
+
+- Use termos iguais aos rótulos da engrenagem.
+
+### Se der erro
+
+Tente palavra mais curta ou consulte a Base de conhecimento.
+
+---
+
+## 36. Base de conhecimento
+
+### Objetivo
+
+Criar e editar artigos da ajuda interna.
+
+### Caminho
+
+**Engrenagem → Governança e TI → Base de conhecimento**
+
+### Passo a passo
+
+1. Abra o módulo.
+2. Pesquise antes de criar.
+3. Abra artigo existente ou crie novo.
+4. Informe título claro.
+5. Escolha catálogo/categoria.
+6. Escreva passos objetivos.
+7. Revise links.
+8. Salve.
+9. Confira em **Como faço…?**.
+
+### Resultado esperado
+
+O artigo fica disponível no catálogo definido.
+
+### Dicas
+
+- Atualize artigos quando a navegação mudar.
+- Evite duplicar respostas.
+
+### Se der erro
+
+Confira categoria, estado de publicação e permissão.
+
+---
+
+## 37. Relatórios
+
+### Objetivo
+
+Executar relatórios autorizados com filtros da igreja ativa.
+
+### Caminho
+
+**Engrenagem → Governança e TI → Relatórios**
+
+### Passo a passo
+
+1. Abra o catálogo.
+2. Escolha o relatório.
+3. Leia a descrição.
+4. Informe filtros.
+5. Execute.
+6. Aguarde o resultado.
+7. Revise período e igreja.
+8. Exporte somente quando autorizado.
+
+### Resultado esperado
+
+O relatório retorna dados isolados da igreja e permitidos ao perfil.
+
+### Dicas
+
+- Use intervalo menor quando a consulta for pesada.
+- Proteja qualquer arquivo exportado.
+
+### Se der erro
+
+Revise filtros obrigatórios, período e grant do relatório.
+
+---
+
+## 38. Controle de Acesso
+
+### Objetivo
+
+Gerir disponibilidade do app, condição comercial, LGPD, papéis e grants.
+
+### Caminho
+
+**Engrenagem → Governança e TI → Controle de Acesso**
+
+![Controle de Acesso](docs/manual-manutencao/screens/access_control.png)
+
+### Cabeçalho — App Ativo/Inativo
+
+1. Abra o módulo.
+2. Confira a igreja ativa.
+3. Localize o switch **App Ativo/App Inativo**.
+4. Leia o estado atual.
+5. Antes de inativar, escreva ou revise a mensagem de indisponibilidade.
+6. Altere o switch.
+7. Confirme.
+8. Valide o efeito com cuidado.
+
+**Resultado esperado:** a disponibilidade geral muda para toda a instância.
+
+**Dica:** não use este switch para resolver problema de apenas um usuário.
+
+### Cabeçalho — Gestão Liberada/Bloqueada
+
+1. Localize **Gestão Liberada/Gestão Bloqueada**.
+2. Leia o estado comercial atual.
+3. Confirme a autorização para alterar.
+4. Ative **Gestão Liberada** para desligar o paywall da instância.
+5. Ou bloqueie conforme a condição comercial aplicável.
+6. Confirme.
+7. Reabra a sessão de teste.
+
+**Resultado esperado:** com Gestão Liberada, a igreja opera sem exigir assinatura Stripe ativa.
+
+**Dica:** Gestão Liberada não concede papéis nem grants.
+
+### Cabeçalho — LGPD Ativo/Inativo
+
+1. Localize o switch LGPD.
+2. Leia o estado.
+3. Confirme a política da igreja.
+4. Ative para exigir o fluxo formal de consentimento.
+5. Desative para usar o cadastro simplificado.
+6. Confirme.
+7. Teste com um cadastro apropriado.
+
+**Resultado esperado:** o fluxo de entrada respeita o estado LGPD da instância.
+
+### Texto LGPD por instância
+
+1. Com LGPD ativo, localize **Texto de consentimento LGPD**.
+2. Leia todo o texto atual.
+3. Atualize entidade, finalidade e canais.
+4. Revise com o responsável.
+5. Toque em **Salvar texto LGPD**.
+6. Valide no cadastro da mesma igreja.
+
+### Alterar papéis e atribuições
+
+1. Abra a aba de perfis.
+2. Toque na busca.
+3. Use **Enxergar**.
+4. Digite conforme nome, telefone ou critério vigente.
+5. Selecione a pessoa.
+6. Confira identidade.
+7. Expanda papéis e atribuições.
+8. Faça apenas a alteração autorizada.
+9. Salve.
+10. Oriente saída e novo login.
+
+### Configurar grants
+
+1. Selecione o papel.
+2. Escolha telas, tabelas ou colunas.
+3. Pesquise o recurso.
+4. Leia o estado atual.
+5. Defina **Ver**.
+6. Defina **Editar** somente se necessário.
+7. Salve.
+8. Teste com perfil daquele papel.
+
+### Resultado esperado
+
+Switches afetam a instância; papéis e grants afetam os perfis definidos.
+
+### Dicas
+
+- Não confunda bloqueio comercial com ACL.
+- Conceda o menor acesso necessário.
+- Teste com Modo Ghost.
+- O Gestor de Controle de Acesso nunca vê super_admin, seus logs, PIN ou senha.
+
+### Se der erro
+
+| Situação | Ação |
+|---|---|
+| Usuário não ganhou acesso | Peça logout/login e confira papel + grant. |
+| Gestão Liberada não abre módulo | Falta ACL; o switch só remove paywall. |
+| Texto LGPD não mudou em outra igreja | O texto é por instância. |
+| Gestor vê Super Admin | Trate como falha de segurança e interrompa a operação. |
+
+---
+
+## 39. Mudança Papéis
+
+### Objetivo
+
+Promover ou alterar Visitante, Congregado e Membro com conferência.
+
+### Caminho
+
+**Engrenagem → Governança e TI → Mudança Papéis**
+
+![Mudança Papéis](docs/manual-manutencao/screens/mudanca_papeis.png)
+
+### Passo a passo
+
+1. Abra o módulo.
+2. Escolha o filtro do papel atual.
+3. Para novos registros, use **Visitante**.
+4. Abra a busca **Enxergar**.
+5. Digite o nome.
+6. Selecione a pessoa correta.
+7. Confira família e telefone.
+8. Escolha o novo papel.
+9. Leia o impacto.
+10. Confirme.
+11. Aguarde a mensagem.
+12. Oriente a pessoa a sair e entrar.
+
+### Entrada pelo sticker da Home
+
+1. Toque no sticker amarelo.
+2. Se houver fila familiar, processe-a primeiro.
+3. Sem fila prioritária, o app abre Mudança Papéis filtrada em Visitante.
+4. Selecione o novo registro e prossiga.
+
+### Resultado esperado
+
+O perfil passa ao novo papel e deixa a Régua quando não for mais visitante.
+
+### Dicas
+
+- Não promova sem concluir a recepção necessária.
+- Confira homônimos.
+- super_admin vê o sticker sempre; secretaria/pastoral apenas com pendência.
+
+### Se der erro
+
+Se a pessoa não aparece, confira papel atual, fila familiar, filtros e igreja ativa.
+
+---
+
+## 40. Transferência de Membro
+
+### Objetivo
+
+Mover o vínculo de membro entre igrejas conforme regras autorizadas.
+
+### Caminho
+
+**Engrenagem → Governança e TI → Transferência de Membro**
+
+### Passo a passo
+
+1. Abra o módulo.
+2. Pesquise a pessoa.
+3. Confirme igreja de origem.
+4. Confira família e vínculos.
+5. Selecione destino.
+6. Leia os efeitos.
+7. Obtenha as confirmações exigidas.
+8. Execute a transferência.
+9. Confira o resultado nas duas instâncias.
+
+### Resultado esperado
+
+O vínculo é transferido conforme as regras sem criar perfil duplicado.
+
+### Dicas
+
+- Não use transferência para corrigir seleção de igreja errada sem análise.
+- Revise família e histórico antes.
+
+### Se der erro
+
+Pare em conflito de vínculo ou família e peça decisão administrativa.
+
+---
+
+## 41. Acesso Usuários
+
+### Objetivo
+
+Auditar logins, sessões e histórico de telas.
+
+### Caminho
+
+**Engrenagem → Governança e TI → Acesso Usuários**, somente **super_admin**.
+
+![Acessos de Usuários — referência visual](docs/manual-manutencao/screens/m16-acessos-usuarios.png)
+
+### Passo a passo
+
+1. Abra o módulo como Super Administrador.
+2. Use **Enxergar** para localizar o perfil.
+3. Confira nome e igreja.
+4. Consulte último acesso.
+5. Leia quantidade de logins.
+6. Abra a sessão desejada.
+7. Consulte histórico de telas.
+8. Registre apenas a conclusão necessária.
+9. Use **Limpar histórico** somente com motivo autorizado.
+10. Confirme antes de apagar.
+
+### Resultado esperado
+
+O Super Administrador audita acessos permitidos.
+
+### Dicas
+
+- Este módulo é exclusivo de super_admin.
+- O Gestor de Controle de Acesso não pode ver ações ou credenciais do Super Administrador.
+
+### Se der erro
+
+Se o módulo aparecer para papel indevido, interrompa o acesso e trate como incidente de segurança.
+
+---
+
+## 42. Modo Ghost
+
+### Objetivo
+
+Auditar o aplicativo usando a identidade efetiva de outra pessoa.
+
+### Caminho
+
+**Engrenagem → Governança e TI → Modo Ghost**
+
+### Passo a passo
+
+1. Abra o módulo.
+2. Pesquise o perfil-alvo.
+3. Confira nome, telefone e igreja.
+4. Leia o aviso da simulação.
+5. Inicie o Ghost.
+6. O app vai ao Início uma vez, já como o alvo.
+7. Abra menu, Eu quero…, Perfil ou um deep link.
+8. Confira opções visíveis.
+9. Entre nas rotas necessárias.
+10. Permaneça na rota para verificar dados e comportamento.
+11. Não use o poder do operador para furar ACL do alvo.
+12. Registre o resultado da auditoria.
+13. Toque em **Sair do Ghost**.
+14. Confirme o retorno à identidade real.
+15. Verifique o Início.
+
+### Resultado esperado
+
+A simulação usa perfil, telefone, família e permissões do alvo.
+
+### Regras obrigatórias
+
+- Iniciar e encerrar Ghost são os únicos retornos automáticos previstos ao Início.
+- A rota escolhida não deve “quicar” para o Início.
+- O bypass de Super Admin do operador fica desligado.
+- Não cobrir a tela com “Sem acesso nesta simulação”.
+- Paywall, assinatura e seleção da igreja pertencem ao operador/instância.
+
+### Dicas
+
+- Anote previamente o que será validado.
+- Encerre sempre a simulação.
+- Não altere dados reais sem necessidade do teste.
+
+### Se der erro
+
+| Situação | Ação |
+|---|---|
+| Perfil-alvo não aparece | Confira igreja e visibilidade do operador. |
+| Rota volta ao Início | Registre rota e comportamento como falha de navegação Ghost. |
+| Dados são do auditor | Interrompa; identidade efetiva não foi aplicada. |
+| Paywall usa o alvo | Interrompa; cobrança deve permanecer na instância do operador. |
+
+---
+
+## 43. Assinaturas e Billing
+
+### Objetivo
+
+Consultar plano, cobrança e situação comercial da igreja.
+
+### Caminho
+
+**Engrenagem → Governança e TI → Assinaturas**
+
+![Assinaturas e cobrança](docs/manual-manutencao/screens/billing.png)
+
+### Passo a passo
+
+1. Abra **Assinaturas**.
+2. Confira a igreja.
+3. Leia o plano.
+4. Consulte a situação da assinatura.
+5. Confira datas e cobrança.
+6. Abra o portal ou fluxo disponível quando autorizado.
+7. Faça apenas a alteração comercial aprovada.
+8. Retorne ao Conecta+.
+9. Confira o estado atualizado.
+
+### Gestão Liberada
+
+1. Abra **Controle de Acesso**.
+2. Localize **Gestão Liberada**.
+3. Ative somente com autorização.
+4. Confirme.
+5. Valide que o paywall deixou de bloquear a instância.
+6. Confirme que a ACL individual continua igual.
+
+### Resultado esperado
+
+A cobrança reflete o plano; Gestão Liberada remove a exigência comercial sem conceder acessos.
+
+### Dicas
+
+- Não altere assinatura durante Modo Ghost para testar o alvo.
+- Paywall é da igreja/operador, não da identidade simulada.
+
+### Se der erro
+
+| Situação | Ação |
+|---|---|
+| Gestão Liberada mas módulo não abre | Confira ACL do usuário. |
+| Portal não abre | Permita nova guia e confira autorização. |
+| Estado não atualiza | Recarregue após retorno do provedor. |
+
+---
+
+## 44. Aliança Conecta Reino
+
+### Objetivo
+
+Gerir indicações, passivo de 40% e baixa manual de ofertas no programa.
+
+### Caminho
+
+**Engrenagem → Governança e TI → Aliança Conecta Reino**
+
+![Aliança Conecta Reino](docs/manual-manutencao/screens/alianca.png)
+
+### Passo a passo
+
+1. Abra o módulo.
+2. Confira a igreja e a parceria.
+3. Consulte indicações.
+4. Leia valores e estados.
+5. Confira o passivo aplicável.
+6. Registre baixa manual somente com evidência.
+7. Revise.
+8. Confirme.
+
+### Resultado esperado
+
+As movimentações da aliança ficam atualizadas e rastreáveis.
+
+### Dicas
+
+- Não dê baixa apenas por comunicação verbal.
+- Preserve comprovantes.
+
+### Se der erro
+
+Confira vínculo da parceria, valor, estado e autorização.
+
+---
+
+## 45. Indicados
+
+### Objetivo
+
+Administrar o funil Kanban de indicados.
+
+### Caminho
+
+**Engrenagem → Governança e TI → Indicados**, exclusivo do Super Administrador.
+
+### Passo a passo
+
+1. Abra o módulo.
+2. Leia as colunas do funil.
+3. Localize o indicado.
+4. Abra o cartão.
+5. Registre atualização objetiva.
+6. Mova para a etapa correta.
+7. Confirme.
+8. Revise o quadro.
+
+### Resultado esperado
+
+O funil representa a etapa real de cada indicação.
+
+### Dicas
+
+- Não avance cartão sem ação real.
+- Mantenha dados comerciais restritos.
+
+### Se der erro
+
+Confira acesso de super_admin, filtros e igreja/parceria.
+
+---
+
+## 46. Instâncias (Igrejas)
+
+### Objetivo
+
+Criar e alternar ambientes de igreja.
+
+### Caminho
+
+**Engrenagem → Governança e TI → Instâncias (Igrejas)**
+
+### Passo a passo
+
+1. Abra o módulo.
+2. Consulte as instâncias permitidas.
+3. Para alternar, selecione a igreja.
+4. Confirme.
+5. Verifique nome e logomarca.
+6. Para criar, use a ação autorizada.
+7. Preencha identificação e configurações essenciais.
+8. Revise.
+9. Salve.
+10. Valide isolamento de dados.
+
+### Resultado esperado
+
+A sessão opera na igreja escolhida ou uma nova instância é criada corretamente.
+
+### Dicas
+
+- Confira a instância antes de qualquer alteração.
+- Nunca use dados de uma igreja para completar outra.
+
+### Se der erro
+
+Se dados misturarem instâncias, pare imediatamente e trate como incidente.
+
+---
+
+## 47. Chave Gemini
+
+### Objetivo
+
+Configurar a chave usada pela Abigail.
+
+### Caminho
+
+**Engrenagem → Governança e TI → Chave Gemini**, somente Super Administrador.
+
+### Passo a passo
+
+1. Abra o módulo.
+2. Confirme a igreja.
+3. Informe ou substitua a chave autorizada.
+4. Evite exibi-la a terceiros.
+5. Salve.
+6. Faça um teste simples na Abigail.
+7. Confira se a resposta pertence ao contexto correto.
+
+### Resultado esperado
+
+A Abigail consegue operar com a configuração da instância.
+
+### Dicas
+
+- Chave é segredo; não envie por chat ou documento.
+- Rotacione se houver exposição.
+
+### Se der erro
+
+Confira validade, cota, restrições e se a chave foi salva na instância correta.
+
+---
+
+## 48. Rotinas operacionais
+
+### Antes do culto
+
+1. Confira evento publicado.
+2. Confira data, local e capacidade.
+3. Valide salas e faixas.
+4. Teste Totem de check-in.
+5. Teste Sala(s) — Check In.
+6. Confira Tipos e Programação de Escalas.
+7. Revise avisos.
+8. Confirme equipe de recepção.
+
+### Durante o culto
+
+1. Recepcione famílias.
+2. Cadastre visitantes sem duplicar.
+3. Leia QR infantil.
+4. Monitore estados **Na sala** e **Liberado**.
+5. Registre presença quando aplicável.
+6. Aplique protocolo manual autorizado em contingência.
+
+### Diariamente
+
+1. Consulte o sticker de novos registros.
+2. Processe Recepção Familiar.
+3. Use a Régua somente para visitantes.
+4. Revise Cuidados Pastorais.
+5. Trate solicitações de cancelamento.
+6. Modere murais.
+
+### Mensalmente
+
+1. Revise papéis e grants.
+2. Confira App, Gestão e LGPD.
+3. Revise assinatura.
+4. Importe e concilie financeiro.
+5. Audite acessos quando necessário.
+6. Atualize a Base de conhecimento.
+
+---
+
+## 49. Resumo rápido
+
+| Necessidade | Caminho |
+|---|---|
+| Configurar sala infantil | **Operação e Segurança → Configuração de salas** |
+| Operar leitor no hall | **Totem de check-in** |
+| Cadastrar visitante infantil | **Visitantes / Cadastro Rápido** |
+| Processar nova família | **Recepção Familiar** |
+| Acompanhar visitante | **Régua de Acolhimento** |
+| Consultar composição familiar | **Lista de Famílias** |
+| Tratar pedido pastoral | **Cuidados Pastorais** |
+| Excluir pedido cancelado | **Cuidados Pastorais → Excluir**, super_admin |
+| Definir responsabilidade | **Atribuições** |
+| Publicar evento | **Programação de Eventos** |
+| Ler QR infantil | **Sala(s) — Check In** |
+| Programar voluntários | **Programação de Escalas** |
+| Importar financeiro | **Informações Financeiras** |
+| Alterar switches da igreja | **Controle de Acesso** |
+| Conceder grant | **Controle de Acesso → papel → recurso** |
+| Admitir visitante | **Mudança Papéis**, filtro Visitante |
+| Auditar como outra pessoa | **Modo Ghost** |
+| Auditar logins | **Acesso Usuários**, super_admin |
+| Consultar cobrança | **Assinaturas** |
+| Remover paywall da instância | **Controle de Acesso → Gestão Liberada** |
+| Configurar Abigail | **Chave Gemini**, super_admin |
+
+---
+
+## 50. Checklist de segurança
+
+### Antes de salvar
+
+- [ ] Estou na igreja correta.
+- [ ] Selecionei a pessoa correta.
+- [ ] Li o estado atual.
+- [ ] Tenho autorização.
+- [ ] Entendi o impacto.
+
+### Antes de excluir
+
+- [ ] Comparei nome, data e registro.
+- [ ] Verifiquei vínculos.
+- [ ] Li a justificativa.
+- [ ] Confirmei que a ação é necessária.
+- [ ] Sei se a ação é reversível.
+
+### Ao terminar
+
+- [ ] Li a confirmação.
+- [ ] Testei o resultado proporcionalmente ao risco.
+- [ ] Saí do Modo Ghost.
+- [ ] Fechei dados sensíveis.
+- [ ] Encerrei a sessão em aparelho compartilhado.
+
+---
+
+*Conecta+ · Manual detalhado da engrenagem · revisão de 05/10/2026*
 

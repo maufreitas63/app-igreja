@@ -2,31 +2,35 @@
 
 **Pacote:** [`PACOTE_4_ANEXO_TECNICO.md`](PACOTE_4_ANEXO_TECNICO.md) · **Índice:** [`INDICE_DOCUMENTACAO.md`](INDICE_DOCUMENTACAO.md)
 
-**Atualizado em:** 23/06/2026
+**Atualizado em:** 05/10/2026
 
 ## 1) Visão Geral
 
 ### Objetivo do sistema
-Centralizar a operação digital da igreja em uma única plataforma com foco em:
+Centralizar a operação digital da igreja (multi-instância / multi-tenant) em uma única plataforma com foco em:
 
-- jornada do membro (login, cadastro, LGPD, dados cadastrais),
-- gestão de eventos e check-in (incluindo totem),
-- gestão de família/membros,
-- acompanhamento pastoral,
-- escalas e apoio operacional,
-- visão geográfica (mapa por CEP) para organização territorial,
-- controle de acesso granular por perfil, papel e recurso.
+- jornada do membro (login por celular + PIN por e-mail, cadastro, LGPD por instância, Perfil),
+- **Início + menu + Eu quero… + engrenagem** (o carrossel do Painel está congelado),
+- gestão de eventos, check-in (totem, geofence, Espaço Infantil por QR),
+- recepção familiar, régua de acolhimento e sticker de novos membros,
+- cuidado pastoral com estágios e cancelamento,
+- escalas, murais, Apoio Mútuo, documentos oficiais e financeiro,
+- assinaturas Stripe / Gestão Liberada,
+- Modo Ghost (identidade efetiva) e ACL granular,
+- visão geográfica (mapa por CEP) e assistente Abigail (Gemini).
 
 ### Stack (alvo e estado atual)
 
 | Camada | Stack alvo (solicitado) | Estado atual no código |
 |---|---|---|
-| Frontend Web/PWA | Next.js | Expo Router com export estático web (PWA-ready) |
-| Mobile | React Native | React Native (Expo) |
-| Backend/Data/Auth | Supabase (Postgres, RPC, RLS, Storage) | Supabase em produção |
-| Geolocalização | Google Geocoding API ou similar | Fallback ativo: ViaCEP + OpenStreetMap; Google opcional |
+| Frontend Web/PWA | Next.js | **Expo Router 54** com export estático web (PWA) + Vite no formulário `/cadastro-familia/` |
+| Mobile | React Native | React Native (Expo SDK 54) |
+| Backend/Data/Auth | Supabase (Postgres, RPC, RLS, Storage) | Supabase em produção (RPCs SECURITY DEFINER + headers de sessão) |
+| Billing | Stripe | Checkout, webhooks e planos trimestrais; Gestão Liberada no Controle de Acesso |
+| IA | Gemini | Abigail com chave por instância (`maintenance.card.ai_assistant`) |
+| Geolocalização | Google Geocoding API ou similar | ViaCEP + OpenStreetMap; Google opcional; geofence no culto |
 
-Observação arquitetural: a base atual já suporta o contexto PWA e pode evoluir para shell Next.js sem ruptura de domínio (serviços, ACL, modelo de dados e RLS permanecem no Supabase).
+Observação: o domínio permanece no Supabase. A navegação publicada não usa o carrossel; ver `lib/frozenPublication.ts` e `lib/appDrawerMenu.ts`.
 
 ---
 

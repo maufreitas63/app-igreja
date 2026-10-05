@@ -158,7 +158,7 @@ xmlns="http://www.w3.org/TR/REC-html40">
 <tr>
 <td><code>STRIPE_SECRET_KEY</code></td>
 <td><strong>Secret</strong></td>
-<td>Stripe → Developers → API keys → Secret key <strong>test</strong> (<code>sk_test_…</code>)</td>
+<td>Stripe → Developers → API keys → Secret key <strong>live</strong> (<code>sk_live_…</code>) em produção; <code>sk_test_…</code> só em teste</td>
 </tr>
 <tr>
 <td><code>STRIPE_WEBHOOK_SECRET</code></td>
@@ -178,35 +178,58 @@ xmlns="http://www.w3.org/TR/REC-html40">
 <tr>
 <td><code>STRIPE_PRICE_SEMENTE</code></td>
 <td>Texto</td>
-<td>Price ID <strong>trimestral</strong> do produto Semente (<code>price_…</code>, <code>interval_count</code> 3)</td>
+<td>Fallback de teste: Price ID trimestral (<code>price_…</code>)</td>
 </tr>
 <tr>
 <td><code>STRIPE_PRICE_CRESCIMENTO</code></td>
 <td>Texto</td>
-<td>Price ID trimestral do plano Crescimento</td>
+<td>Fallback de teste: Price ID trimestral</td>
 </tr>
 <tr>
 <td><code>STRIPE_PRICE_EXPANSAO</code></td>
 <td>Texto</td>
-<td>Price ID trimestral do plano Expansão</td>
+<td>Fallback de teste: Price ID trimestral</td>
 </tr>
 <tr>
 <td><code>STRIPE_PRICE_MINISTERIO</code></td>
 <td>Texto</td>
-<td>Price ID trimestral do plano Ministério</td>
+<td>Fallback de teste: Price ID trimestral</td>
 </tr>
 <tr>
 <td><code>EXPO_PUBLIC_APP_URL</code></td>
 <td>Texto</td>
-<td>URL do Pages (ex.: <code>https://app-igreja.pages.dev</code>)</td>
+<td><code>https://app.conectamais.api.br</code></td>
 </tr>
 </tbody></table>
-<p>Webhook Stripe (modo <strong>Test</strong>):</p>
+<p>Webhook Stripe (modo <strong>Live</strong> em produção):</p>
 <p>```</p>
-<p>https://SEU-DOMINIO.pages.dev/api/stripe-webhook</p>
+<p>https://app.conectamais.api.br/api/stripe-webhook</p>
 <p>```</p>
-<p>Os Prices precisam ser <strong>trimestrais</strong> (<code>recurring.interval = month</code> e <code>interval_count = 3</code>). O Stripe não deixa mudar um Price mensal para trimestral: crie um Price novo no mesmo produto. Com <code>STRIPE_SECRET_KEY</code> no <code>.env.local</code>, rode <code>npm run stripe:quarterly-prices</code> e cole os <code>price_…</code> nas variáveis acima.</p>
-<p>Price IDs atuais (modo Test, 3 × o mensal):</p>
+<p>Os Prices precisam ser <strong>trimestrais</strong> (<code>recurring.interval = month</code> e <code>interval_count = 3</code>). O Stripe não deixa mudar um Price mensal para trimestral: crie um Price novo no mesmo produto. Com <code>STRIPE_SECRET_KEY</code> live no <code>.env.local</code>, rode <code>npm run stripe:quarterly-prices</code> se precisar gerar o Price trimestral.</p>
+<p>O checkout <strong>live</strong> resolve o <code>price_…</code> a partir de <code>billing_plans.stripe_product_id</code>. Os <code>STRIPE_PRICE_*</code> ficam como fallback de teste.</p>
+<p>Product IDs de produção:</p>
+<table><thead><tr>
+<th>Plano</th>
+<th>Product ID</th>
+</tr></thead><tbody>
+<tr>
+<td>Semente</td>
+<td><code>prod_VHJyIji7BiDXMN</code></td>
+</tr>
+<tr>
+<td>Crescimento</td>
+<td><code>prod_VHK0NV797cK5v2</code></td>
+</tr>
+<tr>
+<td>Expansão</td>
+<td><code>prod_VHK1R5xL6SKUm5</code></td>
+</tr>
+<tr>
+<td>Ministério</td>
+<td><code>prod_VHK29Q00ifpUrw</code></td>
+</tr>
+</tbody></table>
+<p>Price IDs de fallback (modo Test, trimestral):</p>
 <table><thead><tr>
 <th>Variável</th>
 <th>Price ID</th>
@@ -214,27 +237,49 @@ xmlns="http://www.w3.org/TR/REC-html40">
 </tr></thead><tbody>
 <tr>
 <td><code>STRIPE_PRICE_SEMENTE</code></td>
-<td><code>price_1U9TwCRexYTA7BZinNE5DHcM</code></td>
-<td>R$ 89,70 / trimestre</td>
+<td><code>price_1UDseeRexYTA7BZiEJhl4ikh</code></td>
+<td>R$ 104,99 / trimestre</td>
 </tr>
 <tr>
 <td><code>STRIPE_PRICE_CRESCIMENTO</code></td>
-<td><code>price_1U9TwCRexYTA7BZid3vCScbV</code></td>
-<td>R$ 239,70 / trimestre</td>
+<td><code>price_1UDsfkRexYTA7BZiYgfpNg55</code></td>
+<td>R$ 252,99 / trimestre</td>
 </tr>
 <tr>
 <td><code>STRIPE_PRICE_EXPANSAO</code></td>
-<td><code>price_1U9TwDRexYTA7BZiolQgqpTI</code></td>
-<td>R$ 449,70 / trimestre</td>
+<td><code>price_1UDsiHRexYTA7BZipBCdbRCb</code></td>
+<td>R$ 815,99 / trimestre</td>
 </tr>
 <tr>
 <td><code>STRIPE_PRICE_MINISTERIO</code></td>
-<td><code>price_1U9TwERexYTA7BZiSxEMG3pg</code></td>
-<td>R$ 899,70 / trimestre</td>
+<td><code>price_1UDskyRexYTA7BZispxHQKyV</code></td>
+<td>R$ 1.419,99 / trimestre</td>
 </tr>
 </tbody></table>
 <p>Eventos sugeridos: <code>checkout.session.completed</code>, <code>customer.subscription.updated</code>, <code>customer.subscription.deleted</code>, <code>invoice.paid</code>, <code>invoice.payment_failed</code>.</p>
 <p>Após salvar secrets, faça um <strong>Retry deployment</strong> (ou um novo push) para as Functions enxergarem os valores.</p>
+<hr>
+<h2>Domínio profissional (<code>app.conectamais.api.br</code>)</h2>
+<p>O hostname <code>*.pages.dev</code> continua no ar. O link enviado aos usuários é o subdomínio no domínio <strong>já registrado</strong> <code>conectamais.api.br</code>.</p>
+<p>No Cloudflare (uma vez):</p>
+<p>1. <strong>Workers &amp; Pages</strong> → projeto <strong>app-igreja</strong> → <strong>Custom domains</strong> → <strong>Set up a custom domain</strong> → <code>app.conectamais.api.br</code>.</p>
+<p>2. DNS da zona <strong><code>conectamais.api.br</code></strong>:</p>
+<table><thead><tr>
+<th>Tipo</th>
+<th>Nome</th>
+<th>Destino</th>
+<th>Proxy</th>
+</tr></thead><tbody>
+<tr>
+<td>CNAME</td>
+<td><code>app</code></td>
+<td><code>app-igreja.pages.dev</code></td>
+<td>Proxied (laranja)</td>
+</tr>
+</tbody></table>
+<p>3. Em <strong>Settings → Variables and Secrets</strong> (Production), defina <code>EXPO_PUBLIC_APP_URL</code> = <code>https://app.conectamais.api.br</code>.</p>
+<p>4. No Stripe, atualize o webhook para <code>https://app.conectamais.api.br/api/stripe-webhook</code>.</p>
+<p>O certificado HTTPS é emitido pelo Cloudflare. Enquanto o CNAME não estiver ativo, <code>https://app-igreja.pages.dev</code> segue funcionando.</p>
 <hr>
 <h2>Fluxo diário: git push</h2>
 <h3>1. Conferir o que será enviado</h3>
@@ -257,7 +302,7 @@ xmlns="http://www.w3.org/TR/REC-html40">
 <h3>4. Acompanhar o build</h3>
 <p>1. Cloudflare Dashboard → seu projeto Pages → aba <strong>Deployments</strong></p>
 <p>2. Aguarde status <strong>Success</strong> (build costuma levar 2–8 minutos)</p>
-<p>3. Abra a URL do projeto (ex.: <code>https://app-igreja.pages.dev</code> ou domínio customizado)</p>
+<p>3. Abra a URL do projeto (<code>https://app.conectamais.api.br</code> — <code>https://app-igreja.pages.dev</code> continua como fallback)</p>
 <h3>5. Validar no navegador</h3>
 <p>Após o deploy aparecer <strong>Success</strong> (não basta o <code>git push</code> — aguarde o build):</p>
 <p>1. Abra <code>https://{seu-dominio}/build-info.json</code> e confira:</p>
@@ -289,7 +334,7 @@ xmlns="http://www.w3.org/TR/REC-html40">
 <p>```</p>
 <p>https://{seu-dominio}/cadastro-familia/</p>
 <p>```</p>
-<p>Exemplo: <code>https://app-igreja.pages.dev/cadastro-familia/</code></p>
+<p>Exemplo: <code>https://app.conectamais.api.br/cadastro-familia/</code></p>
 <p>Após o envio, a submissão entra na fila <strong>Recepção Familiar</strong> na manutenção (execute <code>scripts/recepcao-cadastro-familiar.sql</code> no Supabase se a fila não carregar).</p>
 <p>Desenvolvimento local do formulário (sem Expo):</p>
 <p>```powershell</p>
@@ -386,7 +431,7 @@ xmlns="http://www.w3.org/TR/REC-html40">
 <tr>
 <td><strong>Production</strong></td>
 <td>Push em <code>main</code> (branch de produção)</td>
-<td>Domínio principal (<code>app-igreja.pages.dev</code> ou customizado)</td>
+<td><code>https://app.conectamais.api.br</code> (legado: <code>app-igreja.pages.dev</code>)</td>
 <td><strong>Sim</strong></td>
 </tr>
 <tr>

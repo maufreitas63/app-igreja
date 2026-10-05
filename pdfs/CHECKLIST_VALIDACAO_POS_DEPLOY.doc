@@ -32,8 +32,59 @@ xmlns="http://www.w3.org/TR/REC-html40">
 <body>
 <div class="Section1">
 <h1>Checklist de validação pós-deploy</h1>
-<p>Conferência em produção dos <strong>pedidos</strong> feitos ao app. Marque cada item após testar.</p>
+<p>Conferência em produção do <strong>Conecta+ publicado</strong> (Início, menu, Eu quero…, engrenagem). Marque cada item após testar.</p>
 <p><strong>Planilha Excel por papel:</strong> <a href="pdfs/CHECKLIST_VALIDACAO_POR_PAPEL.xlsx">&lt;code&gt;pdfs/CHECKLIST_VALIDACAO_POR_PAPEL.xlsx&lt;/code&gt;</a> — combina este checklist com o mapa ACL para teste prático (uma aba por papel). Regenerar: <code>npm run build:validation-checklist-xlsx</code>.</p>
+<blockquote>Itens abaixo que citam <strong>carrossel do dashboard</strong> são legado (<code>/(tabs)/dashboard</code> congelado). Priorize validação nas rotas dedicadas e no Início.</blockquote>
+<p><strong>Atualizado em:</strong> 05/10/2026</p>
+<hr>
+<h2>Navegação publicada (05/10/2026)</h2>
+<ul>
+<li>[ ] <strong>Início</strong> (<code>/(tabs)</code>) exibe Próximos Eventos, Avisos, Eu quero… e engrenagem (se ACL)</li>
+<li>[ ] Toque em evento abre <strong>Agenda da Família</strong> (não carrossel Card 1)</li>
+<li>[ ] Menu inclui <strong>Documentos oficiais</strong> e <strong>Apoio Mútuo</strong> quando o papel permite</li>
+<li>[ ] Deep link <code>/(tabs)/dashboard</code> redireciona para rota viva equivalente</li>
+</ul>
+<hr>
+<h2>Gestão Liberada e billing</h2>
+<ul>
+<li>[ ] Em <strong>Controle de Acesso</strong>, interruptor <strong>Gestão Liberada</strong> grava por tenant (<code>app_parameters</code>)</li>
+<li>[ ] Com <strong>Gestão Liberada</strong> ligada: engrenagem e operação seguem sem exigir assinatura Stripe ativa</li>
+<li>[ ] Com <strong>Gestão Liberada</strong> desligada: gate comercial respeita plano/instância conforme política</li>
+<li>[ ] Super Administrador acessa <strong>Assinaturas</strong> (<code>/billing</code>) independentemente do paywall do membro</li>
+</ul>
+<hr>
+<h2>Modo Ghost (auditores)</h2>
+<ul>
+<li>[ ] Iniciar Ghost → vai ao Início <strong>uma vez</strong> já como o alvo</li>
+<li>[ ] Com Ghost ativo, abrir rota sem grant do <strong>alvo</strong> <strong>não</strong> redireciona para Início (sem “home bounce”)</li>
+<li>[ ] Não aparece overlay “Sem acesso nesta simulação” no lugar da tela</li>
+<li>[ ] Paywall, <code>/billing</code> e <strong>Selecionar igreja</strong> usam identidade do <strong>operador real</strong></li>
+<li>[ ] Encerrar Ghost → Início na identidade real</li>
+</ul>
+<hr>
+<h2>Sticker de admissão (Início)</h2>
+<ul>
+<li>[ ] Etiqueta amarela retrátil visível para papéis autorizados quando há pendência</li>
+<li>[ ] Pendência de <strong>Recepção Familiar</strong> abre painel correto</li>
+<li>[ ] Visitante fora da recepção pode abrir <strong>Mudança de Papéis</strong> filtrada em Visitante</li>
+<li>[ ] Sem pendências: mensagem clara (Super Admin pode manter atalho)</li>
+</ul>
+<hr>
+<h2>Isolamento multi-tenant</h2>
+<ul>
+<li>[ ] Dados listados (eventos, membros, recepção, avisos, finanças) correspondem à <strong>igreja ativa</strong></li>
+<li>[ ] Troca em <strong>Selecionar igreja</strong> altera conteúdo, marca e parâmetros</li>
+<li>[ ] Link <code>/cadastro-familia</code> com tenant A não grava na igreja B</li>
+<li>[ ] Relatórios e RPCs sensíveis não retornam registros de outro <code>tenant_id</code></li>
+</ul>
+<hr>
+<h2>PIN e e-mail (autenticação)</h2>
+<ul>
+<li>[ ] <strong>Primeiro acesso:</strong> PIN temporário chega <strong>somente por e-mail</strong> (não WhatsApp)</li>
+<li>[ ] <strong>Esqueci minha senha:</strong> novo PIN por e-mail após validação</li>
+<li>[ ] Totem (<code>cel_totem</code>) não usa fluxo de primeiro acesso de membro</li>
+<li>[ ] Gestor / Gestor em Controle de Acesso <strong>não</strong> visualiza PIN de terceiros na UI</li>
+</ul>
 <hr>
 <h2>Deploy e atualização</h2>
 <p><strong>Pedido:</strong> alterações demoravam para aparecer no ambiente de produção.</p>
@@ -302,13 +353,14 @@ xmlns="http://www.w3.org/TR/REC-html40">
 <li>[ ] Ícone desabilitado se não houver endereço/CEP para montar a linha</li>
 </ul>
 <hr>
-<h2>Coração Aberto</h2>
+<h2>Coração Aberto e pastoral — Excluir</h2>
 <p><strong>Pedido:</strong> em <strong>Meus pedidos</strong>, borracha por pedido para excluir só os ainda não iniciados pelo Cuidado Pastoral.</p>
 <ul>
 <li>[ ] Ícone de borracha no topo do formulário continua limpando o rascunho (novo pedido)</li>
-<li>[ ] Em <strong>Meus pedidos</strong>, cada card tem borracha individual</li>
+<li>[ ] Em <strong>Meus pedidos</strong> (<code>/pastoral-history</code>), cada card expõe ação <strong>Excluir</strong> (ou borracha equivalente)</li>
 <li>[ ] Pedido com status <strong>Novo</strong> (ou sem Acolher/Apoiar/Acompanhar) pode ser excluído após confirmação</li>
-<li>[ ] Pedido já iniciado pelo Cuidado Pastoral (Acolher, Apoiar, Acompanhar ou em andamento) → borracha bloqueada e mensagem explicativa</li>
+<li>[ ] Pedido já iniciado pelo Cuidado Pastoral (Acolher, Apoiar, Acompanhar ou em andamento) → <strong>Excluir</strong> bloqueado e mensagem explicativa</li>
+<li>[ ] Após início do acompanhamento: membro solicita cancelamento com justificativa; confirmação de exclusão conforme regra (<code>approve_pastoral_cancellation</code> / super_admin)</li>
 <li>[ ] <strong>SQL em produção:</strong> <code>scripts/pastoral-request-delete-rpc.sql</code></li>
 </ul>
 <hr>
@@ -396,7 +448,7 @@ xmlns="http://www.w3.org/TR/REC-html40">
 </tr>
 </tbody></table>
 <hr>
-<p><em>Atualizado em 23/06/2026</em></p>
+<p><em>Atualizado em 05/10/2026</em></p>
 </div>
 </body>
 </html>

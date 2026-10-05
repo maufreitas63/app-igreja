@@ -37,7 +37,7 @@ Caminhamos na ordem em que a vida acontece: chegar, orientar-se, marcar presenç
 
 <p class="route">/</p>
 
-<p class="missing-shot">Recorte original desta parada ainda não está na pasta Screeshot/ ou nos manuais — o roteiro descreve a tela mesmo assim.</p>
+<div class="shots single"><figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/docs/manual-painel/screens/00-login.png" alt="00-login.png" /><figcaption class="shot-cap">docs/manual-painel/screens/00-login.png</figcaption></figure></div>
 
 ### Onde estamos na jornada
 
@@ -71,7 +71,8 @@ Sessão rastreável, PIN no servidor, totem isolado. Reduz aparelho “logado co
 
 <p class="route">/register</p>
 
-<p class="missing-shot">Recorte original desta parada ainda não está na pasta Screeshot/ ou nos manuais — o roteiro descreve a tela mesmo assim.</p>
+<div class="shots"><figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/docs/manual-painel/screens/01-cadastro.png" alt="01-cadastro.png" /><figcaption class="shot-cap">docs/manual-painel/screens/01-cadastro.png</figcaption></figure>
+<figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/docs/manual-painel/screens/01c-cadastro-sem-lgpd.png" alt="01c-cadastro-sem-lgpd.png" /><figcaption class="shot-cap">docs/manual-painel/screens/01c-cadastro-sem-lgpd.png</figcaption></figure></div>
 
 ### Onde estamos na jornada
 
@@ -173,7 +174,9 @@ Isolamento de dados por instância, sem planilha “qual igreja é essa linha?�
 
 <p class="route">/lgpd</p>
 
-<div class="shots single"><figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/docs/manual-manutencao/screens/m14b-lgpd-modulo-inativo.png" alt="m14b-lgpd-modulo-inativo.png" /><figcaption class="shot-cap">docs/manual-manutencao/screens/m14b-lgpd-modulo-inativo.png</figcaption></figure></div>
+<div class="shots"><figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/docs/manual-painel/screens/01b-lgpd.png" alt="01b-lgpd.png" /><figcaption class="shot-cap">docs/manual-painel/screens/01b-lgpd.png</figcaption></figure>
+<figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/docs/manual-manutencao/screens/m14b-lgpd-modulo-inativo.png" alt="m14b-lgpd-modulo-inativo.png" /><figcaption class="shot-cap">docs/manual-manutencao/screens/m14b-lgpd-modulo-inativo.png</figcaption></figure>
+<figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/docs/manual-painel/screens/01c-cadastro-sem-lgpd.png" alt="01c-cadastro-sem-lgpd.png" /><figcaption class="shot-cap">docs/manual-painel/screens/01c-cadastro-sem-lgpd.png</figcaption></figure></div>
 
 ### Onde estamos na jornada
 
@@ -313,6 +316,7 @@ Garante que o PWA daquela igreja aponta para o banco e a marca corretos.
 <p class="route">/(tabs) · tela do membro</p>
 
 <div class="shots"><figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/Screeshot/1.png" alt="1.png" /><figcaption class="shot-cap">Screeshot/1.png</figcaption></figure>
+<figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/Screeshot/index.png" alt="index.png" /><figcaption class="shot-cap">Screeshot/index.png</figcaption></figure>
 <figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/Screeshot/2-1.png" alt="2-1.png" /><figcaption class="shot-cap">Screeshot/2-1.png</figcaption></figure></div>
 
 ### Onde estamos na jornada
@@ -383,7 +387,16 @@ O mesmo menu, filtrado. Gestor e Super Administrador enxergam a engrenagem; o me
 <p class="route">Rodapé do Início</p>
 
 <div class="shots"><figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/Screeshot/1.png" alt="1.png" /><figcaption class="shot-cap">Screeshot/1.png</figcaption></figure>
-<figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/docs/manual-manutencao/screens/m09-cuidado-pastoral.png" alt="m09-cuidado-pastoral.png" /><figcaption class="shot-cap">docs/manual-manutencao/screens/m09-cuidado-pastoral.png</figcaption></figure></div>
+<figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/Screeshot/index.png" alt="index.png" /><figcaption class="shot-cap">Screeshot/index.png</figcaption></figure>
+<figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/Screeshot/ofertas.png" alt="ofertas.png" /><figcaption class="shot-cap">Screeshot/ofertas.png</figcaption></figure>
+<figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/docs/manual-painel/screens/06-dizimos-ofertas.png" alt="06-dizimos-ofertas.png" /><figcaption class="shot-cap">docs/manual-painel/screens/06-dizimos-ofertas.png</figcaption></figure>
+<figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/Screeshot/pastoral.png" alt="pastoral.png" /><figcaption class="shot-cap">Screeshot/pastoral.png</figcaption></figure>
+<figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/docs/manual-painel/screens/07-coracao-aberto.png" alt="07-coracao-aberto.png" /><figcaption class="shot-cap">docs/manual-painel/screens/07-coracao-aberto.png</figcaption></figure>
+<figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/Screeshot/maintenance-dashboard-panel-pastoral_care.png" alt="maintenance-dashboard-panel-pastoral_care.png" /><figcaption class="shot-cap">Screeshot/maintenance-dashboard-panel-pastoral_care.png</figcaption></figure>
+<figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/docs/manual-manutencao/screens/m09-cuidado-pastoral.png" alt="m09-cuidado-pastoral.png" /><figcaption class="shot-cap">docs/manual-manutencao/screens/m09-cuidado-pastoral.png</figcaption></figure>
+<figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/docs/manual-manutencao/screens/pastoral_care.png" alt="pastoral_care.png" /><figcaption class="shot-cap">docs/manual-manutencao/screens/pastoral_care.png</figcaption></figure>
+<figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/docs/manual-painel/screens/pastoral-pedido.png" alt="pastoral-pedido.png" /><figcaption class="shot-cap">docs/manual-painel/screens/pastoral-pedido.png</figcaption></figure>
+<figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/docs/manual-painel/screens/pastoral.png" alt="pastoral.png" /><figcaption class="shot-cap">docs/manual-painel/screens/pastoral.png</figcaption></figure></div>
 
 ### Onde estamos na jornada
 
@@ -454,8 +467,11 @@ Higiene de sessão no hall e na secretaria.
 
 <p class="route">Modal no Início · toque no evento</p>
 
-<div class="shots"><figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/Screeshot/3.png" alt="3.png" /><figcaption class="shot-cap">Screeshot/3.png</figcaption></figure>
-<figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/Screeshot/1.png" alt="1.png" /><figcaption class="shot-cap">Screeshot/1.png</figcaption></figure></div>
+<div class="shots"><figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/docs/manual-painel/screens/03-agenda-familia.png" alt="03-agenda-familia.png" /><figcaption class="shot-cap">docs/manual-painel/screens/03-agenda-familia.png</figcaption></figure>
+<figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/Screeshot/3.png" alt="3.png" /><figcaption class="shot-cap">Screeshot/3.png</figcaption></figure>
+<figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/Screeshot/agenda-familia.png" alt="agenda-familia.png" /><figcaption class="shot-cap">Screeshot/agenda-familia.png</figcaption></figure>
+<figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/Screeshot/1.png" alt="1.png" /><figcaption class="shot-cap">Screeshot/1.png</figcaption></figure>
+<figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/Screeshot/index.png" alt="index.png" /><figcaption class="shot-cap">Screeshot/index.png</figcaption></figure></div>
 
 ### Onde estamos na jornada
 
@@ -490,8 +506,11 @@ Capacidade real, não lista de WhatsApp. Quórum e geofence nascem desta lista.
 <p class="route">Início + Agenda · GPS do aparelho + RPC `confirm_geo_family_checkin_atomic`</p>
 
 <div class="shots"><figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/Screeshot/3.png" alt="3.png" /><figcaption class="shot-cap">Screeshot/3.png</figcaption></figure>
+<figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/docs/manual-painel/screens/03-agenda-familia.png" alt="03-agenda-familia.png" /><figcaption class="shot-cap">docs/manual-painel/screens/03-agenda-familia.png</figcaption></figure>
+<figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/Screeshot/agenda-familia.png" alt="agenda-familia.png" /><figcaption class="shot-cap">Screeshot/agenda-familia.png</figcaption></figure>
 <figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/docs/manual-manutencao/screens/m02-programacao-eventos.png" alt="m02-programacao-eventos.png" /><figcaption class="shot-cap">docs/manual-manutencao/screens/m02-programacao-eventos.png</figcaption></figure>
-<figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/docs/manual-manutencao/screens/m03-editor-evento.png" alt="m03-editor-evento.png" /><figcaption class="shot-cap">docs/manual-manutencao/screens/m03-editor-evento.png</figcaption></figure></div>
+<figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/docs/manual-manutencao/screens/m03-editor-evento.png" alt="m03-editor-evento.png" /><figcaption class="shot-cap">docs/manual-manutencao/screens/m03-editor-evento.png</figcaption></figure>
+<figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/Screeshot/stripe-cli-test-events.png" alt="stripe-cli-test-events.png" /><figcaption class="shot-cap">Screeshot/stripe-cli-test-events.png</figcaption></figure></div>
 
 ### Onde estamos na jornada
 
@@ -525,7 +544,7 @@ Presença objetiva com lat/lng e horário. Relatórios distinguem GPS (Geofence)
 
 <p class="route">/totem-checkin</p>
 
-<p class="missing-shot">Recorte original desta parada ainda não está na pasta Screeshot/ ou nos manuais — o roteiro descreve a tela mesmo assim.</p>
+<div class="shots single"><figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/docs/manual-painel/screens/04-qr-checkin.png" alt="04-qr-checkin.png" /><figcaption class="shot-cap">docs/manual-painel/screens/04-qr-checkin.png</figcaption></figure></div>
 
 ### Onde estamos na jornada
 
@@ -559,7 +578,8 @@ Fila rápida, aparelho que não vaza sessão de membro, presença oficial para l
 
 <p class="route">/perfil</p>
 
-<p class="missing-shot">Recorte original desta parada ainda não está na pasta Screeshot/ ou nos manuais — o roteiro descreve a tela mesmo assim.</p>
+<div class="shots"><figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/docs/manual-painel/screens/15-dados-cadastrais.png" alt="15-dados-cadastrais.png" /><figcaption class="shot-cap">docs/manual-painel/screens/15-dados-cadastrais.png</figcaption></figure>
+<figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/docs/manual-painel/screens/17-selfie-biometrica.png" alt="17-selfie-biometrica.png" /><figcaption class="shot-cap">docs/manual-painel/screens/17-selfie-biometrica.png</figcaption></figure></div>
 
 ### Onde estamos na jornada
 
@@ -593,7 +613,8 @@ Identidade operacional sem PII no QR.
 
 <p class="route">/configuracao-salas</p>
 
-<div class="shots single"><figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/docs/manual-manutencao/screens/m05-sala-checkin.png" alt="m05-sala-checkin.png" /><figcaption class="shot-cap">docs/manual-manutencao/screens/m05-sala-checkin.png</figcaption></figure></div>
+<div class="shots"><figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/docs/manual-painel/screens/05-salas-kids-teens.png" alt="05-salas-kids-teens.png" /><figcaption class="shot-cap">docs/manual-painel/screens/05-salas-kids-teens.png</figcaption></figure>
+<figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/docs/manual-manutencao/screens/m05-sala-checkin.png" alt="m05-sala-checkin.png" /><figcaption class="shot-cap">docs/manual-manutencao/screens/m05-sala-checkin.png</figcaption></figure></div>
 
 ### Onde estamos na jornada
 
@@ -627,7 +648,8 @@ Padroniza nomes, evita sala “fantasma” em evento que não a usa.
 
 <p class="route">/maintenance-dashboard?panel=sala_servidor</p>
 
-<div class="shots single"><figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/docs/manual-manutencao/screens/m05-sala-checkin.png" alt="m05-sala-checkin.png" /><figcaption class="shot-cap">docs/manual-manutencao/screens/m05-sala-checkin.png</figcaption></figure></div>
+<div class="shots"><figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/docs/manual-painel/screens/05-salas-kids-teens.png" alt="05-salas-kids-teens.png" /><figcaption class="shot-cap">docs/manual-painel/screens/05-salas-kids-teens.png</figcaption></figure>
+<figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/docs/manual-manutencao/screens/m05-sala-checkin.png" alt="m05-sala-checkin.png" /><figcaption class="shot-cap">docs/manual-manutencao/screens/m05-sala-checkin.png</figcaption></figure></div>
 
 ### Onde estamos na jornada
 
@@ -664,7 +686,7 @@ Equipe da sala trabalha com lista viva, não papel na prancheta.
 
 <p class="route">/perfil</p>
 
-<p class="missing-shot">Recorte original desta parada ainda não está na pasta Screeshot/ ou nos manuais — o roteiro descreve a tela mesmo assim.</p>
+<div class="shots single"><figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/docs/manual-painel/screens/15-dados-cadastrais.png" alt="15-dados-cadastrais.png" /><figcaption class="shot-cap">docs/manual-painel/screens/15-dados-cadastrais.png</figcaption></figure></div>
 
 ### Onde estamos na jornada
 
@@ -698,7 +720,8 @@ Fonte única. Secretaria complementa; não compete.
 
 <p class="route">/manage-profile</p>
 
-<p class="missing-shot">Recorte original desta parada ainda não está na pasta Screeshot/ ou nos manuais — o roteiro descreve a tela mesmo assim.</p>
+<div class="shots"><figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/Screeshot/manage-profile.png" alt="manage-profile.png" /><figcaption class="shot-cap">Screeshot/manage-profile.png</figcaption></figure>
+<figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/docs/manual-painel/screens/15-dados-cadastrais.png" alt="15-dados-cadastrais.png" /><figcaption class="shot-cap">docs/manual-painel/screens/15-dados-cadastrais.png</figcaption></figure></div>
 
 ### Onde estamos na jornada
 
@@ -732,7 +755,8 @@ Menos retrabalho; telefone novo propaga com cuidado (troca de telefone é fluxo 
 
 <p class="route">/manage-members</p>
 
-<p class="missing-shot">Recorte original desta parada ainda não está na pasta Screeshot/ ou nos manuais — o roteiro descreve a tela mesmo assim.</p>
+<div class="shots"><figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/Screeshot/manage-members.png" alt="manage-members.png" /><figcaption class="shot-cap">Screeshot/manage-members.png</figcaption></figure>
+<figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/docs/manual-painel/screens/16-gerenciar-familia.png" alt="16-gerenciar-familia.png" /><figcaption class="shot-cap">docs/manual-painel/screens/16-gerenciar-familia.png</figcaption></figure></div>
 
 ### Onde estamos na jornada
 
@@ -800,7 +824,7 @@ Conteúdo versionado por igreja; reset é gesto consciente, não “apaga tudo n
 
 <p class="route">/perfil (cantinho) · /livros-doados (engrenagem)</p>
 
-<p class="missing-shot">Recorte original desta parada ainda não está na pasta Screeshot/ ou nos manuais — o roteiro descreve a tela mesmo assim.</p>
+<div class="shots single"><figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/docs/manual-painel/screens/15-dados-cadastrais.png" alt="15-dados-cadastrais.png" /><figcaption class="shot-cap">docs/manual-painel/screens/15-dados-cadastrais.png</figcaption></figure></div>
 
 ### Onde estamos na jornada
 
@@ -834,7 +858,9 @@ Acervo vivo, não caixa de papelão na sala dos fundos.
 
 <p class="route">/expense-report</p>
 
-<div class="shots single"><figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/Screeshot/11.png" alt="11.png" /><figcaption class="shot-cap">Screeshot/11.png</figcaption></figure></div>
+<div class="shots"><figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/docs/manual-painel/screens/11-relatorio-despesas.png" alt="11-relatorio-despesas.png" /><figcaption class="shot-cap">docs/manual-painel/screens/11-relatorio-despesas.png</figcaption></figure>
+<figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/docs/manual-painel/screens/11b-rd-formulario.png" alt="11b-rd-formulario.png" /><figcaption class="shot-cap">docs/manual-painel/screens/11b-rd-formulario.png</figcaption></figure>
+<figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/Screeshot/11.png" alt="11.png" /><figcaption class="shot-cap">Screeshot/11.png</figcaption></figure></div>
 
 ### Onde estamos na jornada
 
@@ -871,7 +897,8 @@ Trilha de despesa, não envelope misterioso.
 
 <p class="route">/ofertas</p>
 
-<p class="missing-shot">Recorte original desta parada ainda não está na pasta Screeshot/ ou nos manuais — o roteiro descreve a tela mesmo assim.</p>
+<div class="shots"><figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/Screeshot/ofertas.png" alt="ofertas.png" /><figcaption class="shot-cap">Screeshot/ofertas.png</figcaption></figure>
+<figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/docs/manual-painel/screens/06-dizimos-ofertas.png" alt="06-dizimos-ofertas.png" /><figcaption class="shot-cap">docs/manual-painel/screens/06-dizimos-ofertas.png</figcaption></figure></div>
 
 ### Onde estamos na jornada
 
@@ -905,7 +932,13 @@ Identificação de origem, sem “Pix genérico da conta da igreja” como únic
 
 <p class="route">/pastoral</p>
 
-<div class="shots single"><figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/docs/manual-manutencao/screens/m09-cuidado-pastoral.png" alt="m09-cuidado-pastoral.png" /><figcaption class="shot-cap">docs/manual-manutencao/screens/m09-cuidado-pastoral.png</figcaption></figure></div>
+<div class="shots"><figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/Screeshot/pastoral.png" alt="pastoral.png" /><figcaption class="shot-cap">Screeshot/pastoral.png</figcaption></figure>
+<figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/docs/manual-painel/screens/07-coracao-aberto.png" alt="07-coracao-aberto.png" /><figcaption class="shot-cap">docs/manual-painel/screens/07-coracao-aberto.png</figcaption></figure>
+<figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/Screeshot/maintenance-dashboard-panel-pastoral_care.png" alt="maintenance-dashboard-panel-pastoral_care.png" /><figcaption class="shot-cap">Screeshot/maintenance-dashboard-panel-pastoral_care.png</figcaption></figure>
+<figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/docs/manual-manutencao/screens/m09-cuidado-pastoral.png" alt="m09-cuidado-pastoral.png" /><figcaption class="shot-cap">docs/manual-manutencao/screens/m09-cuidado-pastoral.png</figcaption></figure>
+<figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/docs/manual-manutencao/screens/pastoral_care.png" alt="pastoral_care.png" /><figcaption class="shot-cap">docs/manual-manutencao/screens/pastoral_care.png</figcaption></figure>
+<figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/docs/manual-painel/screens/pastoral-pedido.png" alt="pastoral-pedido.png" /><figcaption class="shot-cap">docs/manual-painel/screens/pastoral-pedido.png</figcaption></figure>
+<figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/docs/manual-painel/screens/pastoral.png" alt="pastoral.png" /><figcaption class="shot-cap">docs/manual-painel/screens/pastoral.png</figcaption></figure></div>
 
 ### Onde estamos na jornada
 
@@ -1007,7 +1040,8 @@ Líder e anfitrião distintos; participantes sem misturar papéis.
 
 <p class="route">/escalas</p>
 
-<div class="shots single"><figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/docs/manual-manutencao/screens/m08-programacao-escalas.png" alt="m08-programacao-escalas.png" /><figcaption class="shot-cap">docs/manual-manutencao/screens/m08-programacao-escalas.png</figcaption></figure></div>
+<div class="shots"><figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/docs/manual-painel/screens/12-escalas.png" alt="12-escalas.png" /><figcaption class="shot-cap">docs/manual-painel/screens/12-escalas.png</figcaption></figure>
+<figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/docs/manual-manutencao/screens/m08-programacao-escalas.png" alt="m08-programacao-escalas.png" /><figcaption class="shot-cap">docs/manual-manutencao/screens/m08-programacao-escalas.png</figcaption></figure></div>
 
 ### Onde estamos na jornada
 
@@ -1041,7 +1075,8 @@ Grade oficial; substituição combinada, não “chama fulano no palco”.
 
 <p class="route">/mural-oportunidades</p>
 
-<p class="missing-shot">Recorte original desta parada ainda não está na pasta Screeshot/ ou nos manuais — o roteiro descreve a tela mesmo assim.</p>
+<div class="shots"><figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/Screeshot/mural-oportunidades.png" alt="mural-oportunidades.png" /><figcaption class="shot-cap">Screeshot/mural-oportunidades.png</figcaption></figure>
+<figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/docs/manual-painel/screens/mural-oportunidades.png" alt="mural-oportunidades.png" /><figcaption class="shot-cap">docs/manual-painel/screens/mural-oportunidades.png</figcaption></figure></div>
 
 ### Onde estamos na jornada
 
@@ -1212,7 +1247,13 @@ Documento vivo de privacidade, versionado com o deploy.
 
 <p class="route">/financial</p>
 
-<div class="shots single"><figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/docs/manual-manutencao/screens/m10-financeiro-manut.png" alt="m10-financeiro-manut.png" /><figcaption class="shot-cap">docs/manual-manutencao/screens/m10-financeiro-manut.png</figcaption></figure></div>
+<div class="shots"><figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/docs/manual-painel/screens/10-financeiro.png" alt="10-financeiro.png" /><figcaption class="shot-cap">docs/manual-painel/screens/10-financeiro.png</figcaption></figure>
+<figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/docs/manual-manutencao/screens/m10-financeiro-manut.png" alt="m10-financeiro-manut.png" /><figcaption class="shot-cap">docs/manual-manutencao/screens/m10-financeiro-manut.png</figcaption></figure>
+<figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/docs/manual-painel/screens/10a-fin-resultado.png" alt="10a-fin-resultado.png" /><figcaption class="shot-cap">docs/manual-painel/screens/10a-fin-resultado.png</figcaption></figure>
+<figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/docs/manual-painel/screens/10b-fin-comparativo.png" alt="10b-fin-comparativo.png" /><figcaption class="shot-cap">docs/manual-painel/screens/10b-fin-comparativo.png</figcaption></figure>
+<figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/docs/manual-painel/screens/10c-fin-12meses.png" alt="10c-fin-12meses.png" /><figcaption class="shot-cap">docs/manual-painel/screens/10c-fin-12meses.png</figcaption></figure>
+<figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/docs/manual-painel/screens/10d-fin-orcamento.png" alt="10d-fin-orcamento.png" /><figcaption class="shot-cap">docs/manual-painel/screens/10d-fin-orcamento.png</figcaption></figure>
+<figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/docs/manual-painel/screens/10e-fin-saldo.png" alt="10e-fin-saldo.png" /><figcaption class="shot-cap">docs/manual-painel/screens/10e-fin-saldo.png</figcaption></figure></div>
 
 ### Onde estamos na jornada
 
@@ -1246,7 +1287,9 @@ Separa operação (lançar) de prestação (mostrar).
 
 <p class="route">/membros</p>
 
-<p class="missing-shot">Recorte original desta parada ainda não está na pasta Screeshot/ ou nos manuais — o roteiro descreve a tela mesmo assim.</p>
+<div class="shots"><figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/docs/manual-painel/screens/08-lista-membros.png" alt="08-lista-membros.png" /><figcaption class="shot-cap">docs/manual-painel/screens/08-lista-membros.png</figcaption></figure>
+<figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/docs/manual-painel/screens/08b-lista-membros-familia.png" alt="08b-lista-membros-familia.png" /><figcaption class="shot-cap">docs/manual-painel/screens/08b-lista-membros-familia.png</figcaption></figure>
+<figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/docs/manual-painel/screens/08c-lista-visitantes.png" alt="08c-lista-visitantes.png" /><figcaption class="shot-cap">docs/manual-painel/screens/08c-lista-visitantes.png</figcaption></figure></div>
 
 ### Onde estamos na jornada
 
@@ -1280,7 +1323,7 @@ Diretório oficial, filtrado por papel, com blindagem do Super Administrador.
 
 <p class="route">/aniversariantes</p>
 
-<p class="missing-shot">Recorte original desta parada ainda não está na pasta Screeshot/ ou nos manuais — o roteiro descreve a tela mesmo assim.</p>
+<div class="shots single"><figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/docs/manual-painel/screens/09-aniversariantes.png" alt="09-aniversariantes.png" /><figcaption class="shot-cap">docs/manual-painel/screens/09-aniversariantes.png</figcaption></figure></div>
 
 ### Onde estamos na jornada
 
@@ -1314,7 +1357,7 @@ Agenda de afeto operacional.
 
 <p class="route">/mapa-geolocalizacao</p>
 
-<p class="missing-shot">Recorte original desta parada ainda não está na pasta Screeshot/ ou nos manuais — o roteiro descreve a tela mesmo assim.</p>
+<div class="shots single"><figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/docs/manual-painel/screens/08d-mapa-geral.png" alt="08d-mapa-geral.png" /><figcaption class="shot-cap">docs/manual-painel/screens/08d-mapa-geral.png</figcaption></figure></div>
 
 ### Onde estamos na jornada
 
@@ -1560,7 +1603,8 @@ Procedimento visível, não heroísmo de um diácono com caderninho.
 
 <p class="route">/maintenance-dashboard?panel=profile_cadastro</p>
 
-<div class="shots single"><figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/docs/manual-manutencao/screens/m12-cadastro-usuario.png" alt="m12-cadastro-usuario.png" /><figcaption class="shot-cap">docs/manual-manutencao/screens/m12-cadastro-usuario.png</figcaption></figure></div>
+<div class="shots"><figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/docs/manual-manutencao/screens/m12-cadastro-usuario.png" alt="m12-cadastro-usuario.png" /><figcaption class="shot-cap">docs/manual-manutencao/screens/m12-cadastro-usuario.png</figcaption></figure>
+<figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/docs/manual-painel/screens/14-gestao-cadastros.png" alt="14-gestao-cadastros.png" /><figcaption class="shot-cap">docs/manual-painel/screens/14-gestao-cadastros.png</figcaption></figure></div>
 
 ### Onde estamos na jornada
 
@@ -1662,7 +1706,8 @@ Liderança e hospedagem distintas; datas reais.
 
 <p class="route">/maintenance-dashboard?panel=volunteer_mural</p>
 
-<p class="missing-shot">Recorte original desta parada ainda não está na pasta Screeshot/ ou nos manuais — o roteiro descreve a tela mesmo assim.</p>
+<div class="shots"><figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/Screeshot/mural-oportunidades.png" alt="mural-oportunidades.png" /><figcaption class="shot-cap">Screeshot/mural-oportunidades.png</figcaption></figure>
+<figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/docs/manual-painel/screens/mural-oportunidades.png" alt="mural-oportunidades.png" /><figcaption class="shot-cap">docs/manual-painel/screens/mural-oportunidades.png</figcaption></figure></div>
 
 ### Onde estamos na jornada
 
@@ -1734,7 +1779,8 @@ Pastoreia o marketplace interno.
 <p class="route">/maintenance-dashboard?panel=events</p>
 
 <div class="shots"><figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/docs/manual-manutencao/screens/m02-programacao-eventos.png" alt="m02-programacao-eventos.png" /><figcaption class="shot-cap">docs/manual-manutencao/screens/m02-programacao-eventos.png</figcaption></figure>
-<figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/docs/manual-manutencao/screens/m03-editor-evento.png" alt="m03-editor-evento.png" /><figcaption class="shot-cap">docs/manual-manutencao/screens/m03-editor-evento.png</figcaption></figure></div>
+<figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/docs/manual-manutencao/screens/m03-editor-evento.png" alt="m03-editor-evento.png" /><figcaption class="shot-cap">docs/manual-manutencao/screens/m03-editor-evento.png</figcaption></figure>
+<figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/Screeshot/stripe-cli-test-events.png" alt="stripe-cli-test-events.png" /><figcaption class="shot-cap">Screeshot/stripe-cli-test-events.png</figcaption></figure></div>
 
 ### Onde estamos na jornada
 
@@ -2010,7 +2056,12 @@ Dirige a comunicação presencial.
 
 <p class="route">/maintenance-dashboard?panel=financials</p>
 
-<div class="shots single"><figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/docs/manual-manutencao/screens/m10-financeiro-manut.png" alt="m10-financeiro-manut.png" /><figcaption class="shot-cap">docs/manual-manutencao/screens/m10-financeiro-manut.png</figcaption></figure></div>
+<div class="shots"><figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/docs/manual-manutencao/screens/m10-financeiro-manut.png" alt="m10-financeiro-manut.png" /><figcaption class="shot-cap">docs/manual-manutencao/screens/m10-financeiro-manut.png</figcaption></figure>
+<figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/docs/manual-painel/screens/10a-fin-resultado.png" alt="10a-fin-resultado.png" /><figcaption class="shot-cap">docs/manual-painel/screens/10a-fin-resultado.png</figcaption></figure>
+<figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/docs/manual-painel/screens/10b-fin-comparativo.png" alt="10b-fin-comparativo.png" /><figcaption class="shot-cap">docs/manual-painel/screens/10b-fin-comparativo.png</figcaption></figure>
+<figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/docs/manual-painel/screens/10c-fin-12meses.png" alt="10c-fin-12meses.png" /><figcaption class="shot-cap">docs/manual-painel/screens/10c-fin-12meses.png</figcaption></figure>
+<figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/docs/manual-painel/screens/10d-fin-orcamento.png" alt="10d-fin-orcamento.png" /><figcaption class="shot-cap">docs/manual-painel/screens/10d-fin-orcamento.png</figcaption></figure>
+<figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/docs/manual-painel/screens/10e-fin-saldo.png" alt="10e-fin-saldo.png" /><figcaption class="shot-cap">docs/manual-painel/screens/10e-fin-saldo.png</figcaption></figure></div>
 
 ### Onde estamos na jornada
 
@@ -2044,7 +2095,8 @@ Opera com trilha, não com “confia no tesoureiro”.
 
 <p class="route">/maintenance-dashboard?panel=campaigns_management</p>
 
-<p class="missing-shot">Recorte original desta parada ainda não está na pasta Screeshot/ ou nos manuais — o roteiro descreve a tela mesmo assim.</p>
+<div class="shots"><figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/Screeshot/ofertas.png" alt="ofertas.png" /><figcaption class="shot-cap">Screeshot/ofertas.png</figcaption></figure>
+<figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/docs/manual-painel/screens/06-dizimos-ofertas.png" alt="06-dizimos-ofertas.png" /><figcaption class="shot-cap">docs/manual-painel/screens/06-dizimos-ofertas.png</figcaption></figure></div>
 
 ### Onde estamos na jornada
 
@@ -2078,7 +2130,12 @@ Propósito, prazo e identificação no Pix.
 
 <p class="route">/maintenance-dashboard?panel=predictive_insights</p>
 
-<div class="shots single"><figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/docs/manual-manutencao/screens/m10-financeiro-manut.png" alt="m10-financeiro-manut.png" /><figcaption class="shot-cap">docs/manual-manutencao/screens/m10-financeiro-manut.png</figcaption></figure></div>
+<div class="shots"><figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/docs/manual-manutencao/screens/m10-financeiro-manut.png" alt="m10-financeiro-manut.png" /><figcaption class="shot-cap">docs/manual-manutencao/screens/m10-financeiro-manut.png</figcaption></figure>
+<figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/docs/manual-painel/screens/10a-fin-resultado.png" alt="10a-fin-resultado.png" /><figcaption class="shot-cap">docs/manual-painel/screens/10a-fin-resultado.png</figcaption></figure>
+<figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/docs/manual-painel/screens/10b-fin-comparativo.png" alt="10b-fin-comparativo.png" /><figcaption class="shot-cap">docs/manual-painel/screens/10b-fin-comparativo.png</figcaption></figure>
+<figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/docs/manual-painel/screens/10c-fin-12meses.png" alt="10c-fin-12meses.png" /><figcaption class="shot-cap">docs/manual-painel/screens/10c-fin-12meses.png</figcaption></figure>
+<figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/docs/manual-painel/screens/10d-fin-orcamento.png" alt="10d-fin-orcamento.png" /><figcaption class="shot-cap">docs/manual-painel/screens/10d-fin-orcamento.png</figcaption></figure>
+<figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/docs/manual-painel/screens/10e-fin-saldo.png" alt="10e-fin-saldo.png" /><figcaption class="shot-cap">docs/manual-painel/screens/10e-fin-saldo.png</figcaption></figure></div>
 
 ### Onde estamos na jornada
 
@@ -2217,7 +2274,10 @@ Ferramenta consciente, não botão de pânico.
 
 <p class="route">/maintenance-dashboard?panel=relatorios</p>
 
-<div class="shots single"><figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/docs/manual-manutencao/screens/m11-lista-presenca.png" alt="m11-lista-presenca.png" /><figcaption class="shot-cap">docs/manual-manutencao/screens/m11-lista-presenca.png</figcaption></figure></div>
+<div class="shots"><figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/docs/manual-manutencao/screens/m11-lista-presenca.png" alt="m11-lista-presenca.png" /><figcaption class="shot-cap">docs/manual-manutencao/screens/m11-lista-presenca.png</figcaption></figure>
+<figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/docs/manual-painel/screens/08-lista-membros.png" alt="08-lista-membros.png" /><figcaption class="shot-cap">docs/manual-painel/screens/08-lista-membros.png</figcaption></figure>
+<figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/docs/manual-painel/screens/08b-lista-membros-familia.png" alt="08b-lista-membros-familia.png" /><figcaption class="shot-cap">docs/manual-painel/screens/08b-lista-membros-familia.png</figcaption></figure>
+<figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/docs/manual-painel/screens/08c-lista-visitantes.png" alt="08c-lista-visitantes.png" /><figcaption class="shot-cap">docs/manual-painel/screens/08c-lista-visitantes.png</figcaption></figure></div>
 
 ### Onde estamos na jornada
 
@@ -2319,7 +2379,8 @@ Ofício de papel com rastro.
 
 <p class="route">/maintenance-dashboard?panel=transferencia_igreja</p>
 
-<div class="shots single"><figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/docs/manual-manutencao/screens/m12-cadastro-usuario.png" alt="m12-cadastro-usuario.png" /><figcaption class="shot-cap">docs/manual-manutencao/screens/m12-cadastro-usuario.png</figcaption></figure></div>
+<div class="shots"><figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/docs/manual-manutencao/screens/m12-cadastro-usuario.png" alt="m12-cadastro-usuario.png" /><figcaption class="shot-cap">docs/manual-manutencao/screens/m12-cadastro-usuario.png</figcaption></figure>
+<figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/docs/manual-painel/screens/14-gestao-cadastros.png" alt="14-gestao-cadastros.png" /><figcaption class="shot-cap">docs/manual-painel/screens/14-gestao-cadastros.png</figcaption></figure></div>
 
 ### Onde estamos na jornada
 
@@ -2388,7 +2449,8 @@ Enxerga adoção de telas para treinar melhor.
 <p class="route">/maintenance-dashboard?panel=auditor</p>
 
 <div class="shots"><figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/docs/manual-manutencao/screens/m16-acessos-usuarios.png" alt="m16-acessos-usuarios.png" /><figcaption class="shot-cap">docs/manual-manutencao/screens/m16-acessos-usuarios.png</figcaption></figure>
-<figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/Screeshot/1.png" alt="1.png" /><figcaption class="shot-cap">Screeshot/1.png</figcaption></figure></div>
+<figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/Screeshot/1.png" alt="1.png" /><figcaption class="shot-cap">Screeshot/1.png</figcaption></figure>
+<figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/Screeshot/index.png" alt="index.png" /><figcaption class="shot-cap">Screeshot/index.png</figcaption></figure></div>
 
 ### Onde estamos na jornada
 
@@ -2422,7 +2484,12 @@ Depura a jornada real, com rastro de quem auditou.
 
 <p class="route">/billing</p>
 
-<div class="shots single"><figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/docs/manual-manutencao/screens/m10-financeiro-manut.png" alt="m10-financeiro-manut.png" /><figcaption class="shot-cap">docs/manual-manutencao/screens/m10-financeiro-manut.png</figcaption></figure></div>
+<div class="shots"><figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/docs/manual-manutencao/screens/m10-financeiro-manut.png" alt="m10-financeiro-manut.png" /><figcaption class="shot-cap">docs/manual-manutencao/screens/m10-financeiro-manut.png</figcaption></figure>
+<figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/docs/manual-painel/screens/10a-fin-resultado.png" alt="10a-fin-resultado.png" /><figcaption class="shot-cap">docs/manual-painel/screens/10a-fin-resultado.png</figcaption></figure>
+<figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/docs/manual-painel/screens/10b-fin-comparativo.png" alt="10b-fin-comparativo.png" /><figcaption class="shot-cap">docs/manual-painel/screens/10b-fin-comparativo.png</figcaption></figure>
+<figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/docs/manual-painel/screens/10c-fin-12meses.png" alt="10c-fin-12meses.png" /><figcaption class="shot-cap">docs/manual-painel/screens/10c-fin-12meses.png</figcaption></figure>
+<figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/docs/manual-painel/screens/10d-fin-orcamento.png" alt="10d-fin-orcamento.png" /><figcaption class="shot-cap">docs/manual-painel/screens/10d-fin-orcamento.png</figcaption></figure>
+<figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/docs/manual-painel/screens/10e-fin-saldo.png" alt="10e-fin-saldo.png" /><figcaption class="shot-cap">docs/manual-painel/screens/10e-fin-saldo.png</figcaption></figure></div>
 
 ### Onde estamos na jornada
 
@@ -2456,7 +2523,12 @@ Vê o contrato da ferramenta.
 
 <p class="route">/alianca-conecta-reino</p>
 
-<div class="shots single"><figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/docs/manual-manutencao/screens/m10-financeiro-manut.png" alt="m10-financeiro-manut.png" /><figcaption class="shot-cap">docs/manual-manutencao/screens/m10-financeiro-manut.png</figcaption></figure></div>
+<div class="shots"><figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/docs/manual-manutencao/screens/m10-financeiro-manut.png" alt="m10-financeiro-manut.png" /><figcaption class="shot-cap">docs/manual-manutencao/screens/m10-financeiro-manut.png</figcaption></figure>
+<figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/docs/manual-painel/screens/10a-fin-resultado.png" alt="10a-fin-resultado.png" /><figcaption class="shot-cap">docs/manual-painel/screens/10a-fin-resultado.png</figcaption></figure>
+<figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/docs/manual-painel/screens/10b-fin-comparativo.png" alt="10b-fin-comparativo.png" /><figcaption class="shot-cap">docs/manual-painel/screens/10b-fin-comparativo.png</figcaption></figure>
+<figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/docs/manual-painel/screens/10c-fin-12meses.png" alt="10c-fin-12meses.png" /><figcaption class="shot-cap">docs/manual-painel/screens/10c-fin-12meses.png</figcaption></figure>
+<figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/docs/manual-painel/screens/10d-fin-orcamento.png" alt="10d-fin-orcamento.png" /><figcaption class="shot-cap">docs/manual-painel/screens/10d-fin-orcamento.png</figcaption></figure>
+<figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/docs/manual-painel/screens/10e-fin-saldo.png" alt="10e-fin-saldo.png" /><figcaption class="shot-cap">docs/manual-painel/screens/10e-fin-saldo.png</figcaption></figure></div>
 
 ### Onde estamos na jornada
 
@@ -2527,7 +2599,11 @@ Nasce uma igreja no ecossistema sem fork de código.
 
 <p class="route">Carrossel `/(tabs)/dashboard` (só redireciona) · `/(tabs)/explore` congelada</p>
 
-<div class="shots"><figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/Screeshot/3.png" alt="3.png" /><figcaption class="shot-cap">Screeshot/3.png</figcaption></figure>
+<div class="shots"><figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/docs/manual-painel/screens/03-agenda-familia.png" alt="03-agenda-familia.png" /><figcaption class="shot-cap">docs/manual-painel/screens/03-agenda-familia.png</figcaption></figure>
+<figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/Screeshot/3.png" alt="3.png" /><figcaption class="shot-cap">Screeshot/3.png</figcaption></figure>
+<figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/Screeshot/agenda-familia.png" alt="agenda-familia.png" /><figcaption class="shot-cap">Screeshot/agenda-familia.png</figcaption></figure>
+<figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/docs/manual-painel/screens/04-qr-checkin.png" alt="04-qr-checkin.png" /><figcaption class="shot-cap">docs/manual-painel/screens/04-qr-checkin.png</figcaption></figure>
+<figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/docs/manual-painel/screens/05-salas-kids-teens.png" alt="05-salas-kids-teens.png" /><figcaption class="shot-cap">docs/manual-painel/screens/05-salas-kids-teens.png</figcaption></figure>
 <figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/docs/manual-manutencao/screens/m05-sala-checkin.png" alt="m05-sala-checkin.png" /><figcaption class="shot-cap">docs/manual-manutencao/screens/m05-sala-checkin.png</figcaption></figure></div>
 
 ### Onde estamos na jornada
@@ -2602,6 +2678,32 @@ Estes arquivos estavam nas pastas de assets e entram no guia para nenhum recorte
 <figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/Screeshot/8-1.png" alt="8-1.png" /><figcaption class="shot-cap">Screeshot/8-1.png</figcaption></figure>
 <figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/Screeshot/8-2.png" alt="8-2.png" /><figcaption class="shot-cap">Screeshot/8-2.png</figcaption></figure>
 <figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/Screeshot/9.png" alt="9.png" /><figcaption class="shot-cap">Screeshot/9.png</figcaption></figure>
+<figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/Screeshot/alianca-conecta-reino.png" alt="alianca-conecta-reino.png" /><figcaption class="shot-cap">Screeshot/alianca-conecta-reino.png</figcaption></figure>
+<figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/Screeshot/apoio-mutuo.png" alt="apoio-mutuo.png" /><figcaption class="shot-cap">Screeshot/apoio-mutuo.png</figcaption></figure>
+<figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/Screeshot/billing.png" alt="billing.png" /><figcaption class="shot-cap">Screeshot/billing.png</figcaption></figure>
+<figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/Screeshot/cloudflare-create-app.png" alt="cloudflare-create-app.png" /><figcaption class="shot-cap">Screeshot/cloudflare-create-app.png</figcaption></figure>
+<figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/Screeshot/cloudflare-custom-domains.png" alt="cloudflare-custom-domains.png" /><figcaption class="shot-cap">Screeshot/cloudflare-custom-domains.png</figcaption></figure>
+<figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/Screeshot/cloudflare-nameservers-redeconectamais.png" alt="cloudflare-nameservers-redeconectamais.png" /><figcaption class="shot-cap">Screeshot/cloudflare-nameservers-redeconectamais.png</figcaption></figure>
+<figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/Screeshot/cloudflare-redeconectamais-protected.png" alt="cloudflare-redeconectamais-protected.png" /><figcaption class="shot-cap">Screeshot/cloudflare-redeconectamais-protected.png</figcaption></figure>
+<figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/Screeshot/cloudflare-review-dns-redeconectamais.png" alt="cloudflare-review-dns-redeconectamais.png" /><figcaption class="shot-cap">Screeshot/cloudflare-review-dns-redeconectamais.png</figcaption></figure>
+<figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/Screeshot/cloudflare-workers-pages-list.png" alt="cloudflare-workers-pages-list.png" /><figcaption class="shot-cap">Screeshot/cloudflare-workers-pages-list.png</figcaption></figure>
+<figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/Screeshot/cloudflare-workers-weathered-wave-31c7.png" alt="cloudflare-workers-weathered-wave-31c7.png" /><figcaption class="shot-cap">Screeshot/cloudflare-workers-weathered-wave-31c7.png</figcaption></figure>
+<figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/Screeshot/coracao-aberto.png" alt="coracao-aberto.png" /><figcaption class="shot-cap">Screeshot/coracao-aberto.png</figcaption></figure>
+<figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/Screeshot/maintenance-dashboard-panel-access.png" alt="maintenance-dashboard-panel-access.png" /><figcaption class="shot-cap">Screeshot/maintenance-dashboard-panel-access.png</figcaption></figure>
+<figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/Screeshot/maintenance-dashboard-panel-ai_assistant.png" alt="maintenance-dashboard-panel-ai_assistant.png" /><figcaption class="shot-cap">Screeshot/maintenance-dashboard-panel-ai_assistant.png</figcaption></figure>
+<figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/Screeshot/mudanca-de-papeis.png" alt="mudanca-de-papeis.png" /><figcaption class="shot-cap">Screeshot/mudanca-de-papeis.png</figcaption></figure>
+<figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/Screeshot/stripe-webhooks.png" alt="stripe-webhooks.png" /><figcaption class="shot-cap">Screeshot/stripe-webhooks.png</figcaption></figure>
+<figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/Screeshot/visitantes-cadastro-rapido.png" alt="visitantes-cadastro-rapido.png" /><figcaption class="shot-cap">Screeshot/visitantes-cadastro-rapido.png</figcaption></figure>
+<figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/docs/manual-manutencao/screens/access_control.png" alt="access_control.png" /><figcaption class="shot-cap">docs/manual-manutencao/screens/access_control.png</figcaption></figure>
+<figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/docs/manual-manutencao/screens/alianca.png" alt="alianca.png" /><figcaption class="shot-cap">docs/manual-manutencao/screens/alianca.png</figcaption></figure>
+<figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/docs/manual-manutencao/screens/billing.png" alt="billing.png" /><figcaption class="shot-cap">docs/manual-manutencao/screens/billing.png</figcaption></figure>
+<figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/docs/manual-manutencao/screens/family_reception.png" alt="family_reception.png" /><figcaption class="shot-cap">docs/manual-manutencao/screens/family_reception.png</figcaption></figure>
+<figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/docs/manual-manutencao/screens/mudanca_papeis.png" alt="mudanca_papeis.png" /><figcaption class="shot-cap">docs/manual-manutencao/screens/mudanca_papeis.png</figcaption></figure>
+<figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/docs/manual-manutencao/screens/visitantes-cadastro-rapido.png" alt="visitantes-cadastro-rapido.png" /><figcaption class="shot-cap">docs/manual-manutencao/screens/visitantes-cadastro-rapido.png</figcaption></figure>
+<figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/docs/manual-manutencao/screens/visitor_followup.png" alt="visitor_followup.png" /><figcaption class="shot-cap">docs/manual-manutencao/screens/visitor_followup.png</figcaption></figure>
+<figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/docs/manual-painel/screens/02-indice-painel.png" alt="02-indice-painel.png" /><figcaption class="shot-cap">docs/manual-painel/screens/02-indice-painel.png</figcaption></figure>
+<figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/docs/manual-painel/screens/13-estacionamento.png" alt="13-estacionamento.png" /><figcaption class="shot-cap">docs/manual-painel/screens/13-estacionamento.png</figcaption></figure>
+<figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/docs/manual-painel/screens/apoio-mutuo.png" alt="apoio-mutuo.png" /><figcaption class="shot-cap">docs/manual-painel/screens/apoio-mutuo.png</figcaption></figure>
 <figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/images/captura.png" alt="captura.png" /><figcaption class="shot-cap">images/captura.png</figcaption></figure>
 <figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/images/circulo.png" alt="circulo.png" /><figcaption class="shot-cap">images/circulo.png</figcaption></figure>
 <figure><img src="file:///C:/Users/maufr/.cursor/MProj/ecossistema/app-igreja/images/IBEP.png" alt="IBEP.png" /><figcaption class="shot-cap">images/IBEP.png</figcaption></figure>

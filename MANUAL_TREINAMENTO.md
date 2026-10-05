@@ -1,383 +1,239 @@
-# Manual de Treinamento — Mão na Massa
-## App de Gestão IBN (Igreja Batista Norte)
+# Manual de Treinamento — Conecta+
 
-**Público:** membros, famílias e voluntários que usam o aplicativo no celular ou na versão web (PWA).  
-**Formato:** missões práticas — cada missão é uma tarefa que você executa no app enquanto lê.  
-**Tempo estimado:** 25 a 40 minutos (primeira vez).
+Treinamento prático em missões para membros, famílias, voluntários e equipes. Execute cada missão no ambiente da sua igreja.
 
-**Pacote de documentação:** [`PACOTE_1_VISAO_GERAL.md`](PACOTE_1_VISAO_GERAL.md) · Índice completo: [`INDICE_DOCUMENTACAO.md`](INDICE_DOCUMENTACAO.md)
+**Atualizado em:** 05/10/2026
+**Navegação publicada:** **Início + menu lateral + Eu quero… + Perfil + engrenagem**. Não use o antigo carrossel do Painel como roteiro.
 
 ---
 
-## Introdução
+## Antes de começar
 
-Bem-vindo ao aplicativo da **Igreja Batista Norte (IBN)**.
-
-Este app foi criado para aproximar você da vida da igreja no dia a dia: participar de eventos, confirmar presença, cuidar dos seus dados, acompanhar sua família e acessar recursos como ofertas, pastoral e escalas — tudo a partir do seu celular, com segurança.
-
-Seus dados são validados em tempo real no banco de dados da igreja (plataforma **Supabase**). Isso significa que, quando você entra com celular e senha, o sistema confere sua identidade no servidor antes de liberar o painel — não é apenas uma “tela aberta”, é um acesso autenticado.
-
-> **Como usar este manual**  
-> Leia uma missão por vez. Não pule etapas: cada missão prepara a seguinte.  
-> Itens em **negrito** são botões, menus ou áreas da tela que você deve tocar.
+- Confira nome/logo da igreja ativa.
+- Tenha acesso ao e-mail cadastrado: primeiro PIN e recuperação são enviados por e-mail.
+- Itens variam por papel e ACL; não ver uma opção pode ser comportamento correto.
+- Em aparelho compartilhado, encerre a sessão ao terminar.
 
 ---
 
-## Metodologia — As Missões
+## Missão 1 — Entrar pela primeira vez
 
-| Símbolo | Significado |
-|---------|-------------|
-| **Objetivo** | O que você vai aprender |
-| **Caminho** | Onde clicar na interface |
-| **Ação prática** | Passo a passo numerado |
-| **Dica Pro** | Atalho ou cuidado que facilita o uso |
+**Caminho:** Boas-vindas → celular → Continuar → Receber código por e-mail → PIN.
 
-Ao concluir todas as missões obrigatórias, você saberá: entrar no app, concluir o cadastro, usar o painel, fazer check-in com QR Code e sair com segurança.
+1. Digite o celular com DDD.
+2. Toque em **Continuar**.
+3. Se ainda não possui PIN, solicite o código por e-mail.
+4. Confira caixa de entrada, spam e promoções.
+5. Digite os quatro dígitos.
+6. Se o usuário participa de várias igrejas, selecione a instância correta.
 
----
-
-# Missão 1 — Primeiro acesso: Login com celular e senha
-
-### Objetivo da Missão
-Aprender a entrar no app usando seu **número de celular** e sua **senha de acesso de 4 dígitos**.
-
-### Caminho
-Tela inicial → **Boas-Vindas** → campos **Celular** e **Senha de acesso** → botão **Entrar** (ou ícone **WhatsApp** na primeira vez).
-
-### Ação prática
-
-1. Abra o aplicativo IBN no navegador (PWA) ou no celular.
-2. Aguarde a tela de **Boas-Vindas** carregar (logo da igreja no topo).
-3. No campo **Celular**, digite seu número com DDD — o app formata automaticamente: `(00) 00000-0000`.
-4. Se for sua **primeira entrada** e ainda não tiver senha:
-   - Toque no ícone verde do **WhatsApp** ao lado do campo de senha.
-   - Siga as instruções na mensagem: o sistema gera uma senha temporária de 4 dígitos.
-   - A mensagem pode ser copiada automaticamente para você colar ou memorizar.
-5. No campo **Senha de acesso**, digite os **4 dígitos** (a senha fica oculta, como um PIN).
-6. O app pode entrar sozinho ao completar o 4º dígito; se preferir, toque em **Entrar**.
-7. Se o login for aceito, você será direcionado ao **Painel** ou ao **Cadastro**, conforme seu perfil no banco de dados.
-
-### O que acontece nos bastidores
-O app envia celular e senha para o servidor (**Supabase**), que valida através da função `verificar_login`. Só após essa confirmação sua sessão é gravada no aparelho.
-
-### Dica Pro
-Na **primeira entrada**, o texto abaixo do campo de senha explica se o WhatsApp abre no **seu celular** ou no **gestor** — isso depende da configuração da igreja (`psw_user` / `psw_mngr`). Leia o hint antes de tocar no ícone.
-
-> **Se algo der errado**  
-> - *"Número ou senha inválidos"* — confira os 4 dígitos; se **esqueceu** a senha pessoal, use **Esqueci minha senha** no passo 2 (e-mail). Na **primeira vez**, gere código pelo **WhatsApp**.  
-> - *"Código necessário"* — toque em **Receber código no WhatsApp** antes de digitar a senha.  
-> - *"Validação indisponível"* — problema técnico no servidor; avise a equipe de TI da igreja.
+**Validação:** o app abre cadastro, LGPD ou Início conforme o estado do perfil. WhatsApp não entrega PIN.
 
 ---
 
-# Missão 2 — Primeiro cadastro: dados, LGPD e selfie
+## Missão 2 — Concluir cadastro e LGPD
 
-> **Reconhecimento LGPD opcional:** a igreja define o parâmetro **`LGPD_Ativo`** em **Manutenção → Controle de Acesso**. Com **`sim`**, siga esta missão integralmente. Com **`nao`**, pule termos e selfie — preencha **Nome**, **Data Nascimento** e **CEP**, toque **Continuar** e vá ao **Índice** (detalhes no [Pacote 5, seção 0.2b](MANUAL_DASHBOARD_MEMBRO.md#02b-cadastro-simplificado-quando-lgpd_ativo--nao)).
+**Caminho:** onboarding → Cadastro/LGPD.
 
-### Objetivo da Missão
-Concluir seu cadastro inicial com nome, data de nascimento, aceite dos termos de privacidade (**LGPD**) e foto (**selfie**).
+1. Confira telefone, nome e nascimento.
+2. Informe CEP e dados solicitados.
+3. Com LGPD ativo, leia o texto da igreja até o fim.
+4. Registre aceite/recusa e selfie quando exigido.
+5. Confirme o cadastro.
+6. Depois, abra **Menu → Perfil → Dados Cadastrais** e revise contato/endereço.
 
-### Caminho
-Após login (primeira vez) → tela **Cadastro** → formulário → termos LGPD → **Capturar Selfie** → **Confirmar Registro**.
-
-### Ação prática
-
-1. Na tela **Cadastro**, confira se seu **Telefone** aparece correto (campo bloqueado — veio do login).
-2. Preencha **Nome Completo** (o app capitaliza as palavras automaticamente).
-3. Preencha **Data Nascimento** no formato `dd/mm/aaaa`.
-4. Role a caixa **Termos de Uso e Privacidade (LGPD)** **até o final**.
-   - Enquanto não rolar tudo, verá: `↓ Role para ler tudo ↓`
-   - Ao chegar ao fim: `✅ Termos lidos.`
-5. Marque **Li e aceito** (só fica ativo depois do scroll completo e com nome/nascimento preenchidos).
-   - Se marcar **Li e não concordo**, o app exibirá orientações sobre privacidade — o cadastro segue conforme a política da igreja.
-6. Toque para abrir a **câmera** ou selecionar foto (na web, escolha um arquivo de imagem).
-7. **Capture a selfie com boa iluminação**: rosto centralizado, fundo simples, sem óculos escuros ou chapéu que cubram o rosto.
-8. Na tela **Confirmar Registro**, revise nome, data e foto.
-9. Toque para **finalizar o cadastro**.
-10. Ao ver **"Cadastro inicial concluído"**, você será levado a completar **Dados Cadastrais** ou aos termos LGPD, se ainda faltar algum passo.
-
-### Dica Pro
-A **trava de leitura LGPD** existe por lei e por respeito a você: o sistema só libera o aceite quando você realmente percorreu todo o texto. Não é bug — é proteção.
-
-> **Permissão de câmera**  
-> Se o celular pedir acesso à câmera, toque em **Permitir**. Sem isso, a selfie biométrica não pode ser registrada.
-
-> **Após o cadastro**  
-> Acesse **Dados Cadastrais** (no painel) e **altere a senha temporária** para uma senha pessoal de 4 dígitos que só você saiba.
+Com LGPD inativo, o fluxo é simplificado. A configuração vale por igreja.
 
 ---
 
-# Missão 3 — Navegando o Painel (Dashboard)
+## Missão 3 — Reconhecer a navegação
 
-### Objetivo da Missão
-Conhecer o **Painel principal**: cabeçalho, cards deslizantes e rodapé de navegação.
+No **Início**, identifique:
 
-### Caminho
-Após login → **Índice do Aplicativo** (atalhos com etiquetas) **ou** **Painel** / **Dashboard** → deslize ou use **<** e **>** no rodapé.
+- Próximos Eventos e avisos;
+- bolo de aniversários, quando houver celebração no dia;
+- faixa **Eu quero…**;
+- Abigail, quando autorizada;
+- sticker amarelo de novos registros, apenas para equipe autorizada.
 
-### Ação prática
+Abra o **menu lateral** e localize Perfil, Financeiro, Documentos oficiais, Minha Célula, Escalas, murais, Apoio Mútuo, Sugestões, ajuda, redes e Sobre. Abra e feche sem alterar dados.
 
-1. Observe o topo: **"Boas-Vindas, {seu nome}"** e o título do card atual.
-   - Se o fundo do cabeçalho estiver **vermelho**, seus termos LGPD ainda precisam de atenção — vá em **Dados Cadastrais** ou **LGPD**.
-2. O centro da tela mostra **um card por vez** (carrossel horizontal).
-3. No rodapé, observe o indicador **1 / N** (posição atual no carrossel).
-4. Para mudar de card:
-   - **Deslize** o dedo para a esquerda ou direita no card, **ou**
-   - Use os botões **‹** e **›** no rodapé (segurar o botão avança card a card automaticamente).
-5. No **Índice**, toque na etiqueta do módulo desejado para abrir o card correspondente no Painel.
-6. Cards que você pode encontrar (conforme permissão da igreja):
-   - **Agenda da Família**
-   - **Check In / QR Code**
-   - **SALA(S)**
-   - **Dízimos e Ofertas**
-   - **Coração Aberto**
-   - **Lista de Membros**
-   - **Aniversariantes**
-   - **Financeiro**
-   - **Escalas**
-   - **Dados Cadastrais / Gerenciar Família**
-6. No rodapé, toque no botão central (**Menu**) para ir à tela de atalhos com lista de módulos (ícones coloridos por módulo).
-7. Se você for da equipe e tiver permissão, verá o ícone de **engrenagem** (manutenção) — ignore neste treinamento se não for seu caso.
-
-### Dica Pro
-Nem todo card aparece para todo mundo: a igreja configura **permissões por perfil**. Se um módulo não aparecer, fale com o administrador — não é falha do seu aparelho.
-
-> **Banner amarelo de ACL**  
-> Se aparecer aviso de "controle de acesso indisponível", o app está em modo de proteção. Avise a equipe técnica; evite operações sensíveis até normalizar.
+Se houver autorização, abra a **engrenagem** e reconheça os grupos, sem executar ações destrutivas.
 
 ---
 
-# Missão 4 — Check-in completo: audiência e QR Code
+## Missão 4 — Agenda da Família
 
-### Objetivo da Missão
-Registrar sua família no evento (**audiência / pré-check-in**) e **apresentar o QR Code** no totem ou na entrada, no dia do culto ou evento.
+**Caminho:** Início → tocar em evento → Agenda da Família.
 
-### Caminho
-**Painel** → card **Agenda da Família** → marcar audiência → (no dia do evento) card **Check In / QR Code** → totem da igreja.
+1. Escolha evento publicado.
+2. Confira data, horário, local e vagas.
+3. Marque os integrantes em **Audiência**.
+4. Adicione o compromisso ao calendário quando disponível.
+5. Em evento com Espaço Infantil, abra o QR de entrada/saída.
+6. Em evento de quórum/totem, apresente o QR conforme orientação.
 
-### Ação prática — Parte A: Antes ou no dia (audiência)
-
-1. No **Painel**, deslize até o card **Agenda da Família**.
-2. Em **Trocar Evento**, selecione o culto ou evento desejado (chips horizontais).
-3. Confira data, horário, local e vagas.
-4. Na lista de **Audiência**, marque o checkbox de cada membro da família que participará.
-   - Em eventos de **quórum**, apenas o membro da sessão ativa pode ser marcado.
-5. Aguarde a confirmação visual — o sistema grava o **pré-check-in** no banco de dados.
-6. Leia as mensagens de orientação na tela (em cinza ou vermelho se houver erro):
-   - *"Marque a audiência abaixo para liberar o card de check-in com QR Code."*
-   - *"O card com QR Code ficará disponível no dia do evento."*
-
-### Ação prática — Parte B: No dia do evento (QR Code)
-
-1. No **dia do evento**, volte ao **Painel** e localize o card de check-in (pode aparecer como **QR Code — Check-in Totem**, **QR Code — Check-in Quórum** ou **Check In — QR Code**).
-2. Verifique:
-   - **Nome do evento**
-   - **Etiqueta** — código da sua família (ex.: código alfanumérico em destaque amarelo)
-   - **QR Code** — quadrado branco com o padrão de barras
-3. Aumente o brilho da tela do celular.
-4. No totem da igreja (tablet/celular fixo na entrada), aponte o QR Code para a câmera do totem.
-5. Aguarde a mensagem de confirmação no totem: *"Confirmação realizada com sucesso"*.
-6. Se já tinha confirmado antes, verá aviso de que o check-in **já foi realizado** — isso é normal e evita duplicidade.
-
-### Quem faz o quê (visão geral)
-
-| Etapa | Quem executa | Onde |
-|-------|--------------|------|
-| Criar evento | Equipe (manutenção) | Painel administrativo |
-| Marcar audiência | **Você (membro)** | Card Agenda da Família |
-| Exibir QR | **Você (membro)** | Card Check-in |
-| Ler QR e confirmar | Totem / equipe na entrada | Aparelho do totem |
-| Entrada nas salas Kids/Teens | Equipe | Manutenção (não é no seu celular) |
-
-### Dica Pro
-O check-in no totem **só funciona** se você marcou a audiência antes. Se o totem disser *"Pré-check-in não encontrado"*, volte ao card **Agenda da Família** e marque os participantes.
-
-> **Eventos de quórum**  
-> Após confirmar no totem, a audiência pode **travar** — você não desmarca por engano. Isso protege a lista oficial de presença.
-
-> **Sem código de família**  
-> Se o QR não aparecer e houver aviso para vincular família, vá em **Dados Cadastrais** e confira seu código de família com a secretaria.
+**Resultado:** inscrições são atualizadas. Geofence, quando configurado e autorizado, pode confirmar presença dentro da janela e do raio.
 
 ---
 
-# Missão 5 — Gestão de saída: encerrar sessão com segurança
+## Missão 5 — Contribuir
 
-### Objetivo da Missão
-Sair do aplicativo de forma segura, limpando os dados de login do aparelho — essencial em celulares compartilhados ou computadores públicos.
+**Caminho:** Início → Eu quero… → Contribuir.
 
-### Caminho
-**Painel** → **Menu** (rodapé) → tela de atalhos → **Sair do aplicativo** (celular) ou **Encerrar sessão** (navegador web).
+1. Escolha Dízimos e Ofertas, Campanhas e Projetos ou Primícias.
+2. Confira recebedor e igreja.
+3. Informe valor/item quando solicitado.
+4. Copie a chave PIX ou instrução identificada.
+5. Conclua no banco.
 
-### Ação prática
-
-1. No **Painel**, toque em **Menu** no rodapé central (entre os controles de navegação).
-2. Você verá a tela de **atalhos** com botões para os módulos (Agenda, Ofertas, Financeiro, etc.).
-3. Role até o rodapé desta tela.
-4. Toque em:
-   - **Sair do aplicativo** — no celular (Android pode fechar o app após sair), **ou**
-   - **Encerrar sessão** — na versão web/PWA.
-5. Aguarde o texto **"Encerrando…"** se aparecer.
-6. Você retornará à tela de **Boas-Vindas** (login).
-7. Na web, a URL pode incluir parâmetro de logout para **impedir login automático** — nesse caso, digite celular e senha novamente.
-
-### Por que isso importa
-Ao sair, o app remove do aparelho o **telefone** e o **identificador do perfil** salvos localmente. A próxima pessoa que pegar o celular **não entra na sua conta** sem saber sua senha de 4 dígitos — e a senha continua validada no **Supabase**.
-
-### Dica Pro
-Troque de aparelho? Saia no aparelho antigo e entre no novo com celular + senha. Se alterou permissões na igreja e algo “não aparece”, **saia e entre de novo** para atualizar a sessão.
-
-> **Totem da igreja**  
-> No aparelho do totem, use **Encerrar sessão** na tela de check-in ao final do culto — nunca deixe o totem logado como se fosse um membro comum.
-
-> **Se der erro ao sair**  
-> Mensagem: *"Não foi possível encerrar a sessão"* ou *"Não foi possível sair do aplicativo"*. Feche o navegador ou o app manualmente e, se possível, limpe os dados do site no navegador.
+O Conecta+ não debita automaticamente a conta.
 
 ---
 
-## Missões bônus (quando estiver confortável)
+## Missão 6 — Cuidado Pastoral
 
-### Missão B1 — Trocar sua senha de acesso
+**Caminho:** Início → Eu quero… → Cuidado Pastoral.
 
-**Caminho:** Painel → **Dados Cadastrais** (card ou atalho no Menu) → seção **Senha de acesso**.
+1. Escolha motivo, situação, beneficiário e destino.
+2. Escreva o pedido sem dados desnecessários.
+3. Envie e abra **Meus pedidos**.
+4. Em pedido novo, use Excluir se disponível.
+5. Se o acompanhamento já começou, use **Solicitar cancelamento**, justifique e aguarde análise.
 
-1. Digite a senha **atual** (4 dígitos).
-2. Digite a **nova** senha e **confirme**.
-3. Salve e memorize — você usará nos próximos logins.
-
----
-
-### Missão B2 — Gerenciar sua família
-
-**Caminho:** Painel → **Gerenciar Família**.
-
-1. Abra a seção **Adicionar membro** (recolhível).
-2. Busque por **nome** ou informe telefone, nome, parentesco e data de nascimento.
-3. Se a pessoa já estiver em **outra família**, confirme a **transferência** quando o app solicitar.
-4. Salve — o app copia o **endereço completo** da sua família para o perfil do membro (quando possível).
-5. Para membros já listados, use o **checkbox de aceite** na lista para reconhecer o vínculo; o endereço também é herdado ao aceitar.
+A exclusão final de pedido acompanhado é confirmada por Super Administrador no painel pastoral.
 
 ---
 
-### Missão B3 — Coração Aberto (pedido pastoral)
+## Missão 7 — Perfil e família
 
-**Caminho:** Painel → **Coração Aberto** → formulário.
+**Caminho:** Menu → Perfil.
 
-1. Escolha **Motivo** e **Situação**.
-2. Indique para quem é o pedido e o destino (sigilo ou intercessão).
-3. Escreva seu pedido e toque em **Enviar pedido**.
+Pratique:
 
----
+1. **Dados Cadastrais:** revisar endereço, e-mail e PIN.
+2. **Gerenciar Família:** conferir integrantes, parentescos e código familiar.
+3. **Carteirinha Digital:** abrir QR permanente.
+4. **Ofereço meus Serviços:** conhecer a publicação no Apoio Mútuo.
+5. **Trilha de Discipulado:** abrir progresso e conquistas.
+6. **Reembolsos:** iniciar um RD somente se houver despesa real e autorização.
 
-### Missão B4 — Escalas em equipe: vagas por domingo e ciclo em bloco *(staff / líder de escala)*
-
-> **Quem pode fazer:** perfil com acesso à **Manutenção** e permissão nos cards de escala (`Tipos de Escala`, `Servos em Disponibilidade`, `Programação de Escalas`). Se você não vê a engrenagem no Painel, pule esta missão.
-
-#### Objetivo da Missão
-Configurar um tipo de escala com **várias vagas no mesmo domingo** (ex.: vigilância com 4 servos) e gerar a programação automaticamente no modo **equipe**.
-
-#### Caminho
-**Painel** → ícone **engrenagem** (Manutenção) → **Tipos de Escala** → **Servos em Disponibilidade** → **Programação de Escalas** → conferir no card **Escalas** do Painel.
-
-#### Ação prática — Parte A: Configurar o tipo de escala
-
-1. No **Painel**, toque no ícone de **engrenagem** para abrir a **Manutenção**.
-2. Abra o card **Tipos de Escala**.
-3. Cadastre um tipo novo **ou** edite um existente (ex.: `vigilancia_estacionamento` / **Vigilância Estacionamento**).
-4. Em **Vagas por domingo**, informe quantos servos podem atuar na mesma data — use **4** neste exercício (aceita de 1 a 50).
-5. Em **Modo do ciclo em bloco**, selecione **Equipe** (em vez de Individual).
-   - **Individual:** cada servo em domingo distinto no ciclo automático.
-   - **Equipe:** o ciclo preenche até N servos no **mesmo** domingo antes de avançar para o próximo.
-6. Toque em **Cadastrar** ou **Salvar alterações** e aguarde a confirmação na tela.
-
-#### Ação prática — Parte B: Preparar os servos
-
-1. Na Manutenção, abra **Servos em Disponibilidade**.
-2. Selecione o **mesmo tipo de escala** que você acabou de configurar.
-3. Confira se há servos **ativos** com **ordem sequencial** definida (1, 2, 3, 4…).
-   - Sem ordem, o ciclo em bloco **não gera** a prévia — ajuste a ordem antes de continuar.
-4. Se faltar servo, cadastre e defina a ordem na lista.
-
-#### Ação prática — Parte C: Gerar o ciclo em equipe
-
-1. Abra **Programação de Escalas** na Manutenção.
-2. Selecione o tipo de escala configurado (chip/radio no topo do card).
-3. Toque em **Escala em bloco**.
-4. Leia a **prévia** (título *Prévia — escala em bloco*): com modo **equipe** e 4 vagas, você deve ver **até 4 servos na mesma data** antes de passar ao domingo seguinte.
-5. Confira a mensagem de resumo (quantidade de escalas, domingos e ordem sequencial).
-6. Toque em **Gravar bloco** e confirme no diálogo para aplicar via `aplicar_ciclo_escala`.
-7. Aguarde o toast de sucesso com a quantidade de escalas gravadas.
-
-#### Ação prática — Parte D: Validar no Painel
-
-1. Volte ao **Painel** (sair da Manutenção se necessário).
-2. Deslize até o card **Escalas**.
-3. Selecione o tipo de escala que você programou.
-4. Verifique se **o mesmo domingo** lista **vários nomes** (até o limite de vagas configurado).
-5. Toque no ícone **WhatsApp** ao lado de um servo, se houver telefone — confirme que o contato abre corretamente.
-
-#### O que acontece nos bastidores
-O app consulta `get_scale_cycle_context` (ocupação por data, vagas e modo) e monta a prévia em `gerarCicloCompleto`. Ao confirmar, grava tudo de uma vez em `escalas_log` pela RPC `aplicar_ciclo_escala` — se uma entrada falhar, **nenhuma** é salva (transação).
-
-#### Dica Pro
-Use **modo equipe** para vigilância, recepção ou estacionamento (vários no mesmo culto). Use **modo individual** para intercessão ou funções em que cada servo serve em domingos alternados. O **registro manual** na Programação de Escalas também respeita o limite de vagas — o mesmo servo **não** pode repetir na mesma data.
-
-> **Se a prévia falhar**  
-> - *"sem ordem_sequencial"* — defina a ordem em **Servos em Disponibilidade**.  
-> - *"Calendário saturado"* — há muitas datas futuras já ocupadas; revise escalas existentes ou reduza servos no ciclo.  
-> - *"excedem as N vaga(s)"* — o lote ultrapassou `vagas_por_servico`; gere de novo ou remova registros conflitantes.
+Não remova representante legal nem transfira pessoa entre famílias como teste.
 
 ---
 
-## Checklist — Concluí o treinamento?
+## Missão 8 — Menu do membro
 
-Marque mentalmente cada item:
+Abra, conforme sua permissão:
 
-- [ ] Entrei com celular e senha (ou gerei PIN pelo WhatsApp na primeira vez)
-- [ ] Completei cadastro com LGPD (scroll até o fim) e selfie
-- [ ] Naveguei pelos cards do Painel com deslize ou **<** / **>**
-- [ ] Marquei audiência em um evento na **Agenda da Família**
-- [ ] Localizei etiqueta + QR Code no dia do evento
-- [ ] Entendi que o totem confirma o check-in após o pré-check-in
-- [ ] Saí pelo **Menu** → **Sair do aplicativo** / **Encerrar sessão**
+- **Documentos oficiais:** consultar documento publicado;
+- **Apoio Mútuo:** categoria → pessoa → cartão;
+- **Minha Célula:** conferir vínculo;
+- **Escalas:** conferir datas e equipe;
+- **Murais:** ler oportunidade/doação;
+- **Como faço…?:** localizar artigo de ajuda.
 
-### Checklist extra — líder de escala *(opcional)*
-
-- [ ] Configurei **vagas por domingo** e modo **equipe** em **Tipos de Escala**
-- [ ] Servos ativos com **ordem sequencial** em **Servos em Disponibilidade**
-- [ ] Gerei e confirmei o **ciclo em bloco** em **Programação de Escalas**
-- [ ] Validei **vários servos no mesmo domingo** no card **Escalas** do Painel
+A ausência de conteúdo pode significar que a igreja ainda não publicou registros.
 
 ---
 
-## Glossário rápido
+## Missão 9 — Espaço Infantil
 
-| Termo | Significado simples |
-|-------|---------------------|
-| **PIN / Senha de acesso** | 4 dígitos numéricos pessoais |
-| **Pré-check-in / Audiência** | Marcar presença prevista antes do totem |
-| **QR Code** | Código visual lido pela câmera do totem |
-| **Totem** | Aparelho fixo na entrada para confirmar check-in |
-| **LGPD** | Lei de proteção de dados; aceite registrado no seu perfil |
-| **Supabase** | Banco de dados na nuvem onde seus dados são validados |
-| **PWA** | Versão web do app, instalável no navegador |
-| **Vagas por domingo** | Máximo de servos no mesmo domingo para um tipo de escala (`vagas_por_servico`) |
-| **Ciclo em bloco** | Geração automática de várias datas de escala de uma vez (modo individual ou equipe) |
+### Família
+1. Inscreva a criança na Agenda.
+2. Abra o QR familiar.
+3. Apresente na entrada.
+4. Na retirada, apresente novamente.
+5. Confira estado **Na sala** ou **Liberado**.
 
----
+### Equipe
+1. Abra **Engrenagem → Culto e Eventos → Sala(s) - Check In**.
+2. Selecione evento/sala.
+3. Leia o QR e confirme identidade da família/criança.
+4. Registre entrada.
+5. Na retirada, valide o vínculo e registre saída.
 
-## Precisa de ajuda?
-
-| Situação | O que fazer |
-|----------|-------------|
-| Esqueci minha senha (já cadastrado) | **Passo 2** do login → **Esqueci minha senha** → pergunta de segurança → novo PIN por **e-mail** |
-| Primeira entrada | **Receber código no WhatsApp** no passo 2 |
-| QR não aparece | Confirme: audiência marcada? É o dia do evento? Código de família cadastrado? |
-| Card não aparece no Painel | Permissão do perfil — fale com administrador |
-| Erro técnico persistente | Anote a mensagem na tela e contate a equipe de TI da igreja |
-| Ciclo em bloco não gera prévia | Verifique ordem sequencial dos servos e permissão ACL de escala |
-| Domingo com mais servos que o permitido | Ajuste `vagas_por_servico` em **Tipos de Escala** ou remova escalas extras |
+Confira alertas alimentares, necessidades específicas e observações sem expor dados a pessoas não autorizadas.
 
 ---
 
-*Manual de treinamento — App IBN · Igreja Batista Norte*  
-*Alinhado ao aplicativo, ao [`FUNCIONALIDADES.md`](FUNCIONALIDADES.md) e ao [`BLUEPRINT.md`](BLUEPRINT.md).*
+## Missão 10 — Recepção e acolhimento (equipe)
+
+1. Abra **Recepção Familiar**.
+2. Em **Novos Membros**, selecione pessoa já cadastrada.
+3. Confira `family_id` e celular pré-preenchido no convite.
+4. Na fila, revise telefone, nascimento, CEP, família e conflitos.
+5. Processe somente lote válido.
+6. Abra a inbox de novos cadastros e marque o item tratado.
+7. Na Régua, confirme que apenas visitante efetivo recebeu D+1/D+4/D+8.
+8. Observe o sticker: Recepção tem prioridade; depois, Mudança Papéis filtrada em Visitante.
+
+Não use a régua para membro ou congregado.
+
+---
+
+## Missão 11 — Escalas (líder)
+
+**Caminho:** Engrenagem → Culto e Eventos.
+
+1. Em **Tipos de Escala**, configure vagas e modo individual/equipe.
+2. Em **Servos em Disponibilidade**, associe voluntários e ordem.
+3. Em **Programação de Escalas**, gere prévia.
+4. Confira datas, vagas e duplicidades.
+5. Aplique o bloco apenas depois da revisão.
+6. Valide em **Menu → Escalas** com um usuário autorizado.
+
+---
+
+## Missão 12 — Governança (administrador)
+
+1. Confirme igreja ativa.
+2. Abra **Controle de Acesso** e reconheça App Ativo, Gestão Liberada e LGPD.
+3. Revise papéis e grants sem usar PIN/senha como dado administrativo.
+4. Teste **Modo Ghost** com perfil de teste: iniciar leva ao Início uma vez; depois a navegação permanece na rota escolhida.
+5. Encerre Ghost e confirme retorno à identidade real.
+6. Confira **Assinaturas**; Gestão Liberada remove o paywall, mas não concede ACL.
+
+Gestor de Controle de Acesso nunca pode ver Super Administrador, seus logs ou credenciais.
+
+---
+
+## Missão 13 — Encerrar sessão
+
+1. Abra o menu.
+2. Toque em **Encerrar sessão/Sair do aplicativo**.
+3. Confirme retorno à tela de login ou site configurado pela igreja.
+4. Em totem/aparelho compartilhado, verifique que a sessão anterior não é restaurada.
+
+---
+
+## Checklist final
+
+- [ ] Entrei com PIN recebido por e-mail.
+- [ ] Confirmei a igreja ativa.
+- [ ] Concluí cadastro/LGPD conforme configuração.
+- [ ] Usei Início, menu, Eu quero… e Perfil.
+- [ ] Abri evento e marquei audiência.
+- [ ] Entendi QR/totem/geofence e Espaço Infantil.
+- [ ] Sei abrir e acompanhar Cuidado Pastoral.
+- [ ] Sei onde ficam documentos, escalas e Apoio Mútuo.
+- [ ] Equipe: revisei Recepção, inbox, régua e sticker.
+- [ ] Administração: entendi ACL, Ghost, billing e Gestão Liberada.
+- [ ] Encerrei sessão com segurança.
+
+---
+
+## Solução rápida de problemas
+
+| Situação | Ação |
+|---|---|
+| PIN não chegou | Conferir e-mail/spam e endereço cadastrado |
+| Item não aparece | Conferir papel/grant; sair e entrar após mudança |
+| Evento não aparece | Confirmar publicação, período e tenant |
+| QR não confirma | Conferir audiência, evento, família e fluxo do totem |
+| Criança não aparece | Conferir parentesco, evento, sala e inscrição |
+| Régua nasceu para membro | Interromper e revisar papéis/patch do visitante efetivo |
+| Ghost volta ao Início | Reportar regressão; só entrada/saída devem redirecionar automaticamente |
+| Cobrança bloqueia | Conferir assinatura, instância ativa e Gestão Liberada |
+
+*Conecta+ · Manual de Treinamento · revisão de 05/10/2026.*

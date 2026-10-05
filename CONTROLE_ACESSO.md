@@ -10,7 +10,7 @@ Script SQL: [`scripts/access-control-schema.sql`](scripts/access-control-schema.
 
 ---
 
-## Status da implementação (atualizado em 09/06/2026)
+## Status da implementação (atualizado em 05/10/2026)
 
 Documento de encerramento da sessão: o que já está pronto, o que falta e qual é o **próximo passo** recomendado.
 
@@ -52,6 +52,8 @@ Documento de encerramento da sessão: o que já está pronto, o que falta e qual
 | **Mudança de Papéis** | Card pastoral/super_admin (`access-control-pastoral-role-change.sql`) |
 | **Cadastro de Usuário** | `maintenance.card.profile_cadastro` — busca, CEP, exclusão completa |
 | **Acessos de Usuários** | `maintenance.card.profile_access_insights` — histórico de logins e telas visitadas *(super_admin)* |
+| **Gestor em Controle de Acesso** | Opera papéis e grants sem listar, visualizar ou editar Super Administrador, seus acessos ou PIN/senha |
+| **Modo Ghost** | ACL, perfil, telefone, família e dados usam a identidade efetiva do alvo; cobrança e instância permanecem na identidade real |
 | **Sessão assinada** | `profile_sessions` + header `x-session-token` (prioridade sobre `x-profile-id`) |
 | **Telemetria de uso** | Tabelas `profile_app_access_events` e `profile_app_access_screen_visits`; RPCs admin e `record_profile_app_access_screen_visit` |
 | **Mapa ACL PDF** | `npm run build:access-roles-pdf` → `PAPEIS_CONTROLE_ACESSO.pdf` |
@@ -126,6 +128,13 @@ Use sempre **`profiles.id`** como “usuário” do ACL.
 - Não use só `auth.users.id` — pedidos pastorais e RPCs já documentam o desvio (`pastoral-requests-fields.sql`).
 - O app pode resolver `profile_id` a partir do telefone da sessão (`find_profile_id_by_phone` / SELECT em `profiles`).
 
+### 2.1 Identidade efetiva no Modo Ghost
+
+- Telas, listas e permissões resolvem o alvo com `loadEffectiveSessionProfile`, `resolveEffectiveProfileId` e `getEffectiveUserPhone`.
+- O bypass de `super_admin` do operador fica desligado para a ACL simulada.
+- O auditor entra e permanece na rota escolhida; grant negado do alvo não provoca retorno ao Início nem bloqueio “Sem acesso nesta simulação”.
+- Iniciar/encerrar Ghost são as únicas transições automáticas para o Início. Billing, paywall e seleção de instância continuam vinculados ao operador real.
+
 ---
 
 ## 3. Inventário de telas (`resource_type = 'screen'`)
@@ -143,6 +152,11 @@ Use sempre **`profiles.id`** como “usuário” do ACL.
 | `screen:/financial` | `app/financial.tsx` | Relatórios financeiros (leitura) |
 | `screen:/expense-report` | `app/expense-report.tsx` | Relatório de Despesas (RD) |
 | `screen:/lgpd` | `app/lgpd.tsx` | Termos LGPD |
+| `screen:/lista-familias` | `app/lista-familias.tsx` | Diretório de famílias |
+| `screen:/visitantes-cadastro-rapido` | `app/visitantes-cadastro-rapido.tsx` | Cadastro rápido e QR do visitante |
+| `screen:/documentos-oficiais` | `app/documentos-oficiais.tsx` | Documentos publicados da igreja |
+| `screen:/apoio-mutuo` | `app/apoio-mutuo.tsx` | Serviços da comunidade |
+| `screen:/atribuicoes` | `app/atribuicoes.tsx` | Papéis operacionais; pastoral e super_admin |
 
 ### Cards do dashboard (`screen:dashboard.card.*`)
 
@@ -160,6 +174,15 @@ Use sempre **`profiles.id`** como “usuário” do ACL.
 | `screen:dashboard.card.grouped_manage` | Menu (perfil + família) | `grouped_manage` |
 
 Visibilidade condicional de cards (parâmetros/evento) continua no app; o ACL define se o usuário **pode** ver o card quando ele estaria disponível.
+
+As rotas dedicadas e o menu/“Eu quero…” são a navegação publicada. O antigo carrossel do Painel não deve ser usado como inventário do produto.
+
+### Recursos administrativos restritos
+
+- `maintenance.card.profile_access_insights` (**Acessos de Usuários**) é exclusivo de `super_admin`, inclusive nas RPCs de listar e limpar histórico.
+- O papel `gestor_controle_acesso` pode administrar o ACL, mas o escudo autoritativo SQL (`assert_gestor_super_admin_shield` e filtros de visibilidade) impede qualquer acesso ao perfil/papel `super_admin`, aos registros de acesso desse perfil e às colunas de PIN/senha.
+- O cliente aplica os mesmos filtros em `lib/gestorControleAcessoSecurity.ts` como defesa em profundidade.
+<!-- Proteção aplicada: Gestor não tem visibilidade do Super Administrador -->
 
 ---
 
@@ -182,6 +205,8 @@ Tabelas usadas pelo app (Supabase `public`):
 | `table:vigilancia_*` | Escalas (import/histórico — conferir nomes no Supabase) |
 
 Atualizar a lista após `information_schema.tables` no projeto se houver tabelas só no banco.
+
+O texto e a ativação da LGPD são por instância/tenant. A tela deve carregar o conteúdo da igreja ativa; não se reutiliza texto de outra instância, mesmo quando o mesmo telefone existe em mais de uma igreja.
 
 ---
 

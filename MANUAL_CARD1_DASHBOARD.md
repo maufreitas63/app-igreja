@@ -1,196 +1,110 @@
-# Manual de Instrucoes - Card 1 do Dashboard
+# Manual — Agenda da Família (Início)
 
 **Pacotes:** [`PACOTE_5_MANUAL_PAINEL.md`](PACOTE_5_MANUAL_PAINEL.md) (membro) · [`PACOTE_2_OPERACAO.md`](PACOTE_2_OPERACAO.md) (operação) · **Índice:** [`INDICE_DOCUMENTACAO.md`](INDICE_DOCUMENTACAO.md)
 
-**Atualizado em:** 02/09/2026
+**Atualizado em:** 05/10/2026
+
+> O antigo **Card 1** do carrossel `/(tabs)/dashboard` está **congelado** e fora da publicação. A experiência publicada é **Início** (`/(tabs)`) → toque em **Próximos Eventos** → modal **Agenda da Família** (`FamilyAgendaModal`).
 
 ## Objetivo
 
-O Card 1 do dashboard foi desenvolvido para concentrar, em uma unica area, a selecao do evento ativo, a visualizacao de vagas e o registro da audiencia da familia.
+Concentrar, em um único fluxo a partir do Início, a seleção do evento, a visualização de vagas e o registro da audiência da família — incluindo integração com geofence, totem, salas Kids/Teens, Google Agenda e arquivo `.ics`.
 
-Este card permite:
+Este fluxo permite:
 
-- visualizar o evento atualmente em evidencia;
-- verificar data, horario e local do evento;
-- identificar se o evento possui `IBN Kids` e/ou `IBN Teens`;
-- acompanhar a ocupacao de vagas pelo indicador em formato de copo;
-- trocar rapidamente entre eventos ativos;
-- registrar ou remover individualmente os membros da familia no evento selecionado;
-- marcar ou desmarcar todos os membros de uma vez;
-- gravar o culto na agenda do celular (Google Agenda e arquivo `.ics` para Apple Calendar / Outlook).
+- escolher o culto ou evento a partir da lista publicada no Início;
+- verificar data, horário e local;
+- identificar selos de salas (**Kids** / **Teens**) quando o evento as habilita;
+- acompanhar ocupação de vagas (quando o evento tem capacidade);
+- registrar ou remover individualmente integrantes do núcleo familiar;
+- marcar ou desmarcar todos de uma vez (quando permitido);
+- adicionar o compromisso ao **Google Agenda** ou baixar **`.ics`** (Apple Calendar / Outlook), no fuso da igreja (`America/Sao_Paulo`).
 
-## Estrutura do Card
+## Estrutura do modal
 
-O card esta dividido em tres blocos principais:
+### 1. Evento selecionado
 
-### 1. Evento Selecionado
+- nome do evento;
+- data e horário;
+- local;
+- indicadores de salas, quando aplicável.
 
-Nesta area aparecem:
-
-- nome do evento em destaque;
-- data e horario formatados;
-- local do evento;
-- identificadores `IBN Kids` e `IBN Teens`, quando aplicavel.
-
-Se nenhum evento estiver selecionado, o card exibira a mensagem:
-
-`Selecione um evento.`
+Se nenhum evento estiver selecionado, a mensagem orienta a escolher um item em **Próximos Eventos** no Início.
 
 ### 2. Vagas
 
-Ao lado do evento selecionado existe um indicador visual em formato de copo.
+Quando o evento possui `max_capacity`:
 
-Ele mostra:
+- vagas restantes;
+- relação inscritos / total;
+- indicador visual de ocupação.
 
-- o numero de vagas restantes entre parenteses;
-- a relacao `inscritos/total de vagas`;
-- o preenchimento visual proporcional da ocupacao.
+Eventos sem capacidade definida não exibem contador de copo — a audiência continua disponível.
 
-Interpretacao:
+### 3. Trocar evento
 
-- quanto mais cheio o copo, maior a ocupacao do evento;
-- o valor entre parenteses representa as vagas restantes;
-- a linha inferior mostra quantos participantes ja estao registrados.
+Lista eventos ativos (hoje e futuros, desbloqueados). Ao tocar:
 
-### 3. Trocar Evento
+1. o evento passa a ser o contexto da audiência;
+2. vagas e selos são recalculados;
+3. check-in (geofence/totem) passa a referir-se a esse evento.
 
-Esta faixa exibe os eventos ativos disponiveis.
+### 4. Audiência
 
-Cada item pode mostrar:
+Integrantes elegíveis do núcleo (**membro** / **congregado** e dependentes reconhecidos). Cada linha tem checkbox; inscritos exibem confirmação visual. Modo **quórum** restringe marcação individual após confirmação no totem.
 
-- nome do evento;
-- data/hora;
-- indicadores coloridos quando houver `kids_room` ou `teens_room`.
-
-Ao tocar em um evento desta lista:
-
-1. ele passa a ser o evento em evidencia;
-2. o bloco superior e atualizado;
-3. o contador de vagas e recalculado;
-4. a audiencia da familia passa a atuar sobre esse evento.
-
-### 4. Audiencia
-
-A parte inferior do card mostra a audiencia da familia vinculada ao usuario logado.
-
-Nesta area:
-
-- cada linha representa um integrante do nucleo familiar (**membro** ou **congregado**);
-- dependentes com reconhecimento **pendente ou aceito** tambem aparecem (`accepted` diferente de `false`);
-- integrantes **rejeitados** na familia nao entram na lista;
-- o nome do membro aparece sem parentesco;
-- cada item possui um checkbox para registrar ou remover a participacao;
-- quando o membro ja estiver inscrito, o item indica `Registrado para o evento`.
-
-No cabecalho da audiencia existe um checkbox geral para:
-
-- marcar todos os membros;
-- desmarcar todos os membros.
-
-## Como Usar
+## Como usar
 
 ### Registrar participantes
 
-1. No **Início**, toque no culto (Agenda da Família). O carrossel antigo do Painel não é o caminho publicado.
-2. Confira qual evento esta em evidencia.
-3. Se necessario, use a secao `Trocar Evento` para selecionar outro evento.
-4. Na secao `Audiencia`, toque no checkbox ao lado do nome do membro desejado — ou no checkbox alto à esquerda para a família inteira.
-5. No modal **Compromisso enviado para minha agenda**, toque em **Adicionar** para abrir o Google Agenda e baixar o `.ics`.
+1. Abra **Início** (`/(tabs)`).
+2. Toque no evento em **Próximos Eventos**.
+3. No modal, confira evento, local e horário; troque de evento se necessário.
+4. Marque os integrantes na **Audiência** (ou use o checkbox geral).
+5. Aceite **Adicionar** no diálogo de agenda para Google Agenda / `.ics`.
 
-Resultado esperado:
-
-- o membro fica marcado;
-- o texto `Registrado para o evento` aparece;
-- o contador de vagas e atualizado;
-- o culto pode entrar na agenda do celular no horário da igreja.
+**Resultado esperado:** pré-check-in registrado; vagas atualizadas; geofence e totem reconhecem a audiência no dia do evento.
 
 ### Remover participantes
 
-1. Localize o membro ja marcado na audiencia.
-2. Toque novamente no checkbox.
+Desmarque o checkbox do integrante (respeitando travas de quórum e check-in já confirmado).
 
-Resultado esperado:
+## Regras de funcionamento
 
-- o membro deixa de ficar marcado;
-- o registro e removido do evento;
-- o contador de vagas e ajustado automaticamente.
+### Eventos exibidos no Início
 
-### Registrar ou remover todos
+- eventos do dia e futuros, publicados e não bloqueados (`is_locked`);
+- filtrados por visibilidade e tenant da igreja ativa.
 
-1. No topo da secao `Audiencia`, use o checkbox geral.
-2. Se todos estiverem desmarcados, a acao registra todos.
-3. Se todos estiverem marcados, a acao remove todos.
+### Geofence e totem
 
-## Regras de Funcionamento
+- **Geofence:** exige audiência prévia, local favorito com coordenadas, flag `geofence_ativo` e parâmetros de raio/janela.
+- **Totem:** confirma quem já está na audiência; QR/carteirinha em **Perfil**.
 
-### Eventos exibidos
+### Modo Ghost
 
-O card apresenta apenas:
+Com auditoria ativa, família, telefone e permissões seguem o **perfil-alvo**; o operador real não substitui o alvo na audiência.
 
-- eventos do dia atual;
-- eventos futuros;
-- eventos desbloqueados/ativos.
+## Integração operacional (engrenagem)
 
-Eventos antigos permanecem no banco para historico, mas nao aparecem no Card 1.
+| Necessidade | Onde configurar |
+|-------------|-----------------|
+| Criar/editar evento, capacidade, salas, geofence | **Programação de Eventos** |
+| Coordenadas do templo | **Locais favoritos** / `event_local` |
+| Presença oficial / quórum | **Presença** |
+| Check-in no hall | **Totem de check-in** |
 
-### Indicadores `IBN Kids` e `IBN Teens`
+## Mensagens comuns
 
-Quando o evento possuir suporte a criancas ou adolescentes:
+- Erro ao carregar evento / família não vinculada
+- Selecione um evento para registrar participantes
+- Carregando participantes já registrados…
 
-- `IBN Kids` aparece com destaque amarelo;
-- `IBN Teens` aparece com destaque vermelho.
+## Resumo operacional
 
-Esses indicadores aparecem:
+1. Publicar evento na engrenagem.
+2. Membro abre **Início** e toca no evento.
+3. Marca audiência da família.
+4. No culto: geofence e/ou totem confirmam presença conforme regras do evento.
 
-- no bloco do evento selecionado;
-- na lista de troca de eventos;
-- no card de `Check In`, vinculado ao mesmo evento em evidencia.
-
-### Atualizacao das vagas
-
-Sempre que um membro e registrado ou removido:
-
-- o total de inscritos e recalculado;
-- o numero de vagas restantes e atualizado;
-- o copo muda visualmente conforme a ocupacao.
-
-## Navegacao no Dashboard
-
-O dashboard usa carrossel horizontal com rodape `CarouselFooterNav`:
-
-- **`<`** e **`>`** para voltar/avançar entre cards (segurar avanca automaticamente);
-- **`Menu`** no centro — retorna ao **Indice do Aplicativo**;
-- contador **`1 / N`** na mesma faixa;
-- no **Indice**, **Encerrar sessao** / **Sair do aplicativo**; engrenagem de manutencao, quando visivel, alinhada a **direita** do rodape.
-
-## Integracao com o Card de Check In
-
-O evento selecionado no Card 1 tambem alimenta o card de `Check In`.
-
-No card de `Check In` sao refletidos:
-
-- o nome do evento em evidencia;
-- os badges `IBN Kids` e `IBN Teens`, quando existirem.
-
-Isso garante que o evento selecionado no Card 1 seja o mesmo contexto visual do QR Code.
-
-## Mensagens Possiveis
-
-Durante o uso, algumas mensagens podem aparecer:
-
-- `Erro ao carregar evento.`
-- `Nenhum evento no momento.`
-- `Selecione um evento para registrar participantes.`
-- `Família não vinculada.`
-- `Carregando participantes já registrados...`
-
-## Resumo Operacional
-
-Fluxo recomendado de uso:
-
-1. Escolher o evento em `Trocar Evento`;
-2. Confirmar nome, horario, local e indicadores do evento;
-3. Conferir vagas disponiveis no copo;
-4. Marcar ou desmarcar participantes da audiencia;
-5. Avancar ao card de `Check In` quando necessario.
-
+*Não treinar o carrossel legado do Painel — use sempre Início + Agenda da Família.*

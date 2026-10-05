@@ -6,7 +6,7 @@ xmlns="http://www.w3.org/TR/REC-html40">
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <meta name="ProgId" content="Word.Document">
 <meta name="Generator" content="Microsoft Word 15">
-<title>App IBN — Igreja Batista Norte</title>
+<title>Conecta+ — projeto e documentação</title>
 <style>
 
   body { font-family: Calibri, Segoe UI, sans-serif; font-size: 11pt; color: #1E293B; line-height: 1.45; }
@@ -31,52 +31,58 @@ xmlns="http://www.w3.org/TR/REC-html40">
 </head>
 <body>
 <div class="Section1">
-<h1>App IBN — Igreja Batista Norte</h1>
-<p>Aplicativo móvel e PWA (Expo SDK 54) para membros e equipe da igreja: eventos, check-in, família, pastoral, financeiro, escalas e manutenção.</p>
-<h2>Documentação</h2>
-<p>Mapa completo: <a href="INDICE_DOCUMENTACAO.md">&lt;code&gt;INDICE_DOCUMENTACAO.md&lt;/code&gt;</a></p>
-<table><thead><tr>
-<th>Documento</th>
-<th>Conteúdo</th>
-</tr></thead><tbody>
-<tr>
-<td><a href="MANUAL_ENTREGA.md">&lt;code&gt;MANUAL_ENTREGA.md&lt;/code&gt;</a></td>
-<td>Manual de entrega (cliente + manutenção) · PDF em <a href="pdfs/MANUAL_ENTREGA.pdf">&lt;code&gt;pdfs/MANUAL_ENTREGA.pdf&lt;/code&gt;</a></td>
-</tr>
-<tr>
-<td><a href="CAMADAS_SEGURANCA.md">&lt;code&gt;CAMADAS_SEGURANCA.md&lt;/code&gt;</a></td>
-<td>Especificação das 4 camadas de segurança</td>
-</tr>
-<tr>
-<td><a href="FUNCIONALIDADES.md">&lt;code&gt;FUNCIONALIDADES.md&lt;/code&gt;</a></td>
-<td>Lista de funcionalidades por área</td>
-</tr>
-<tr>
-<td><a href="BLUEPRINT.md">&lt;code&gt;BLUEPRINT.md&lt;/code&gt;</a></td>
-<td>Telas, fluxos e controles</td>
-</tr>
-<tr>
-<td><a href="CONTROLE_ACESSO.md">&lt;code&gt;CONTROLE_ACESSO.md&lt;/code&gt;</a></td>
-<td>Modelo ACL e inventário</td>
-</tr>
-</tbody></table>
-<p>PDFs gerados em <a href="pdfs/">&lt;code&gt;pdfs/&lt;/code&gt;</a>. Manuais: membro <a href="PACOTE_5_MANUAL_PAINEL.md">&lt;code&gt;PACOTE_5_MANUAL_PAINEL.md&lt;/code&gt;</a> · equipe <a href="PACOTE_6_MANUAL_MANUTENCAO.md">&lt;code&gt;PACOTE_6_MANUAL_MANUTENCAO.md&lt;/code&gt;</a>.</p>
+<h1>Conecta+ — projeto e documentação</h1>
+<p>Plataforma multi-tenant para a operação de igrejas, construída com Expo SDK 54, React Native/React Web, Expo Router e Supabase. O canal principal é a PWA publicada no Cloudflare Pages.</p>
+<p>A experiência publicada usa <strong>Início + menu lateral + Eu quero… + Perfil + engrenagem de manutenção</strong>. O antigo carrossel do Painel permanece congelado e não deve ser usado como referência funcional.</p>
+<h2>Principais capacidades</h2>
+<ul>
+<li>membros, famílias, cadastro público e Recepção Familiar;</li>
+<li>eventos, Agenda da Família, totem, quórum, geofence e Espaço Infantil;</li>
+<li>cuidado pastoral, escalas, células, murais, livros e documentos;</li>
+<li>financeiro, campanhas, Primícias e relatórios de despesas;</li>
+<li>ACL, multi-tenant, Modo Ghost, auditoria, billing Stripe e Gestão Liberada;</li>
+<li>Abigail, Régua de Acolhimento, instâncias e Aliança Conecta Reino.</li>
+</ul>
+<h2>Stack</h2>
+<ul>
+<li>Expo <code>~54.0.37</code>, Expo Router <code>~6.0.24</code>, React 19.1 e React Native 0.81.5;</li>
+<li>TypeScript 5.9;</li>
+<li>Supabase/PostgreSQL com RLS, RPCs <code>SECURITY DEFINER</code>, Storage e Realtime;</li>
+<li>Cloudflare Pages: <code>npm run build:web</code> gera <code>dist/</code>;</li>
+<li>formulário público familiar em Vite, entregue no mesmo domínio.</li>
+</ul>
 <h2>Desenvolvimento</h2>
 <p>```bash</p>
 <p>npm install</p>
-<p>npm run web              # PWA em http://localhost:8081</p>
-<p>npm run build:web        # Export estático para deploy (dist/)</p>
-<p>npm run generate:icons   # Regenera ícones a partir da marca d'água</p>
-<p>npm run build:docs       # Regenera pacotes .md e PDFs em pdfs/</p>
-<p>npm run build:manual-entrega-pdf  # Manual de entrega (MD → pdfs/MANUAL_ENTREGA.pdf)</p>
-<p>npm run build:access-roles-pdf  # Mapa visual dos papéis ACL</p>
+<p>npm run web</p>
+<p>npm run lint</p>
+<p>npm run build:web</p>
 <p>```</p>
-<h2>Stack</h2>
+<p>Requer Node.js <code>&gt;=20.19.4</code>. Segredos e configurações locais ficam em <code>.env</code>, que não deve ser versionado.</p>
+<h2>Documentação</h2>
+<p>Comece por <a href="INDICE_DOCUMENTACAO.md">&lt;code&gt;INDICE_DOCUMENTACAO.md&lt;/code&gt;</a>. As fontes principais são:</p>
 <ul>
-<li><strong>Frontend:</strong> React Native, Expo Router, TypeScript</li>
-<li><strong>Backend:</strong> Supabase (PostgreSQL, RLS, RPC)</li>
-<li><strong>Auth:</strong> PIN + sessão local (<code>user_profile_id</code>)</li>
+<li><a href="FUNCIONALIDADES.md">&lt;code&gt;FUNCIONALIDADES.md&lt;/code&gt;</a>: inventário funcional atual;</li>
+<li><a href="MANUAL_DASHBOARD_MEMBRO.md">&lt;code&gt;MANUAL_DASHBOARD_MEMBRO.md&lt;/code&gt;</a>: uso pelo membro;</li>
+<li><a href="MANUAL_DASHBOARD_MANUTENCAO.md">&lt;code&gt;MANUAL_DASHBOARD_MANUTENCAO.md&lt;/code&gt;</a>: operação pela engrenagem;</li>
+<li><a href="MANUAL_ENTREGA.md">&lt;code&gt;MANUAL_ENTREGA.md&lt;/code&gt;</a>: entrega funcional e técnica;</li>
+<li><a href="DESCRITIVO_APLICACAO.md">&lt;code&gt;DESCRITIVO_APLICACAO.md&lt;/code&gt;</a>: arquitetura e segurança;</li>
+<li><a href="BLUEPRINT.md">&lt;code&gt;BLUEPRINT.md&lt;/code&gt;</a>: mapa técnico de módulos e fluxos;</li>
+<li><a href="FAQ.md">&lt;code&gt;FAQ.md&lt;/code&gt;</a>: dúvidas operacionais.</li>
 </ul>
+<h3>Regenerar documentos derivados</h3>
+<p>```bash</p>
+<p>npm run build:docs:md       # recompõe PACOTE_*.md a partir das fontes</p>
+<p>npm run build:docs:pdf      # gera PDFs, manual de entrega e descritivo</p>
+<p>npm run build:docs          # build web + fontes derivadas + PDFs</p>
+<p>npm run build:docs:doc      # documentos Word institucionais</p>
+<p>npm run build:access-roles-pdf</p>
+<p>npm run build:validation-checklist-xlsx</p>
+<p>```</p>
+<p>Edite primeiro os arquivos-fonte; não edite manualmente <code>PACOTE_*.md</code> quando o conteúdo é gerado por <code>scripts/build-pacotes-md.mjs</code>.</p>
+<h2>Banco e deploy</h2>
+<p>SQL versionado fica em <code>scripts/</code> e deve ser aplicado ao projeto Supabase linkado. O deploy web ocorre por push na branch <code>main</code>, que dispara o build do Cloudflare Pages. Consulte <a href="DEPLOY_CLOUDFLARE.md">&lt;code&gt;DEPLOY_CLOUDFLARE.md&lt;/code&gt;</a> e <a href="CHECKLIST_VALIDACAO_POS_DEPLOY.md">&lt;code&gt;CHECKLIST_VALIDACAO_POS_DEPLOY.md&lt;/code&gt;</a>.</p>
+<p><em>Revisado em 05/10/2026.</em></p>
 </div>
 </body>
 </html>

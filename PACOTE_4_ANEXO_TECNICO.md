@@ -2,9 +2,9 @@
 
 Documentação **autocontida** de arquitetura e referências técnicas.
 
-**Atualizado em:** 23/06/2026
+**Atualizado em:** 05/10/2026
 
-Conteúdo integrado: Arquitetura Blueprint PWA · Cards do Dashboard
+Conteúdo integrado: Arquitetura Blueprint PWA · Estado dos cards do Dashboard (congelados)
 
 ---
 
@@ -16,31 +16,35 @@ Conteúdo integrado: Arquitetura Blueprint PWA · Cards do Dashboard
 
 **Pacote:** [`PACOTE_4_ANEXO_TECNICO.md`](PACOTE_4_ANEXO_TECNICO.md) · **Índice:** [`INDICE_DOCUMENTACAO.md`](INDICE_DOCUMENTACAO.md)
 
-**Atualizado em:** 23/06/2026
+**Atualizado em:** 05/10/2026
 
 ## 1) Visão Geral
 
 ### Objetivo do sistema
-Centralizar a operação digital da igreja em uma única plataforma com foco em:
+Centralizar a operação digital da igreja (multi-instância / multi-tenant) em uma única plataforma com foco em:
 
-- jornada do membro (login, cadastro, LGPD, dados cadastrais),
-- gestão de eventos e check-in (incluindo totem),
-- gestão de família/membros,
-- acompanhamento pastoral,
-- escalas e apoio operacional,
-- visão geográfica (mapa por CEP) para organização territorial,
-- controle de acesso granular por perfil, papel e recurso.
+- jornada do membro (login por celular + PIN por e-mail, cadastro, LGPD por instância, Perfil),
+- **Início + menu + Eu quero… + engrenagem** (o carrossel do Painel está congelado),
+- gestão de eventos, check-in (totem, geofence, Espaço Infantil por QR),
+- recepção familiar, régua de acolhimento e sticker de novos membros,
+- cuidado pastoral com estágios e cancelamento,
+- escalas, murais, Apoio Mútuo, documentos oficiais e financeiro,
+- assinaturas Stripe / Gestão Liberada,
+- Modo Ghost (identidade efetiva) e ACL granular,
+- visão geográfica (mapa por CEP) e assistente Abigail (Gemini).
 
 ### Stack (alvo e estado atual)
 
 | Camada | Stack alvo (solicitado) | Estado atual no código |
 |---|---|---|
-| Frontend Web/PWA | Next.js | Expo Router com export estático web (PWA-ready) |
-| Mobile | React Native | React Native (Expo) |
-| Backend/Data/Auth | Supabase (Postgres, RPC, RLS, Storage) | Supabase em produção |
-| Geolocalização | Google Geocoding API ou similar | Fallback ativo: ViaCEP + OpenStreetMap; Google opcional |
+| Frontend Web/PWA | Next.js | **Expo Router 54** com export estático web (PWA) + Vite no formulário `/cadastro-familia/` |
+| Mobile | React Native | React Native (Expo SDK 54) |
+| Backend/Data/Auth | Supabase (Postgres, RPC, RLS, Storage) | Supabase em produção (RPCs SECURITY DEFINER + headers de sessão) |
+| Billing | Stripe | Checkout, webhooks e planos trimestrais; Gestão Liberada no Controle de Acesso |
+| IA | Gemini | Abigail com chave por instância (`maintenance.card.ai_assistant`) |
+| Geolocalização | Google Geocoding API ou similar | ViaCEP + OpenStreetMap; Google opcional; geofence no culto |
 
-Observação arquitetural: a base atual já suporta o contexto PWA e pode evoluir para shell Next.js sem ruptura de domínio (serviços, ACL, modelo de dados e RLS permanecem no Supabase).
+Observação: o domínio permanece no Supabase. A navegação publicada não usa o carrossel; ver `lib/frozenPublication.ts` e `lib/appDrawerMenu.ts`.
 
 ---
 
@@ -342,228 +346,74 @@ scripts/
 
 ---
 
-# Parte 2 — Cards do Dashboard
+# Parte 2 — Cards do Dashboard (legado / congelado)
 
 ---
 
-# Cards do Dashboard
+# Cards do Dashboard (legado / congelado)
 
+**Documentação:** [`PACOTE_4_ANEXO_TECNICO.md`](PACOTE_4_ANEXO_TECNICO.md) · [`INDICE_DOCUMENTACAO.md`](INDICE_DOCUMENTACAO.md) · [`lib/frozenPublication.ts`](lib/frozenPublication.ts)
 
-
-Lista dos cards do carrossel horizontal em `app/(tabs)/dashboard.tsx`.
-
-
-
-**Documentação:** [`PACOTE_4_ANEXO_TECNICO.md`](PACOTE_4_ANEXO_TECNICO.md) · [`INDICE_DOCUMENTACAO.md`](INDICE_DOCUMENTACAO.md)
-
-
-
-**Atualizado em:** 02/07/2026
-
-
-
-## Índice do Aplicativo (`/(tabs)/index`)
-
-Tela inicial após o login com **etiquetas** (atalhos) para cada módulo do Painel:
-
-- Distribuição uniforme na altura útil da tela
-- Subitens aninhados (ex.: Sala(s) e QR Code sob Painel de Eventos)
-- Ícones coloridos por módulo; atalhos desabilitados quando o fluxo não se aplica (sem evento, sem QR, etc.)
-- Toque na etiqueta navega para `/(tabs)/dashboard` com parâmetro `dashboardCard`
-- Marca d'água visível (login não exibe marca d'água)
+**Atualizado em:** 05/10/2026
 
 ---
 
-## Navegação do carrossel
+## Estado de publicação
 
+O carrossel horizontal em `app/(tabs)/dashboard.tsx` **não é o caminho de uso publicado**. A experiência atual é:
 
+| Superfície | Função |
+|---|---|
+| **Início** `/(tabs)` | Eventos, avisos, Agenda da Família, bolo, sticker, Eu quero…, Abigail |
+| **Menu lateral** | Vida do membro (Perfil, Financeiro, Documentos, Célula, Escalas, murais, Apoio Mútuo, etc.) |
+| **Engrenagem** | Operação da igreja (grupos em `lib/appDrawerMenu.ts`) |
+| **Perfil** `/perfil` | Dados, família, carteirinha, trilha, serviços, reembolsos |
 
-- Deslize horizontalmente no card **ou** use os botões `‹` / `›` no rodapé (`CarouselFooterNav`).
+`dashboard.tsx` apenas **redireciona** deep links de cards congelados para rotas dedicadas (`resolveFrozenDashboardDeepLink` / `resolvePublishedDashboardHref`).
 
-- O rodapé exibe a posição atual (`1 / N`) e o botão central **Menu** (largura expandida entre as setas).
-- No **Índice**, **Encerrar sessão** / **Sair** centralizado; ícone **Configurações** (manutenção) com `trailingAccessory` **alinhado à direita** do rodapé.
+### Cards congelados (`FROZEN_DASHBOARD_CARD_CONTENTS`)
 
-- Segurar `‹` ou `›` avança card a card automaticamente (500 ms).
+`event_alt`, `qr`, `kids_teens`, `offerings`, `pastoral`, `members_list`, `birthdays`, `financial`, `vigilance_scales`, `parking_vehicle_v2`, `scale_roster`, `grouped_manage`, `administrativo`, `campaign_card`.
 
-- O cabeçalho mostra o título do card ativo (`ActiveScreenBadge`).
+Código antigo em comentário: `lib/frozen-dashboard-cards.comment.ts` (não importar).
 
-- Cards visíveis dependem de **ACL** (`dashboard.card.*`) e de flags de evento/escala/estacionamento.
+### Cards ainda vivos com rota dedicada (`LIVE_DASHBOARD_CARD_CONTENTS`)
 
-- Cada card usa **paleta visual própria** (fundo, borda, sombra e acentos) definida em `lib/dashboardCardThemes.ts`.
+| Content | Rota |
+|---|---|
+| `small_group` | `/pequeno-grupo` |
+| `opportunity_mural_card` | `/mural-oportunidades` |
 
-- Telas filhas abertas a partir do dashboard propagam `returnDashboardCard`; ao voltar, o carrossel restaura o card de origem sem passar por cards intermediários.
+### Rotas congeladas
 
-
-
-## Todos os cards (por número)
-
-
-
-| Número | Nome | Posição padrão* | Conteúdo (`content`) | Visibilidade |
-
-|--------|------|-----------------|----------------------|--------------|
-
-| 1 | Agenda da Família | 1 | `event_alt` | Sempre (com ACL) |
-
-| 2 | Check In | 2 | `qr` | Parâmetro `qr_code` ≠ `nao` |
-
-| 4 | SALA(S) | 3 | `kids_teens` | Sempre (com ACL) — **só inscrições da família do usuário** |
-
-| 3 | Dízimos e Ofertas | 4 | `offerings` | **Sempre** (com ACL) — independente de `parm_ofertas` do evento |
-
-| 5 | Coração Aberto | 5 | `pastoral` | Sempre (com ACL) |
-
-| 10 | Lista de Membros | 6 | `members_list` | Sempre (com ACL) |
-
-| 7 | Aniversariantes | 7 | `birthdays` | Sempre (com ACL) |
-
-| 11 | Financeiro | 8 | `financial` | Sempre (com ACL) — hub: `/financial` (relatórios + saldo bancário) e `/expense-report` (RD) |
-
-| 8 | Escalas | 9 | `vigilance_scales` | Sempre (com ACL) |
-
-| 12 | Servos em escala | 10 | `scale_roster` | Quando há escala selecionada com servos |
-
-| 9 | Estacionamento | 11 | `parking_vehicle_v2` | Painel de estacionamento ativo |
-
-| 6 | Perfil & Identidade | 12 | `grouped_manage` | Sempre (com ACL) — título na UI; atalhos Dados Cadastrais, Gerenciar Família, Trilha de Discipulado e Paleta de cores |
-
-
-
-\* Posição na ordem do carrossel quando **todos** os cards condicionais estão visíveis.
-
-
-
-## Ordem no carrossel (cenário completo)
-
-
-
-| Posição | Número | Nome |
-
-|---------|--------|------|
-
-| 1 | 1 | Agenda da Família |
-
-| 2 | 2 | Check In |
-
-| 3 | 4 | SALA(S) |
-
-| 4 | 3 | Dízimos e Ofertas |
-
-| 5 | 5 | Coração Aberto |
-
-| 6 | 10 | Lista de Membros |
-
-| 7 | 7 | Aniversariantes |
-
-| 8 | 11 | Financeiro |
-
-| 9 | 8 | Escalas |
-
-| 10 | 12 | Servos em escala *(condicional)* |
-
-| 11 | 9 | Estacionamento *(condicional)* |
-
-| 12 | 6 | Perfil & Identidade |
-
-
-
-## Ordem mínima (sem cards condicionais)
-
-
-
-Quando Check In, Estacionamento e Servos em escala estão ocultos:
-
-
-
-| Posição | Número | Nome |
-
-|---------|--------|------|
-
-| 1 | 1 | Agenda da Família |
-
-| 2 | 4 | SALA(S) |
-
-| 3 | 3 | Dízimos e Ofertas |
-
-| 4 | 5 | Coração Aberto |
-
-| 5 | 10 | Lista de Membros |
-
-| 6 | 7 | Aniversariantes |
-
-| 7 | 11 | Financeiro |
-
-| 8 | 8 | Escalas |
-
-| 9 | 6 | Perfil & Identidade |
-
-
-
-## Card SALA(S) — escopo no dashboard
-
-
-
-No **Painel do membro**, o card lista apenas inscrições Kids/Teens de **membros da própria família** (`familyId` da sessão). Na **Manutenção → Sala(s) - Check In**, a equipe vê **todos** os inscritos do evento.
-
-
-
-Mensagens quando vazio:
-
-
-
-- Família não identificada: *"Não foi possível identificar a família do seu cadastro…"*
-
-- Sem inscritos da família: *"Nenhum membro da sua família inscrito em IBN KIDS/TEENS."*
-
-
-
-## Navegação por parâmetro
-
-
-
-Outras telas podem abrir um card via `dashboardCard`:
-
-
-
-- Por **número**: `'1'`, `'2'`, … `'12'`, `'6'`
-
-- Por **conteúdo**: ex. `'pastoral'` (card 5), `'members_list'` (card 10), `'offerings'` (card 3)
-
-
-
-Constante usada para o menu: `DASHBOARD_MENU_CARD_ID = '6'`.
+`/(tabs)/explore`, `/explore`.
 
 ---
 
-## Card Lista de Membros (`members_list`)
+## Mapa de equivalência (legado → publicado)
 
-- Botões **Visitantes** (ou **Membros**, conforme a lista ativa) e **Mapa Geral** dividem a mesma linha (`flex: 1` cada).
-- **Mapa Geral** abre `/mapa-geolocalizacao` preservando `returnDashboardCard`.
-- Título alterna entre *LISTA DE MEMBROS* e *LISTA DE VISITANTES*.
-
----
-
-## Card Perfil & Identidade (`grouped_manage`)
-
-- Título exibido: **Perfil & Identidade** (identificador interno do card permanece `grouped_manage`; atalho no Índice do Aplicativo com o mesmo nome).
-- Botões com ícones: **Dados Cadastrais** → `/manage-profile`; **Gerenciar Família** → `/manage-members`; **Trilha de Discipulado** → painel da jornada (5×3), selos coloridos e, na lição 5.1, **Perfil Ministerial** (questionário de 50 perguntas; RPCs `listar_questionario_ministerial`, `obter_resultado_questionario_ministerial`, `submeter_questionario_ministerial`).
-- Rodapé: seletor de **Paleta de cores** (`GroupedManagePaletteFooter`).
-- Atalhos de tela propagam `returnDashboardCard` para retorno ao card 6.
-
----
-
-## Card Dízimos e Ofertas (`offerings`)
-
-- Botão **Copiar chave PIX** usa ícone Material *touch-app* para reforçar a ação de toque no PWA.
+| Card antigo | Destino publicado |
+|---|---|
+| Agenda / `event_alt` | Início → tocar o culto → Agenda da Família |
+| QR / `qr` | Agenda / Carteirinha Digital / Totem |
+| Ofertas / Campanhas | Eu quero… → Contribuir → `/ofertas` |
+| Pastoral | Eu quero… → Cuidado Pastoral → `/pastoral` |
+| Perfil & Identidade | Menu → Perfil → `/perfil` |
+| Aniversariantes | Home (bolo do dia) e Engrenagem → Aniversariantes |
+| Escalas | Menu → Escalas → `/escalas` |
+| Lista de Membros | Engrenagem → Lista de Membros → `/membros` |
+| Financeiro | Menu → Financeiro → `/financial` |
+| Administrativo | Engrenagem → Administrativo |
+| Célula | Menu → Minha Célula |
+| Mural de Oportunidades | Menu → Mural de Oportunidades |
 
 ---
 
-## Card Financeiro (`financial`)
+## Índice legado
 
-- Recurso ACL: `dashboard.card.financial` (card) + telas `/financial` e `/expense-report`.
-- Toque abre hub com atalho destacado **Relatório de Despesas (RD)** → `/expense-report`.
-- Tela `/financial`: Resultado do mês, Comparativo, Últimos 12 meses, Planejado × Realizado, **Saldo bancário**.
-- Itens Fluxo de caixa, Categorias e Relatórios extras aparecem como **em breve** no hub.
+Documentos de treinamento e manuais **não** devem ensinar o carrossel como fluxo principal. Use [`MANUAL_DASHBOARD_MEMBRO.md`](MANUAL_DASHBOARD_MEMBRO.md) e [`FUNCIONALIDADES.md`](FUNCIONALIDADES.md).
 
+---
 
+*Anexo técnico · estado congelado documentado em 05/10/2026.*
 

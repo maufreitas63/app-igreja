@@ -33,18 +33,20 @@ xmlns="http://www.w3.org/TR/REC-html40">
 <div class="Section1">
 <h1>Blueprint de Arquitetura e Especificação Técnica</h1>
 <p><strong>Pacote:</strong> <a href="PACOTE_4_ANEXO_TECNICO.md">&lt;code&gt;PACOTE_4_ANEXO_TECNICO.md&lt;/code&gt;</a> · <strong>Índice:</strong> <a href="INDICE_DOCUMENTACAO.md">&lt;code&gt;INDICE_DOCUMENTACAO.md&lt;/code&gt;</a></p>
-<p><strong>Atualizado em:</strong> 23/06/2026</p>
+<p><strong>Atualizado em:</strong> 05/10/2026</p>
 <h2>1) Visão Geral</h2>
 <h3>Objetivo do sistema</h3>
-<p>Centralizar a operação digital da igreja em uma única plataforma com foco em:</p>
+<p>Centralizar a operação digital da igreja (multi-instância / multi-tenant) em uma única plataforma com foco em:</p>
 <ul>
-<li>jornada do membro (login, cadastro, LGPD, dados cadastrais),</li>
-<li>gestão de eventos e check-in (incluindo totem),</li>
-<li>gestão de família/membros,</li>
-<li>acompanhamento pastoral,</li>
-<li>escalas e apoio operacional,</li>
-<li>visão geográfica (mapa por CEP) para organização territorial,</li>
-<li>controle de acesso granular por perfil, papel e recurso.</li>
+<li>jornada do membro (login por celular + PIN por e-mail, cadastro, LGPD por instância, Perfil),</li>
+<li><strong>Início + menu + Eu quero… + engrenagem</strong> (o carrossel do Painel está congelado),</li>
+<li>gestão de eventos, check-in (totem, geofence, Espaço Infantil por QR),</li>
+<li>recepção familiar, régua de acolhimento e sticker de novos membros,</li>
+<li>cuidado pastoral com estágios e cancelamento,</li>
+<li>escalas, murais, Apoio Mútuo, documentos oficiais e financeiro,</li>
+<li>assinaturas Stripe / Gestão Liberada,</li>
+<li>Modo Ghost (identidade efetiva) e ACL granular,</li>
+<li>visão geográfica (mapa por CEP) e assistente Abigail (Gemini).</li>
 </ul>
 <h3>Stack (alvo e estado atual)</h3>
 <table><thead><tr>
@@ -55,25 +57,35 @@ xmlns="http://www.w3.org/TR/REC-html40">
 <tr>
 <td>Frontend Web/PWA</td>
 <td>Next.js</td>
-<td>Expo Router com export estático web (PWA-ready)</td>
+<td><strong>Expo Router 54</strong> com export estático web (PWA) + Vite no formulário <code>/cadastro-familia/</code></td>
 </tr>
 <tr>
 <td>Mobile</td>
 <td>React Native</td>
-<td>React Native (Expo)</td>
+<td>React Native (Expo SDK 54)</td>
 </tr>
 <tr>
 <td>Backend/Data/Auth</td>
 <td>Supabase (Postgres, RPC, RLS, Storage)</td>
-<td>Supabase em produção</td>
+<td>Supabase em produção (RPCs SECURITY DEFINER + headers de sessão)</td>
+</tr>
+<tr>
+<td>Billing</td>
+<td>Stripe</td>
+<td>Checkout, webhooks e planos trimestrais; Gestão Liberada no Controle de Acesso</td>
+</tr>
+<tr>
+<td>IA</td>
+<td>Gemini</td>
+<td>Abigail com chave por instância (<code>maintenance.card.ai_assistant</code>)</td>
 </tr>
 <tr>
 <td>Geolocalização</td>
 <td>Google Geocoding API ou similar</td>
-<td>Fallback ativo: ViaCEP + OpenStreetMap; Google opcional</td>
+<td>ViaCEP + OpenStreetMap; Google opcional; geofence no culto</td>
 </tr>
 </tbody></table>
-<p>Observação arquitetural: a base atual já suporta o contexto PWA e pode evoluir para shell Next.js sem ruptura de domínio (serviços, ACL, modelo de dados e RLS permanecem no Supabase).</p>
+<p>Observação: o domínio permanece no Supabase. A navegação publicada não usa o carrossel; ver <code>lib/frozenPublication.ts</code> e <code>lib/appDrawerMenu.ts</code>.</p>
 <hr>
 <h2>2) Módulos Estratégicos (todos)</h2>
 <h3>2.1 Acesso e Sessão</h3>
