@@ -291,6 +291,7 @@ export function MaintenanceFamilyReceptionCard({
 
     const formUrl = buildFamilyRegistrationShareUrl(tenantCode, {
       familyId: inviteFamilyId.trim() || null,
+      phone: invitePhone,
     });
     const message = buildFamilyRegistrationInviteMessage(formUrl, inviteChurchName, guestName);
     const opened = openWhatsAppLikeBirthdaysWithText(invitePhone, message);

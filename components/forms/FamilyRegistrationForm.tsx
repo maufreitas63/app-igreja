@@ -53,12 +53,15 @@ type FamilyRegistrationFormProps = {
   churchName?: string;
   /** Código familiar já atribuído ao membro — vincula o lote a esta família. */
   targetFamilyId?: string | null;
+  /** Celular do convite da Recepção — pré-preenche o representante legal. */
+  initialPhone?: string | null;
 };
 
 export function FamilyRegistrationForm({
   tenantCode,
   churchName,
   targetFamilyId = null,
+  initialPhone = null,
 }: FamilyRegistrationFormProps) {
   const [submitState, setSubmitState] = useState<SubmitState>('idle');
   const [feedbackMessage, setFeedbackMessage] = useState('');
@@ -67,9 +70,17 @@ export function FamilyRegistrationForm({
   const [copyHint, setCopyHint] = useState('');
   const [formClosed, setFormClosed] = useState(false);
 
+  const prefilledPhone = formatPhoneDisplay(initialPhone ?? '');
+
   const form = useForm<FamilyRegistrationSchemaValues>({
     resolver: zodResolver(familyRegistrationSchema) as never,
-    defaultValues: familyRegistrationDefaultValues,
+    defaultValues: {
+      ...familyRegistrationDefaultValues,
+      informant: {
+        ...familyRegistrationDefaultValues.informant,
+        phone: prefilledPhone,
+      },
+    },
     mode: 'onBlur',
   });
 
@@ -98,7 +109,13 @@ export function FamilyRegistrationForm({
       setDetectedFamilyId(result.detectedFamilyId);
       setSubmitState('success');
       setFeedbackMessage(result.message);
-      form.reset(familyRegistrationDefaultValues);
+      form.reset({
+        ...familyRegistrationDefaultValues,
+        informant: {
+          ...familyRegistrationDefaultValues.informant,
+          phone: prefilledPhone,
+        },
+      });
     } catch (error) {
       setSubmitState('error');
       const message =
@@ -110,7 +127,10 @@ export function FamilyRegistrationForm({
   };
 
   const handleCopyLink = async () => {
-    const url = buildFamilyRegistrationShareUrl(tenantCode, { familyId: targetFamilyId });
+    const url = buildFamilyRegistrationShareUrl(tenantCode, {
+      familyId: targetFamilyId,
+      phone: prefilledPhone || null,
+    });
     if (!url) {
       setCopyHint('URL indisponível neste ambiente.');
       return;
@@ -125,7 +145,10 @@ export function FamilyRegistrationForm({
   };
 
   const handleShareWhatsApp = () => {
-    const url = buildFamilyRegistrationShareUrl(tenantCode, { familyId: targetFamilyId });
+    const url = buildFamilyRegistrationShareUrl(tenantCode, {
+      familyId: targetFamilyId,
+      phone: prefilledPhone || null,
+    });
     if (!url) {
       setCopyHint('URL indisponível para compartilhar.');
       return;

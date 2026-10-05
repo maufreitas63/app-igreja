@@ -5,6 +5,7 @@ import {
   FAMILY_REGISTRATION_TENANT_REQUIRED_MESSAGE,
   lookupPublicFamilyChurch,
   parseFamilyIdFromUrl,
+  parseInvitePhoneFromUrl,
   type PublicFamilyChurch,
 } from '@/lib/familyRegistration';
 import { parseInstanceCodeFromUrl } from '@/lib/instanceCode';
@@ -15,6 +16,7 @@ function CadastroFamiliaPage() {
   const [status, setStatus] = useState<'loading' | 'ready' | 'missing' | 'invalid'>('loading');
   const [church, setChurch] = useState<PublicFamilyChurch | null>(null);
   const [targetFamilyId, setTargetFamilyId] = useState<string | null>(null);
+  const [initialPhone, setInitialPhone] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState('');
 
   useEffect(() => {
@@ -24,6 +26,7 @@ function CadastroFamiliaPage() {
       const href = typeof window !== 'undefined' ? window.location.href : '';
       const code = href ? parseInstanceCodeFromUrl(href) : null;
       const familyId = href ? parseFamilyIdFromUrl(href) : null;
+      const phone = href ? parseInvitePhoneFromUrl(href) : null;
 
       if (!code) {
         if (active) {
@@ -47,6 +50,7 @@ function CadastroFamiliaPage() {
 
         setChurch(found);
         setTargetFamilyId(familyId);
+        setInitialPhone(phone);
         setStatus('ready');
       } catch {
         if (active) {
@@ -83,6 +87,7 @@ function CadastroFamiliaPage() {
           tenantCode={church.code}
           churchName={church.name}
           targetFamilyId={targetFamilyId}
+          initialPhone={initialPhone}
         />
       ) : null}
 

@@ -420,9 +420,37 @@ export function parseFamilyIdFromUrl(url: string | null | undefined): string | n
   }
 }
 
+/** Celular do convite da Recepção — pré-preenche o representante legal no formulário. */
+export function parseInvitePhoneFromUrl(url: string | null | undefined): string | null {
+  if (!url?.trim()) {
+    return null;
+  }
+
+  try {
+    const parsed = new URL(url);
+    const raw = (
+      parsed.searchParams.get('celular')
+      ?? parsed.searchParams.get('telefone')
+      ?? parsed.searchParams.get('phone')
+      ?? ''
+    ).trim();
+
+    if (!raw) {
+      return null;
+    }
+
+    const digits = extractBrazilMobilePhoneDigits(raw);
+    return digits.length === BRAZIL_MOBILE_PHONE_DIGIT_COUNT
+      ? formatPhoneDisplay(digits)
+      : null;
+  } catch {
+    return null;
+  }
+}
+
 export function buildFamilyRegistrationShareUrl(
   tenantCode?: string | null,
-  options?: { familyId?: string | null }
+  options?: { familyId?: string | null; phone?: string | null }
 ): string {
   const origin = resolveFamilyRegistrationOrigin();
   const code = normalizeInstanceCode(tenantCode);
@@ -435,6 +463,11 @@ export function buildFamilyRegistrationShareUrl(
   const familyId = (options?.familyId ?? '').trim();
   if (familyId) {
     params.set('familia', familyId);
+  }
+
+  const phoneDigits = extractBrazilMobilePhoneDigits(options?.phone ?? '');
+  if (phoneDigits.length === BRAZIL_MOBILE_PHONE_DIGIT_COUNT) {
+    params.set('celular', phoneDigits);
   }
 
   const query = params.toString();
