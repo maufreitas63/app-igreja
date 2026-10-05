@@ -242,3 +242,108 @@ export function formatVisitorFollowupDate(value: string | null | undefined) {
 
   return `${day}/${month}/${year}`;
 }
+
+export type NewRegistrationEntry = {
+  id: string;
+  profileId: string;
+  fullName: string;
+  phone: string | null;
+  registeredAt: string;
+  reviewedAt: string | null;
+  followupId: string | null;
+  isVisitor: boolean;
+  isCongregado: boolean;
+  isMember: boolean;
+  followupActive: boolean;
+  followupStatus: string | null;
+};
+
+const parseNewRegistration = (row: Record<string, unknown>): NewRegistrationEntry | null => {
+  const id = String(row.id ?? '').trim();
+  const profileId = String(row.profile_id ?? '').trim();
+
+  if (!id || !profileId) {
+    return null;
+  }
+
+  const phoneRaw = row.phone ? String(row.phone) : null;
+
+  return {
+    id,
+    profileId,
+    fullName: String(row.full_name ?? 'Sem nome').trim() || 'Sem nome',
+    phone: hasVisitorFollowupPhone(phoneRaw) ? phoneRaw : null,
+    registeredAt: String(row.registered_at ?? ''),
+    reviewedAt: row.reviewed_at ? String(row.reviewed_at) : null,
+    followupId: row.followup_id ? String(row.followup_id) : null,
+    isVisitor: row.is_visitor === true,
+    isCongregado: row.is_congregado === true,
+    isMember: row.is_member === true,
+    followupActive: row.followup_active === true,
+    followupStatus: row.followup_status ? String(row.followup_status) : null,
+  };
+};
+
+export async function listNewRegistrations(days = 30) {
+  const { data, error } = await supabase.rpc('list_new_registrations', {
+    p_days: days,
+  });
+
+  if (error) {
+    throwIfRpcMissing(error, 'list_new_registrations');
+  }
+
+  const record = (data ?? {}) as Record<string, unknown>;
+
+  if (record.success !== true) {
+    throw new Error(String(record.message ?? 'Não foi possível listar os novos cadastros.'));
+  }
+
+  const rows = Array.isArray(record.registrations) ? record.registrations : [];
+
+  return rows
+    .map((entry) => parseNewRegistration(entry as Record<string, unknown>))
+    .filter((entry): entry is NewRegistrationEntry => entry !== null);
+}
+
+export async function markNewRegistrationReviewed(inboxId: string) {
+  const { data, error } = await supabase.rpc('mark_new_registration_reviewed', {
+    p_inbox_id: inboxId,
+  });
+
+  if (error) {
+    throwIfRpcMissing(error, 'mark_new_registration_reviewed');
+  }
+
+  const record = (data ?? {}) as Record<string, unknown>;
+
+  if (record.success !== true) {
+    throw new Error(String(record.message ?? 'Não foi possível marcar o cadastro como visto.'));
+  }
+}
+
+export function formatNewRegistrationDateTime(value: string | null | undefined) {
+  if (!value) {
+    return '—';
+  }
+
+  const parsed = Date.parse(value);
+  if (!Number.isFinite(parsed)) {
+    return formatVisitorFollowupDate(value);
+  }
+
+  return new Date(parsed).toLocaleString('pt-BR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
+
+export function newRegistrationRoleLabel(entry: NewRegistrationEntry) {
+  if (entry.isMember) return 'Membro';
+  if (entry.isCongregado) return 'Congregado';
+  if (entry.isVisitor) return 'Visitante';
+  return 'Sem papel visitante';
+}

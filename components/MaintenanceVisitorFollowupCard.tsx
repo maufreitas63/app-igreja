@@ -12,9 +12,12 @@ import { CONTAIN_WIDTH } from '@/lib/minimalPresentation';
 import { MINIMAL_SECTION_TITLE, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { pickRouteParam } from '@/lib/dashboardReturnNavigation';
 import {
+  formatNewRegistrationDateTime,
   formatVisitorFollowupDate,
   hasVisitorFollowupPhone,
+  newRegistrationRoleLabel,
   VISITOR_FOLLOWUP_TASK_LABEL,
+  type NewRegistrationEntry,
   type VisitorFollowupBoardTask,
   type VisitorFollowupJourney,
   type VisitorFollowupTask,
@@ -40,7 +43,7 @@ type Props = {
 };
 
 const HELP_TEXT =
-  'O registro não é feito nesta tela. Quando a Recepção Familiar aprova o visitante (status processado), a régua começa sozinha: D+1 WhatsApp da equipe, D+4 convite à célula mais próxima e D+8 verificação de check-in no culto. Aqui a equipe abre o WhatsApp com a mensagem pronta e toca em Concluir para avançar o passo. O D+8 é automático; se não houver culto, vira alerta para o pastor.';
+  'Novos cadastros do app aparecem abaixo com a data. Se a pessoa permanecer visitante após o cadastro, a régua inicia sozinha (D+1 WhatsApp, D+4 célula, D+8 culto). Quem vira congregado/membro no cadastro inicial entra na lista de novos, mas não na régua. A Recepção Familiar continua disparando a régua ao processar o lote. Aqui a equipe marca “Visto”, abre o WhatsApp e toca em Concluir.';
 
 const PROCEDURE_STEPS = [
   {
@@ -85,9 +88,20 @@ export function MaintenanceVisitorFollowupCard({
   const { presentation: presentationParam } = useLocalSearchParams<{
     presentation?: string | string[];
   }>();
-  const { tasks, journeys, loading, error, completingId, refetch, completeTask } =
-    useWelcomeVisitorFollowup(isActive);
+  const {
+    tasks,
+    journeys,
+    newRegistrations,
+    loading,
+    error,
+    completingId,
+    reviewingId,
+    refetch,
+    completeTask,
+    markRegistrationReviewed,
+  } = useWelcomeVisitorFollowup(isActive);
   const contentHeight = computeMaintenanceContentHeight(panelHeight);
+  const pendingNewRegistrations = newRegistrations.filter((entry) => !entry.reviewedAt);
 
   const openWhatsAppFor = (phone: string | null, message: string, missingLabel: string) => {
     if (!hasVisitorFollowupPhone(phone)) {
@@ -134,6 +148,17 @@ export function MaintenanceVisitorFollowupCard({
     });
   };
 
+  const handleMarkReviewed = async (entry: NewRegistrationEntry) => {
+    const result = await markRegistrationReviewed(entry.id);
+    Toast.show({
+      type: result.success ? 'success' : 'error',
+      text1: 'Novos cadastros',
+      text2: result.success
+        ? `${formatShortName(entry.fullName)} marcado como visto.`
+        : result.message,
+    });
+  };
+
   const openFamilyReception = () => {
     const presentation = pickRouteParam(presentationParam);
     router.setParams(
@@ -169,7 +194,7 @@ export function MaintenanceVisitorFollowupCard({
         <Text style={[styles.errorText, minimal && styles.errorTextMinimal]}>{error}</Text>
       ) : null}
 
-      {loading && !tasks.length && !journeys.length ? (
+      {loading && !tasks.length && !journeys.length && !newRegistrations.length ? (
         <CardLoadingState lines={4} compact minimal={minimal} />
       ) : (
         <ScrollView
@@ -178,13 +203,84 @@ export function MaintenanceVisitorFollowupCard({
           nestedScrollEnabled
           {...MAINTENANCE_SCROLL_PROPS}
         >
+          <Text style={[styles.blockTitle, minimal && styles.blockTitleMinimal]}>
+            Novos cadastros ({pendingNewRegistrations.length} sem visto)
+          </Text>
+          {!newRegistrations.length ? (
+            <Text style={[styles.emptyText, minimal && styles.emptyTextMinimal]}>
+              Nenhum cadastro novo nos últimos 30 dias.
+            </Text>
+          ) : (
+            newRegistrations.map((entry) => {
+              const busy = reviewingId === entry.id;
+              const roleLabel = newRegistrationRoleLabel(entry);
+              const followupLabel = entry.followupActive
+                ? 'Na régua'
+                : entry.followupStatus
+                  ? `Régua: ${entry.followupStatus}`
+                  : entry.isVisitor
+                    ? 'Aguardando régua'
+                    : 'Fora da régua';
+
+              return (
+                <View
+                  key={entry.id}
+                  style={[styles.taskCard, minimal && styles.taskCardMinimal]}
+                >
+                  <Text
+                    style={[styles.taskName, minimal && styles.taskNameMinimal]}
+                    numberOfLines={1}
+                  >
+                    {formatShortName(entry.fullName)}
+                  </Text>
+                  <Text style={[styles.taskMeta, minimal && styles.taskMetaMinimal]}>
+                    {formatNewRegistrationDateTime(entry.registeredAt)}
+                    {' · '}
+                    {roleLabel}
+                    {' · '}
+                    {followupLabel}
+                  </Text>
+                  {entry.reviewedAt ? (
+                    <Text style={[styles.taskDesc, minimal && styles.taskDescMinimal]}>
+                      Visto em {formatNewRegistrationDateTime(entry.reviewedAt)}
+                    </Text>
+                  ) : (
+                    <TouchableOpacity
+                      style={[styles.doneButton, minimal && styles.doneButtonMinimal, { marginLeft: 0, marginTop: 8 }]}
+                      onPress={() => void handleMarkReviewed(entry)}
+                      disabled={busy}
+                      activeOpacity={0.85}
+                    >
+                      {busy ? (
+                        <ActivityIndicator
+                          size="small"
+                          color={minimal ? MINIMAL_UI.blueDark : '#FFF'}
+                        />
+                      ) : (
+                        <Text
+                          style={[
+                            styles.doneButtonText,
+                            minimal && styles.doneButtonTextMinimal,
+                          ]}
+                        >
+                          Marcar visto
+                        </Text>
+                      )}
+                    </TouchableOpacity>
+                  )}
+                </View>
+              );
+            })
+          )}
+
           <View style={[styles.guideBox, minimal && styles.guideBoxMinimal]}>
             <Text style={[styles.guideTitle, minimal && styles.guideTitleMinimal]}>
               Procedimento (automático)
             </Text>
             <Text style={[styles.guideIntro, minimal && styles.guideIntroMinimal]}>
-              O visitante entra na régua quando a Recepção Familiar aprova o cadastro. Não há
-              inclusão manual nesta tela.
+              Entrada na régua: (1) Recepção Familiar processa o lote, ou (2) novo cadastro no app
+              que permanece visitante após concluir nome e nascimento. Congregado/membro não entra
+              na régua automaticamente.
             </Text>
             {PROCEDURE_STEPS.map((step) => (
               <View key={step.day} style={styles.guideStep}>
