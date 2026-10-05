@@ -101,7 +101,12 @@ export function MaintenanceVisitorFollowupCard({
     markRegistrationReviewed,
   } = useWelcomeVisitorFollowup(isActive);
   const contentHeight = computeMaintenanceContentHeight(panelHeight);
-  const pendingNewRegistrations = newRegistrations.filter((entry) => !entry.reviewedAt);
+  // Mantém na lista quem ainda não foi visto, ou quem já está na régua ativa.
+  // Visto + fora da régua some da tela.
+  const visibleNewRegistrations = newRegistrations.filter(
+    (entry) => !entry.reviewedAt || entry.followupActive
+  );
+  const pendingNewRegistrations = visibleNewRegistrations.filter((entry) => !entry.reviewedAt);
 
   const openWhatsAppFor = (phone: string | null, message: string, missingLabel: string) => {
     if (!hasVisitorFollowupPhone(phone)) {
@@ -194,7 +199,7 @@ export function MaintenanceVisitorFollowupCard({
         <Text style={[styles.errorText, minimal && styles.errorTextMinimal]}>{error}</Text>
       ) : null}
 
-      {loading && !tasks.length && !journeys.length && !newRegistrations.length ? (
+      {loading && !tasks.length && !journeys.length && !visibleNewRegistrations.length ? (
         <CardLoadingState lines={4} compact minimal={minimal} />
       ) : (
         <ScrollView
@@ -206,12 +211,12 @@ export function MaintenanceVisitorFollowupCard({
           <Text style={[styles.blockTitle, minimal && styles.blockTitleMinimal]}>
             Novos cadastros ({pendingNewRegistrations.length} sem visto)
           </Text>
-          {!newRegistrations.length ? (
+          {!visibleNewRegistrations.length ? (
             <Text style={[styles.emptyText, minimal && styles.emptyTextMinimal]}>
               Nenhum cadastro novo nos últimos 30 dias.
             </Text>
           ) : (
-            newRegistrations.map((entry) => {
+            visibleNewRegistrations.map((entry) => {
               const busy = reviewingId === entry.id;
               const roleLabel = newRegistrationRoleLabel(entry);
               const followupLabel = entry.followupActive

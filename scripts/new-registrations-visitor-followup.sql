@@ -373,6 +373,17 @@ begin
        where coalesce(i.tenant_id, p.tenant_id) = v_tenant
          and i.registered_at >= (timezone('America/Sao_Paulo', now()) - make_interval(days => v_days))
          and not public.profile_is_tstmax_test_profile(p.id)
+         -- Visto + fora da régua: sai da lista operacional.
+         and (
+           i.reviewed_at is null
+           or exists (
+             select 1
+               from public.visitor_followup f
+              where f.visitor_id = p.id
+                and f.tenant_id = v_tenant
+                and f.status = 'Ativo'
+           )
+         )
        order by i.registered_at desc
        limit 200
       ) x
