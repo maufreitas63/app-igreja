@@ -1,3 +1,4 @@
+import { HomeAdmissionSticker } from '@/components/minimal/HomeAdmissionSticker';
 import { MinimalMainPanel } from '@/components/minimal/MinimalMainPanel';
 import { MinimalEuQueroFooter } from '@/components/minimal/MinimalEuQueroFooter';
 import { MinimalScreenLayout } from '@/components/minimal/MinimalScreenLayout';
@@ -12,6 +13,7 @@ export default function DashboardIndexScreen() {
     <MinimalScreenLayout
       scroll={false}
       showGreeting
+      overlay={<HomeAdmissionSticker />}
       footer={
         <View style={styles.homeFooter}>
           <MinimalEuQueroFooter />
