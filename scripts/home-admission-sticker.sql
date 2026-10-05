@@ -1,9 +1,11 @@
 -- =============================================================================
 -- Sticker da Home — novos membros a admitir
 -- =============================================================================
--- Visível só para super_admin / secretaria / pastoral, e só se houver:
---   - novo cadastro na inbox (sem "visto", últimos 30 dias), ou
---   - lote pendente na Recepção Familiar
+-- Papéis: super_admin / secretaria / pastoral.
+-- Visibilidade:
+--   - super_admin: sempre visível
+--   - secretaria / pastoral: só se houver inbox sem visto (30 dias) ou
+--     lote pendente na Recepção Familiar
 -- Aplica: npx supabase db query --linked -f scripts/home-admission-sticker.sql
 -- =============================================================================
 
@@ -37,6 +39,7 @@ declare
   v_tenant uuid;
   v_has_new boolean := false;
   v_has_reception boolean := false;
+  v_is_super_admin boolean := false;
 begin
   if v_actor is null then
     return jsonb_build_object(
@@ -56,13 +59,16 @@ begin
     );
   end if;
 
+  v_is_super_admin := public.is_super_admin_profile(v_actor);
+
   begin
     v_tenant := public.require_session_tenant_id();
   exception
     when others then
+      -- Super Admin mantém o sticker mesmo sem tenant resolvido.
       return jsonb_build_object(
         'success', true,
-        'visible', false,
+        'visible', v_is_super_admin,
         'has_new_registrations', false,
         'has_reception_pending', false
       );
@@ -89,7 +95,7 @@ begin
 
   return jsonb_build_object(
     'success', true,
-    'visible', (v_has_new or v_has_reception),
+    'visible', (v_is_super_admin or v_has_new or v_has_reception),
     'has_new_registrations', v_has_new,
     'has_reception_pending', v_has_reception
   );
