@@ -80,7 +80,9 @@ node scripts/build-recepcao-familiar-pdf.mjs
 
 Saídas principais: `PACOTE_*.md`, `pdfs/*`, `docs/*.docx`, `docs/Experiencia-do-Usuario-Conecta.docx`.
 
-> `npm run build:docs:md` e `npm run build:docs` **re-capturam** telas a partir do `dist/` e apagam PNGs existentes em `docs/manual-painel/screens`. Use só quando o servidor de captura estiver disponível e as sessões de demo estiverem preparadas.
+> Preferir `npm run build:docs:md:sources` para regenerar pacotes **sem** Puppeteer.  
+> `npm run build:docs:md` / `build:docs` ainda podem recapturar telas; por padrão **não apagam** PNGs existentes (use `MANUAL_SCREEN_WIPE=1` para limpar). Jobs de captura do membro usam rotas publicadas (`/ofertas`, `/pastoral`, `/membros`, etc.), não o carrossel congelado.  
+> `npm run build:docs:doc` inclui Experiência do Usuário (DOCX) e PDF da Recepção Familiar.
 
 ---
 

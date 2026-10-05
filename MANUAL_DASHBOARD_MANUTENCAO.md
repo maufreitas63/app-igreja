@@ -311,6 +311,15 @@ Registros válidos viram perfis/membros corretos; conflitos permanecem para aná
 
 ## 7. Régua de Acolhimento
 
+### Ilustração — Régua de Acolhimento
+
+![Régua de Acolhimento — captura anotada](docs/manual-manutencao/screens/visitor_followup.png)
+
+| Ref. | Elemento indicado na imagem |
+|:----:|------------------------------|
+| — | Captura de referência da tela publicada |
+
+
 ### Objetivo
 
 Acompanhar **visitantes** depois da recepção com ações D+1, D+4 e D+8.
@@ -882,6 +891,16 @@ O evento publicado aparece no Início; o rascunho permanece oculto.
 
 ## 21. Cronograma de Eventos
 
+### Ilustração — Cronograma de Eventos
+
+![Cronograma de Eventos — captura anotada](docs/manual-manutencao/screens/m04-cronograma.png)
+
+| Ref. | Elemento indicado na imagem |
+|:----:|------------------------------|
+| ① | Barras do **Cronograma de Eventos** |
+| ② | Toque na barra abre a **edição** do evento (ex.: **Maurício de Freitas** no cronograma) |
+
+
 ### Objetivo
 
 Visualizar eventos no tempo e abrir rapidamente uma edição.
@@ -1022,6 +1041,16 @@ Entrada e saída ficam registradas na sala e aparecem para o responsável.
 
 ## 24. Tipos de Escala
 
+### Ilustração — Tipos de Escala
+
+![Tipos de Escala — captura anotada](docs/manual-manutencao/screens/m06-tipos-escala.png)
+
+| Ref. | Elemento indicado na imagem |
+|:----:|------------------------------|
+| ① | Seção **Cadastrar tipo** de escala |
+| ② | Lista de **Tipos cadastrados** |
+
+
 ### Objetivo
 
 Definir modelos de escala, vagas e ciclo.
@@ -1058,6 +1087,16 @@ Verifique código duplicado e campos obrigatórios.
 
 ## 25. Servos em Disponibilidade
 
+### Ilustração — Servos em Disponibilidade
+
+![Servos em Disponibilidade — captura anotada](docs/manual-manutencao/screens/m07-servos-disponibilidade.png)
+
+| Ref. | Elemento indicado na imagem |
+|:----:|------------------------------|
+| ① | Seletor **Tipo de escala** |
+| ② | Coluna **Disponível** por servo |
+
+
 ### Objetivo
 
 Associar voluntários aos tipos de escala e organizar sua ordem.
@@ -1093,6 +1132,16 @@ Se a pessoa não aparecer, confira cadastro, igreja, filtros e permissão.
 ---
 
 ## 26. Programação de Escalas
+
+### Ilustração — Programação de Escalas
+
+![Programação de Escalas — captura anotada](docs/manual-manutencao/screens/m08-programacao-escalas.png)
+
+| Ref. | Elemento indicado na imagem |
+|:----:|------------------------------|
+| ① | **Escala** e **Data** do serviço |
+| ② | Botão **Salvar programação** |
+
 
 ### Objetivo
 

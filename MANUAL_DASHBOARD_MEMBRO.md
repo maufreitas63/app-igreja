@@ -193,6 +193,18 @@ Consultar o que acontece na igreja e abrir rapidamente as ações mais usadas.
 
 **Menu → Início**
 
+### Ilustração — Início
+
+![Início — captura anotada](docs/manual-painel/screens/02-indice-painel.png)
+
+| Ref. | Elemento indicado na imagem |
+|:----:|------------------------------|
+| ① | Atalhos do **Índice** abrem o card correspondente |
+| ② | Área do **card ativo** no carrossel do Painel |
+| ③ | Contador **3 / 8** — posição no carrossel |
+| ④ | Rodapé **‹ Menu ›** para navegar e voltar ao Índice |
+
+
 ### O que pode aparecer
 
 1. **Próximos Eventos**.

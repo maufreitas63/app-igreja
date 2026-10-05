@@ -43,7 +43,8 @@ async function prepLoginStep2(page, baseUrl, phone) {
     () =>
       document.body.innerText.includes('Código de acesso')
       || document.body.innerText.includes('Sua senha')
-      || document.body.innerText.includes('Receber código no WhatsApp'),
+      || document.body.innerText.includes('Receber código')
+      || document.body.innerText.includes('Esqueci minha senha'),
     { timeout: 20000 }
   );
   await new Promise((r) => setTimeout(r, 1500));
@@ -66,7 +67,7 @@ export const painelJobs = [
         { n: 1, text: 'Celular confirmado', lx: 55, ly: 235 },
         { n: 2, text: 'Continuar', fx: 195, fy: 545, lx: 55, ly: 160 },
         { n: 3, text: 'Código de acesso', lx: 330, ly: 420 },
-        { n: 4, ariaLabel: 'Receber código no WhatsApp', lx: 55, ly: 310 },
+        { n: 4, texts: ['Receber código', 'e-mail', 'Esqueci minha senha'], lx: 55, ly: 310 },
       ]);
       await saveScreenshot(page, path.join(outDir, '00-login.png'), callouts);
     },
@@ -186,39 +187,30 @@ export const painelJobs = [
     },
   },
   ...[
-    ['03-agenda-familia.png', '1', 'Agenda da Família', [
-      { n: 1, text: 'Evento', lx: 330, ly: 185 },
-      { n: 2, text: 'Vagas', fx: 300, fy: 270, lx: 55, ly: 270 },
-      { n: 3, text: 'Trocar Evento', lx: 330, ly: 270 },
-      { n: 4, text: 'Audiência', lx: 55, ly: 378 },
+    // Rotas publicadas (não usar /dashboard?dashboardCard= — carrossel congelado).
+    ['03-agenda-familia.png', '/(tabs)', [
+      { n: 1, texts: ['Próximos Eventos', 'Evento', 'Agenda'], lx: 330, ly: 185 },
+      { n: 2, texts: ['Vagas', 'Eu quero'], lx: 55, ly: 270 },
+      { n: 3, texts: ['Avisos', 'Trocar Evento'], lx: 330, ly: 270 },
+      { n: 4, texts: ['Audiência', 'Contribuir', 'Cuidado Pastoral'], lx: 55, ly: 378 },
     ]],
-    ['04-qr-checkin.png', 'qr', 'QR', [
-      { n: 1, text: 'Evento', lx: 330, ly: 160 },
-      { n: 2, text: 'Etiqueta', lx: 55, ly: 225 },
-      { n: 3, text: 'QR', lx: 330, ly: 325 },
+    ['06-dizimos-ofertas.png', '/ofertas', [
+      { n: 1, texts: ['Dados do recebedor', 'PIX', 'Oferta'], lx: 330, ly: 170 },
+      { n: 2, texts: ['Chave PIX', 'Pix'], lx: 55, ly: 278 },
+      { n: 3, texts: ['Copiar', 'Copiar chave PIX', 'Atualizar chave PIX'], lx: 330, ly: 348 },
     ]],
-    ['05-salas-kids-teens.png', '4', 'SALA', [
-      { n: 1, text: 'KIDS', lx: 55, ly: 165 },
-      { n: 2, text: 'TEENS', lx: 330, ly: 165 },
-      { n: 3, text: 'IBN', lx: 55, ly: 250 },
+    ['07-coracao-aberto.png', '/pastoral', [
+      { n: 1, texts: ['Motivo', 'Cuidado Pastoral', 'oração'], lx: 330, ly: 180 },
+      { n: 2, texts: ['Para mim', 'Situação'], lx: 55, ly: 255 },
+      { n: 3, texts: ['pedido', 'Seu pedido', 'Descrição'], lx: 330, ly: 338 },
+      { n: 4, texts: ['Meus pedidos', 'Enviar'], lx: 55, ly: 410 },
     ]],
-    ['06-dizimos-ofertas.png', '3', 'Dízimos', [
-      { n: 1, text: 'Dados do recebedor', lx: 330, ly: 170 },
-      { n: 2, text: 'Chave PIX', lx: 55, ly: 278 },
-      { n: 3, texts: ['Copiar chave PIX', 'Atualizar chave PIX'], lx: 330, ly: 348 },
-    ]],
-    ['07-coracao-aberto.png', '5', 'Coração', [
-      { n: 1, text: 'Motivo', lx: 330, ly: 180 },
-      { n: 2, text: 'Para mim', lx: 55, ly: 255 },
-      { n: 3, text: 'pedido', lx: 330, ly: 338 },
-      { n: 4, text: 'Meus pedidos', lx: 55, ly: 410 },
-    ]],
-  ].map(([file, card, _label, calloutDefs]) => ({
+  ].map(([file, route, calloutDefs]) => ({
     file,
     async run(ctx) {
       await ensureMemberLogin(ctx);
-      const { page, baseUrl, gotoAndSettle, saveScreenshot, resolveCallouts, member } = ctx;
-      await gotoAndSettle(page, `${baseUrl}/dashboard?dashboardCard=${card}`);
+      const { page, baseUrl, gotoAndSettle, saveScreenshot, resolveCallouts } = ctx;
+      await gotoAndSettle(page, `${baseUrl}${route}`);
       const callouts = await resolveCallouts(page, calloutDefs);
       await saveScreenshot(page, path.join(outDir, file), callouts);
     },
@@ -228,7 +220,7 @@ export const painelJobs = [
     async run(ctx) {
       await ensureMemberLogin(ctx);
       const { page, baseUrl, gotoAndSettle, saveScreenshot, resolveCallouts } = ctx;
-      await gotoAndSettle(page, `${baseUrl}/dashboard?dashboardCard=10`);
+      await gotoAndSettle(page, `${baseUrl}/membros`);
       await page.waitForFunction(
         () =>
           document.body.innerText.includes('Procurar membro')
@@ -298,7 +290,7 @@ export const painelJobs = [
     async run(ctx) {
       await ensureMemberLogin(ctx);
       const { page, baseUrl, gotoAndSettle, saveScreenshot, resolveCallouts } = ctx;
-      await gotoAndSettle(page, `${baseUrl}/dashboard?dashboardCard=10`);
+      await gotoAndSettle(page, `${baseUrl}/membros`);
       await clickByExactText(page, 'Visitantes');
       await page.waitForFunction(
         () =>
@@ -338,33 +330,33 @@ export const painelJobs = [
     },
   },
   ...[
-    ['09-aniversariantes.png', '7', 'Aniversariantes', [
-      { n: 1, text: 'Mês', lx: 330, ly: 172 },
-      { n: 2, text: 'Aniversariantes', lx: 55, ly: 268 },
-      { n: 3, text: 'WhatsApp', lx: 330, ly: 238 },
+    ['09-aniversariantes.png', '/aniversariantes', [
+      { n: 1, texts: ['Mês', 'Aniversariantes'], lx: 330, ly: 172 },
+      { n: 2, texts: ['Aniversariantes', 'casamento'], lx: 55, ly: 268 },
+      { n: 3, texts: ['WhatsApp', 'Copiar'], lx: 330, ly: 238 },
     ]],
-    ['10-financeiro.png', '11', 'Financeiro', [
-      { n: 1, text: 'mês', lx: 55, ly: 172 },
-      { n: 2, text: 'Relatório de Despesas', lx: 330, ly: 222 },
-      { n: 3, text: 'Saldo', lx: 55, ly: 328 },
+    ['10-financeiro.png', '/financial', [
+      { n: 1, texts: ['mês', 'Resultado', 'Financeiro'], lx: 55, ly: 172 },
+      { n: 2, texts: ['Relatório de Despesas', 'Comparativo', 'Saldo'], lx: 330, ly: 222 },
+      { n: 3, texts: ['Saldo', '12 meses', 'Orçamento'], lx: 55, ly: 328 },
     ]],
-    ['12-escalas.png', '8', 'Escalas', [
-      { n: 1, text: 'Selecionar Escala', lx: 330, ly: 172 },
-      { n: 2, text: 'Nome', lx: 55, ly: 268 },
-      { n: 3, text: 'Identificar veículo', lx: 330, ly: 338 },
+    ['12-escalas.png', '/escalas', [
+      { n: 1, texts: ['Selecionar Escala', 'Escalas', 'Disponibilidade'], lx: 330, ly: 172 },
+      { n: 2, texts: ['Nome', 'Servo', 'Data'], lx: 55, ly: 268 },
+      { n: 3, texts: ['WhatsApp', 'Troca', 'Programação'], lx: 330, ly: 338 },
     ]],
-    ['14-gestao-cadastros.png', '6', 'Gestão', [
-      { n: 1, text: 'Dados Cadastrais', lx: 55, ly: 182 },
-      { n: 2, text: 'Gerenciar Família', lx: 330, ly: 182 },
-      { n: 3, text: 'Representante', lx: 55, ly: 298 },
-      { n: 4, text: 'Adicionar', lx: 330, ly: 388 },
+    ['14-gestao-cadastros.png', '/perfil', [
+      { n: 1, texts: ['Dados Cadastrais', 'Perfil'], lx: 55, ly: 182 },
+      { n: 2, texts: ['Gerenciar Família', 'Carteirinha'], lx: 330, ly: 182 },
+      { n: 3, texts: ['Trilha', 'Ofereço', 'Reembolsos'], lx: 55, ly: 298 },
+      { n: 4, texts: ['Adicionar', 'Carteirinha Digital'], lx: 330, ly: 388 },
     ]],
-  ].map(([file, card, _label, calloutDefs]) => ({
+  ].map(([file, route, calloutDefs]) => ({
     file,
     async run(ctx) {
       await ensureMemberLogin(ctx);
-      const { page, baseUrl, gotoAndSettle, saveScreenshot, resolveCallouts, member } = ctx;
-      await gotoAndSettle(page, `${baseUrl}/dashboard?dashboardCard=${card}`);
+      const { page, baseUrl, gotoAndSettle, saveScreenshot, resolveCallouts } = ctx;
+      await gotoAndSettle(page, `${baseUrl}${route}`);
       const callouts = await resolveCallouts(page, calloutDefs);
       await saveScreenshot(page, path.join(outDir, file), callouts);
     },
@@ -406,17 +398,15 @@ export const painelJobs = [
     },
   },
   {
+    // Card Estacionamento congelado — reaproveita captura existente se houver; senão pula.
     file: '13-estacionamento.png',
-    async run(ctx) {
-      await ensureMemberLogin(ctx);
-      const { page, baseUrl, gotoAndSettle, saveScreenshot, resolveCallouts } = ctx;
-      await gotoAndSettle(page, `${baseUrl}/dashboard?dashboardCard=9`);
-      const callouts = await resolveCallouts(page, [
-        { n: 1, text: 'placa', lx: 330, ly: 238 },
-        { n: 2, text: 'Buscar', lx: 55, ly: 300 },
-        { n: 3, text: 'Proprietário', lx: 330, ly: 378 },
-      ]);
-      await saveScreenshot(page, path.join(outDir, '13-estacionamento.png'), callouts);
+    async run() {
+      const target = path.join(outDir, '13-estacionamento.png');
+      if (fs.existsSync(target)) {
+        console.log('Pulando 13-estacionamento.png (card congelado; mantém arquivo existente).');
+        return;
+      }
+      console.warn('13-estacionamento.png ausente e card congelado — sem recaptura.');
     },
   },
   {

@@ -176,10 +176,17 @@ const legends = {
 };
 
 fs.mkdirSync(outDir, { recursive: true });
-for (const f of fs.readdirSync(outDir)) {
-  if (f.endsWith('.png') || f.endsWith('.svg')) {
-    fs.unlinkSync(path.join(outDir, f));
+
+// Por padrão não apaga capturas existentes (evita perder PNGs se a captura falhar).
+// Para limpar antes: MANUAL_SCREEN_WIPE=1
+if (process.env.MANUAL_SCREEN_WIPE === '1') {
+  for (const f of fs.readdirSync(outDir)) {
+    if (f.endsWith('.png') || f.endsWith('.svg')) {
+      fs.unlinkSync(path.join(outDir, f));
+    }
   }
+} else {
+  console.log('Mantendo capturas existentes (defina MANUAL_SCREEN_WIPE=1 para limpar).');
 }
 
 await captureAppScreens(painelJobs, outDir);
