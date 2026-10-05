@@ -114,6 +114,7 @@ export type FamilyRegistrationFormValues = {
 
 type FamilyRegistrationRpcPayload = {
   tenant_code: string;
+  target_family_id?: string;
   informant: {
     full_name: string;
     birth_date: string;
@@ -142,9 +143,14 @@ type FamilyRegistrationRpcPayload = {
   }>;
 };
 
+export type FamilyRegistrationSubmitOptions = {
+  targetFamilyId?: string | null;
+};
+
 async function buildFamilyRegistrationRpcPayload(
   values: FamilyRegistrationFormValues,
-  tenantCode: string
+  tenantCode: string,
+  options?: FamilyRegistrationSubmitOptions
 ): Promise<FamilyRegistrationRpcPayload> {
   const address = await buildCepAddressPayload(
     values.informant.cep,
@@ -228,8 +234,11 @@ async function buildFamilyRegistrationRpcPayload(
     }
   }
 
+  const targetFamilyId = (options?.targetFamilyId ?? '').trim();
+
   return {
     tenant_code: tenantCode,
+    ...(targetFamilyId ? { target_family_id: targetFamilyId } : {}),
     informant: {
       full_name: formatFullName(values.informant.fullName),
       birth_date: informantBirthIso,
@@ -299,7 +308,8 @@ export type FamilyRegistrationSubmitResult = {
 
 export async function submitFamilyRegistration(
   values: FamilyRegistrationFormValues,
-  tenantCode: string
+  tenantCode: string,
+  options?: FamilyRegistrationSubmitOptions
 ): Promise<FamilyRegistrationSubmitResult> {
   const normalizedTenant = normalizeInstanceCode(tenantCode);
 
@@ -307,7 +317,7 @@ export async function submitFamilyRegistration(
     throw new Error(FAMILY_REGISTRATION_TENANT_REQUIRED_MESSAGE);
   }
 
-  const payload = await buildFamilyRegistrationRpcPayload(values, normalizedTenant);
+  const payload = await buildFamilyRegistrationRpcPayload(values, normalizedTenant, options);
 
   const { data, error } = await supabaseBrowser.rpc('submit_family_registration_public', {
     p_payload: payload,
@@ -391,11 +401,44 @@ export function resolveFamilyRegistrationOrigin(): string {
   return DEFAULT_PRODUCTION_APP_URL;
 }
 
-export function buildFamilyRegistrationShareUrl(tenantCode?: string | null): string {
+export function parseFamilyIdFromUrl(url: string | null | undefined): string | null {
+  if (!url?.trim()) {
+    return null;
+  }
+
+  try {
+    const parsed = new URL(url);
+    const familyId = (
+      parsed.searchParams.get('familia')
+      ?? parsed.searchParams.get('family')
+      ?? parsed.searchParams.get('family_id')
+      ?? ''
+    ).trim();
+    return familyId || null;
+  } catch {
+    return null;
+  }
+}
+
+export function buildFamilyRegistrationShareUrl(
+  tenantCode?: string | null,
+  options?: { familyId?: string | null }
+): string {
   const origin = resolveFamilyRegistrationOrigin();
   const code = normalizeInstanceCode(tenantCode);
-  const query = code ? `?tenant=${encodeURIComponent(code)}` : '';
-  return `${origin}${FAMILY_REGISTRATION_PUBLIC_PATH}${query}`;
+  const params = new URLSearchParams();
+
+  if (code) {
+    params.set('tenant', code);
+  }
+
+  const familyId = (options?.familyId ?? '').trim();
+  if (familyId) {
+    params.set('familia', familyId);
+  }
+
+  const query = params.toString();
+  return `${origin}${FAMILY_REGISTRATION_PUBLIC_PATH}${query ? `?${query}` : ''}`;
 }
 
 export function buildFamilyRegistrationInviteMessage(

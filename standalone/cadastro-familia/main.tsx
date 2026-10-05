@@ -4,6 +4,7 @@ import {
   FAMILY_REGISTRATION_TENANT_INVALID_MESSAGE,
   FAMILY_REGISTRATION_TENANT_REQUIRED_MESSAGE,
   lookupPublicFamilyChurch,
+  parseFamilyIdFromUrl,
   type PublicFamilyChurch,
 } from '@/lib/familyRegistration';
 import { parseInstanceCodeFromUrl } from '@/lib/instanceCode';
@@ -13,14 +14,16 @@ import { createRoot } from 'react-dom/client';
 function CadastroFamiliaPage() {
   const [status, setStatus] = useState<'loading' | 'ready' | 'missing' | 'invalid'>('loading');
   const [church, setChurch] = useState<PublicFamilyChurch | null>(null);
+  const [targetFamilyId, setTargetFamilyId] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState('');
 
   useEffect(() => {
     let active = true;
 
     void (async () => {
-      const code =
-        typeof window !== 'undefined' ? parseInstanceCodeFromUrl(window.location.href) : null;
+      const href = typeof window !== 'undefined' ? window.location.href : '';
+      const code = href ? parseInstanceCodeFromUrl(href) : null;
+      const familyId = href ? parseFamilyIdFromUrl(href) : null;
 
       if (!code) {
         if (active) {
@@ -43,6 +46,7 @@ function CadastroFamiliaPage() {
         }
 
         setChurch(found);
+        setTargetFamilyId(familyId);
         setStatus('ready');
       } catch {
         if (active) {
@@ -75,7 +79,11 @@ function CadastroFamiliaPage() {
       ) : null}
 
       {status === 'ready' && church ? (
-        <FamilyRegistrationForm tenantCode={church.code} churchName={church.name} />
+        <FamilyRegistrationForm
+          tenantCode={church.code}
+          churchName={church.name}
+          targetFamilyId={targetFamilyId}
+        />
       ) : null}
 
       {status === 'missing' || status === 'invalid' ? (

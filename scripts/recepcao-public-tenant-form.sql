@@ -167,6 +167,7 @@ declare
   v_phone_family_distinct_count int;
   v_form_phones text[] := array[]::text[];
   v_family_id_from_phones text;
+  v_target_family_id text;
   v_allowed_relationships text[] := array[
     'Cônjuge', 'Filho(a)', 'Representante Legal', 'Pai', 'Mãe', 'Outros'
   ];
@@ -208,6 +209,60 @@ begin
       'message',
       'Igreja não encontrada ou inativa. Confira o código da instância no link.'
     );
+  end if;
+
+  -- Convite "Novos Membros": família já atribuída ao membro no link (?familia=).
+  v_target_family_id := nullif(trim(coalesce(
+    p_payload ->> 'target_family_id',
+    p_payload ->> 'familia',
+    p_payload ->> 'family_id',
+    ''
+  )), '');
+
+  if v_target_family_id is not null then
+    if not exists (
+      select 1
+        from public.profiles p
+       where p.tenant_id = v_tenant
+         and upper(nullif(trim(coalesce(p.family_id, p.codigo_membro, '')), ''))
+             = upper(v_target_family_id)
+    )
+    and not exists (
+      select 1
+        from public.members m
+       where m.tenant_id = v_tenant
+         and upper(nullif(trim(coalesce(m.family_id, '')), '')) = upper(v_target_family_id)
+    ) then
+      return jsonb_build_object(
+        'success', false,
+        'message',
+        format(
+          'Código familiar "%s" não encontrado nesta igreja. Peça um novo convite à Secretaria.',
+          v_target_family_id
+        )
+      );
+    end if;
+
+    -- Normaliza para o valor já gravado no tenant (preserva capitalização).
+    select coalesce(
+      (
+        select nullif(trim(coalesce(p.family_id, p.codigo_membro, '')), '')
+          from public.profiles p
+         where p.tenant_id = v_tenant
+           and upper(nullif(trim(coalesce(p.family_id, p.codigo_membro, '')), ''))
+               = upper(v_target_family_id)
+         limit 1
+      ),
+      (
+        select nullif(trim(coalesce(m.family_id, '')), '')
+          from public.members m
+         where m.tenant_id = v_tenant
+           and upper(nullif(trim(coalesce(m.family_id, '')), '')) = upper(v_target_family_id)
+         limit 1
+      ),
+      v_target_family_id
+    )
+      into v_target_family_id;
   end if;
 
   v_informant := p_payload -> 'informant';
@@ -551,40 +606,52 @@ begin
   v_family_id_from_phones := public.find_family_id_by_phones_in_tenant(v_form_phones, v_tenant);
   v_phone_family_distinct_count := public.count_distinct_family_ids_by_phones_in_tenant(v_form_phones, v_tenant);
 
-  v_detected_family_id := public.resolve_recepcao_lote_family_id(v_submission_id);
+  -- Convite com família explícita prevalece sobre detecção por telefone.
+  if v_target_family_id is not null then
+    v_detected_family_id := v_target_family_id;
+    v_distinct_family_count := 1;
+    v_phone_family_distinct_count := 1;
 
-  if v_detected_family_id is not null then
     update public.recepcao_cadastro_familiar
-       set detected_family_id = v_detected_family_id
+       set detected_family_id = v_target_family_id
      where tenant_id = v_tenant
        and submission_id = v_submission_id;
-  elsif v_family_id_from_phones is not null then
-    update public.recepcao_cadastro_familiar
-       set detected_family_id = v_family_id_from_phones
+  else
+    v_detected_family_id := public.resolve_recepcao_lote_family_id(v_submission_id);
+
+    if v_detected_family_id is not null then
+      update public.recepcao_cadastro_familiar
+         set detected_family_id = v_detected_family_id
+       where tenant_id = v_tenant
+         and submission_id = v_submission_id;
+    elsif v_family_id_from_phones is not null then
+      update public.recepcao_cadastro_familiar
+         set detected_family_id = v_family_id_from_phones
+       where tenant_id = v_tenant
+         and submission_id = v_submission_id;
+      v_detected_family_id := v_family_id_from_phones;
+    end if;
+
+    select count(distinct nullif(trim(detected_family_id), ''))
+      into v_distinct_family_count
+      from public.recepcao_cadastro_familiar
      where tenant_id = v_tenant
        and submission_id = v_submission_id;
-    v_detected_family_id := v_family_id_from_phones;
+
+    select nullif(trim(detected_family_id), '')
+      into v_detected_family_id
+      from public.recepcao_cadastro_familiar
+     where tenant_id = v_tenant
+       and submission_id = v_submission_id
+       and detected_family_id is not null
+     order by is_informant desc, created_at
+     limit 1;
+
+    v_distinct_family_count := greatest(
+      coalesce(v_distinct_family_count, 0),
+      coalesce(v_phone_family_distinct_count, 0)
+    );
   end if;
-
-  select count(distinct nullif(trim(detected_family_id), ''))
-    into v_distinct_family_count
-    from public.recepcao_cadastro_familiar
-   where tenant_id = v_tenant
-     and submission_id = v_submission_id;
-
-  select nullif(trim(detected_family_id), '')
-    into v_detected_family_id
-    from public.recepcao_cadastro_familiar
-   where tenant_id = v_tenant
-     and submission_id = v_submission_id
-     and detected_family_id is not null
-   order by is_informant desc, created_at
-   limit 1;
-
-  v_distinct_family_count := greatest(
-    coalesce(v_distinct_family_count, 0),
-    coalesce(v_phone_family_distinct_count, 0)
-  );
 
   update public.recepcao_cadastro_familiar_lote
      set member_count = v_member_count,

@@ -49,9 +49,6 @@ export function InstanceQrCode({
         />
       </View>
       <Text style={styles.caption}>{caption}</Text>
-      <Text style={styles.urlHint} selectable>
-        {value}
-      </Text>
     </View>
   );
 }
@@ -85,12 +82,6 @@ const styles = StyleSheet.create({
     color: MINIMAL_UI.blueDark,
     fontSize: 13,
     fontWeight: '500',
-    textAlign: 'center',
-  },
-  urlHint: {
-    marginTop: 6,
-    color: MINIMAL_UI.textMuted,
-    fontSize: 11,
     textAlign: 'center',
   },
 });

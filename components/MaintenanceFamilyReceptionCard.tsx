@@ -1,6 +1,7 @@
 import { InstanceQrCode } from '@/components/InstanceQrCode';
 import { useEntityPrefix } from '@/context/EntityPrefixContext';
 import { CardLoadingState } from '@/components/ui/CardLoadingState';
+import { EnxergarSearchModal } from '@/components/ui/EnxergarSearchModal';
 import { MaintenanceHelpInfoTitle } from '@/components/ui/MaintenanceHelpInfoTitle';
 import { SectionLabel } from '@/components/ui/SectionLabel';
 import { useMaintenanceFamilyReception } from '@/hooks/useMaintenanceFamilyReception';
@@ -15,6 +16,9 @@ import {
   type FamilyReceptionMatch,
 } from '@/lib/familyReceptionApi';
 import { formatBrazilCepInput, formatBrazilDateInput, formatBrazilPhoneInput } from '@/lib/inputMasks';
+import { loadMembersListsClassMembers } from '@/lib/membersListsClassData';
+import type { MembersListsClassEntry } from '@/lib/membersListsClassTypes';
+import { filterMembersListsClassEntries } from '@/lib/membersListsClassUtils';
 import { normalizePhoneForWhatsApp, openWhatsAppLikeBirthdaysWithText } from '@/lib/whatsapp';
 import { computeMaintenanceContentHeight, maintenancePanelStyles } from '@/lib/maintenanceCardStyles';
 import { confirmDialog } from '@/lib/confirmDialog';
@@ -24,12 +28,13 @@ import { CONTAIN_WIDTH } from '@/lib/minimalPresentation';
 import { MINIMAL_SECTION_TITLE, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { resolveInstancePublicUrl } from '@/lib/instancePublicUrl';
 import { getStoredActiveIgrejaBranding } from '@/lib/tenantSession';
-import { MaterialIcons } from '@expo/vector-icons';
+import { FontAwesome, MaterialIcons } from '@expo/vector-icons';
 import * as Clipboard from 'expo-clipboard';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import Toast from 'react-native-toast-message';
 import {
   ActivityIndicator,
+  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -112,16 +117,30 @@ export function MaintenanceFamilyReceptionCard({
   const [savingCepId, setSavingCepId] = useState<string | null>(null);
   const [inviteName, setInviteName] = useState('');
   const [invitePhone, setInvitePhone] = useState('');
+  const [inviteFamilyId, setInviteFamilyId] = useState('');
   const [inviteChurchName, setInviteChurchName] = useState(prefix);
   const [quickLinkUrl, setQuickLinkUrl] = useState<string | null>(null);
   const [quickLinkTitle, setQuickLinkTitle] = useState<string | null>(null);
+  const [novosMembrosOpen, setNovosMembrosOpen] = useState(false);
+  const [novosMembrosLoading, setNovosMembrosLoading] = useState(false);
+  const [novosMembrosError, setNovosMembrosError] = useState<string | null>(null);
+  const [novosMembrosEntries, setNovosMembrosEntries] = useState<MembersListsClassEntry[]>([]);
+  const [novosMembrosQuery, setNovosMembrosQuery] = useState('');
 
   const contentHeight = computeMaintenanceContentHeight(panelHeight);
+
+  const filteredNovosMembros = useMemo(
+    () => filterMembersListsClassEntries(novosMembrosEntries, novosMembrosQuery),
+    [novosMembrosEntries, novosMembrosQuery]
+  );
 
   useEffect(() => {
     if (!isActive) return;
     setInviteName('');
     setInvitePhone('');
+    setInviteFamilyId('');
+    setNovosMembrosOpen(false);
+    setNovosMembrosQuery('');
   }, [isActive]);
 
   useEffect(() => {
@@ -169,6 +188,71 @@ export function MaintenanceFamilyReceptionCard({
   const handleClearInvite = () => {
     setInviteName('');
     setInvitePhone('');
+    setInviteFamilyId('');
+  };
+
+  const openNovosMembrosModal = () => {
+    setNovosMembrosOpen(true);
+    setNovosMembrosQuery('');
+    setNovosMembrosError(null);
+
+    if (novosMembrosEntries.length > 0) {
+      return;
+    }
+
+    setNovosMembrosLoading(true);
+    void (async () => {
+      try {
+        const loaded = await loadMembersListsClassMembers();
+        setNovosMembrosEntries(loaded);
+      } catch (loadError) {
+        console.warn('Novos Membros — lista:', loadError);
+        setNovosMembrosError('Não foi possível carregar a lista de membros.');
+      } finally {
+        setNovosMembrosLoading(false);
+      }
+    })();
+  };
+
+  const handleSelectNovoMembro = (entry: MembersListsClassEntry) => {
+    const name = (entry.full_name || entry.short_name || '').trim();
+    const phone = formatBrazilPhoneInput(entry.phone ?? '');
+    const familyId = (entry.family_id ?? '').trim();
+
+    if (!name) {
+      Toast.show({
+        type: 'error',
+        text1: 'Novos Membros',
+        text2: 'Este cadastro não tem nome para o convite.',
+        visibilityTime: 3500,
+      });
+      return;
+    }
+
+    if (!familyId) {
+      Toast.show({
+        type: 'error',
+        text1: 'Novos Membros',
+        text2: 'Este membro ainda não tem código de família atribuído.',
+        visibilityTime: 4000,
+      });
+      return;
+    }
+
+    setInviteName(name);
+    setInvitePhone(phone);
+    setInviteFamilyId(familyId);
+    setNovosMembrosOpen(false);
+    setNovosMembrosQuery('');
+
+    Toast.show({
+      type: 'success',
+      text1: 'Membro selecionado',
+      text2: familyId
+        ? `${formatShortName(name)} — família ${familyId}`
+        : formatShortName(name),
+      visibilityTime: 3200,
+    });
   };
 
   const handleShareInvite = () => {
@@ -205,7 +289,9 @@ export function MaintenanceFamilyReceptionCard({
       return;
     }
 
-    const formUrl = buildFamilyRegistrationShareUrl(tenantCode);
+    const formUrl = buildFamilyRegistrationShareUrl(tenantCode, {
+      familyId: inviteFamilyId.trim() || null,
+    });
     const message = buildFamilyRegistrationInviteMessage(formUrl, inviteChurchName, guestName);
     const opened = openWhatsAppLikeBirthdaysWithText(invitePhone, message);
 
@@ -374,7 +460,7 @@ export function MaintenanceFamilyReceptionCard({
         <View style={[styles.block, minimal && styles.blockMinimal]}>
           <MaintenanceHelpInfoTitle
             title="Recepção — Link rápido"
-            helpText="QR e URL da instância para o visitante abrir o app no celular (login e tela inicial). O mesmo endereço pode ir no convite WhatsApp abaixo."
+            helpText="QR da instância para o visitante abrir o app no celular (login e tela inicial)."
             minimal={minimal}
             titleStyle={minimal ? styles.sectionTitle : maintenancePanelStyles.panelTitle}
           />
@@ -396,7 +482,7 @@ export function MaintenanceFamilyReceptionCard({
         <View style={[styles.block, styles.blockLower, minimal && styles.blockLowerMinimal]}>
           <MaintenanceHelpInfoTitle
             title="Recepção — Cadastro Familiar"
-            helpText={`Formulários públicos entram aqui antes de profiles/members. Para convidar quem ainda não está nos seus contatos do WhatsApp, preencha nome e celular com DDD e use o botão — o chat abre mesmo sem o número na agenda. Link: /cadastro-familia/?tenant=${prefix}. Lotes com código familiar detectado usam o mesmo ${prefix}; conflitos, data 01/01/1900 ou CEP ausente ficam travados até revisão.`}
+            helpText={`Formulários públicos entram aqui antes de profiles/members. Use Novos Membros para escolher um membro já cadastrado — o convite leva o código da família dele. Também dá para digitar nome e celular com DDD e enviar pelo WhatsApp. Link: /cadastro-familia/?tenant=${prefix}&familia=…. Lotes com código familiar usam o mesmo ${prefix}; conflitos, data 01/01/1900 ou CEP ausente ficam travados até revisão.`}
             minimal={minimal}
             titleStyle={minimal ? styles.sectionTitle : maintenancePanelStyles.panelTitle}
           />
@@ -451,6 +537,11 @@ export function MaintenanceFamilyReceptionCard({
             <MaterialIcons name="close" size={18} color={minimal ? MINIMAL_UI.icon : '#64748B'} />
           </TouchableOpacity>
         </View>
+        {inviteFamilyId.trim() ? (
+          <Text style={[styles.inviteFamilyHint, minimal && styles.inviteFamilyHintMinimal]}>
+            Família no convite: {inviteFamilyId.trim()}
+          </Text>
+        ) : null}
       </View>
 
       <View style={[styles.toolbar, minimal && styles.toolbarMinimal]}>
@@ -474,7 +565,21 @@ export function MaintenanceFamilyReceptionCard({
             WhatsApp — convite
           </Text>
         </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.toolbarButton, minimal && styles.toolbarButtonMinimal]}
+          onPress={openNovosMembrosModal}
+          activeOpacity={0.85}
+          accessibilityRole="button"
+          accessibilityLabel="Novos Membros"
+        >
+          <MaterialIcons name="person-add" size={18} color={minimal ? MINIMAL_UI.icon : '#E2E8F0'} />
+          <Text style={[styles.toolbarButtonText, minimal && styles.toolbarButtonTextMinimal]}>
+            Novos Membros
+          </Text>
+        </TouchableOpacity>
       </View>
+
+      <View style={[styles.queueDivider, minimal && styles.queueDividerMinimal]} />
 
       <SectionHeading minimal={minimal}>{`Fila pendente (${submissions.length})`}</SectionHeading>
 
@@ -782,6 +887,80 @@ export function MaintenanceFamilyReceptionCard({
       )}
         </View>
       </ScrollView>
+
+      <EnxergarSearchModal
+        visible={novosMembrosOpen}
+        title="Novos Membros"
+        searchQuery={novosMembrosQuery}
+        onSearchQueryChange={setNovosMembrosQuery}
+        searchPlaceholder="Digite o nome..."
+        countLabel={
+          novosMembrosLoading
+            ? 'Carregando…'
+            : `${filteredNovosMembros.length.toLocaleString('pt-BR')} membro(s)`
+        }
+        onClose={() => {
+          setNovosMembrosOpen(false);
+          setNovosMembrosQuery('');
+        }}
+        variant="minimal"
+      >
+        {novosMembrosLoading ? (
+          <ActivityIndicator color={MINIMAL_UI.accent} style={{ marginVertical: 16 }} />
+        ) : novosMembrosError ? (
+          <Text style={[styles.errorText, minimal && styles.errorTextMinimal]}>{novosMembrosError}</Text>
+        ) : filteredNovosMembros.length === 0 ? (
+          <Text style={[styles.emptyText, minimal && styles.emptyTextMinimal]}>
+            {novosMembrosQuery.trim()
+              ? 'Nenhum membro corresponde à busca.'
+              : 'Nenhum membro ativo encontrado.'}
+          </Text>
+        ) : (
+          filteredNovosMembros.map((entry) => (
+            <View key={entry.id} style={styles.novosMembroRow}>
+              <Pressable
+                style={styles.novosMembroNamePress}
+                onPress={() => handleSelectNovoMembro(entry)}
+                accessibilityRole="button"
+                accessibilityLabel={`Selecionar ${entry.short_name} para o convite`}
+              >
+                <Text style={styles.novosMembroName} numberOfLines={1}>
+                  {entry.short_name}
+                </Text>
+              </Pressable>
+              <View style={styles.novosMembroActions}>
+                <View style={styles.novosMembroActionCell}>
+                  <FontAwesome name="users" size={18} color={MINIMAL_UI.icon} />
+                </View>
+                <View
+                  style={[
+                    styles.novosMembroActionCell,
+                    !entry.phone && styles.novosMembroActionDisabled,
+                  ]}
+                >
+                  <FontAwesome
+                    name="whatsapp"
+                    size={18}
+                    color={entry.phone ? '#25D366' : MINIMAL_UI.textMuted}
+                  />
+                </View>
+                <View
+                  style={[
+                    styles.novosMembroActionCell,
+                    !entry.cep?.trim() && styles.novosMembroActionDisabled,
+                  ]}
+                >
+                  <FontAwesome
+                    name="map-marker"
+                    size={18}
+                    color={entry.cep?.trim() ? MINIMAL_UI.icon : MINIMAL_UI.textMuted}
+                  />
+                </View>
+              </View>
+            </View>
+          ))
+        )}
+      </EnxergarSearchModal>
     </View>
   );
 }
@@ -886,6 +1065,56 @@ const styles = StyleSheet.create({
     borderColor: MINIMAL_UI.border,
     color: MINIMAL_UI.text,
     backgroundColor: MINIMAL_UI.background,
+  },
+  inviteFamilyHint: {
+    color: 'rgba(58, 150, 221, 0.9)',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  inviteFamilyHintMinimal: {
+    color: MINIMAL_UI.textMuted,
+  },
+  queueDivider: {
+    alignSelf: 'stretch',
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: 'rgba(148, 163, 184, 0.35)',
+    marginBottom: 10,
+    marginTop: 2,
+  },
+  queueDividerMinimal: {
+    borderTopColor: MINIMAL_UI.divider,
+  },
+  novosMembroRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingVertical: 6,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: MINIMAL_UI.divider,
+  },
+  novosMembroNamePress: {
+    flex: 1,
+    minWidth: 0,
+    paddingVertical: 4,
+  },
+  novosMembroName: {
+    color: MINIMAL_UI.text,
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  novosMembroActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: 120,
+  },
+  novosMembroActionCell: {
+    width: 40,
+    height: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  novosMembroActionDisabled: {
+    opacity: 0.45,
   },
   toolbar: {
     flexDirection: 'row',

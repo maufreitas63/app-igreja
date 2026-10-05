@@ -51,9 +51,15 @@ type SubmitState = 'idle' | 'success' | 'error';
 type FamilyRegistrationFormProps = {
   tenantCode: string;
   churchName?: string;
+  /** Código familiar já atribuído ao membro — vincula o lote a esta família. */
+  targetFamilyId?: string | null;
 };
 
-export function FamilyRegistrationForm({ tenantCode, churchName }: FamilyRegistrationFormProps) {
+export function FamilyRegistrationForm({
+  tenantCode,
+  churchName,
+  targetFamilyId = null,
+}: FamilyRegistrationFormProps) {
   const [submitState, setSubmitState] = useState<SubmitState>('idle');
   const [feedbackMessage, setFeedbackMessage] = useState('');
   const [registeredSubmissionId, setRegisteredSubmissionId] = useState<string | null>(null);
@@ -85,7 +91,9 @@ export function FamilyRegistrationForm({ tenantCode, churchName }: FamilyRegistr
         dependents: values.dependents,
       };
 
-      const result = await submitFamilyRegistration(payload, tenantCode);
+      const result = await submitFamilyRegistration(payload, tenantCode, {
+        targetFamilyId,
+      });
       setRegisteredSubmissionId(result.submissionId);
       setDetectedFamilyId(result.detectedFamilyId);
       setSubmitState('success');
@@ -102,7 +110,7 @@ export function FamilyRegistrationForm({ tenantCode, churchName }: FamilyRegistr
   };
 
   const handleCopyLink = async () => {
-    const url = buildFamilyRegistrationShareUrl(tenantCode);
+    const url = buildFamilyRegistrationShareUrl(tenantCode, { familyId: targetFamilyId });
     if (!url) {
       setCopyHint('URL indisponível neste ambiente.');
       return;
@@ -117,7 +125,7 @@ export function FamilyRegistrationForm({ tenantCode, churchName }: FamilyRegistr
   };
 
   const handleShareWhatsApp = () => {
-    const url = buildFamilyRegistrationShareUrl(tenantCode);
+    const url = buildFamilyRegistrationShareUrl(tenantCode, { familyId: targetFamilyId });
     if (!url) {
       setCopyHint('URL indisponível para compartilhar.');
       return;
@@ -204,6 +212,12 @@ export function FamilyRegistrationForm({ tenantCode, churchName }: FamilyRegistr
             ? `Preencha os dados para o cadastro em ${churchName}. Adicione até 9 dependentes (máximo de 10 pessoas).`
             : 'Preencha os dados do informante principal e adicione até 9 dependentes (máximo de 10 pessoas).'}
         </p>
+        {targetFamilyId?.trim() ? (
+          <p className="rounded-md border border-sky-200 bg-sky-50 px-3 py-2 text-sm text-sky-950">
+            Código da família:{' '}
+            <span className="font-mono font-semibold">{targetFamilyId.trim()}</span>
+          </p>
+        ) : null}
       </header>
 
       <Form {...form}>
