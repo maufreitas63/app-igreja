@@ -193,14 +193,7 @@ export function PerfilClassPanel() {
   }, [canOpenDiscipleshipTrail]);
 
   const actions = useMemo(() => {
-    const items: PerfilClassAction[] = [
-      {
-        key: 'digital-id',
-        label: 'Carteirinha Digital',
-        icon: 'badge',
-        onPress: openDigitalIdCard,
-      },
-    ];
+    const items: PerfilClassAction[] = [];
 
     if (manageProfile) {
       items.push({
@@ -228,6 +221,13 @@ export function PerfilClassPanel() {
         onPress: openManageMembers,
       });
     }
+
+    items.push({
+      key: 'digital-id',
+      label: 'Carteirinha Digital',
+      icon: 'badge',
+      onPress: openDigitalIdCard,
+    });
 
     // Perfil Ministerial vive na lição 5.1 da Trilha («Descobrindo meus Dons»).
     if (canOpenDiscipleshipTrail) {
