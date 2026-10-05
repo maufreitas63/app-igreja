@@ -43,7 +43,6 @@ values
   ('screen', 'maintenance.card.relatorios', 'Manutenção — Relatórios', null, true),
   ('screen', 'maintenance.card.profile_cadastro', 'Manutenção — Cadastro / Recepção familiar', null, true),
   ('screen', 'maintenance.card.access_control', 'Manutenção — Controle de Acesso', null, true),
-  ('screen', 'maintenance.card.profile_access_insights', 'Manutenção — Insights de acesso', null, true),
   ('screen', 'maintenance.card.mudanca_papeis', 'Manutenção — Mudança de papéis', null, true),
   ('screen', 'maintenance.card.event_orchestration', 'Manutenção — Orquestração / Avisos', null, true),
   ('screen', '/configuracao-salas', 'Configuração de salas', null, true),
@@ -80,7 +79,6 @@ select r.id, res.id, g.can_view, g.can_update
       ('screen', 'maintenance.card.relatorios', true, true),
       ('screen', 'maintenance.card.profile_cadastro', true, true),
       ('screen', 'maintenance.card.access_control', true, true),
-      ('screen', 'maintenance.card.profile_access_insights', true, true),
       ('screen', 'maintenance.card.mudanca_papeis', true, true),
       ('screen', 'maintenance.card.event_orchestration', true, true),
       ('screen', '/configuracao-salas', true, true),
@@ -116,6 +114,15 @@ delete from public.access_grants g
      or res.resource_key ilike '%password%'
      or res.resource_key ilike '%senha%'
    );
+
+-- Blindagem: Acessos de Usuários é exclusivo do Super Administrador.
+delete from public.access_grants g
+ using public.access_roles ar, public.access_resources res
+ where g.role_id = ar.id
+   and g.resource_id = res.id
+   and ar.code = 'gestor_controle_acesso'
+   and res.resource_type = 'screen'
+   and res.resource_key = 'maintenance.card.profile_access_insights';
 
 -- ---------------------------------------------------------------------------
 -- 2) Security middleware (camada SQL)
@@ -931,7 +938,7 @@ end;
 $$;
 
 -- ---------------------------------------------------------------------------
--- 5) Insights de acesso — excluir Super Admin para o Gestor
+-- 5) Insights de acesso — exclusivo Super Administrador
 -- Proteção aplicada: Gestor não tem visibilidade do Super Administrador
 -- ---------------------------------------------------------------------------
 
@@ -951,8 +958,22 @@ as $list_profile_access_insights_admin$
 declare
   v_tenant uuid := public.require_session_tenant_id();
 begin
-  perform public.assert_access_admin(p_actor_profile_id);
-  -- Proteção aplicada: Gestor não tem visibilidade do Super Administrador
+  if p_actor_profile_id is null then
+    raise exception 'Sessão inválida. Saia e entre novamente no aplicativo.';
+  end if;
+
+  perform public.assert_actor_matches_session(p_actor_profile_id);
+
+  if not public.is_super_admin_profile(p_actor_profile_id) then
+    perform public.log_gestor_acesso_proibido(
+      p_actor_profile_id,
+      null,
+      null,
+      'list_access_insights',
+      jsonb_build_object('http_status', 403)
+    );
+    raise exception 'Apenas o Super Administrador pode visualizar Acessos de Usuários.';
+  end if;
 
   return query
   select
@@ -965,7 +986,6 @@ begin
   where p.tenant_id = v_tenant
     and coalesce(trim(p.full_name), '') <> ''
     and lower(trim(p.full_name)) <> 'visitante'
-    and public.profile_visible_to_access_actor(p_actor_profile_id, p.id)
   group by p.id, p.full_name
   having count(e.id) > 0
   order by max(e.accessed_at) desc, p.full_name asc;
@@ -991,14 +1011,22 @@ as $list_profile_access_screen_visits_admin$
 declare
   v_tenant uuid := public.require_session_tenant_id();
 begin
-  perform public.assert_access_admin(p_actor_profile_id);
-  -- Proteção aplicada: Gestor não tem visibilidade do Super Administrador
-  perform public.assert_gestor_super_admin_shield(
-    p_actor_profile_id,
-    p_target_profile_id,
-    null,
-    'list_access_screen_visits'
-  );
+  if p_actor_profile_id is null then
+    raise exception 'Sessão inválida. Saia e entre novamente no aplicativo.';
+  end if;
+
+  perform public.assert_actor_matches_session(p_actor_profile_id);
+
+  if not public.is_super_admin_profile(p_actor_profile_id) then
+    perform public.log_gestor_acesso_proibido(
+      p_actor_profile_id,
+      p_target_profile_id,
+      null,
+      'list_access_screen_visits',
+      jsonb_build_object('http_status', 403)
+    );
+    raise exception 'Apenas o Super Administrador pode visualizar Acessos de Usuários.';
+  end if;
 
   if p_target_profile_id is null then
     return;
@@ -1009,7 +1037,6 @@ begin
       from public.profiles p
      where p.id = p_target_profile_id
        and p.tenant_id = v_tenant
-       and public.profile_visible_to_access_actor(p_actor_profile_id, p.id)
   ) then
     return;
   end if;
@@ -1028,6 +1055,7 @@ begin
    and sv.screen_label not in ('Dashboard', 'Manutenção')
    and sv.screen_key not in ('/dashboard', '/maintenance-dashboard')
   where e.profile_id = p_target_profile_id
+    and e.tenant_id = v_tenant
   order by e.accessed_at desc, sv.visit_order asc nulls last;
 end;
 $list_profile_access_screen_visits_admin$;
@@ -1042,6 +1070,7 @@ security definer
 set search_path = public
 as $clear_profile_access_insights_admin$
 declare
+  v_tenant uuid := public.require_session_tenant_id();
   cnt_before bigint;
   cnt_after bigint;
 begin
@@ -1057,14 +1086,29 @@ begin
     raise exception '403 Forbidden: Apenas Super Administrador pode limpar o histórico de acessos.';
   end if;
 
-  select count(*)::bigint into cnt_before from public.profile_app_access_events;
+  perform public.assert_actor_matches_session(p_actor_profile_id);
 
-  truncate table
-    public.profile_app_access_screen_visits,
-    public.profile_app_access_events
-  restart identity;
+  select count(*)::bigint
+    into cnt_before
+    from public.profile_app_access_events e
+   where e.tenant_id = v_tenant;
 
-  select count(*)::bigint into cnt_after from public.profile_app_access_events;
+  delete from public.profile_app_access_screen_visits sv
+   where sv.tenant_id = v_tenant
+      or exists (
+        select 1
+          from public.profile_app_access_events e
+         where e.id = sv.access_event_id
+           and e.tenant_id = v_tenant
+      );
+
+  delete from public.profile_app_access_events e
+   where e.tenant_id = v_tenant;
+
+  select count(*)::bigint
+    into cnt_after
+    from public.profile_app_access_events e
+   where e.tenant_id = v_tenant;
 
   if cnt_after > 0 then
     raise exception 'Falha ao limpar profile_app_access_events (% registros restantes).', cnt_after;

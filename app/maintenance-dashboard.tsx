@@ -916,7 +916,8 @@ export default function MaintenanceDashboard() {
       }
 
       if (card.content === 'profile_access_insights') {
-        return canManageAccessControl || maintenancePanelAccess[card.content] === true;
+        // Exclusivo Super Administrador (não Gestor / demais papéis).
+        return canManageAccessControl;
       }
 
       if (card.content === 'auditor') {

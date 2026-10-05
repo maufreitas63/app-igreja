@@ -1,6 +1,7 @@
 -- Card Acessos de Usuários no carrossel de manutenção (etiqueta → maintenance.card.profile_access_insights).
 -- Execute no SQL Editor do Supabase após access-control-admin-rpc.sql.
 -- Complementa scripts/profile-access-insights.sql (dados de acesso).
+-- Exclusivo super_admin — ver também access-control-profile-access-insights-super-admin-only.sql.
 
 insert into public.access_resources (resource_type, resource_key, label, description, is_active)
 values
@@ -27,3 +28,11 @@ on conflict (role_id, resource_id) where (role_id is not null) do update
   set can_view = excluded.can_view,
       can_update = excluded.can_update,
       updated_at = now();
+
+delete from public.access_grants g
+ using public.access_roles ar, public.access_resources res
+ where g.role_id = ar.id
+   and g.resource_id = res.id
+   and res.resource_type = 'screen'
+   and res.resource_key = 'maintenance.card.profile_access_insights'
+   and ar.code <> 'super_admin';
