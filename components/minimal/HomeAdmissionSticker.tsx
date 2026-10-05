@@ -16,17 +16,21 @@ const EXPANDED_WIDTH = 228;
 const STICKER_YELLOW = '#FACC15';
 const STICKER_YELLOW_DARK = '#CA8A04';
 const STICKER_INK = '#422006';
-const EXPANDED_MESSAGE = 'Há novos membros aguardando admissão';
+const MESSAGE_WITH_PENDING = 'Há novos membros aguardando admissão';
+const MESSAGE_NO_PENDING = 'Não há pendências de novos registros';
 
 /**
  * Etiqueta amarela retrátil na borda direita da Home.
- * Visível só para super_admin / secretaria / pastoral com pendência de admissão.
+ * Super Admin: sempre visível. Secretaria/pastoral: só com pendência.
  */
 export function HomeAdmissionSticker() {
   const router = useRouter();
-  const { visible } = useHomeAdmissionSticker(true);
+  const { visible, hasNewRegistrations, hasReceptionPending } = useHomeAdmissionSticker(true);
   const [expanded, setExpanded] = useState(false);
   const widthAnim = useRef(new Animated.Value(COLLAPSED_WIDTH)).current;
+
+  const hasPending = hasNewRegistrations || hasReceptionPending;
+  const expandedMessage = hasPending ? MESSAGE_WITH_PENDING : MESSAGE_NO_PENDING;
 
   useEffect(() => {
     if (!visible) {
@@ -51,9 +55,25 @@ export function HomeAdmissionSticker() {
     setExpanded((current) => !current);
   };
 
-  const openMudancaPapeis = () => {
+  const openPendingDestination = () => {
+    if (!hasPending) {
+      return;
+    }
+
+    // Pendência na Recepção Familiar tem prioridade.
+    if (hasReceptionPending) {
+      void navigateDrawerMenuItem(router, 'family_reception');
+      return;
+    }
+
     void navigateDrawerMenuItem(router, 'mudanca_papeis');
   };
+
+  const destinationLabel = hasReceptionPending
+    ? 'Abrir Recepção Familiar'
+    : hasNewRegistrations
+      ? 'Abrir Mudança de Papéis'
+      : 'Sem pendências de novos registros';
 
   return (
     <View style={styles.anchor} pointerEvents="box-none">
@@ -65,7 +85,9 @@ export function HomeAdmissionSticker() {
           accessibilityLabel={
             expanded
               ? 'Recolher aviso de novos membros'
-              : 'Expandir aviso de novos membros aguardando admissão'
+              : hasPending
+                ? 'Expandir aviso de novos membros aguardando admissão'
+                : 'Expandir status de novos registros'
           }
         >
           <MaterialIcons name="meeting-room" size={20} color={STICKER_INK} />
@@ -74,15 +96,18 @@ export function HomeAdmissionSticker() {
 
         {expanded ? (
           <Pressable
-            onPress={openMudancaPapeis}
+            onPress={openPendingDestination}
             style={styles.messageHit}
             accessibilityRole="button"
-            accessibilityLabel="Abrir Mudança de Papéis"
+            accessibilityLabel={destinationLabel}
+            disabled={!hasPending}
           >
             <Text style={styles.message} numberOfLines={3}>
-              {EXPANDED_MESSAGE}
+              {expandedMessage}
             </Text>
-            <MaterialIcons name="chevron-right" size={18} color={STICKER_INK} />
+            {hasPending ? (
+              <MaterialIcons name="chevron-right" size={18} color={STICKER_INK} />
+            ) : null}
           </Pressable>
         ) : null}
       </Animated.View>
