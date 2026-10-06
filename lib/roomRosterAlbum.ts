@@ -89,6 +89,26 @@ export async function loadRoomRosterAlbum(eventId: string, roomKey: 'KIDS' | 'TE
   };
 }
 
+export async function setRoomRegistrationEntry(registrationId: string, checked: boolean) {
+  const actorProfileId = await resolveActorProfileId({ forceRefresh: false });
+  const { data, error } = await supabase.rpc('set_event_registration_room_entry', {
+    p_registration_id: registrationId,
+    p_room_entry_checked: checked,
+    p_actor_profile_id: actorProfileId,
+  });
+
+  if (error) {
+    throw new Error(error.message || 'Não foi possível registrar a entrada.');
+  }
+
+  const result = (data ?? {}) as { success?: boolean; message?: string };
+  if (!result.success) {
+    throw new Error(result.message || 'Não foi possível registrar a entrada.');
+  }
+
+  return result.message ?? 'Entrada registrada.';
+}
+
 export async function releaseRoomRegistration(registrationId: string) {
   const actorProfileId = await resolveActorProfileId({ forceRefresh: false });
   const { data, error } = await supabase.rpc('set_event_registration_room_release', {

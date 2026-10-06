@@ -859,8 +859,6 @@ export const MaintenanceSalaServidorCard = ({
                 showGrid={rosterView === 'album'}
                 selectedId={rosterDetailId}
                 onSelect={setRosterDetailId}
-                canCheckIn={canCheckInSelectedRoom}
-                onCheckIn={(registrationId) => handleRoomEntryToggle(registrationId, true)}
                 onAttendanceChanged={refetchGroupedRegistrations}
               />
               {rosterView === 'list' ? (

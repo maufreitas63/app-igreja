@@ -171,6 +171,127 @@ $$;
 
 grant execute on function public.get_room_roster_album(uuid, text) to anon, authenticated;
 
+-- Quem vê a sala, o Ministério Infantil, a Secretaria ou o servidor escalado registra presença.
+create or replace function public.profile_can_record_room_attendance(
+  p_profile_id uuid,
+  p_room text,
+  p_service_date date
+)
+returns boolean
+language plpgsql
+stable
+security definer
+set search_path = public
+as $$
+begin
+  if p_profile_id is null then
+    return false;
+  end if;
+
+  if public.profile_is_room_servidor_on_date(p_profile_id, p_room, p_service_date) then
+    return true;
+  end if;
+
+  if public.profile_has_role_code(p_profile_id, 'ministerio_infantil') then
+    return true;
+  end if;
+
+  return public.profile_has_access(
+    p_profile_id,
+    'screen',
+    'maintenance.card.sala_servidor',
+    'view'
+  );
+end;
+$$;
+
+grant execute on function public.profile_can_record_room_attendance(uuid, text, date) to anon, authenticated;
+
+-- Entrada na sala, limitada à instância da sessão.
+create or replace function public.set_event_registration_room_entry(
+  p_registration_id uuid,
+  p_room_entry_checked boolean,
+  p_actor_profile_id uuid default null
+)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_tenant uuid := public.require_session_tenant_id();
+  v_actor uuid := coalesce(p_actor_profile_id, public.current_session_profile_id());
+  v_event_date timestamptz;
+  v_service_date date;
+  v_kids_status text;
+  v_checked boolean := coalesce(p_room_entry_checked, false);
+begin
+  if v_actor is null then
+    return jsonb_build_object('success', false, 'message', 'Sessão inválida.');
+  end if;
+
+  if not exists (
+    select 1
+      from public.profiles p
+     where p.id = v_actor
+       and (
+         p.tenant_id = v_tenant
+         or public.is_super_admin_profile(p.id)
+       )
+  ) then
+    return jsonb_build_object('success', false, 'message', 'Operador sem permissão nesta instância.');
+  end if;
+
+  select er.kids_status, ev.event_date
+    into v_kids_status, v_event_date
+    from public.event_registrations er
+    join public.events ev on ev.id = er.event_id and ev.tenant_id = v_tenant
+   where er.id = p_registration_id
+     and er.tenant_id = v_tenant;
+
+  if v_kids_status is null or v_kids_status not in ('KIDS', 'TEENS') then
+    return jsonb_build_object('success', false, 'message', 'Inscrição do evento não encontrada.');
+  end if;
+
+  v_service_date := (v_event_date at time zone 'America/Sao_Paulo')::date;
+
+  if not public.profile_can_record_room_attendance(v_actor, v_kids_status, v_service_date) then
+    return jsonb_build_object(
+      'success', false,
+      'message',
+      'Sem permissão para registrar a presença nesta sala.'
+    );
+  end if;
+
+  update public.event_registrations
+     set room_entry_checked = v_checked,
+         room_released = case
+           when v_checked then false
+           else room_released
+         end
+   where id = p_registration_id
+     and tenant_id = v_tenant;
+
+  if not found then
+    return jsonb_build_object('success', false, 'message', 'Inscrição do evento não encontrada.');
+  end if;
+
+  return jsonb_build_object(
+    'success', true,
+    'message',
+    case
+      when v_checked then 'Entrada na sala atualizada com sucesso.'
+      else 'Check-out na sala atualizado com sucesso.'
+    end
+  );
+exception
+  when others then
+    return jsonb_build_object('success', false, 'message', sqlerrm);
+end;
+$$;
+
+grant execute on function public.set_event_registration_room_entry(uuid, boolean, uuid) to anon, authenticated;
+
 -- Libera uma criança para retirada sem finalizar a sala inteira.
 create or replace function public.set_event_registration_room_release(
   p_registration_id uuid,
@@ -196,7 +317,10 @@ begin
     select 1
       from public.profiles p
      where p.id = v_actor
-       and p.tenant_id = v_tenant
+       and (
+         p.tenant_id = v_tenant
+         or public.is_super_admin_profile(p.id)
+       )
   ) then
     return jsonb_build_object('success', false, 'message', 'Operador sem permissão nesta instância.');
   end if;
@@ -214,11 +338,11 @@ begin
 
   v_service_date := (v_event_date at time zone 'America/Sao_Paulo')::date;
 
-  if not public.profile_is_room_servidor_on_date(v_actor, v_kids_status, v_service_date) then
+  if not public.profile_can_record_room_attendance(v_actor, v_kids_status, v_service_date) then
     return jsonb_build_object(
       'success', false,
       'message',
-      'Somente Secretaria, Super Admin ou servidores escalados para esta sala na data do evento podem registrar a saída.'
+      'Sem permissão para registrar a presença nesta sala.'
     );
   end if;
 

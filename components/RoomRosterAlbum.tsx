@@ -3,6 +3,7 @@ import {
   loadRoomRosterAlbum,
   releaseRoomRegistration,
   rosterInitials,
+  setRoomRegistrationEntry,
 } from '@/lib/roomRosterAlbum';
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { openWhatsAppLikeBirthdaysWithText } from '@/lib/whatsapp';
@@ -31,8 +32,6 @@ type Props = {
   showGrid: boolean;
   selectedId: string | null;
   onSelect: (id: string | null) => void;
-  canCheckIn: boolean;
-  onCheckIn: (registrationId: string) => Promise<void>;
   onAttendanceChanged: () => Promise<void> | void;
 };
 
@@ -96,7 +95,6 @@ function RosterAvatar({
 function ChildDetailModal({
   child,
   roomLabel,
-  canCheckIn,
   busy,
   onClose,
   onCheckIn,
@@ -104,7 +102,6 @@ function ChildDetailModal({
 }: {
   child: RoomInscribedChild;
   roomLabel: string;
-  canCheckIn: boolean;
   busy: boolean;
   onClose: () => void;
   onCheckIn: () => void;
@@ -178,9 +175,9 @@ function ChildDetailModal({
               <Pressable
                 style={[
                   styles.entryButton,
-                  (busy || !canCheckIn || child.checkinStatus !== 'pending') && styles.buttonDisabled,
+                  (busy || child.checkinStatus !== 'pending') && styles.buttonDisabled,
                 ]}
-                disabled={busy || !canCheckIn || child.checkinStatus !== 'pending'}
+                disabled={busy || child.checkinStatus !== 'pending'}
                 onPress={onCheckIn}
                 accessibilityRole="button"
                 accessibilityLabel="Registrar Entrada (Na Sala)"
@@ -190,9 +187,9 @@ function ChildDetailModal({
               <Pressable
                 style={[
                   styles.releaseButton,
-                  (busy || !canCheckIn || child.checkinStatus !== 'in_room') && styles.buttonDisabled,
+                  (busy || child.checkinStatus !== 'in_room') && styles.buttonDisabled,
                 ]}
-                disabled={busy || !canCheckIn || child.checkinStatus !== 'in_room'}
+                disabled={busy || child.checkinStatus !== 'in_room'}
                 onPress={onRelease}
                 accessibilityRole="button"
                 accessibilityLabel="Registrar Saída (Liberado)"
@@ -200,10 +197,8 @@ function ChildDetailModal({
                 <Text style={styles.releaseText}>Registrar Saída (Liberado)</Text>
               </Pressable>
             </View>
-            {!canCheckIn ? (
-              <Text style={styles.emptyNote}>
-                Somente Secretaria, Super Admin ou servidores escalados podem registrar a presença.
-              </Text>
+            {child.checkinStatus === 'pending' ? (
+              <Text style={styles.emptyNote}>A saída fica disponível depois da entrada na sala.</Text>
             ) : null}
           </ScrollView>
           <Pressable style={styles.closeButton} onPress={onClose} accessibilityRole="button" accessibilityLabel="Fechar">
@@ -246,8 +241,6 @@ export function RoomRosterAlbum({
   showGrid,
   selectedId,
   onSelect,
-  canCheckIn,
-  onCheckIn,
   onAttendanceChanged,
 }: Props) {
   const [children, setChildren] = useState<RoomInscribedChild[]>([]);
@@ -306,11 +299,18 @@ export function RoomRosterAlbum({
     setBusyId(child.id);
     try {
       if (action === 'in') {
-        await onCheckIn(child.id);
+        await setRoomRegistrationEntry(child.id, true);
       } else {
         await releaseRoomRegistration(child.id);
-        await onAttendanceChanged();
       }
+      setChildren((current) =>
+        current.map((item) =>
+          item.id === child.id
+            ? { ...item, checkinStatus: action === 'in' ? 'in_room' : 'released' }
+            : item
+        )
+      );
+      await onAttendanceChanged();
       reload();
     } catch (error) {
       Alert.alert(
@@ -369,7 +369,6 @@ export function RoomRosterAlbum({
         <ChildDetailModal
           child={selected}
           roomLabel={roomLabel}
-          canCheckIn={canCheckIn}
           busy={busyId === selected.id}
           onClose={() => onSelect(null)}
           onCheckIn={() => {
