@@ -382,6 +382,128 @@ begin
   end if;
 
   -- ---------------------------------------------------------------------------
+  -- listar_familias: integrantes ativos agrupados pelo código da família
+  -- ---------------------------------------------------------------------------
+  if v_tool in ('buscar_pessoas', 'consultar_cadastros')
+     and (
+       public.ia_norm_text(coalesce(v_params->>'agrupar', '')) in ('familia', 'familias', 'codigo')
+       or (
+         coalesce(v_fonte, '') in ('familia', 'familias')
+         and (v_busca is null or char_length(v_busca) < 2)
+         and v_papel is null
+         and v_parentesco is null
+         and not v_filtro_idade
+         and v_bairro_f is null
+         and v_cidade_f is null
+         and v_cargo_f is null
+       )
+     )
+  then
+    v_tool := 'listar_familias';
+  end if;
+
+  if v_tool = 'listar_familias' then
+    begin
+      with integrantes as (
+        select
+          upper(trim(m.family_id)) as codigo,
+          nullif(trim(m.full_name), '') as nome,
+          nullif(trim(m.relationship), '') as parentesco
+          from public.members m
+         where m.tenant_id = v_tenant
+           and m.accepted is true
+           and nullif(trim(m.family_id), '') is not null
+           and nullif(trim(m.full_name), '') is not null
+           and (
+             coalesce(public.get_family_id_prefix_for_tenant(v_tenant), '') = ''
+             or upper(trim(m.family_id)) like upper(trim(public.get_family_id_prefix_for_tenant(v_tenant))) || '%'
+           )
+           and (
+             v_familia_f is null
+             or upper(trim(m.family_id)) = upper(trim(v_familia_f))
+             or public.ia_norm_text(m.family_id) like '%' || public.ia_norm_text(v_familia_f) || '%'
+           )
+           and (
+             v_busca is null
+             or char_length(v_busca) < 2
+             or public.ia_norm_text(m.full_name) like '%' || public.ia_norm_text(v_busca) || '%'
+             or public.ia_norm_text(m.family_id) like '%' || public.ia_norm_text(v_busca) || '%'
+             or public.ia_norm_text(coalesce(m.relationship, '')) like '%' || public.ia_norm_text(v_busca) || '%'
+           )
+           and (
+             v_parentesco is null
+             or public.ia_norm_text(coalesce(m.relationship, '')) like '%' || public.ia_norm_text(v_parentesco) || '%'
+           )
+           and not exists (
+             select 1
+               from public.profiles p
+              where p.tenant_id = m.tenant_id
+                and coalesce(p.membership_out::text, '') <> ''
+                and public.ia_norm_text(p.full_name) = public.ia_norm_text(m.full_name)
+                and (
+                  public.ia_same_phone(p.phone, m.phone)
+                  or (
+                    public.ia_norm_text(p.family_id) = public.ia_norm_text(m.family_id)
+                    and public.ia_norm_text(m.family_id) <> ''
+                  )
+                )
+           )
+           and (
+             not v_is_gestor
+             or not exists (
+               select 1
+                 from public.profiles p
+                where p.tenant_id = m.tenant_id
+                  and public.is_super_admin_profile(p.id)
+                  and public.ia_norm_text(p.full_name) = public.ia_norm_text(m.full_name)
+                  and (
+                    public.ia_same_phone(p.phone, m.phone)
+                    or public.ia_norm_text(p.family_id) = public.ia_norm_text(m.family_id)
+                  )
+             )
+           )
+      ),
+      familias as (
+        select
+          i.codigo,
+          count(*)::int as qtd,
+          string_agg(
+            '- ' || i.nome || case when i.parentesco is not null then ' — ' || i.parentesco else '' end,
+            E'\n'
+            order by public.family_relationship_display_rank(i.parentesco), i.nome
+          ) as linhas
+          from integrantes i
+         group by i.codigo
+      )
+      select jsonb_build_object(
+        'ok', true,
+        'escopo', 'somente_instancia_da_sessao',
+        'bases', jsonb_build_array('members'),
+        'ativas', 'integrantes aceitos, com código de família desta instância e sem saída',
+        'quantidade_familias', count(*)::int,
+        'quantidade_integrantes', coalesce(sum(f.qtd), 0)::int,
+        'instrucao', 'Reproduza lista_texto na íntegra. Cada bloco começa pelo código da família e, abaixo, os integrantes. Não resuma e não omita códigos.',
+        'lista_texto', coalesce(
+          string_agg(f.codigo || E'\n' || f.linhas, E'\n\n' order by f.codigo),
+          ''
+        ),
+        'lista_parcial', false
+      )
+        into v_result
+        from familias f;
+    exception
+      when others then
+        raise warning 'ia.listar_familias falhou: %', sqlerrm;
+        return jsonb_build_object('ok', false, 'erro', 'consulta_familias_indisponivel');
+    end;
+
+    return coalesce(
+      v_result,
+      jsonb_build_object('ok', true, 'quantidade_familias', 0, 'quantidade_integrantes', 0, 'lista_texto', '')
+    );
+  end if;
+
+  -- ---------------------------------------------------------------------------
   -- buscar_pessoas / consultar_cadastros
   -- Bases da instância: perfis, integrantes da família e recepção pendente.
   -- ---------------------------------------------------------------------------

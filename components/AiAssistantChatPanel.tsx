@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
+  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -49,7 +50,16 @@ export function AiAssistantChatPanel() {
       return;
     }
 
-    await Clipboard.setStringAsync(text);
+    try {
+      if (Platform.OS === 'web' && typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(text);
+      } else {
+        await Clipboard.setStringAsync(text);
+      }
+    } catch {
+      await Clipboard.setStringAsync(text);
+    }
+
     setCopiedId(id);
   };
 
@@ -118,23 +128,25 @@ export function AiAssistantChatPanel() {
               message.role === 'user' ? styles.userBubble : styles.assistantBubble,
             ]}
           >
-            <Text style={styles.messageRole}>
-              {message.role === 'user' ? 'Você' : ABIGAIL_NAME}
-            </Text>
+            <View style={styles.messageHead}>
+              <Text style={styles.messageRole}>
+                {message.role === 'user' ? 'Você' : ABIGAIL_NAME}
+              </Text>
+              {message.role === 'assistant' && message.content.trim() ? (
+                <Pressable
+                  onPress={() => void copyMessage(message.id, message.content)}
+                  accessibilityRole="button"
+                  accessibilityLabel="Copiar resposta"
+                  style={styles.copyButton}
+                >
+                  <Text style={styles.copyText}>{copiedId === message.id ? 'Copiado' : 'Copiar'}</Text>
+                </Pressable>
+              ) : null}
+            </View>
             <Text selectable style={styles.messageText}>
               {message.content}
               {message.role === 'assistant' && streaming && !message.content ? '…' : ''}
             </Text>
-            {message.role === 'assistant' && message.content.trim() ? (
-              <TouchableOpacity
-                onPress={() => void copyMessage(message.id, message.content)}
-                accessibilityRole="button"
-                accessibilityLabel="Copiar resposta"
-                disabled={streaming}
-              >
-                <Text style={styles.copyText}>{copiedId === message.id ? 'Copiado' : 'Copiar'}</Text>
-              </TouchableOpacity>
-            ) : null}
           </View>
         ))}
       </ScrollView>
@@ -190,7 +202,7 @@ const styles = StyleSheet.create({
   },
   chatContent: {
     gap: 8,
-    paddingBottom: 8,
+    paddingBottom: 24,
     flexGrow: 1,
   },
   messageBubble: {
@@ -212,11 +224,18 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: MINIMAL_UI.divider,
   },
+  messageHead: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 8,
+  },
   messageRole: {
     color: MINIMAL_UI.textMuted,
     fontSize: 10,
     fontWeight: '800',
     textTransform: 'uppercase',
+    flexShrink: 1,
   },
   messageText: {
     color: MINIMAL_UI.text,
@@ -224,11 +243,22 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     ...(Platform.OS === 'web' ? { userSelect: 'text' as const } : null),
   },
+  copyButton: {
+    borderWidth: 1,
+    borderColor: MINIMAL_UI.accent,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    minHeight: 28,
+    minWidth: 72,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   copyText: {
     color: MINIMAL_UI.accent,
     fontSize: 12,
-    fontWeight: '700',
-    marginTop: 4,
+    fontWeight: '800',
   },
   composerDock: {
     position: Platform.OS === 'web' ? 'fixed' : 'absolute',

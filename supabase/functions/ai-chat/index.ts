@@ -15,6 +15,7 @@ const BASE_SYSTEM_PROMPT = [
 const ISOLATION_PROMPT = [
   'Só a igreja da sessão. Você consulta as bases de cadastro desta instância: perfis, integrantes da família e recepção familiar pendente. Nome, nascimento, idade, papel, parentesco, família, endereço, cargo, eventos e grupos.',
   'Parentesco (Representante Legal, Cônjuge, Filho(a), Pai, Mãe, Outros) não é o papel member/congregado/visitante. Use consultar_cadastros só com parentesco e ordem=alfabetica. Não envie papel=member nesse pedido: membro ativo é quem segue no cadastro desta instância.',
+  'Integrantes por código de família, famílias ativas ou composição familiar: use listar_familias, sem exigir outro filtro. Cada bloco de lista_texto começa pelo código. Reproduza a lista inteira.',
   'Quando vier lista_texto, copie essa lista na resposta, na íntegra, uma pessoa por linha, sem resumir e sem omitir nomes. Se vier lista_recepcao, mostre depois, em bloco separado, como recepção pendente.',
   'Nunca diga que não tem acesso a cadastros desta igreja. Não invente. Não envie tenant_id. Recuse só PIN, senha, CPF, PIX, dados médicos e conteúdo pastoral confidencial.',
   'Quantidade 0 é zero nesta instância. Finanças: saldo_atual em resultado_historico.',
@@ -47,6 +48,7 @@ const ALLOWED_TOOLS = new Set([
   'cuidado_pastoral_totais',
   'pequenos_grupos',
   'aniversariantes',
+  'listar_familias',
   'consultar_biblia',
 ]);
 
@@ -100,6 +102,19 @@ const GEMINI_TOOLS = [
             parentesco: { type: 'string', description: 'Parentesco na família: Representante Legal, Cônjuge, Filho(a), Pai, Mãe ou Outros.' },
             ordem: { type: 'string', description: 'alfabetica quando pedirem a lista por nome.' },
             fonte: { type: 'string', description: 'perfil, familia, recepcao ou todos. Só a instância da sessão.' },
+          },
+        },
+      },
+      {
+        name: 'listar_familias',
+        description:
+          'Lista as famílias ativas desta instância, agrupadas pelo código, com os integrantes (nome e parentesco). Use para integrantes por código de família. Sem filtro devolve todas. familia restringe a um código. Sem PIN, senha, CPF ou PIX.',
+        parameters: {
+          type: 'object',
+          properties: {
+            familia: { type: 'string', description: 'Código da família, opcional. Vazio lista todas as ativas.' },
+            busca: { type: 'string', description: 'Trecho opcional de nome, código ou parentesco.' },
+            parentesco: { type: 'string', description: 'Opcional: Representante Legal, Cônjuge, Filho(a), Pai, Mãe ou Outros.' },
           },
         },
       },
@@ -488,18 +503,36 @@ const listsFromToolResult = (result: unknown) => {
     .filter((text) => text.length > 0);
 };
 
-const answerWithLists = (answer: string, lists: string[]) => {
-  const base = String(answer || '').trim();
-  const missing = lists.filter((lista) => {
-    const firstLine = lista.split('\n').map((line) => line.trim()).find(Boolean) || '';
-    return firstLine.length > 3 && !base.includes(firstLine);
-  });
+const listLines = (lista: string) => lista.split('\n').map((line) => line.trim()).filter(Boolean);
 
-  if (!missing.length) {
-    return base;
+const answerWithLists = (answer: string, lists: string[]) => {
+  let base = String(answer || '').trim();
+
+  for (const lista of lists) {
+    const lines = listLines(lista);
+    const firstLine = lines[0] || '';
+    const lastLine = lines[lines.length - 1] || '';
+
+    if (firstLine.length <= 3) {
+      continue;
+    }
+
+    const hasFirst = base.includes(firstLine);
+    const hasLast = lines.length < 8 || (lastLine.length > 3 && base.includes(lastLine));
+
+    if (hasFirst && hasLast) {
+      continue;
+    }
+
+    if (hasFirst) {
+      const cut = base.indexOf(firstLine);
+      base = cut > 0 ? base.slice(0, cut).trim() : '';
+    }
+
+    base = [base, lista].filter(Boolean).join('\n\n');
   }
 
-  return [base, ...missing].filter(Boolean).join('\n\n');
+  return base;
 };
 
 const fetchGeminiTurn = async (
