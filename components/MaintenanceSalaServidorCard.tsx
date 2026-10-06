@@ -1,3 +1,8 @@
+import {
+  RoomRosterAlbum,
+  RoomRosterViewSwitch,
+  type RoomRosterView,
+} from '@/components/RoomRosterAlbum';
 import { useRoomDisplayLabels } from '@/hooks/useRoomDisplayLabels';
 import { CardLoadingState } from '@/components/ui/CardLoadingState';
 import { FamilyQrCodeScanner } from '@/components/FamilyQrCodeScanner';
@@ -108,6 +113,8 @@ export const MaintenanceSalaServidorCard = ({
   } = useDashboardSelectedEvent({ enablePolling: false });
 
   const [selectedGroupedRoom, setSelectedGroupedRoom] = useState<GroupedRoomKey | null>(null);
+  const [rosterView, setRosterView] = useState<RoomRosterView>('list');
+  const [rosterDetailId, setRosterDetailId] = useState<string | null>(null);
   const [roomEntryPendingIds, setRoomEntryPendingIds] = useState<string[]>([]);
   const [qrScannerOpen, setQrScannerOpen] = useState(false);
   const [familyCodeModalOpen, setFamilyCodeModalOpen] = useState(false);
@@ -840,6 +847,23 @@ export const MaintenanceSalaServidorCard = ({
 
           {selectedGroupedRoomConfig ? (
             <View style={styles.groupedAudienceSection}>
+              <RoomRosterViewSwitch
+                view={rosterView}
+                onViewChange={setRosterView}
+                minimal={minimal}
+              />
+              <RoomRosterAlbum
+                eventId={selectedEventId}
+                roomKey={selectedGroupedRoomConfig.key}
+                roomLabel={selectedGroupedRoomConfig.label}
+                showGrid={rosterView === 'album'}
+                selectedId={rosterDetailId}
+                onSelect={setRosterDetailId}
+                canCheckIn={canCheckInSelectedRoom}
+                onCheckIn={(registrationId) => handleRoomEntryToggle(registrationId, true)}
+                onAttendanceChanged={refetchGroupedRegistrations}
+              />
+              {rosterView === 'list' ? (
               <View
                 style={[
                   styles.groupedAudienceListBox,
@@ -900,15 +924,22 @@ export const MaintenanceSalaServidorCard = ({
                             ) : null}
                           </TouchableOpacity>
                           <View style={styles.groupedAudienceNameWrap}>
-                            <Text
-                              style={[
-                                styles.groupedAudienceName,
-                                minimal && styles.groupedAudienceNameMinimal,
-                              ]}
-                              numberOfLines={1}
+                            <TouchableOpacity
+                              onPress={() => setRosterDetailId(registration.registration_id)}
+                              activeOpacity={0.85}
+                              accessibilityRole="button"
+                              accessibilityLabel={`Abrir ficha de ${formatDisplayName(registration.full_name)}`}
                             >
-                              {formatDisplayName(registration.full_name)}
-                            </Text>
+                              <Text
+                                style={[
+                                  styles.groupedAudienceName,
+                                  minimal && styles.groupedAudienceNameMinimal,
+                                ]}
+                                numberOfLines={1}
+                              >
+                                {formatDisplayName(registration.full_name)}
+                              </Text>
+                            </TouchableOpacity>
                             <View
                               accessibilityLabel={
                                 registration.kids_status === 'TEENS'
@@ -1022,6 +1053,7 @@ export const MaintenanceSalaServidorCard = ({
                   </Text>
                 )}
               </View>
+              ) : null}
             </View>
           ) : (
             <Text style={[styles.placeholderText, minimal && styles.placeholderTextMinimal]}>
