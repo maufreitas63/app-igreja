@@ -358,6 +358,14 @@ export const FamilyRegistrationList = ({
     };
   }, [familyId, soloMode, soloParticipant, visibleMembers]);
 
+  const faixaStatusFor = useCallback(
+    (memberId: string): 'KIDS' | 'TEENS' | null =>
+      roomStatusByMemberId[memberId]
+      ?? registeredMemberStatusById[memberId]
+      ?? null,
+    [registeredMemberStatusById, roomStatusByMemberId]
+  );
+
   const inscriptionRoomLabelFor = useCallback(
     (memberId: string) =>
       resolveEventInscriptionRoomLabel({
@@ -710,7 +718,7 @@ export const FamilyRegistrationList = ({
               registrationStatus={soloRegistrationStatus}
               showKidsIndicator={showKidsIndicator}
               showTeensIndicator={showTeensIndicator}
-              roomStatusDot={roomStatusByMemberId[soloParticipant.id] ?? null}
+              roomStatusDot={faixaStatusFor(soloParticipant.id)}
               assignedRoomLabel={inscriptionRoomLabelFor(soloParticipant.id)}
               assignedRoomIsOverlay={
                 inscriptionRoomLabelFor(soloParticipant.id) === roomLabelByMemberId[soloParticipant.id]
@@ -902,7 +910,7 @@ export const FamilyRegistrationList = ({
                   registrationStatus={registeredMemberStatusById[item.id]}
                   showKidsIndicator={showKidsIndicator}
                   showTeensIndicator={showTeensIndicator}
-                  roomStatusDot={roomStatusByMemberId[item.id] ?? null}
+                  roomStatusDot={faixaStatusFor(item.id)}
                   assignedRoomLabel={inscriptionRoomLabelFor(item.id)}
                   assignedRoomIsOverlay={
                     inscriptionRoomLabelFor(item.id) === roomLabelByMemberId[item.id]

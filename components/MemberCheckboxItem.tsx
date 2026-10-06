@@ -75,11 +75,15 @@ export const MemberCheckboxItem = ({
     return 'Sem Inscrições';
   })();
   const hasStatusHighlight = Boolean(caption) || Boolean(roomLabel) || isRegistered;
-  const statusDotVisible =
-    (roomStatusDot === 'KIDS' && showKidsIndicator)
-    || (roomStatusDot === 'TEENS' && showTeensIndicator);
-  const showRoomDot = !hideRoomStatusDot && statusDotVisible;
+  const ageBandDot = roomStatusDot === 'KIDS' || roomStatusDot === 'TEENS';
+  const showRoomDot =
+    !hideRoomStatusDot
+    && (
+      (roomStatusDot === 'KIDS' && showKidsIndicator)
+      || (roomStatusDot === 'TEENS' && showTeensIndicator)
+    );
   const reserveStatusBullet = hideRoomStatusDot && (showKidsIndicator || showTeensIndicator);
+  const statusDotVisible = reserveStatusBullet && ageBandDot;
 
   return (
     <View style={styles.row}>
