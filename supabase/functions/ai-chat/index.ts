@@ -9,13 +9,14 @@ import {
 const BASE_SYSTEM_PROMPT = [
   'Você é a Abigail, assistente de gestão da igreja.',
   'Tom acolhedor e profissional. Vá direto ao que foi perguntado, sem se apresentar de novo.',
-  'Responda em português do Brasil, de forma breve e objetiva.',
+  'Responda em português do Brasil. Seja direta. Quando a pergunta pedir uma lista, entregue a lista completa.',
 ].join('\n');
 
 const ISOLATION_PROMPT = [
-  'Só a igreja da sessão. Você tem acesso pleno aos cadastros desta instância: nome, nascimento, idade, papel, família, endereço, cargo, eventos e grupos.',
-  'Para recortes (crianças com menos de 10 anos, aniversariantes, bairro, papel), use consultar_cadastros ou buscar_pessoas. Nunca diga que não tem acesso a dados cadastrais desta igreja.',
-  'Não invente. Não envie tenant_id. Recuse só PIN, senha, CPF, PIX e conteúdo pastoral confidencial.',
+  'Só a igreja da sessão. Você consulta as bases de cadastro desta instância: perfis, integrantes da família e recepção familiar pendente. Nome, nascimento, idade, papel, parentesco, família, endereço, cargo, eventos e grupos.',
+  'Parentesco (Representante Legal, Cônjuge, Filho(a), Pai, Mãe, Outros) não é o papel member/congregado/visitante. Use consultar_cadastros com parentesco. Membros ativos: papel=member junto com o parentesco, se os dois forem pedidos. Ordem alfabética: ordem=alfabetica.',
+  'Quando vier lista_texto, copie essa lista na resposta, na íntegra, uma pessoa por linha, sem resumir e sem omitir nomes. Se vier lista_recepcao, mostre depois, em bloco separado, como recepção pendente.',
+  'Nunca diga que não tem acesso a cadastros desta igreja. Não invente. Não envie tenant_id. Recuse só PIN, senha, CPF, PIX, dados médicos e conteúdo pastoral confidencial.',
   'Quantidade 0 é zero nesta instância. Finanças: saldo_atual em resultado_historico.',
   'Bíblia: texto externo, sem cruzar igrejas. Se o pedido for só "bíblia" ou faltar livro/capítulo, pergunte versão (ARA, ARC, ACF, NVI), livro, capítulo e se quer versículo. Não invente o texto.',
   'Com livro e capítulo, use consultar_biblia. Sem versículo, devolva o capítulo inteiro. Com versículo, só aquele trecho. Sempre cite a tradução (ex.: Texto conforme a tradução Almeida Revista e Atualizada - ARA). Sem versão, use ARA e deixe explícito.',
@@ -34,7 +35,7 @@ const MAX_HISTORY_CHARS = 400;
 const MAX_QUESTION_CHARS = 1_200;
 const MAX_TOOL_ROUNDS = 3;
 const MAX_TOOL_CALLS_PER_ROUND = 2;
-const MAX_TOOL_RESULT_CHARS = 4_000;
+const MAX_TOOL_RESULT_CHARS = 48_000;
 
 const ALLOWED_TOOLS = new Set([
   'buscar_pessoas',
@@ -55,12 +56,12 @@ const GEMINI_TOOLS = [
       {
         name: 'buscar_pessoas',
         description:
-          'Consulta cadastros desta instância por nome ou filtros (idade, nascimento, papel, bairro, cidade, cargo, família). Use para contar crianças ou listar pessoas. busca é opcional se houver outro filtro.',
+          'Consulta os cadastros desta instância (perfis, família e recepção pendente) por nome ou filtros. Use parentesco para Representante Legal e ordem=alfabetica para listar por nome. busca é opcional se houver outro filtro.',
         parameters: {
           type: 'object',
           properties: {
             busca: { type: 'string', description: 'Trecho do nome, telefone, código ou cargo (opcional).' },
-            papel: { type: 'string', description: 'Filtro opcional: member, congregado ou visitante.' },
+            papel: { type: 'string', description: 'member, congregado ou visitante. Para Representante Legal, Cônjuge ou Filho(a), use parentesco.' },
             menos_de_anos: { type: 'string', description: 'Idade máxima exclusiva. Ex.: 10 para menores de 10 anos.' },
             idade_min: { type: 'string', description: 'Idade mínima inclusive.' },
             idade_max: { type: 'string', description: 'Idade máxima inclusive.' },
@@ -71,18 +72,21 @@ const GEMINI_TOOLS = [
             cargo: { type: 'string', description: 'Filtro por cargo/função na igreja.' },
             familia: { type: 'string', description: 'Filtro por família.' },
             listar: { type: 'string', description: 'true para nomes; false só para contar.' },
+            parentesco: { type: 'string', description: 'Parentesco na família: Representante Legal, Cônjuge, Filho(a), Pai, Mãe ou Outros.' },
+            ordem: { type: 'string', description: 'alfabetica quando pedirem a lista por nome.' },
+            fonte: { type: 'string', description: 'perfil, familia, recepcao ou todos. Só a instância da sessão.' },
           },
         },
       },
       {
         name: 'consultar_cadastros',
         description:
-          'Conta e lista cadastros desta instância com nascimento e idade. Prefira esta ferramenta para faixas etárias (ex.: crianças com menos de 10 anos: menos_de_anos=10). Sem PIN, senha, CPF ou PIX.',
+          'Conta e lista cadastros desta instância: perfis, integrantes da família e recepção pendente. Para Representante Legal use parentesco. Para A-Z use ordem=alfabetica. Sem PIN, senha, CPF ou PIX.',
         parameters: {
           type: 'object',
           properties: {
             busca: { type: 'string', description: 'Nome, telefone, código ou cargo (opcional).' },
-            papel: { type: 'string', description: 'member, congregado ou visitante.' },
+            papel: { type: 'string', description: 'member, congregado ou visitante. Para Representante Legal, Cônjuge ou Filho(a), use parentesco.' },
             menos_de_anos: { type: 'string', description: 'Idade máxima exclusiva. Ex.: 10 para menores de 10 anos.' },
             idade_min: { type: 'string', description: 'Idade mínima inclusive.' },
             idade_max: { type: 'string', description: 'Idade máxima inclusive.' },
@@ -93,6 +97,9 @@ const GEMINI_TOOLS = [
             cargo: { type: 'string', description: 'Filtro por cargo/função na igreja.' },
             familia: { type: 'string', description: 'Filtro por família.' },
             listar: { type: 'string', description: 'true para nomes; false só para contar.' },
+            parentesco: { type: 'string', description: 'Parentesco na família: Representante Legal, Cônjuge, Filho(a), Pai, Mãe ou Outros.' },
+            ordem: { type: 'string', description: 'alfabetica quando pedirem a lista por nome.' },
+            fonte: { type: 'string', description: 'perfil, familia, recepcao ou todos. Só a instância da sessão.' },
           },
         },
       },
@@ -110,7 +117,7 @@ const GEMINI_TOOLS = [
       {
         name: 'cadastro_detalhe',
         description:
-          'Dados cadastrais de uma pessoa desta instância (nome, idade, nascimento, cargo, contato, endereço). Sem PIN, senha, CPF ou PIX.',
+          'Dados cadastrais de uma pessoa desta instância (nome, idade, nascimento, parentesco, cargo, contato, endereço). Sem PIN, senha, CPF ou PIX.',
         parameters: {
           type: 'object',
           properties: {
@@ -469,6 +476,32 @@ const clampToolResult = (value: unknown, maxChars = MAX_TOOL_RESULT_CHARS) => {
   };
 };
 
+const listsFromToolResult = (result: unknown) => {
+  if (!result || typeof result !== 'object') {
+    return [] as string[];
+  }
+
+  const record = result as Record<string, unknown>;
+
+  return ['lista_texto', 'lista_recepcao']
+    .map((key) => String(record[key] ?? '').trim())
+    .filter((text) => text.length > 0);
+};
+
+const answerWithLists = (answer: string, lists: string[]) => {
+  const base = String(answer || '').trim();
+  const missing = lists.filter((lista) => {
+    const firstLine = lista.split('\n').map((line) => line.trim()).find(Boolean) || '';
+    return firstLine.length > 3 && !base.includes(firstLine);
+  });
+
+  if (!missing.length) {
+    return base;
+  }
+
+  return [base, ...missing].filter(Boolean).join('\n\n');
+};
+
 const fetchGeminiTurn = async (
   apiKey: string,
   contents: Array<{ role: string; parts: GeminiPart[] }>,
@@ -480,7 +513,7 @@ const fetchGeminiTurn = async (
     contents,
     generationConfig: {
       temperature: 0.3,
-      maxOutputTokens: 1024,
+      maxOutputTokens: 8192,
       thinkingConfig: { thinkingBudget: 0 },
     },
   };
@@ -780,6 +813,7 @@ serve(async (req) => {
       async start(controller) {
         const encoder = new TextEncoder();
         let fullResponse = '';
+        const copiedLists: string[] = [];
 
         const pushEvent = (payload: Record<string, unknown>) => {
           controller.enqueue(encoder.encode(`data: ${JSON.stringify(payload)}\n\n`));
@@ -814,6 +848,7 @@ serve(async (req) => {
 
             for (const call of uniqueCalls) {
               const result = await executeTool(call);
+              copiedLists.push(...listsFromToolResult(result));
               toolParts.push({
                 functionResponse: {
                   name: call.name,
@@ -837,15 +872,15 @@ serve(async (req) => {
             return;
           }
 
-          if (!turn.text.trim()) {
+          if (!turn.text.trim() && copiedLists.length === 0) {
             pushEvent({
               error: 'O modelo de IA não devolveu resposta. Reformule a pergunta de forma mais objetiva e tente de novo.',
             });
             return;
           }
 
-          fullResponse = turn.text;
-          pushEvent({ text: turn.text });
+          fullResponse = answerWithLists(turn.text, copiedLists);
+          pushEvent({ text: fullResponse });
 
           const auditResponse = fullResponse.trim() || '(resposta vazia)';
 

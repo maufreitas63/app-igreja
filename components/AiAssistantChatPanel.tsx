@@ -3,6 +3,7 @@ import { useKeyboardOverlap } from '@/hooks/useKeyboardOverlap';
 import { ABIGAIL_NAME } from '@/lib/abigailPersona';
 import { CLOSE_FOOTER_DOCK_HEIGHT } from '@/components/minimal/CloseFooterBar';
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
+import * as Clipboard from 'expo-clipboard';
 import React, { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -24,6 +25,7 @@ export function AiAssistantChatPanel() {
   const scrollRef = useRef<ScrollView>(null);
   const overlap = useKeyboardOverlap();
   const [dockHeight, setDockHeight] = useState(96);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
   const dockBottom = overlap > 12 ? overlap : CLOSE_FOOTER_DOCK_HEIGHT;
 
   useEffect(() => {
@@ -38,6 +40,17 @@ export function AiAssistantChatPanel() {
     window.scrollTo(0, 0);
     document.documentElement.scrollTop = 0;
     document.body.scrollTop = 0;
+  };
+
+  const copyMessage = async (id: string, content: string) => {
+    const text = content.trim();
+
+    if (!text) {
+      return;
+    }
+
+    await Clipboard.setStringAsync(text);
+    setCopiedId(id);
   };
 
   const composer = (
@@ -108,10 +121,20 @@ export function AiAssistantChatPanel() {
             <Text style={styles.messageRole}>
               {message.role === 'user' ? 'Você' : ABIGAIL_NAME}
             </Text>
-            <Text style={styles.messageText}>
+            <Text selectable style={styles.messageText}>
               {message.content}
               {message.role === 'assistant' && streaming && !message.content ? '…' : ''}
             </Text>
+            {message.role === 'assistant' && message.content.trim() ? (
+              <TouchableOpacity
+                onPress={() => void copyMessage(message.id, message.content)}
+                accessibilityRole="button"
+                accessibilityLabel="Copiar resposta"
+                disabled={streaming}
+              >
+                <Text style={styles.copyText}>{copiedId === message.id ? 'Copiado' : 'Copiar'}</Text>
+              </TouchableOpacity>
+            ) : null}
           </View>
         ))}
       </ScrollView>
@@ -199,6 +222,13 @@ const styles = StyleSheet.create({
     color: MINIMAL_UI.text,
     fontSize: 14,
     lineHeight: 20,
+    ...(Platform.OS === 'web' ? { userSelect: 'text' as const } : null),
+  },
+  copyText: {
+    color: MINIMAL_UI.accent,
+    fontSize: 12,
+    fontWeight: '700',
+    marginTop: 4,
   },
   composerDock: {
     position: Platform.OS === 'web' ? 'fixed' : 'absolute',

@@ -61,6 +61,48 @@ $$;
 revoke all on function public.ia_escape_like(text) from public;
 grant execute on function public.ia_escape_like(text) to anon, authenticated, service_role;
 
+create or replace function public.ia_norm_text(p_text text)
+returns text
+language sql
+immutable
+set search_path = public
+as $$
+  select translate(
+    lower(trim(coalesce(p_text, ''))),
+    'áàâãäéèêëíìîïóòôõöúùûüçñ',
+    'aaaaaeeeeiiiiooooouuuucn'
+  );
+$$;
+
+revoke all on function public.ia_norm_text(text) from public;
+grant execute on function public.ia_norm_text(text) to service_role;
+
+create or replace function public.ia_phone_digits(p_text text)
+returns text
+language sql
+immutable
+set search_path = public
+as $$
+  select nullif(regexp_replace(coalesce(p_text, ''), '\D', '', 'g'), '');
+$$;
+
+revoke all on function public.ia_phone_digits(text) from public;
+grant execute on function public.ia_phone_digits(text) to service_role;
+
+create or replace function public.ia_same_phone(p_left text, p_right text)
+returns boolean
+language sql
+immutable
+set search_path = public
+as $$
+  select
+    length(coalesce(public.ia_phone_digits(p_left), '')) >= 8
+    and right(public.ia_phone_digits(p_left), 8) = right(public.ia_phone_digits(p_right), 8);
+$$;
+
+revoke all on function public.ia_same_phone(text, text) from public;
+grant execute on function public.ia_same_phone(text, text) to service_role;
+
 revoke all on public.vw_ia_cadastros_instancia from public, anon, authenticated;
 
 create or replace function public.ia_escopo_lideranca(p_actor_profile_id uuid)
@@ -155,6 +197,10 @@ declare
   v_cidade_f text;
   v_cargo_f text;
   v_familia_f text;
+  v_parentesco text;
+  v_fonte text;
+  v_ordem text;
+  v_ordem_alfa boolean;
   v_listar boolean;
   v_filtro_idade boolean;
   v_result jsonb;
@@ -173,12 +219,12 @@ begin
   v_limite := least(
     greatest(
       case
-        when coalesce(v_params->>'limite', '') ~ '^[0-9]{1,3}$' then (v_params->>'limite')::int
-        else 40
+        when coalesce(v_params->>'limite', '') ~ '^[0-9]{1,4}$' then (v_params->>'limite')::int
+        else 500
       end,
       1
     ),
-    80
+    500
   );
   v_idade_min := case
     when coalesce(v_params->>'idade_min', '') ~ '^[0-9]{1,3}$' then (v_params->>'idade_min')::int
@@ -204,6 +250,9 @@ begin
   v_cidade_f := nullif(trim(coalesce(v_params->>'cidade', '')), '');
   v_cargo_f := nullif(trim(coalesce(v_params->>'cargo', '')), '');
   v_familia_f := nullif(trim(coalesce(v_params->>'familia', '')), '');
+  v_parentesco := nullif(trim(coalesce(v_params->>'parentesco', '')), '');
+  v_fonte := nullif(public.ia_norm_text(coalesce(v_params->>'fonte', '')), '');
+  v_ordem := nullif(public.ia_norm_text(coalesce(v_params->>'ordem', '')), '');
   v_listar := lower(coalesce(nullif(trim(v_params->>'listar'), ''), 'true'))
     not in ('false', '0', 'nao', 'não', 'n');
   v_filtro_idade := v_idade_min is not null
@@ -211,6 +260,13 @@ begin
     or v_menos_de is not null
     or v_mes_nasc is not null
     or v_ano_nasc is not null;
+  v_ordem_alfa := coalesce(v_ordem, '') in ('alfabetica', 'nome', 'a-z')
+    or v_parentesco is not null
+    or (
+      v_papel is not null
+      and v_papel not in ('member', 'congregado', 'visitante')
+      and not v_filtro_idade
+    );
 
   if v_tool = '' then
     return jsonb_build_object('ok', false, 'erro', 'ferramenta_obrigatoria');
@@ -326,31 +382,34 @@ begin
   end if;
 
   -- ---------------------------------------------------------------------------
-  -- buscar_pessoas / consultar_cadastros (idade, nascimento, papel, endereço)
+  -- buscar_pessoas / consultar_cadastros
+  -- Bases da instância: perfis, integrantes da família e recepção pendente.
   -- ---------------------------------------------------------------------------
   if v_tool in ('buscar_pessoas', 'consultar_cadastros') then
     if (v_busca is null or char_length(v_busca) < 2)
        and v_papel is null
+       and v_parentesco is null
        and not v_filtro_idade
        and v_bairro_f is null
        and v_cidade_f is null
        and v_cargo_f is null
        and v_familia_f is null
+       and coalesce(v_fonte, '') <> 'recepcao'
     then
       return jsonb_build_object(
         'ok', false,
         'erro', 'informe_filtro',
-        'dica', 'Informe busca, papel, idade (idade_min, idade_max, menos_de_anos), mês/ano de nascimento, bairro, cidade, cargo ou família.'
+        'dica', 'Informe busca, papel (member, congregado, visitante ou nome do papel), parentesco (Representante Legal, Cônjuge, Filho(a)...), idade, bairro, cidade, cargo ou família.'
       );
     end if;
 
     begin
-      with visiveis as (
+      with perfil as (
         select
-          c.profile_id,
           c.nome,
           c.cargo,
           c.telefone,
+          c.email,
           c.codigo,
           c.familia,
           c.bairro,
@@ -366,23 +425,31 @@ begin
             string_agg(ar.name, ', ' order by public.access_role_display_order(ar.code), ar.name)
               filter (where ar.code not in ('member', 'congregado', 'visitante')),
             ''
-          ) as cargos_acesso
+          ) as cargos_acesso,
+          (
+            select string_agg(distinct nullif(trim(m.relationship), ''), ', ')
+              from public.members m
+             where m.tenant_id = c.tenant_id
+               and m.accepted is true
+               and public.ia_norm_text(m.full_name) = public.ia_norm_text(c.nome)
+               and (
+                 public.ia_same_phone(m.phone, c.telefone)
+                 or (
+                   public.ia_norm_text(m.family_id) = public.ia_norm_text(c.familia)
+                   and public.ia_norm_text(c.familia) <> ''
+                 )
+               )
+          ) as parentesco,
+          'perfil'::text as fonte,
+          'ativo'::text as situacao
           from public.vw_ia_cadastros_instancia c
           left join public.profile_access_roles par on par.profile_id = c.profile_id
           left join public.access_roles ar on ar.id = par.role_id
          where c.tenant_id = v_tenant
+           and coalesce(v_fonte, 'todos') in ('todos', 'perfil')
            and (
              not v_is_gestor
              or not public.is_super_admin_profile(c.profile_id)
-           )
-           and (
-             v_busca is null
-             or char_length(v_busca) < 2
-             or coalesce(c.nome, '') ilike '%' || public.ia_escape_like(v_busca) || '%' escape '\'
-             or coalesce(c.telefone, '') ilike '%' || public.ia_escape_like(v_busca) || '%' escape '\'
-             or coalesce(c.codigo, '') ilike '%' || public.ia_escape_like(v_busca) || '%' escape '\'
-             or coalesce(c.cargo, '') ilike '%' || public.ia_escape_like(v_busca) || '%' escape '\'
-             or coalesce(c.email, '') ilike '%' || public.ia_escape_like(v_busca) || '%' escape '\'
            )
            and (v_idade_min is null or c.idade >= v_idade_min)
            and (v_idade_max is null or c.idade <= v_idade_max)
@@ -406,12 +473,222 @@ begin
              or coalesce(c.familia, '') ilike '%' || public.ia_escape_like(v_familia_f) || '%' escape '\'
            )
          group by
-           c.profile_id, c.nome, c.cargo, c.telefone, c.codigo, c.familia, c.bairro, c.cidade,
-           c.nascimento, c.idade
+           c.tenant_id, c.profile_id, c.nome, c.cargo, c.telefone, c.email, c.codigo, c.familia,
+           c.bairro, c.cidade, c.nascimento, c.idade
+      ),
+      familia as (
+        select
+          nullif(trim(m.full_name), '') as nome,
+          null::text as cargo,
+          nullif(trim(m.phone), '') as telefone,
+          null::text as email,
+          null::text as codigo,
+          nullif(trim(m.family_id), '') as familia,
+          null::text as bairro,
+          null::text as cidade,
+          m.birth_date as nascimento,
+          case
+            when m.birth_date is null then null
+            else extract(year from age((now() at time zone 'America/Sao_Paulo')::date, m.birth_date))::int
+          end as idade,
+          (
+            select case
+              when bool_or(ar.code = 'member') then 'member'
+              when bool_or(ar.code = 'congregado') then 'congregado'
+              when count(ar.code) > 0 then 'visitante'
+              else null
+            end
+              from public.profiles p
+              left join public.profile_access_roles par on par.profile_id = p.id
+              left join public.access_roles ar on ar.id = par.role_id
+             where p.tenant_id = m.tenant_id
+               and coalesce(p.membership_out::text, '') = ''
+               and (
+                 public.ia_same_phone(p.phone, m.phone)
+                 or (
+                   public.ia_norm_text(p.full_name) = public.ia_norm_text(m.full_name)
+                   and public.ia_norm_text(p.family_id) = public.ia_norm_text(m.family_id)
+                   and public.ia_norm_text(m.family_id) <> ''
+                 )
+               )
+          ) as papel,
+          null::text as cargos_acesso,
+          nullif(trim(m.relationship), '') as parentesco,
+          'familia'::text as fonte,
+          'ativo'::text as situacao
+          from public.members m
+         where m.tenant_id = v_tenant
+           and m.accepted is true
+           and nullif(trim(m.full_name), '') is not null
+           and coalesce(v_fonte, 'todos') in ('todos', 'familia')
+           and v_bairro_f is null
+           and v_cidade_f is null
+           and v_cargo_f is null
+           and (
+             v_familia_f is null
+             or coalesce(m.family_id, '') ilike '%' || public.ia_escape_like(v_familia_f) || '%' escape '\'
+           )
+           and (
+             not v_is_gestor
+             or not exists (
+               select 1
+                 from public.profiles p
+                where p.tenant_id = m.tenant_id
+                  and public.is_super_admin_profile(p.id)
+                  and (
+                    public.ia_same_phone(p.phone, m.phone)
+                    or (
+                      public.ia_norm_text(p.full_name) = public.ia_norm_text(m.full_name)
+                      and public.ia_norm_text(p.family_id) = public.ia_norm_text(m.family_id)
+                    )
+                  )
+             )
+           )
+      ),
+      recepcao as (
+        select
+          nullif(trim(r.full_name), '') as nome,
+          null::text as cargo,
+          nullif(trim(r.phone), '') as telefone,
+          null::text as email,
+          null::text as codigo,
+          coalesce(nullif(trim(r.applied_family_id), ''), nullif(trim(r.detected_family_id), '')) as familia,
+          nullif(trim(r.address_neighborhood), '') as bairro,
+          nullif(trim(r.address_city), '') as cidade,
+          r.birth_date as nascimento,
+          case
+            when r.birth_date is null then null
+            else extract(year from age((now() at time zone 'America/Sao_Paulo')::date, r.birth_date))::int
+          end as idade,
+          null::text as papel,
+          null::text as cargos_acesso,
+          nullif(trim(r.relationship), '') as parentesco,
+          'recepcao'::text as fonte,
+          'recepcao_pendente'::text as situacao
+          from public.recepcao_cadastro_familiar r
+         where r.tenant_id = v_tenant
+           and r.status = 'pending'
+           and nullif(trim(r.full_name), '') is not null
+           and coalesce(v_fonte, 'todos') in ('todos', 'recepcao')
+           and (
+             not v_is_gestor
+             or r.matched_profile_id is null
+             or not public.is_super_admin_profile(r.matched_profile_id)
+           )
+           and (
+             v_bairro_f is null
+             or coalesce(r.address_neighborhood, '') ilike '%' || public.ia_escape_like(v_bairro_f) || '%' escape '\'
+           )
+           and (
+             v_cidade_f is null
+             or coalesce(r.address_city, '') ilike '%' || public.ia_escape_like(v_cidade_f) || '%' escape '\'
+           )
+           and v_cargo_f is null
+           and (
+             v_familia_f is null
+             or coalesce(r.applied_family_id, r.detected_family_id, '') ilike '%' || public.ia_escape_like(v_familia_f) || '%' escape '\'
+           )
+      ),
+      uniao as (
+        select * from perfil
+        union all
+        select * from familia
+        union all
+        select * from recepcao
+      ),
+      dedup as (
+        select distinct on (u.chave)
+          u.nome,
+          u.cargo,
+          u.telefone,
+          u.email,
+          u.codigo,
+          u.familia,
+          u.bairro,
+          u.cidade,
+          u.nascimento,
+          u.idade,
+          u.papel,
+          u.cargos_acesso,
+          u.parentesco,
+          u.fonte,
+          u.situacao
+          from (
+            select
+              uniao.*,
+              (
+                public.ia_norm_text(uniao.nome)
+                || '|'
+                || case
+                  when length(coalesce(public.ia_phone_digits(uniao.telefone), '')) >= 8
+                    then right(public.ia_phone_digits(uniao.telefone), 8)
+                  else public.ia_norm_text(coalesce(uniao.familia, ''))
+                end
+              ) as chave,
+              case uniao.fonte
+                when 'perfil' then 0
+                when 'familia' then 1
+                else 2
+              end as prioridade
+              from uniao
+          ) u
+         order by u.chave, u.prioridade
+      ),
+      filtrados as (
+        select
+          d.*,
+          row_number() over (
+            partition by d.situacao
+            order by
+              case when v_ordem_alfa then 0 else coalesce(d.idade, 999) end,
+              d.nome
+          ) as ord_n
+          from dedup d
+         where (v_idade_min is null or d.idade >= v_idade_min)
+           and (v_idade_max is null or d.idade <= v_idade_max)
+           and (v_menos_de is null or d.idade < v_menos_de)
+           and (v_mes_nasc is null or extract(month from d.nascimento) = v_mes_nasc)
+           and (v_ano_nasc is null or extract(year from d.nascimento) = v_ano_nasc)
+           and (
+             v_busca is null
+             or char_length(v_busca) < 2
+             or public.ia_norm_text(coalesce(d.nome, '')) like '%' || public.ia_norm_text(v_busca) || '%'
+             or coalesce(d.telefone, '') ilike '%' || public.ia_escape_like(v_busca) || '%' escape '\'
+             or public.ia_norm_text(coalesce(d.codigo, '')) like '%' || public.ia_norm_text(v_busca) || '%'
+             or public.ia_norm_text(coalesce(d.cargo, '')) like '%' || public.ia_norm_text(v_busca) || '%'
+             or public.ia_norm_text(coalesce(d.email, '')) like '%' || public.ia_norm_text(v_busca) || '%'
+             or public.ia_norm_text(coalesce(d.parentesco, '')) like '%' || public.ia_norm_text(v_busca) || '%'
+             or public.ia_norm_text(coalesce(d.familia, '')) like '%' || public.ia_norm_text(v_busca) || '%'
+             or public.ia_norm_text(coalesce(d.cargos_acesso, '')) like '%' || public.ia_norm_text(v_busca) || '%'
+             or public.ia_norm_text(coalesce(d.papel, '')) like '%' || public.ia_norm_text(v_busca) || '%'
+           )
+           and (
+             v_papel is null
+             or (
+               v_papel in ('member', 'congregado', 'visitante')
+               and d.papel = v_papel
+             )
+             or (
+               v_papel not in ('member', 'congregado', 'visitante')
+               and (
+                 public.ia_norm_text(coalesce(d.parentesco, '')) like '%' || public.ia_norm_text(v_papel) || '%'
+                 or public.ia_norm_text(coalesce(d.cargos_acesso, '')) like '%' || public.ia_norm_text(v_papel) || '%'
+                 or public.ia_norm_text(coalesce(d.papel, '')) = public.ia_norm_text(v_papel)
+               )
+             )
+           )
+           and (
+             v_parentesco is null
+             or public.ia_norm_text(coalesce(d.parentesco, '')) like '%' || public.ia_norm_text(v_parentesco) || '%'
+           )
       )
       select jsonb_build_object(
         'ok', true,
-        'quantidade', count(*)::int,
+        'escopo', 'somente_instancia_da_sessao',
+        'bases', jsonb_build_array('perfis', 'familia', 'recepcao_familiar'),
+        'ordem', case when v_ordem_alfa then 'alfabetica' else 'idade' end,
+        'quantidade', count(*) filter (where f.situacao = 'ativo')::int,
+        'quantidade_recepcao_pendente', count(*) filter (where f.situacao = 'recepcao_pendente')::int,
         'cadastros_sem_nascimento', case
           when v_filtro_idade then (
             select count(*)::int
@@ -425,36 +702,70 @@ begin
           )
           else null
         end,
+        'instrucao', 'Reproduza lista_texto na íntegra, uma pessoa por linha, sem resumir e sem omitir nomes. Se lista_recepcao tiver texto, mostre depois, em bloco separado, como recepção pendente desta instância.',
+        'lista_texto', coalesce(
+          string_agg(
+            format(
+              '%s. %s',
+              f.ord_n,
+              concat_ws(
+                ' — ',
+                f.nome,
+                nullif(f.parentesco, ''),
+                case when f.familia is not null then 'família ' || f.familia end,
+                nullif(f.papel, '')
+              )
+            ),
+            E'\n'
+            order by f.ord_n
+          ) filter (where f.situacao = 'ativo' and f.ord_n <= v_limite),
+          ''
+        ),
+        'lista_recepcao', coalesce(
+          string_agg(
+            format(
+              '%s. %s',
+              f.ord_n,
+              concat_ws(
+                ' — ',
+                f.nome,
+                nullif(f.parentesco, ''),
+                case when f.familia is not null then 'família ' || f.familia end
+              )
+            ),
+            E'\n'
+            order by f.ord_n
+          ) filter (where f.situacao = 'recepcao_pendente' and f.ord_n <= v_limite),
+          ''
+        ),
         'itens', case
-          when not v_listar then '[]'::jsonb
+          when not v_listar or count(*) filter (where f.situacao = 'ativo') > 25 then '[]'::jsonb
           else coalesce(
             jsonb_agg(
               jsonb_build_object(
-                'nome', v.nome,
-                'idade', v.idade,
-                'nascimento', v.nascimento,
-                'papel', v.papel,
-                'cargo', v.cargo,
-                'papeis_acesso', v.cargos_acesso,
-                'telefone', v.telefone,
-                'codigo', v.codigo,
-                'familia', v.familia,
-                'bairro', v.bairro,
-                'cidade', v.cidade
+                'nome', f.nome,
+                'idade', f.idade,
+                'nascimento', f.nascimento,
+                'papel', f.papel,
+                'parentesco', f.parentesco,
+                'cargo', f.cargo,
+                'papeis_acesso', f.cargos_acesso,
+                'telefone', f.telefone,
+                'codigo', f.codigo,
+                'familia', f.familia,
+                'bairro', f.bairro,
+                'cidade', f.cidade,
+                'fonte', f.fonte
               )
-              order by coalesce(v.idade, 999), v.nome
-            ) filter (where v.ord_n <= v_limite),
+              order by f.ord_n
+            ) filter (where f.situacao = 'ativo' and f.ord_n <= v_limite),
             '[]'::jsonb
           )
         end,
-        'lista_parcial', v_listar and count(*) > v_limite
+        'lista_parcial', count(*) filter (where f.situacao = 'ativo') > v_limite
       )
         into v_result
-        from (
-          select visiveis.*, row_number() over (order by coalesce(visiveis.idade, 999), visiveis.nome) as ord_n
-            from visiveis
-           where v_papel is null or visiveis.papel = v_papel
-        ) v;
+        from filtrados f;
     exception
       when others then
         raise warning 'ia.buscar_pessoas falhou: %', sqlerrm;
@@ -612,6 +923,20 @@ begin
               'papel', m.papel,
               'cargo', m.cargo,
               'papeis', m.papeis,
+              'parentesco', (
+                select string_agg(distinct nullif(trim(fm.relationship), ''), ', ')
+                  from public.members fm
+                 where fm.tenant_id = v_tenant
+                   and fm.accepted is true
+                   and public.ia_norm_text(fm.full_name) = public.ia_norm_text(m.nome)
+                   and (
+                     public.ia_same_phone(fm.phone, m.telefone)
+                     or (
+                       public.ia_norm_text(fm.family_id) = public.ia_norm_text(m.familia)
+                       and public.ia_norm_text(m.familia) <> ''
+                     )
+                   )
+              ),
               'telefone', m.telefone,
               'email', m.email,
               'codigo', m.codigo,
@@ -927,7 +1252,7 @@ end;
 $$;
 
 comment on function public.consultar_ferramenta_ia_lideranca(uuid, text, jsonb) is
-  'Consultas pontuais da igreja da sessão para o assistente de IA (tool calling). Inclui idade/nascimento. Isolado por current_session_tenant_id().';
+  'Consultas da igreja da sessão para a Abigail. Cadastros: perfis, família e recepção pendente. Isolado por current_session_tenant_id().';
 
 revoke all on function public.consultar_ferramenta_ia_lideranca(uuid, text, jsonb) from public;
 grant execute on function public.consultar_ferramenta_ia_lideranca(uuid, text, jsonb) to anon, authenticated, service_role;
