@@ -136,25 +136,23 @@ function ChildDetailModal({
               ]}
             >
               <Text style={styles.alertTitle}>Alertas e saúde</Text>
-              {foodAlerts ? (
-                <>
-                  <Text style={styles.alertLabel}>Restrição Alimentar</Text>
-                  <Text style={styles.alertText}>{foodAlerts}</Text>
-                </>
-              ) : (
-                <Text style={styles.alertQuiet}>Sem restrição alimentar registrada.</Text>
-              )}
+              <View style={styles.alertRow}>
+                <Text style={styles.alertLabel}>Restrição Alimentar</Text>
+                <Text style={foodAlerts ? styles.alertText : styles.alertQuiet}>
+                  {foodAlerts || 'Sem restrição alimentar registrada.'}
+                </Text>
+              </View>
               {additionalNotes ? (
-                <>
+                <View style={styles.alertRow}>
                   <Text style={styles.alertLabel}>Observações Adicionais</Text>
                   <Text style={styles.alertText}>{additionalNotes}</Text>
-                </>
+                </View>
               ) : null}
               {specificNeeds ? (
-                <>
+                <View style={styles.alertRow}>
                   <Text style={styles.alertLabel}>Necessidades Específicas</Text>
                   <Text style={styles.alertText}>{specificNeeds}</Text>
-                </>
+                </View>
               ) : null}
             </View>
 
@@ -519,8 +517,13 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#F59E0B',
     borderRadius: 12,
-    padding: 12,
-    gap: 6,
+    padding: 10,
+    gap: 4,
+  },
+  alertRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 10,
   },
   alertBoxDanger: {
     backgroundColor: '#FEE2E2',
@@ -537,15 +540,20 @@ const styles = StyleSheet.create({
   alertLabel: {
     color: '#92400E',
     fontWeight: '700',
-    marginTop: 4,
+    width: '46%',
+    flexShrink: 0,
   },
   alertText: {
     color: '#7F1D1D',
     fontSize: 14,
+    flex: 1,
+    flexShrink: 1,
   },
   alertQuiet: {
     color: '#64748B',
     fontSize: 14,
+    flex: 1,
+    flexShrink: 1,
   },
   sectionTitle: {
     color: MINIMAL_UI.text,
