@@ -23,6 +23,7 @@ import { FontAwesome } from '@expo/vector-icons';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Alert, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { MemberCheckboxItem } from './MemberCheckboxItem';
+import { AudienceCareRestrictionsModal } from './AudienceCareRestrictionsModal';
 import {
   buildAudienceRoomLabelIndex,
   lookupAudienceRoomLabel,
@@ -183,6 +184,8 @@ export const FamilyRegistrationList = ({
   >({});
   const [soloStatusLoading, setSoloStatusLoading] = useState(false);
   const [soloToggleLoading, setSoloToggleLoading] = useState(false);
+  const [careMemberId, setCareMemberId] = useState<string | null>(null);
+  const [careUsesProfileId, setCareUsesProfileId] = useState(false);
 
   useEffect(() => {
     setPendingRegisterIds([]);
@@ -378,6 +381,19 @@ export const FamilyRegistrationList = ({
       teensDisplayLabel,
     ]
   );
+
+  const roomsOpen =
+    (eventEnabledRoomKeys?.length ?? 0) > 0 || showKidsIndicator || showTeensIndicator;
+  const showBulletColumn = showKidsIndicator || showTeensIndicator;
+  const careMember =
+    (careMemberId && soloParticipant?.id === careMemberId ? soloParticipant : null)
+    ?? visibleMembers.find((member) => member.id === careMemberId)
+    ?? null;
+
+  const openCare = (memberId: string, asProfile: boolean) => {
+    setCareUsesProfileId(asProfile);
+    setCareMemberId(memberId);
+  };
 
   const refetchSoloRegistrationStatus = useCallback(async () => {
     if (!soloMode || !eventId || !sessionProfile?.id) {
@@ -678,34 +694,49 @@ export const FamilyRegistrationList = ({
           </Text>
         ) : null}
         <View style={[styles.listFrame, minimal && styles.listFrameMinimal]}>
-          <MemberCheckboxItem
-            member={soloParticipant}
-            minimal={minimal}
-            disabled={!hasEventOpen || isBusy}
-            isChecked={soloRegistered}
-            isLoading={soloToggleLoading || soloStatusLoading}
-            isRegistered={soloRegistered}
-            registeredEventName={resolvedEventName}
-            commitmentCaption={primiciasCaptionByMemberId[soloParticipant.id] ?? null}
-            registrationStatus={soloRegistrationStatus}
+          <AudienceMemberRow
+            showRestrictions={roomsOpen}
+            showBulletColumn={showBulletColumn}
+            roomStatusDot={roomStatusByMemberId[soloParticipant.id] ?? null}
             showKidsIndicator={showKidsIndicator}
             showTeensIndicator={showTeensIndicator}
-            roomStatusDot={roomStatusByMemberId[soloParticipant.id] ?? null}
-            assignedRoomLabel={inscriptionRoomLabelFor(soloParticipant.id)}
-            assignedRoomIsOverlay={
-              inscriptionRoomLabelFor(soloParticipant.id) === roomLabelByMemberId[soloParticipant.id]
-              && roomOverlayByMemberId[soloParticipant.id] === true
-            }
-            roomCheckInComplete={roomCheckInMemberIds.includes(soloParticipant.id)}
-            roomReleased={roomReleasedMemberIds.includes(soloParticipant.id)}
-            onToggle={() => {
-              if (!hasEventOpen || isBusy) {
-                return;
+            onRestrictions={() => openCare(soloParticipant.id, true)}
+          >
+            <MemberCheckboxItem
+              member={soloParticipant}
+              minimal={minimal}
+              hideRoomStatusDot
+              disabled={!hasEventOpen || isBusy}
+              isChecked={soloRegistered}
+              isLoading={soloToggleLoading || soloStatusLoading}
+              isRegistered={soloRegistered}
+              registeredEventName={resolvedEventName}
+              commitmentCaption={primiciasCaptionByMemberId[soloParticipant.id] ?? null}
+              registrationStatus={soloRegistrationStatus}
+              showKidsIndicator={showKidsIndicator}
+              showTeensIndicator={showTeensIndicator}
+              roomStatusDot={roomStatusByMemberId[soloParticipant.id] ?? null}
+              assignedRoomLabel={inscriptionRoomLabelFor(soloParticipant.id)}
+              assignedRoomIsOverlay={
+                inscriptionRoomLabelFor(soloParticipant.id) === roomLabelByMemberId[soloParticipant.id]
+                && roomOverlayByMemberId[soloParticipant.id] === true
               }
-              void toggleSoloRegistration();
-            }}
-          />
+              roomCheckInComplete={roomCheckInMemberIds.includes(soloParticipant.id)}
+              roomReleased={roomReleasedMemberIds.includes(soloParticipant.id)}
+              onToggle={() => {
+                if (!hasEventOpen || isBusy) {
+                  return;
+                }
+                void toggleSoloRegistration();
+              }}
+            />
+          </AudienceMemberRow>
         </View>
+        <AudienceCareRestrictionsModal
+          member={careMember}
+          profileId={careUsesProfileId ? careMember?.id ?? null : null}
+          onClose={() => setCareMemberId(null)}
+        />
       </View>
     );
   }
@@ -854,38 +885,48 @@ export const FamilyRegistrationList = ({
               !hasEventOpen || isBusy || quorumUnregisterLocked || quorumOtherMemberLocked;
 
             return (
-              <MemberCheckboxItem
-                member={item}
-                minimal={minimal}
-                disabled={rowDisabled}
-                isChecked={
-                  pendingRegisterIds.includes(item.id) ||
-                  ((registeredMemberIds.includes(item.id) || primiciasCommitted) && !pendingUnregisterIds.includes(item.id))
-                }
-                isLoading={
-                  pendingRegisterIds.includes(item.id) || pendingUnregisterIds.includes(item.id)
-                }
-                isRegistered={isItemRegistered}
-                registeredEventName={resolvedEventName}
-                commitmentCaption={primiciasCaptionByMemberId[item.id] ?? null}
-                registrationStatus={registeredMemberStatusById[item.id]}
+              <AudienceMemberRow
+                showRestrictions={roomsOpen}
+                showBulletColumn={showBulletColumn}
+                roomStatusDot={roomStatusByMemberId[item.id] ?? null}
                 showKidsIndicator={showKidsIndicator}
                 showTeensIndicator={showTeensIndicator}
-                roomStatusDot={roomStatusByMemberId[item.id] ?? null}
-                assignedRoomLabel={inscriptionRoomLabelFor(item.id)}
-                assignedRoomIsOverlay={
-                  inscriptionRoomLabelFor(item.id) === roomLabelByMemberId[item.id]
-                  && roomOverlayByMemberId[item.id] === true
-                }
-                roomCheckInComplete={roomCheckInMemberIds.includes(item.id)}
-                roomReleased={roomReleasedMemberIds.includes(item.id)}
-                onToggle={() => {
-                  if (rowDisabled) {
-                    return;
+                onRestrictions={() => openCare(item.id, false)}
+              >
+                <MemberCheckboxItem
+                  member={item}
+                  minimal={minimal}
+                  hideRoomStatusDot
+                  disabled={rowDisabled}
+                  isChecked={
+                    pendingRegisterIds.includes(item.id) ||
+                    ((registeredMemberIds.includes(item.id) || primiciasCommitted) && !pendingUnregisterIds.includes(item.id))
                   }
-                  void toggleMember(item.id);
-                }}
-              />
+                  isLoading={
+                    pendingRegisterIds.includes(item.id) || pendingUnregisterIds.includes(item.id)
+                  }
+                  isRegistered={isItemRegistered}
+                  registeredEventName={resolvedEventName}
+                  commitmentCaption={primiciasCaptionByMemberId[item.id] ?? null}
+                  registrationStatus={registeredMemberStatusById[item.id]}
+                  showKidsIndicator={showKidsIndicator}
+                  showTeensIndicator={showTeensIndicator}
+                  roomStatusDot={roomStatusByMemberId[item.id] ?? null}
+                  assignedRoomLabel={inscriptionRoomLabelFor(item.id)}
+                  assignedRoomIsOverlay={
+                    inscriptionRoomLabelFor(item.id) === roomLabelByMemberId[item.id]
+                    && roomOverlayByMemberId[item.id] === true
+                  }
+                  roomCheckInComplete={roomCheckInMemberIds.includes(item.id)}
+                  roomReleased={roomReleasedMemberIds.includes(item.id)}
+                  onToggle={() => {
+                    if (rowDisabled) {
+                      return;
+                    }
+                    void toggleMember(item.id);
+                  }}
+                />
+              </AudienceMemberRow>
             );
           }}
           style={styles.listScroll}
@@ -901,9 +942,67 @@ export const FamilyRegistrationList = ({
       {hasEventOpen && loadingRegisteredMembers ? (
         <Text style={styles.helperText}>Carregando participantes já registrados...</Text>
       ) : null}
+      <AudienceCareRestrictionsModal
+        member={careMember}
+        profileId={careUsesProfileId ? careMember?.id ?? null : null}
+        onClose={() => setCareMemberId(null)}
+      />
     </View>
   );
 };
+
+const FAIXA_DOT_SIZE = 10;
+
+function AudienceMemberRow({
+  showRestrictions,
+  showBulletColumn,
+  roomStatusDot,
+  showKidsIndicator,
+  showTeensIndicator,
+  onRestrictions,
+  children,
+}: {
+  showRestrictions: boolean;
+  showBulletColumn: boolean;
+  roomStatusDot: 'KIDS' | 'TEENS' | null;
+  showKidsIndicator: boolean;
+  showTeensIndicator: boolean;
+  onRestrictions: () => void;
+  children: React.ReactNode;
+}) {
+  const showDot =
+    (roomStatusDot === 'KIDS' && showKidsIndicator)
+    || (roomStatusDot === 'TEENS' && showTeensIndicator);
+
+  return (
+    <View style={styles.audienceRow}>
+      <View style={styles.audiencePerson}>{children}</View>
+      {showRestrictions ? (
+        <TouchableOpacity
+          style={styles.restrictionsButton}
+          onPress={onRestrictions}
+          accessibilityRole="button"
+          accessibilityLabel="Restrições"
+        >
+          <Text style={styles.restrictionsButtonText}>Restrições</Text>
+        </TouchableOpacity>
+      ) : null}
+      {showBulletColumn ? (
+        <View style={styles.faixaSlot}>
+          {showDot ? (
+            <View
+              accessibilityLabel={roomStatusDot === 'TEENS' ? 'Faixa Jovens' : 'Faixa Infantil'}
+              style={[
+                styles.faixaDot,
+                roomStatusDot === 'TEENS' ? styles.faixaDotTeens : styles.faixaDotKids,
+              ]}
+            />
+          ) : null}
+        </View>
+      ) : null}
+    </View>
+  );
+}
 
 const styles = StyleSheet.create({
   wrapper: {
@@ -987,6 +1086,51 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     gap: 10,
     width: '100%',
+  },
+  audienceRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '100%',
+    minWidth: 0,
+    gap: 8,
+  },
+  audiencePerson: {
+    flex: 1,
+    minWidth: 0,
+  },
+  restrictionsButton: {
+    flexGrow: 0,
+    flexShrink: 0,
+    alignSelf: 'center',
+    paddingVertical: 6,
+    paddingHorizontal: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: MINIMAL_UI.border,
+    backgroundColor: MINIMAL_UI.background,
+  },
+  restrictionsButtonText: {
+    color: MINIMAL_UI.text,
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  faixaSlot: {
+    width: FAIXA_DOT_SIZE,
+    flexGrow: 0,
+    flexShrink: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  faixaDot: {
+    width: FAIXA_DOT_SIZE,
+    height: FAIXA_DOT_SIZE,
+    borderRadius: 999,
+  },
+  faixaDotKids: {
+    backgroundColor: '#FACC15',
+  },
+  faixaDotTeens: {
+    backgroundColor: '#EF4444',
   },
   bulkCheckboxColumn: {
     flexShrink: 0,

@@ -146,6 +146,79 @@ async function insertProfileWithFallback(payload: ProfileUpsertPayload) {
   return data?.id ?? null;
 }
 
+export type ManagedMemberCareFields = {
+  medicalFoodAlerts: string;
+  additionalCareNotes: string;
+  specialNeeds: string;
+};
+
+const careText = (value: unknown) => (typeof value === 'string' ? value.trim() : '');
+
+export async function loadManagedMemberCareFields(input: {
+  memberId?: string | null;
+  profileId?: string | null;
+}): Promise<ManagedMemberCareFields> {
+  const { data, error } = await supabase.rpc('get_managed_member_care_fields', {
+    p_profile_id: input.profileId?.trim() || null,
+    p_member_id: input.memberId?.trim() || null,
+  });
+
+  if (error) {
+    const message =
+      typeof error.message === 'string' && error.message.trim()
+        ? error.message
+        : 'Não foi possível carregar os cuidados.';
+    throw new Error(message);
+  }
+
+  const payload = (data ?? {}) as {
+    success?: boolean;
+    message?: string;
+    medical_food_alerts?: unknown;
+    additional_care_notes?: unknown;
+    special_needs?: unknown;
+  };
+
+  if (payload.success === false) {
+    throw new Error(payload.message ?? 'Não foi possível carregar os cuidados.');
+  }
+
+  return {
+    medicalFoodAlerts: careText(payload.medical_food_alerts),
+    additionalCareNotes: careText(payload.additional_care_notes),
+    specialNeeds: careText(payload.special_needs),
+  };
+}
+
+export async function saveManagedMemberCareFields(input: {
+  memberId?: string | null;
+  profileId?: string | null;
+  medicalFoodAlerts: string;
+  additionalCareNotes: string;
+  specialNeeds: string;
+}) {
+  const { data, error } = await supabase.rpc('set_managed_member_care_fields', {
+    p_profile_id: input.profileId?.trim() || null,
+    p_member_id: input.memberId?.trim() || null,
+    p_medical_food_alerts: input.medicalFoodAlerts.trim() || null,
+    p_additional_care_notes: input.additionalCareNotes.trim() || null,
+    p_special_needs: input.specialNeeds.trim() || null,
+  });
+
+  if (error) {
+    const message =
+      typeof error.message === 'string' && error.message.trim()
+        ? error.message
+        : 'Não foi possível gravar os cuidados.';
+    throw new Error(message);
+  }
+
+  const payload = (data ?? {}) as { success?: boolean; message?: string };
+  if (payload.success === false) {
+    throw new Error(payload.message ?? 'Não foi possível gravar os cuidados.');
+  }
+}
+
 export async function findProfileIdForMember(member: MemberProfileInput) {
   const normalizedName = formatFullName(member.full_name);
   const phone = member.phone?.trim() || null;

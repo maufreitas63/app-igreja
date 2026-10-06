@@ -29,6 +29,8 @@ type Props = {
   roomCheckInComplete?: boolean;
   /** Sala finalizada: criança liberada para retirada. */
   roomReleased?: boolean;
+  /** Quando false, o bullet da faixa fica fora da linha (coluna própria da audiência). */
+  hideRoomStatusDot?: boolean;
   minimal?: boolean;
   onToggle: () => void;
 };
@@ -49,6 +51,7 @@ export const MemberCheckboxItem = ({
   roomCheckInComplete = false,
   roomReleased = false,
   minimal = false,
+  hideRoomStatusDot = false,
   onToggle,
 }: Props) => {
   const displayName = formatShortName(member.full_name, { profileId: member.id });
@@ -73,8 +76,11 @@ export const MemberCheckboxItem = ({
   })();
   const hasStatusHighlight = Boolean(caption) || Boolean(roomLabel) || isRegistered;
   const showRoomDot =
-    (roomStatusDot === 'KIDS' && showKidsIndicator)
-    || (roomStatusDot === 'TEENS' && showTeensIndicator);
+    !hideRoomStatusDot
+    && (
+      (roomStatusDot === 'KIDS' && showKidsIndicator)
+      || (roomStatusDot === 'TEENS' && showTeensIndicator)
+    );
 
   return (
     <View style={styles.row}>
