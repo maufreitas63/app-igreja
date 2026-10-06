@@ -33,6 +33,8 @@ import {
   resolveKidsTeensStatusFromBirthDate,
   type KidsTeensStatus,
 } from '@/lib/kidsTeensStatus';
+import { resolveEventInscriptionRoomLabel } from '@/lib/eventRoomInscription';
+import { useRoomDisplayLabels } from '@/hooks/useRoomDisplayLabels';
 
 export type SessionProfileRegistration = {
   id: string;
@@ -121,7 +123,9 @@ export const FamilyRegistrationList = ({
   geoCheckinRadiusMeters = 30,
   minimal = false,
   hideRoomSelos = false,
+  eventEnabledRoomKeys = null,
 }: Props) => {
+  const { kidsDisplayLabel, teensDisplayLabel } = useRoomDisplayLabels();
   const resolvedEventName = useMemo(() => {
     const explicit = eventName?.trim();
     if (explicit) {
@@ -170,6 +174,7 @@ export const FamilyRegistrationList = ({
     RegistrationStatus | undefined
   >(undefined);
   const [roomLabelByMemberId, setRoomLabelByMemberId] = useState<Record<string, string>>({});
+  const [roomKeyByMemberId, setRoomKeyByMemberId] = useState<Record<string, string>>({});
   const [roomOverlayByMemberId, setRoomOverlayByMemberId] = useState<Record<string, boolean>>(
     {}
   );
@@ -300,6 +305,7 @@ export const FamilyRegistrationList = ({
 
     if (!audience.length) {
       setRoomLabelByMemberId({});
+      setRoomKeyByMemberId({});
       setRoomOverlayByMemberId({});
       setRoomStatusByMemberId({});
       return undefined;
@@ -320,14 +326,15 @@ export const FamilyRegistrationList = ({
 
       const index = buildAudienceRoomLabelIndex(rows);
       const next: Record<string, string> = {};
+      const nextKeys: Record<string, string> = {};
       const nextOverlay: Record<string, boolean> = {};
       const nextStatus: Record<string, KidsTeensStatus> = {};
 
       for (const member of audience) {
         const match = lookupAudienceRoomLabel(index, member);
         if (match) {
-          // Exibe a sala efetiva (padrão ou especial), independente das salas habilitadas no evento.
           next[member.id] = match.room_label;
+          nextKeys[member.id] = match.room_key;
           nextOverlay[member.id] = match.room_kind === 'especial';
         }
 
@@ -338,6 +345,7 @@ export const FamilyRegistrationList = ({
       }
 
       setRoomLabelByMemberId(next);
+      setRoomKeyByMemberId(nextKeys);
       setRoomOverlayByMemberId(nextOverlay);
       setRoomStatusByMemberId(nextStatus);
     })();
@@ -346,6 +354,30 @@ export const FamilyRegistrationList = ({
       active = false;
     };
   }, [familyId, soloMode, soloParticipant, visibleMembers]);
+
+  const inscriptionRoomLabelFor = useCallback(
+    (memberId: string) =>
+      resolveEventInscriptionRoomLabel({
+        enabledRoomKeys: eventEnabledRoomKeys,
+        assignedRoomKey: roomKeyByMemberId[memberId],
+        assignedRoomLabel: roomLabelByMemberId[memberId],
+        ageStatus:
+          roomStatusByMemberId[memberId]
+          ?? registeredMemberStatusById[memberId]
+          ?? null,
+        kidsLabel: kidsDisplayLabel,
+        teensLabel: teensDisplayLabel,
+      }),
+    [
+      eventEnabledRoomKeys,
+      kidsDisplayLabel,
+      registeredMemberStatusById,
+      roomKeyByMemberId,
+      roomLabelByMemberId,
+      roomStatusByMemberId,
+      teensDisplayLabel,
+    ]
+  );
 
   const refetchSoloRegistrationStatus = useCallback(async () => {
     if (!soloMode || !eventId || !sessionProfile?.id) {
@@ -659,8 +691,11 @@ export const FamilyRegistrationList = ({
             showKidsIndicator={showKidsIndicator}
             showTeensIndicator={showTeensIndicator}
             roomStatusDot={roomStatusByMemberId[soloParticipant.id] ?? null}
-            assignedRoomLabel={roomLabelByMemberId[soloParticipant.id]}
-            assignedRoomIsOverlay={roomOverlayByMemberId[soloParticipant.id] === true}
+            assignedRoomLabel={inscriptionRoomLabelFor(soloParticipant.id)}
+            assignedRoomIsOverlay={
+              inscriptionRoomLabelFor(soloParticipant.id) === roomLabelByMemberId[soloParticipant.id]
+              && roomOverlayByMemberId[soloParticipant.id] === true
+            }
             roomCheckInComplete={roomCheckInMemberIds.includes(soloParticipant.id)}
             roomReleased={roomReleasedMemberIds.includes(soloParticipant.id)}
             onToggle={() => {
@@ -837,8 +872,11 @@ export const FamilyRegistrationList = ({
                 showKidsIndicator={showKidsIndicator}
                 showTeensIndicator={showTeensIndicator}
                 roomStatusDot={roomStatusByMemberId[item.id] ?? null}
-                assignedRoomLabel={roomLabelByMemberId[item.id]}
-                assignedRoomIsOverlay={roomOverlayByMemberId[item.id] === true}
+                assignedRoomLabel={inscriptionRoomLabelFor(item.id)}
+                assignedRoomIsOverlay={
+                  inscriptionRoomLabelFor(item.id) === roomLabelByMemberId[item.id]
+                  && roomOverlayByMemberId[item.id] === true
+                }
                 roomCheckInComplete={roomCheckInMemberIds.includes(item.id)}
                 roomReleased={roomReleasedMemberIds.includes(item.id)}
                 onToggle={() => {

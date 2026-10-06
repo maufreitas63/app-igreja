@@ -193,8 +193,13 @@ export const MaintenanceSalaServidorCard = ({
 
   const availableGroupedRooms = useMemo(() => {
     const rooms: GroupedRoomConfig[] = [];
+    const eventOpenedRooms = Boolean(
+      selectedEvent?.kids_room
+      || selectedEvent?.teens_room
+      || (selectedEvent?.enabled_room_keys?.length ?? 0) > 0
+    );
 
-    if (selectedEvent?.kids_room) {
+    if (selectedEvent?.kids_room || (eventOpenedRooms && kidsRegistrations.length > 0)) {
       rooms.push({
         key: 'KIDS',
         label: kidsRoomLabel,
@@ -204,7 +209,7 @@ export const MaintenanceSalaServidorCard = ({
       });
     }
 
-    if (selectedEvent?.teens_room) {
+    if (selectedEvent?.teens_room || (eventOpenedRooms && safeTeensRegistrations.length > 0)) {
       rooms.push({
         key: 'TEENS',
         label: teensRoomLabel,
@@ -219,10 +224,11 @@ export const MaintenanceSalaServidorCard = ({
     kidsCheckedCount,
     kidsRegistrations.length,
     kidsRoomLabel,
+    safeTeensRegistrations.length,
+    selectedEvent?.enabled_room_keys,
     selectedEvent?.kids_room,
     selectedEvent?.teens_room,
     teensCheckedCount,
-    safeTeensRegistrations.length,
     teensRoomLabel,
   ]);
 
@@ -523,7 +529,7 @@ export const MaintenanceSalaServidorCard = ({
   }, [entityPrefix, familyCodeInput, handleFamilyQrScan]);
 
   const isLoading = loadingEvents || loadingGroupedRegistrations || loadingRoomServidores;
-  const hasSalaResources = Boolean(selectedEvent?.kids_room || selectedEvent?.teens_room);
+  const hasSalaResources = availableGroupedRooms.length > 0;
 
   return (
     <View

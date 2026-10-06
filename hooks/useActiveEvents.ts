@@ -144,7 +144,8 @@ export const useActiveEvents = (options?: UseActiveEventsOptions) => {
     const { count, error: countError } = await supabase
       .from('event_registrations')
       .select('id', { count: 'exact', head: true })
-      .eq('event_id', eventId);
+      .eq('event_id', eventId)
+      .is('registration_room_key', null);
 
     if (countError) {
       console.error('Erro ao buscar total de inscritos diretamente:', countError);
