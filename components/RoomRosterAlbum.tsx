@@ -160,11 +160,13 @@ function ChildDetailModal({
             {child.guardians.length ? (
               child.guardians.map((guardian) => (
                 <View key={guardian.id} style={styles.guardianRow}>
-                  <Text style={styles.guardianName}>{guardian.fullName}</Text>
-                  {guardian.relationship ? (
-                    <Text style={styles.guardianMeta}>{guardian.relationship}</Text>
-                  ) : null}
-                  <Text style={styles.guardianMeta}>{guardian.phone || 'Sem telefone'}</Text>
+                  <View style={styles.guardianInfo}>
+                    <Text style={styles.guardianName}>{guardian.fullName}</Text>
+                    {guardian.relationship ? (
+                      <Text style={styles.guardianMeta}>{guardian.relationship}</Text>
+                    ) : null}
+                    <Text style={styles.guardianMeta}>{guardian.phone || 'Sem telefone'}</Text>
+                  </View>
                   <Pressable
                     style={[styles.whatsappButton, !guardian.phone && styles.buttonDisabled]}
                     disabled={!guardian.phone}
@@ -562,11 +564,18 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   guardianRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
     borderWidth: 1,
     borderColor: MINIMAL_UI.border,
     borderRadius: 12,
     padding: 10,
     marginBottom: 8,
+    gap: 10,
+  },
+  guardianInfo: {
+    flex: 1,
+    flexShrink: 1,
     gap: 2,
   },
   guardianName: {
@@ -578,10 +587,11 @@ const styles = StyleSheet.create({
     fontSize: 13,
   },
   whatsappButton: {
-    marginTop: 8,
+    flexShrink: 0,
     backgroundColor: '#16A34A',
     borderRadius: 10,
     paddingVertical: 8,
+    paddingHorizontal: 12,
     alignItems: 'center',
   },
   whatsappText: {
@@ -593,27 +603,37 @@ const styles = StyleSheet.create({
     fontSize: 13,
   },
   actionRow: {
+    flexDirection: 'row',
+    alignItems: 'stretch',
     gap: 8,
   },
   entryButton: {
+    flex: 1,
     backgroundColor: '#166534',
     borderRadius: 10,
     paddingVertical: 10,
+    paddingHorizontal: 8,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   entryText: {
     color: '#FFFFFF',
     fontWeight: '800',
+    textAlign: 'center',
   },
   releaseButton: {
+    flex: 1,
     backgroundColor: '#1E3A8A',
     borderRadius: 10,
     paddingVertical: 10,
+    paddingHorizontal: 8,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   releaseText: {
     color: '#FFFFFF',
     fontWeight: '800',
+    textAlign: 'center',
   },
   buttonDisabled: {
     opacity: 0.45,
