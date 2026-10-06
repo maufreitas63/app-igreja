@@ -5,7 +5,7 @@ import {
   saveManagedMemberCareFields,
 } from '@/lib/memberProfiles';
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Modal,
@@ -24,10 +24,94 @@ type Props = {
   onClose: () => void;
 };
 
+/** A primeira digitação troca o texto carregado, em vez de colar no início ou no fim. */
+function textReplacingLoadedValue(loaded: string, next: string): string | null {
+  if (!loaded || next === loaded) {
+    return null;
+  }
+  if (next.startsWith(loaded)) {
+    return next.slice(loaded.length);
+  }
+  if (next.endsWith(loaded)) {
+    return next.slice(0, next.length - loaded.length);
+  }
+  return null;
+}
+
+function CareTextField({
+  label,
+  value,
+  loadedValue,
+  onChangeText,
+  placeholder,
+  editable,
+}: {
+  label: string;
+  value: string;
+  loadedValue: string;
+  onChangeText: (value: string) => void;
+  placeholder: string;
+  editable: boolean;
+}) {
+  const baselineRef = useRef(loadedValue);
+  const hostRef = useRef<{ value: string } | null>(null);
+
+  useEffect(() => {
+    baselineRef.current = loadedValue;
+  }, [loadedValue]);
+
+  return (
+    <>
+      <Text style={styles.label}>{label}</Text>
+      <TextInput
+        style={styles.input}
+        value={value}
+        onFocus={(event) => {
+          const node = (event as unknown as { target?: { value?: string } }).target;
+          if (node && typeof node.value === 'string') {
+            hostRef.current = node as { value: string };
+            if (!baselineRef.current && node.value) {
+              baselineRef.current = node.value;
+            }
+          }
+        }}
+        onKeyPress={(event) => {
+          const node = (event as unknown as { target?: { value?: string; select?: () => void } }).target;
+          if (!node || typeof node.select !== 'function' || !baselineRef.current) {
+            return;
+          }
+          if (node.value === baselineRef.current) {
+            node.select();
+          }
+        }}
+        onChangeText={(next) => {
+          const replaced = textReplacingLoadedValue(baselineRef.current, next);
+          if (replaced != null) {
+            if (hostRef.current && hostRef.current.value !== replaced) {
+              hostRef.current.value = replaced;
+            }
+            onChangeText(replaced);
+            return;
+          }
+          onChangeText(next);
+        }}
+        placeholder={placeholder}
+        placeholderTextColor={MINIMAL_UI.textMuted}
+        multiline
+        selectTextOnFocus
+        editable={editable}
+      />
+    </>
+  );
+}
+
 export function AudienceCareRestrictionsModal({ member, profileId = null, onClose }: Props) {
   const [medicalFoodAlerts, setMedicalFoodAlerts] = useState('');
   const [additionalCareNotes, setAdditionalCareNotes] = useState('');
   const [specialNeeds, setSpecialNeeds] = useState('');
+  const [loadedMedicalFoodAlerts, setLoadedMedicalFoodAlerts] = useState('');
+  const [loadedAdditionalCareNotes, setLoadedAdditionalCareNotes] = useState('');
+  const [loadedSpecialNeeds, setLoadedSpecialNeeds] = useState('');
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [ready, setReady] = useState(false);
@@ -45,6 +129,9 @@ export function AudienceCareRestrictionsModal({ member, profileId = null, onClos
     setMedicalFoodAlerts('');
     setAdditionalCareNotes('');
     setSpecialNeeds('');
+    setLoadedMedicalFoodAlerts('');
+    setLoadedAdditionalCareNotes('');
+    setLoadedSpecialNeeds('');
 
     void (async () => {
       try {
@@ -58,6 +145,9 @@ export function AudienceCareRestrictionsModal({ member, profileId = null, onClos
         setMedicalFoodAlerts(fields.medicalFoodAlerts);
         setAdditionalCareNotes(fields.additionalCareNotes);
         setSpecialNeeds(fields.specialNeeds);
+        setLoadedMedicalFoodAlerts(fields.medicalFoodAlerts);
+        setLoadedAdditionalCareNotes(fields.additionalCareNotes);
+        setLoadedSpecialNeeds(fields.specialNeeds);
         setReady(true);
       } catch (loadError) {
         if (!active) {
@@ -129,34 +219,28 @@ export function AudienceCareRestrictionsModal({ member, profileId = null, onClos
               keyboardShouldPersistTaps="handled"
               showsVerticalScrollIndicator={false}
             >
-              <Text style={styles.label}>Restrição Alimentar</Text>
-              <TextInput
-                style={styles.input}
+              <CareTextField
+                label="Restrição Alimentar"
                 value={medicalFoodAlerts}
+                loadedValue={loadedMedicalFoodAlerts}
                 onChangeText={setMedicalFoodAlerts}
                 placeholder="Ex.: sem lactose, alérgico a amendoim"
-                placeholderTextColor={MINIMAL_UI.textMuted}
-                multiline
                 editable={!saving}
               />
-              <Text style={styles.label}>Observações Adicionais</Text>
-              <TextInput
-                style={styles.input}
+              <CareTextField
+                label="Observações Adicionais"
                 value={additionalCareNotes}
+                loadedValue={loadedAdditionalCareNotes}
                 onChangeText={setAdditionalCareNotes}
                 placeholder="Opcional"
-                placeholderTextColor={MINIMAL_UI.textMuted}
-                multiline
                 editable={!saving}
               />
-              <Text style={styles.label}>Necessidades Específicas</Text>
-              <TextInput
-                style={styles.input}
+              <CareTextField
+                label="Necessidades Específicas"
                 value={specialNeeds}
+                loadedValue={loadedSpecialNeeds}
                 onChangeText={setSpecialNeeds}
                 placeholder="Opcional"
-                placeholderTextColor={MINIMAL_UI.textMuted}
-                multiline
                 editable={!saving}
               />
               {error ? <Text style={styles.error}>{error}</Text> : null}
