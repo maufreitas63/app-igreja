@@ -384,7 +384,6 @@ export const FamilyRegistrationList = ({
 
   const roomsOpen =
     (eventEnabledRoomKeys?.length ?? 0) > 0 || showKidsIndicator || showTeensIndicator;
-  const showBulletColumn = showKidsIndicator || showTeensIndicator;
   const careMember =
     (careMemberId && soloParticipant?.id === careMemberId ? soloParticipant : null)
     ?? visibleMembers.find((member) => member.id === careMemberId)
@@ -696,10 +695,6 @@ export const FamilyRegistrationList = ({
         <View style={[styles.listFrame, minimal && styles.listFrameMinimal]}>
           <AudienceMemberRow
             showRestrictions={roomsOpen}
-            showBulletColumn={showBulletColumn}
-            roomStatusDot={roomStatusByMemberId[soloParticipant.id] ?? null}
-            showKidsIndicator={showKidsIndicator}
-            showTeensIndicator={showTeensIndicator}
             onRestrictions={() => openCare(soloParticipant.id, true)}
           >
             <MemberCheckboxItem
@@ -887,10 +882,6 @@ export const FamilyRegistrationList = ({
             return (
               <AudienceMemberRow
                 showRestrictions={roomsOpen}
-                showBulletColumn={showBulletColumn}
-                roomStatusDot={roomStatusByMemberId[item.id] ?? null}
-                showKidsIndicator={showKidsIndicator}
-                showTeensIndicator={showTeensIndicator}
                 onRestrictions={() => openCare(item.id, false)}
               >
                 <MemberCheckboxItem
@@ -951,29 +942,15 @@ export const FamilyRegistrationList = ({
   );
 };
 
-const FAIXA_DOT_SIZE = 10;
-
 function AudienceMemberRow({
   showRestrictions,
-  showBulletColumn,
-  roomStatusDot,
-  showKidsIndicator,
-  showTeensIndicator,
   onRestrictions,
   children,
 }: {
   showRestrictions: boolean;
-  showBulletColumn: boolean;
-  roomStatusDot: 'KIDS' | 'TEENS' | null;
-  showKidsIndicator: boolean;
-  showTeensIndicator: boolean;
   onRestrictions: () => void;
   children: React.ReactNode;
 }) {
-  const showDot =
-    (roomStatusDot === 'KIDS' && showKidsIndicator)
-    || (roomStatusDot === 'TEENS' && showTeensIndicator);
-
   return (
     <View style={styles.audienceRow}>
       <View style={styles.audiencePerson}>{children}</View>
@@ -986,19 +963,6 @@ function AudienceMemberRow({
         >
           <Text style={styles.restrictionsButtonText}>Restrições</Text>
         </TouchableOpacity>
-      ) : null}
-      {showBulletColumn ? (
-        <View style={styles.faixaSlot}>
-          {showDot ? (
-            <View
-              accessibilityLabel={roomStatusDot === 'TEENS' ? 'Faixa Jovens' : 'Faixa Infantil'}
-              style={[
-                styles.faixaDot,
-                roomStatusDot === 'TEENS' ? styles.faixaDotTeens : styles.faixaDotKids,
-              ]}
-            />
-          ) : null}
-        </View>
       ) : null}
     </View>
   );
@@ -1113,24 +1077,6 @@ const styles = StyleSheet.create({
     color: MINIMAL_UI.text,
     fontSize: 12,
     fontWeight: '700',
-  },
-  faixaSlot: {
-    width: FAIXA_DOT_SIZE,
-    flexGrow: 0,
-    flexShrink: 0,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  faixaDot: {
-    width: FAIXA_DOT_SIZE,
-    height: FAIXA_DOT_SIZE,
-    borderRadius: 999,
-  },
-  faixaDotKids: {
-    backgroundColor: '#FACC15',
-  },
-  faixaDotTeens: {
-    backgroundColor: '#EF4444',
   },
   bulkCheckboxColumn: {
     flexShrink: 0,

@@ -75,12 +75,11 @@ export const MemberCheckboxItem = ({
     return 'Sem Inscrições';
   })();
   const hasStatusHighlight = Boolean(caption) || Boolean(roomLabel) || isRegistered;
-  const showRoomDot =
-    !hideRoomStatusDot
-    && (
-      (roomStatusDot === 'KIDS' && showKidsIndicator)
-      || (roomStatusDot === 'TEENS' && showTeensIndicator)
-    );
+  const statusDotVisible =
+    (roomStatusDot === 'KIDS' && showKidsIndicator)
+    || (roomStatusDot === 'TEENS' && showTeensIndicator);
+  const showRoomDot = !hideRoomStatusDot && statusDotVisible;
+  const reserveStatusBullet = hideRoomStatusDot && (showKidsIndicator || showTeensIndicator);
 
   return (
     <View style={styles.row}>
@@ -119,17 +118,33 @@ export const MemberCheckboxItem = ({
             />
           ) : null}
         </View>
-        <Text
-          style={[
-            styles.registeredText,
-            minimal && styles.registeredTextMinimal,
-            !hasStatusHighlight && styles.noRegistrationText,
-            !hasStatusHighlight && minimal && styles.noRegistrationTextMinimal,
-          ]}
-          numberOfLines={caption ? 4 : 2}
-        >
-          {statusLine}
-        </Text>
+        <View style={reserveStatusBullet ? styles.statusLine : undefined}>
+          {reserveStatusBullet ? (
+            <View style={styles.statusDotSlot}>
+              {statusDotVisible ? (
+                <View
+                  accessibilityLabel={roomStatusDot === 'TEENS' ? 'Faixa Jovens' : 'Faixa Infantil'}
+                  style={[
+                    styles.roomStatusDot,
+                    roomStatusDot === 'TEENS' ? styles.roomStatusDotTeens : styles.roomStatusDotKids,
+                  ]}
+                />
+              ) : null}
+            </View>
+          ) : null}
+          <Text
+            style={[
+              styles.registeredText,
+              reserveStatusBullet && styles.registeredTextInLine,
+              minimal && styles.registeredTextMinimal,
+              !hasStatusHighlight && styles.noRegistrationText,
+              !hasStatusHighlight && minimal && styles.noRegistrationTextMinimal,
+            ]}
+            numberOfLines={caption ? 4 : 2}
+          >
+            {statusLine}
+          </Text>
+        </View>
       </View>
       {roomCheckInComplete && roomReleased ? (
         <View
@@ -246,11 +261,29 @@ const styles = StyleSheet.create({
   roomStatusDotTeens: {
     backgroundColor: '#EF4444',
   },
+  statusLine: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 4,
+    gap: 8,
+    minWidth: 0,
+    width: '100%',
+  },
+  statusDotSlot: {
+    width: 10,
+    height: 10,
+    flexShrink: 0,
+  },
   registeredText: {
     color: MINIMAL_UI.textMuted,
     fontSize: 12,
     marginTop: 4,
     fontWeight: '600',
+  },
+  registeredTextInLine: {
+    flex: 1,
+    minWidth: 0,
+    marginTop: 0,
   },
   registeredTextMinimal: {
     color: MINIMAL_UI.textMuted,
