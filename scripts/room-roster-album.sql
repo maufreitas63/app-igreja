@@ -96,6 +96,8 @@ begin
           end,
           'selfieUrl', nullif(trim(coalesce(prof.selfie_url, '')), ''),
           'medicalFoodAlerts', nullif(trim(coalesce(prof.medical_food_alerts, '')), ''),
+          'additionalCareNotes', nullif(trim(coalesce(prof.additional_care_notes, '')), ''),
+          'specialNeeds', nullif(trim(coalesce(prof.special_needs, '')), ''),
           'specialNeedsNotes', nullif(
             trim(concat_ws(
               E'\n',

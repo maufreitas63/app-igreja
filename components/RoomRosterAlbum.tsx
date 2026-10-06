@@ -108,7 +108,10 @@ function ChildDetailModal({
   onRelease: () => void;
 }) {
   const ageLabel = formatRosterAge(child.birthDate, child.ageYears);
-  const hasAlert = Boolean(child.medicalFoodAlerts?.trim() || child.specialNeedsNotes?.trim());
+  const foodAlerts = child.medicalFoodAlerts?.trim() || '';
+  const additionalNotes = child.additionalCareNotes?.trim() || '';
+  const specificNeeds = child.specialNeeds?.trim() || '';
+  const hasAlert = Boolean(foodAlerts || additionalNotes || specificNeeds || child.specialNeedsNotes?.trim());
   const whatsappMessage = `Olá, precisamos da sua presença na ${roomLabel.trim() || 'sala infantil'}`;
 
   return (
@@ -133,15 +136,24 @@ function ChildDetailModal({
               ]}
             >
               <Text style={styles.alertTitle}>Alertas e saúde</Text>
-              {child.medicalFoodAlerts?.trim() ? (
-                <Text style={styles.alertText}>{child.medicalFoodAlerts.trim()}</Text>
+              {foodAlerts ? (
+                <>
+                  <Text style={styles.alertLabel}>Restrição Alimentar</Text>
+                  <Text style={styles.alertText}>{foodAlerts}</Text>
+                </>
               ) : (
                 <Text style={styles.alertQuiet}>Sem restrição alimentar registrada.</Text>
               )}
-              {child.specialNeedsNotes?.trim() ? (
+              {additionalNotes ? (
                 <>
-                  <Text style={styles.alertLabel}>Observações adicionais</Text>
-                  <Text style={styles.alertText}>{child.specialNeedsNotes.trim()}</Text>
+                  <Text style={styles.alertLabel}>Observações Adicionais</Text>
+                  <Text style={styles.alertText}>{additionalNotes}</Text>
+                </>
+              ) : null}
+              {specificNeeds ? (
+                <>
+                  <Text style={styles.alertLabel}>Necessidades Específicas</Text>
+                  <Text style={styles.alertText}>{specificNeeds}</Text>
                 </>
               ) : null}
             </View>

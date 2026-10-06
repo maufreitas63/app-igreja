@@ -12,6 +12,8 @@ export interface RoomInscribedChild {
   ageYears: number;
   selfieUrl?: string | null;
   medicalFoodAlerts?: string | null;
+  additionalCareNotes?: string | null;
+  specialNeeds?: string | null;
   specialNeedsNotes?: string | null;
   familyId: string;
   checkinStatus: 'pending' | 'in_room' | 'released';

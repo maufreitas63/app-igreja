@@ -57,6 +57,8 @@ const mapChild = (value: unknown): RoomInscribedChild | null => {
     ageYears: Number.isFinite(ageYears) && ageYears > 0 ? Math.floor(ageYears) : 0,
     selfieUrl: asText(row.selfieUrl) || null,
     medicalFoodAlerts: asText(row.medicalFoodAlerts) || null,
+    additionalCareNotes: asText(row.additionalCareNotes) || null,
+    specialNeeds: asText(row.specialNeeds) || null,
     specialNeedsNotes: asText(row.specialNeedsNotes) || null,
     familyId: asText(row.familyId),
     checkinStatus: asStatus(row.checkinStatus),
