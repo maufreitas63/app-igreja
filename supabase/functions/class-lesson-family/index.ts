@@ -33,7 +33,41 @@ const extractGeminiText = (payload: { candidates?: Array<{ content?: { parts?: A
 const cleanSuggestion = (value: string) =>
   value.replace(/^["“”']+|["“”']+$/g, '').replace(/\*\*/g, '').trim();
 
-const suggestFamilyExtension = async (apiKey: string, prompt: string) => {
+const parseAgeLimit = (value: unknown) => {
+  const text = String(value ?? '').trim();
+  return /^\d+$/.test(text) ? Number.parseInt(text, 10) : null;
+};
+
+const familySystemPrompt = (roomKey: string, idadeKids: number | null, idadeTeens: number | null) => {
+  const lines = [
+    'Redija a conversa em família de uma aula.',
+    'Use somente o título, a passagem bíblica e o objetivo informados. Não troque a passagem e não invente outro tema.',
+    'Escreva em português do Brasil, de 2 a 4 frases, para os pais aplicarem em casa durante a semana: uma pergunta e um desafio curto.',
+    'A linguagem e a pergunta seguem a faixa etária da sala. Não faça pergunta que a criança ou o jovem dessa idade não consiga entender ou responder.',
+  ];
+
+  if (roomKey === 'TEENS') {
+    const from = idadeKids != null ? idadeKids + 1 : null;
+    lines.push(
+      from != null && idadeTeens != null
+        ? `A sala é de jovens, cerca de ${from} a ${idadeTeens} anos.`
+        : 'A sala é de jovens.'
+    );
+    lines.push(
+      'Fale como com adolescente: direto e respeitoso. Não use fala de criança pequena nem vocabulário de adulto. A pergunta cabe na semana deles: escola, amigos, escolhas, casa.'
+    );
+  } else {
+    lines.push(idadeKids != null ? `A sala é infantil, crianças de até ${idadeKids} anos.` : 'A sala é infantil.');
+    lines.push(
+      'Frases curtas e palavras do dia a dia. Exemplos concretos: casa, brincadeira, medo, cuidado, família. Sem termos abstratos e sem pergunta que uma criança pequena não saiba responder.'
+    );
+  }
+
+  lines.push('Devolva só o texto, sem título, sem aspas e sem markdown.');
+  return lines.join('\n');
+};
+
+const suggestFamilyExtension = async (apiKey: string, prompt: string, systemPrompt: string) => {
   const bodyPayload: {
     systemInstruction: { parts: Array<{ text: string }> };
     contents: Array<{ role: string; parts: Array<{ text: string }> }>;
@@ -44,16 +78,7 @@ const suggestFamilyExtension = async (apiKey: string, prompt: string) => {
     };
   } = {
     systemInstruction: {
-      parts: [
-        {
-          text: [
-            'Redija a conversa em família de uma aula da sala infantil ou de jovens.',
-            'Use somente o título, a passagem bíblica e o objetivo informados. Não troque a passagem e não invente outro tema.',
-            'Escreva em português do Brasil, de 2 a 4 frases, para os pais aplicarem em casa durante a semana: uma pergunta simples e um desafio curto.',
-            'Devolva só o texto, sem título, sem aspas e sem markdown.',
-          ].join('\n'),
-        },
-      ],
+      parts: [{ text: systemPrompt }],
     },
     contents: [{ role: 'user', parts: [{ text: prompt }] }],
     generationConfig: {
@@ -171,6 +196,11 @@ serve(async (req) => {
     return jsonResponse({ error: 'A sugestão da conversa em família ainda não está disponível neste ambiente.' }, 503);
   }
 
+  const [{ data: kidsAge }, { data: teensAge }] = await Promise.all([
+    supabase.rpc('get_app_parameter_value', { p_parameter: 'idade_kids' }),
+    supabase.rpc('get_app_parameter_value', { p_parameter: 'idade_teens' }),
+  ]);
+
   const prompt = [
     `Sala: ${roomLabel || (roomKey === 'TEENS' ? 'Jovens' : 'Infantil')}`,
     `Título: ${title}`,
@@ -179,7 +209,11 @@ serve(async (req) => {
   ].join('\n');
 
   try {
-    const text = await suggestFamilyExtension(apiKey, prompt);
+    const text = await suggestFamilyExtension(
+      apiKey,
+      prompt,
+      familySystemPrompt(roomKey, parseAgeLimit(kidsAge), parseAgeLimit(teensAge))
+    );
     return jsonResponse({ text });
   } catch (error) {
     return jsonResponse(
