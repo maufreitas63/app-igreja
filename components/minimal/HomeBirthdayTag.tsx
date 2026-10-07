@@ -7,14 +7,70 @@ import { boxShadowStyle } from '@/lib/boxShadow';
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { FontAwesome } from '@expo/vector-icons';
 import * as Clipboard from 'expo-clipboard';
-import React, { useRef, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { Animated, Easing, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 type Props = {
   aniversariantes: Array<{ full_name: string }>;
   casais?: Array<{ full_name: string }>;
   canCopy?: boolean;
 };
+
+function CandleFlame({ delay, lean }: { delay: number; lean: number }) {
+  const glow = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.delay(delay),
+        Animated.timing(glow, {
+          toValue: 0.35,
+          duration: 220,
+          easing: Easing.inOut(Easing.quad),
+          useNativeDriver: true,
+        }),
+        Animated.timing(glow, {
+          toValue: 1,
+          duration: 340,
+          easing: Easing.inOut(Easing.quad),
+          useNativeDriver: true,
+        }),
+      ])
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [delay, glow]);
+
+  return (
+    <Animated.View
+      style={[
+        styles.flame,
+        {
+          opacity: glow,
+          transform: [
+            { translateX: lean },
+            { scaleY: glow.interpolate({ inputRange: [0.35, 1], outputRange: [0.72, 1.08] }) },
+          ],
+        },
+      ]}
+    >
+      <View style={styles.flameCore} />
+    </Animated.View>
+  );
+}
+
+function BirthdayCakeMark() {
+  return (
+    <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={styles.cakeMark}>
+      <FontAwesome color={MINIMAL_UI.accent} name="birthday-cake" size={28} />
+      <View pointerEvents="none" style={styles.flameRow}>
+        <CandleFlame delay={0} lean={-0.3} />
+        <CandleFlame delay={150} lean={0.2} />
+        <CandleFlame delay={80} lean={0.4} />
+      </View>
+    </View>
+  );
+}
 
 /** Bolo à esquerda de «Proximos Eventos»; só renderiza se houver aniversário pessoal ou de casamento hoje. */
 export function HomeBirthdayTag({ aniversariantes, casais = [], canCopy = false }: Props) {
@@ -61,7 +117,7 @@ export function HomeBirthdayTag({ aniversariantes, casais = [], canCopy = false 
         onPress={toggleOpen}
         style={styles.iconWrap}
       >
-        <FontAwesome color={MINIMAL_UI.accent} name="birthday-cake" size={28} />
+        <BirthdayCakeMark />
       </Pressable>
       {open ? (
         <View style={styles.panel}>
@@ -133,6 +189,40 @@ const styles = StyleSheet.create({
     height: 28,
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'visible',
+  },
+  cakeMark: {
+    width: 28,
+    height: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  flameRow: {
+    position: 'absolute',
+    top: -2,
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    justifyContent: 'center',
+    gap: 2,
+  },
+  flame: {
+    width: 5,
+    height: 7,
+    borderTopLeftRadius: 5,
+    borderTopRightRadius: 5,
+    borderBottomLeftRadius: 2,
+    borderBottomRightRadius: 2,
+    backgroundColor: '#FB923C',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+  },
+  flameCore: {
+    width: 2,
+    height: 3,
+    borderTopLeftRadius: 2,
+    borderTopRightRadius: 2,
+    backgroundColor: '#FDE047',
+    marginBottom: 1,
   },
   panel: {
     position: 'absolute',
