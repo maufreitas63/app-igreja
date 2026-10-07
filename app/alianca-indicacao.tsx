@@ -9,7 +9,8 @@ import {
 } from 'react-native';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useLocalSearchParams } from 'expo-router';
-import { formatBrazilPhoneInput } from '@/lib/inputMasks';
+import { formatCep, lookupViaCep } from '@/lib/cepUtils';
+import { formatBrazilCepInput, formatBrazilPhoneInput } from '@/lib/inputMasks';
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { supabase } from '@/lib/supabase';
 
@@ -41,9 +42,13 @@ export default function AliancaIndicacaoScreen() {
   const [email, setEmail] = useState('');
   const [role, setRole] = useState('');
   const [church, setChurch] = useState('');
-  const [address, setAddress] = useState('');
+  const [cep, setCep] = useState('');
+  const [street, setStreet] = useState('');
+  const [addressNumber, setAddressNumber] = useState('');
+  const [neighborhood, setNeighborhood] = useState('');
   const [city, setCity] = useState('');
   const [uf, setUf] = useState('');
+  const [cepStatus, setCepStatus] = useState('');
   const [members, setMembers] = useState('');
   const [systems, setSystems] = useState('');
   const [busy, setBusy] = useState(false);
@@ -84,16 +89,55 @@ export default function AliancaIndicacaoScreen() {
     };
   }, [linkReady, tenantId]);
 
+  useEffect(() => {
+    const digits = cep.replace(/\D/g, '');
+    if (digits.length !== 8) {
+      setCepStatus('');
+      return;
+    }
+
+    let cancelled = false;
+    setCepStatus('Buscando endereço...');
+    void lookupViaCep(digits).then((viaCep) => {
+      if (cancelled) return;
+      if (!viaCep) {
+        setCepStatus('CEP não encontrado. Confira o número.');
+        return;
+      }
+      setStreet(viaCep.logradouro?.trim() || '');
+      setNeighborhood(viaCep.bairro?.trim() || '');
+      setCity(viaCep.localidade?.trim() || '');
+      setUf((viaCep.uf?.trim() || '').toUpperCase().slice(0, 2));
+      setCepStatus('');
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [cep]);
+
   const handleSend = () => {
     const membersCount = Number(members.replace(/\D/g, ''));
     if (!Number.isFinite(membersCount) || membersCount < 1) {
       setError('Informe o número aproximado de membros.');
       return;
     }
-    if (uf.trim().length !== 2) {
-      setError('Informe a UF com duas letras.');
+    const cepDigits = cep.replace(/\D/g, '');
+    if (cepDigits.length !== 8) {
+      setError('Informe o CEP da igreja com 8 números.');
       return;
     }
+    if (!city.trim() || uf.trim().length !== 2) {
+      setError('Aguarde o CEP completar cidade e UF, ou confira o número.');
+      return;
+    }
+    const churchAddress = [
+      formatCep(cepDigits),
+      [street.trim(), addressNumber.trim()].filter(Boolean).join(', '),
+      neighborhood.trim(),
+    ]
+      .filter(Boolean)
+      .join(' — ');
     setBusy(true);
     setError('');
     void supabase
@@ -104,7 +148,7 @@ export default function AliancaIndicacaoScreen() {
         p_indicated_phone: phone,
         p_indicated_role: role.trim(),
         p_indicated_church_name: church.trim(),
-        p_church_address: address.trim(),
+        p_church_address: churchAddress,
         p_city: city.trim(),
         p_uf: uf.trim().toUpperCase(),
         p_estimated_members: membersCount,
@@ -189,10 +233,31 @@ export default function AliancaIndicacaoScreen() {
       />
       <Field label="Nome da igreja" value={church} onChangeText={setChurch} placeholder="Nome da igreja" />
       <Field
-        label="Endereço da igreja"
-        value={address}
-        onChangeText={setAddress}
-        placeholder="Rua, número, bairro"
+        label="CEP da igreja"
+        value={cep}
+        onChangeText={(value) => setCep(formatBrazilCepInput(value))}
+        placeholder="00000-000"
+        keyboardType="number-pad"
+      />
+      {cepStatus ? <Text style={styles.cepStatus}>{cepStatus}</Text> : null}
+      <Field
+        label="Logradouro"
+        value={street}
+        onChangeText={setStreet}
+        placeholder="Rua, avenida..."
+      />
+      <Field
+        label="Número"
+        value={addressNumber}
+        onChangeText={setAddressNumber}
+        placeholder="100"
+        keyboardType="number-pad"
+      />
+      <Field
+        label="Bairro"
+        value={neighborhood}
+        onChangeText={setNeighborhood}
+        placeholder="Bairro"
       />
       <Field label="Cidade" value={city} onChangeText={setCity} placeholder="Cidade" />
       <Field
@@ -324,6 +389,11 @@ const styles = StyleSheet.create({
     color: '#B91C1C',
     fontSize: 13,
     textAlign: 'center',
+  },
+  cepStatus: {
+    color: MINIMAL_UI.textMuted,
+    fontSize: 12,
+    marginTop: -4,
   },
   button: {
     marginTop: 8,
