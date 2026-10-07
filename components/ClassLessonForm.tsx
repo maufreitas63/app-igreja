@@ -4,10 +4,12 @@ import { suggestClassLessonFamily } from '@/lib/classLessonFamilyApi';
 import { getEventCalendarDate } from '@/lib/eventDate';
 import { MINIMAL_SCREEN_PADDING_LEFT, MINIMAL_SCREEN_PADDING_RIGHT, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import type { ClassRoomKey } from '@/types/class-lesson';
+import * as Clipboard from 'expo-clipboard';
 import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Modal,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -45,6 +47,7 @@ export function ClassLessonForm({
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [suggesting, setSuggesting] = useState(false);
+  const [familyCopied, setFamilyCopied] = useState(false);
   const [title, setTitle] = useState('');
   const [biblePassage, setBiblePassage] = useState('');
   const [mainObjective, setMainObjective] = useState('');
@@ -132,6 +135,44 @@ export function ClassLessonForm({
     }
   };
 
+  const handleClear = () => {
+    if (saving || suggesting || loading) {
+      return;
+    }
+
+    setTitle('');
+    setBiblePassage('');
+    setMainObjective('');
+    setResourcesNotes('');
+    setFamilyExtension('');
+    setFamilyCopied(false);
+  };
+
+  const handleCopyFamily = async () => {
+    const text = familyExtension.trim();
+
+    if (!text) {
+      Toast.show({
+        type: 'error',
+        text1: 'Conversa em família',
+        text2: 'Não há sugestão para copiar.',
+      });
+      return;
+    }
+
+    try {
+      if (Platform.OS === 'web' && typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(text);
+      } else {
+        await Clipboard.setStringAsync(text);
+      }
+    } catch {
+      await Clipboard.setStringAsync(text);
+    }
+
+    setFamilyCopied(true);
+  };
+
   const handleSave = async () => {
     if (saving || loading) {
       return;
@@ -215,20 +256,50 @@ export function ClassLessonForm({
                 <Text style={styles.suggestButtonText}>Sugerir conversa em família</Text>
               )}
             </Pressable>
-            <Field
-              label="Extensão para casa"
-              value={familyExtension}
-              onChangeText={setFamilyExtension}
-              multiline
-            />
+            <View style={styles.field}>
+              <View style={styles.copyRow}>
+                <Text style={styles.label}>Extensão para casa</Text>
+                <Pressable
+                  onPress={() => void handleCopyFamily()}
+                  style={styles.copyButton}
+                  accessibilityRole="button"
+                  accessibilityLabel="Copiar sugestão da conversa em família"
+                >
+                  <Text style={styles.copyButtonText}>{familyCopied ? 'Copiado' : 'Copiar'}</Text>
+                </Pressable>
+              </View>
+              <TextInput
+                value={familyExtension}
+                onChangeText={(value) => {
+                  setFamilyCopied(false);
+                  setFamilyExtension(value);
+                }}
+                multiline
+                style={[styles.input, styles.inputMultiline]}
+                placeholderTextColor={MINIMAL_UI.textMuted}
+              />
             </View>
-            <View style={[styles.saveWrap, saving && styles.saveWrapBusy]} pointerEvents={saving ? 'none' : 'auto'}>
+            </View>
+            <View
+              style={[styles.saveWrap, (saving || suggesting) && styles.saveWrapBusy]}
+              pointerEvents={saving || suggesting ? 'none' : 'auto'}
+            >
               <View style={styles.saveInner}>
-                <CloseButton
-                  label="Salvar planejamento"
-                  accessibilityLabel="Salvar planejamento da aula"
-                  onPress={() => void handleSave()}
-                />
+                <View style={styles.saveRow}>
+                  <CloseButton
+                    label="Limpar"
+                    accessibilityLabel="Limpar todos os campos do planejamento"
+                    variant="outline"
+                    layout="flex"
+                    onPress={handleClear}
+                  />
+                  <CloseButton
+                    label="Salvar planejamento"
+                    accessibilityLabel="Salvar planejamento da aula"
+                    layout="flex"
+                    onPress={() => void handleSave()}
+                  />
+                </View>
               </View>
             </View>
           </ScrollView>
@@ -349,6 +420,26 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '800',
   },
+  copyRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 8,
+  },
+  copyButton: {
+    minHeight: 36,
+    borderRadius: 10,
+    borderWidth: 0,
+    backgroundColor: MINIMAL_UI.accent,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 14,
+  },
+  copyButtonText: {
+    color: MINIMAL_UI.onDark,
+    fontSize: 13,
+    fontWeight: '800',
+  },
   saveWrap: {
     paddingLeft: MINIMAL_SCREEN_PADDING_LEFT,
     paddingRight: MINIMAL_SCREEN_PADDING_RIGHT,
@@ -358,5 +449,10 @@ const styles = StyleSheet.create({
   },
   saveInner: {
     paddingHorizontal: 16,
+  },
+  saveRow: {
+    flexDirection: 'row',
+    alignItems: 'stretch',
+    gap: 8,
   },
 });
