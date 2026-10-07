@@ -1,5 +1,6 @@
 import { CloseButton, CloseFooterBar } from '@/components/minimal/CloseFooterBar';
 import { fetchClassLesson, saveClassLesson } from '@/lib/classLessonApi';
+import { suggestClassLessonFamily } from '@/lib/classLessonFamilyApi';
 import { getEventCalendarDate } from '@/lib/eventDate';
 import { MINIMAL_SCREEN_PADDING_LEFT, MINIMAL_SCREEN_PADDING_RIGHT, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import type { ClassRoomKey } from '@/types/class-lesson';
@@ -7,6 +8,7 @@ import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Modal,
+  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -42,6 +44,7 @@ export function ClassLessonForm({
   const classDateLabel = formatClassDate(eventDate);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [suggesting, setSuggesting] = useState(false);
   const [title, setTitle] = useState('');
   const [biblePassage, setBiblePassage] = useState('');
   const [mainObjective, setMainObjective] = useState('');
@@ -86,6 +89,48 @@ export function ClassLessonForm({
       cancelled = true;
     };
   }, [eventId, roomKey, visible]);
+
+  const handleSuggestFamily = async () => {
+    if (suggesting || saving || loading) {
+      return;
+    }
+
+    if (title.trim().length < 2 || biblePassage.trim().length < 1 || mainObjective.trim().length < 1) {
+      Toast.show({
+        type: 'error',
+        text1: 'Conversa em família',
+        text2: 'Preencha o título, a passagem e o objetivo para sugerir a conversa.',
+      });
+      return;
+    }
+
+    setSuggesting(true);
+
+    try {
+      const suggestion = await suggestClassLessonFamily({
+        eventId,
+        roomKey,
+        roomLabel,
+        title,
+        biblePassage,
+        mainObjective,
+      });
+      setFamilyExtension(suggestion);
+      Toast.show({
+        type: 'success',
+        text1: 'Conversa em família',
+        text2: 'Sugestão colocada no campo. Revise antes de salvar.',
+      });
+    } catch (error) {
+      Toast.show({
+        type: 'error',
+        text1: 'Conversa em família',
+        text2: error instanceof Error ? error.message : 'Não foi possível sugerir a conversa.',
+      });
+    } finally {
+      setSuggesting(false);
+    }
+  };
 
   const handleSave = async () => {
     if (saving || loading) {
@@ -157,6 +202,19 @@ export function ClassLessonForm({
             <Text style={styles.sectionHint}>
               Pergunta, desafio ou dica para os pais continuarem a conversa com a criança durante a semana.
             </Text>
+            <Pressable
+              onPress={() => void handleSuggestFamily()}
+              disabled={suggesting}
+              style={[styles.suggestButton, suggesting && styles.suggestButtonBusy]}
+              accessibilityRole="button"
+              accessibilityLabel="Sugerir conversa em família a partir do título, da passagem e do objetivo"
+            >
+              {suggesting ? (
+                <ActivityIndicator color={MINIMAL_UI.onDark} />
+              ) : (
+                <Text style={styles.suggestButtonText}>Sugerir conversa em família</Text>
+              )}
+            </Pressable>
             <Field
               label="Extensão para casa"
               value={familyExtension}
@@ -273,6 +331,23 @@ const styles = StyleSheet.create({
     lineHeight: 18,
     color: MINIMAL_UI.textMuted,
     marginTop: -6,
+  },
+  suggestButton: {
+    minHeight: 44,
+    borderRadius: 10,
+    borderWidth: 0,
+    backgroundColor: MINIMAL_UI.accent,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 12,
+  },
+  suggestButtonBusy: {
+    opacity: 0.7,
+  },
+  suggestButtonText: {
+    color: MINIMAL_UI.onDark,
+    fontSize: 15,
+    fontWeight: '800',
   },
   saveWrap: {
     paddingLeft: MINIMAL_SCREEN_PADDING_LEFT,

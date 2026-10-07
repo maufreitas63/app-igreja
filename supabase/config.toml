@@ -3,4 +3,7 @@
 
 [functions.ai-chat]
 verify_jwt = false
+
+[functions.class-lesson-family]
+verify_jwt = false
 # Consultas pontuais + tool calling; o cliente espera até 180s.
