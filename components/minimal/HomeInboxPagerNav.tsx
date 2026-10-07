@@ -26,7 +26,7 @@ export function HomeInboxPagerNav({ variant, onPress }: HomeInboxPagerNavProps) 
     >
       <View style={styles.sideSlot}>
         {variant === 'toEventos' ? (
-          <MaterialIcons name="chevron-left" size={MINIMAL_ICON.chevron} color={MINIMAL_UI.onDark} />
+          <MaterialIcons name="chevron-left" size={MINIMAL_ICON.chevron} color={MINIMAL_UI.blueDark} />
         ) : null}
       </View>
 
@@ -36,7 +36,7 @@ export function HomeInboxPagerNav({ variant, onPress }: HomeInboxPagerNavProps) 
 
       <View style={[styles.sideSlot, styles.sideSlotEnd]}>
         {variant === 'toAvisos' ? (
-          <MaterialIcons name="chevron-right" size={MINIMAL_ICON.chevron} color={MINIMAL_UI.onDark} />
+          <MaterialIcons name="chevron-right" size={MINIMAL_ICON.chevron} color={MINIMAL_UI.blueDark} />
         ) : null}
       </View>
     </Pressable>
@@ -54,14 +54,14 @@ const styles = StyleSheet.create({
     flexShrink: 0,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: MINIMAL_UI.accent,
+    backgroundColor: 'rgba(58, 150, 221, 0.45)',
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: MINIMAL_UI.blue,
+    borderTopColor: '#3A96DD',
     paddingHorizontal: 4,
     ...(Platform.OS === 'web' ? { cursor: 'pointer' as const } : null),
   },
   rowPressed: {
-    backgroundColor: MINIMAL_UI.blue,
+    backgroundColor: 'rgba(58, 150, 221, 0.62)',
   },
   sideSlot: {
     width: 40,
@@ -78,7 +78,7 @@ const styles = StyleSheet.create({
     minWidth: 0,
     paddingVertical: 0,
     fontSize: 18,
-    color: MINIMAL_UI.onDark,
+    color: MINIMAL_UI.blueDark,
     backgroundColor: 'transparent',
   },
 });
