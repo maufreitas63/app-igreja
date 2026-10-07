@@ -132,7 +132,10 @@ export function AiAssistantChatPanel() {
               <Text style={styles.messageRole}>
                 {message.role === 'user' ? 'Você' : ABIGAIL_NAME}
               </Text>
-              {message.role === 'assistant' && message.content.trim() ? (
+              {message.role === 'assistant' &&
+              !message.localOnly &&
+              !message.optimistic &&
+              message.content.trim() ? (
                 <Pressable
                   onPress={() => void copyMessage(message.id, message.content)}
                   accessibilityRole="button"
