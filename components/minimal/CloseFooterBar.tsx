@@ -69,10 +69,9 @@ function buildWebButtonStyle(
     margin: 0,
     paddingBlock: 14,
     paddingInline: 10,
-    borderRadius: 16,
-    borderWidth: 2,
+    borderRadius: 10,
+    borderWidth: 0,
     borderStyle: 'solid',
-    borderColor: CLOSE_BUTTON_BORDER,
     backgroundColor: isOutline ? '#FFFFFF' : CLOSE_BUTTON_FILL,
     color: isOutline ? CLOSE_BUTTON_BORDER : '#FFFFFF',
     fontSize: layout === 'flex' ? 13 : 15,
@@ -92,9 +91,8 @@ function buildWebButtonStyle(
 const closeButtonStyles = StyleSheet.create({
   button: {
     minHeight: CLOSE_FOOTER_BUTTON_HEIGHT,
-    borderRadius: 16,
-    borderWidth: 2,
-    borderColor: CLOSE_BUTTON_BORDER,
+    borderRadius: 10,
+    borderWidth: 0,
     backgroundColor: CLOSE_BUTTON_FILL,
     alignItems: 'center',
     justifyContent: 'center',
@@ -126,7 +124,7 @@ const closeButtonStyles = StyleSheet.create({
   },
 });
 
-/** Botão «Fechar» canónico — azul, 51px, borda 2px, `<button>` na web. */
+/** Botão «Fechar» canónico — azul, 51px, sem borda, `<button>` na web. */
 export function CloseButton({
   onPress,
   label = 'Fechar',

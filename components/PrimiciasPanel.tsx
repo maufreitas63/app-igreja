@@ -306,13 +306,11 @@ const styles = StyleSheet.create({
     gap: 12,
     paddingVertical: 10,
     paddingHorizontal: 12,
-    borderWidth: 1,
-    borderColor: MINIMAL_UI.border,
+    borderWidth: 0,
     borderRadius: 10,
     backgroundColor: MINIMAL_UI.background,
   },
   rowMine: {
-    borderColor: MINIMAL_UI.accent,
     backgroundColor: MINIMAL_UI.rowHover,
   },
   rowPledged: {

@@ -20,7 +20,6 @@ import {
 const OFFERINGS_CLASS_SURFACE = '#FFFFFF';
 const OFFERINGS_COPY_BUTTON_BG = '#3A96DD';
 const OFFERINGS_COPY_BUTTON_TEXT = '#FFFFFF';
-const OFFERINGS_COPY_BUTTON_BORDER = '#1B4F8A';
 /** padding 8 + botão (ícone 28 + padding 24 + borda 4) + padding 8 + borda. */
 const OFFERINGS_COPY_DOCK_HEIGHT = 8 + 56 + 8 + 1;
 
@@ -583,8 +582,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     backgroundColor: OFFERINGS_COPY_BUTTON_BG,
     borderRadius: 10,
-    borderWidth: 2,
-    borderColor: OFFERINGS_COPY_BUTTON_BORDER,
+    borderWidth: 0,
     ...(Platform.OS === 'web' ? { cursor: 'pointer' as const } : null),
   },
   copyButtonDisabled: {
