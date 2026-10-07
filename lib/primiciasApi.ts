@@ -27,6 +27,7 @@ export type PrimiciasPledge = {
   profileId: string;
   name: string;
   isMine: boolean;
+  quantity: number;
   createdAt: string;
 };
 
@@ -100,9 +101,18 @@ export function formatPrimiciasItemLine(item: Pick<PrimiciasItem, 'quantity' | '
   return `${item.quantity} / ${item.unit} / ${item.productName} / ${item.weight}`;
 }
 
-/** Itens ainda livres — cada compromisso risca um item e reduz este total. */
+export function pledgedPrimiciasQuantity(item: Pick<PrimiciasItem, 'pledges'>) {
+  return item.pledges.reduce((sum, pledge) => sum + Math.max(1, pledge.quantity || 1), 0);
+}
+
+/** Unidades ainda sem doador. */
+export function remainingPrimiciasQuantity(item: Pick<PrimiciasItem, 'quantity' | 'pledges'>) {
+  return Math.max(0, item.quantity - pledgedPrimiciasQuantity(item));
+}
+
+/** Itens com saldo — um compromisso parcial não esgota a quantidade. */
 export function countPendingPrimiciasItems(items: PrimiciasItem[]) {
-  return items.filter((item) => item.pledges.length === 0).length;
+  return items.filter((item) => remainingPrimiciasQuantity(item) > 0).length;
 }
 
 export function formatPrimiciasPendingCount(items: PrimiciasItem[]) {
@@ -152,10 +162,13 @@ const parsePledge = (value: unknown): PrimiciasPledge | null => {
     return null;
   }
 
+  const quantity = Number(row.quantity);
+
   return {
     profileId,
     name: formatShortName(String(row.name ?? '').trim() || 'Membro'),
     isMine: row.is_mine === true,
+    quantity: Number.isFinite(quantity) && quantity > 0 ? Math.floor(quantity) : 1,
     createdAt: String(row.created_at ?? ''),
   };
 };
@@ -255,8 +268,11 @@ export async function listPrimiciasItems(): Promise<PrimiciasListResult> {
   };
 }
 
-export async function togglePrimiciasPledge(itemId: string) {
-  const payload = await rpcPayload('toggle_primicias_pledge', { p_item_id: itemId });
+export async function togglePrimiciasPledge(itemId: string, quantity?: number) {
+  const payload = await rpcPayload('toggle_primicias_pledge', {
+    p_item_id: itemId,
+    ...(quantity === undefined ? {} : { p_quantity: quantity }),
+  });
 
   if (payload.success !== true) {
     throw new Error(String(payload.message ?? 'Não foi possível registrar o compromisso.'));
