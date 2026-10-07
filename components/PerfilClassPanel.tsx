@@ -5,6 +5,7 @@ import { PerfilClass, type PerfilClassAction } from '@/components/PerfilClass';
 import { ProfileClassPanel } from '@/components/ProfileClassPanel';
 import { ProfileServiceForm } from '@/components/ProfileServiceForm';
 import { DiscipleshipTrailPanel } from '@/components/DiscipleshipTrailPanel';
+import { TeachingTrailPanel } from '@/components/TeachingTrailPanel';
 import { CloseFooterBar } from '@/components/minimal/CloseFooterBar';
 import { ACCESS_SCREEN, sessionHasAccess } from '@/lib/accessControl';
 import { loadGroupedManageScreenAccess } from '@/lib/groupedManageAccess';
@@ -43,6 +44,7 @@ export function PerfilClassPanel() {
   const [profileClassVisible, setProfileClassVisible] = useState(false);
   const [membersClassVisible, setMembersClassVisible] = useState(false);
   const [discipleshipTrailVisible, setDiscipleshipTrailVisible] = useState(false);
+  const [teachingTrailVisible, setTeachingTrailVisible] = useState(false);
   const [digitalIdVisible, setDigitalIdVisible] = useState(false);
   const [myBooksVisible, setMyBooksVisible] = useState(false);
   const [serviceOfferVisible, setServiceOfferVisible] = useState(false);
@@ -229,6 +231,13 @@ export function PerfilClassPanel() {
       onPress: openDigitalIdCard,
     });
 
+    items.push({
+      key: 'teaching-trail',
+      label: 'Trilha de Ensino',
+      icon: 'history-edu',
+      onPress: () => setTeachingTrailVisible(true),
+    });
+
     // Perfil Ministerial vive na lição 5.1 da Trilha («Descobrindo meus Dons»).
     if (canOpenDiscipleshipTrail) {
       items.push({
@@ -316,6 +325,25 @@ export function PerfilClassPanel() {
           </Pressable>
         </View>
         <DigitalIDCard />
+      </View>
+    );
+  }
+
+  if (teachingTrailVisible) {
+    return (
+      <View style={styles.embeddedPanel}>
+        <View style={styles.embeddedHeader}>
+          <Pressable
+            onPress={() => setTeachingTrailVisible(false)}
+            style={styles.backButton}
+            accessibilityRole="button"
+            accessibilityLabel="Voltar ao perfil"
+          >
+            <FontAwesome name="chevron-left" size={14} color={MINIMAL_UI.blueDark} />
+            <Text style={styles.backButtonText}>Perfil</Text>
+          </Pressable>
+        </View>
+        <TeachingTrailPanel />
       </View>
     );
   }

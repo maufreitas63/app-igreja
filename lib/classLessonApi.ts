@@ -1,6 +1,13 @@
 import { supabase } from '@/lib/supabase';
 import { isSupabaseRpcMissingError } from '@/lib/supabaseRpc';
-import type { ClassLesson, ClassLessonInput, ClassRoomKey } from '@/types/class-lesson';
+import type {
+  ClassLesson,
+  ClassLessonDetail,
+  ClassLessonInput,
+  ClassRoomKey,
+  LessonServerInfo,
+  RoomType,
+} from '@/types/class-lesson';
 
 const SQL_HINT = 'O planejamento de aula ainda não está disponível neste ambiente.';
 
@@ -44,6 +51,64 @@ async function rpcPayload(fn: string, args: Record<string, unknown>) {
   }
 
   return asRecord(data);
+}
+
+const toRoomType = (roomKey: string): RoomType => (roomKey === 'TEENS' ? 'jovens' : 'infantil');
+
+const parseServer = (value: unknown): LessonServerInfo | null => {
+  const row = asRecord(value);
+  const id = String(row.id ?? '').trim();
+  if (!id) {
+    return null;
+  }
+
+  const selfie = String(row.selfie_url ?? '').trim();
+
+  return {
+    id,
+    fullName: String(row.full_name ?? '').trim() || 'Servidor',
+    selfieUrl: selfie || null,
+  };
+};
+
+const parseLessonDetail = (value: unknown): ClassLessonDetail | null => {
+  const row = asRecord(value);
+  const id = String(row.id ?? '').trim();
+  const classDate = String(row.class_date ?? '').trim().slice(0, 10);
+  const title = String(row.title ?? '').trim();
+
+  if (!id || !classDate || !title) {
+    return null;
+  }
+
+  const servers = Array.isArray(row.servers)
+    ? row.servers.map(parseServer).filter((server): server is LessonServerInfo => server !== null)
+    : [];
+
+  return {
+    id,
+    roomType: toRoomType(String(row.room_key ?? '')),
+    classDate,
+    title,
+    biblePassage: String(row.bible_passage ?? ''),
+    mainObjective: String(row.main_objective ?? ''),
+    resourcesNotes: String(row.resources_notes ?? '').trim() || null,
+    familyExtension: String(row.family_extension ?? '').trim() || null,
+    servers,
+  };
+};
+
+export async function listClassLessonTrail(roomKey: ClassRoomKey): Promise<ClassLessonDetail[]> {
+  const payload = await rpcPayload('list_class_lesson_trail', { p_room_key: roomKey });
+
+  if (payload.success !== true) {
+    throw new Error(String(payload.message ?? 'Não foi possível carregar a trilha de ensino.'));
+  }
+
+  const rows = Array.isArray(payload.lessons) ? payload.lessons : [];
+  return rows
+    .map(parseLessonDetail)
+    .filter((lesson): lesson is ClassLessonDetail => lesson !== null);
 }
 
 export async function fetchClassLesson(eventId: string, roomKey: ClassRoomKey): Promise<ClassLesson | null> {
