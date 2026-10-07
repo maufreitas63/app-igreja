@@ -406,7 +406,7 @@ Escolha o mês e REALIZADO ou PLANEJADO. Esvaziar apaga os lançamentos daquela 
 Cadastre chaves (dízimo/oferta/campanha). Carga em lote importa o extrato CSV. Comprovantes em lote vinculam JPG pelo campo referência.
 
 ## Lançamentos, RD e atas
-O extrato analítico do mês, a fila de Relatórios de Despesas e o repositório de atas (PDF) ficam nesta tela. A Aliança de 40% baixa em Aliança Conecta Reino.$body$,
+O extrato analítico do mês, a fila de Relatórios de Despesas e o repositório de atas (PDF) ficam nesta tela. A Aliança de 10% de cashback abate na fatura da igreja que indicou.$body$,
     'maintenance-dashboard?panel=financials',
     v_ops,
     430

@@ -567,15 +567,18 @@ export async function supabaseServiceRpc(
 export async function stripeFormPost(
   secretKey: string,
   path: string,
-  params: Record<string, string>
+  params: Record<string, string>,
+  idempotencyKey?: string
 ): Promise<{ ok: true; data: Record<string, unknown> } | { ok: false; message: string; status: number }> {
   const body = new URLSearchParams(params);
+  const headers: Record<string, string> = {
+    Authorization: `Bearer ${secretKey}`,
+    'Content-Type': 'application/x-www-form-urlencoded',
+  };
+  if (idempotencyKey) headers['Idempotency-Key'] = idempotencyKey;
   const response = await fetch(`https://api.stripe.com/v1/${path}`, {
     method: 'POST',
-    headers: {
-      Authorization: `Bearer ${secretKey}`,
-      'Content-Type': 'application/x-www-form-urlencoded',
-    },
+    headers,
     body,
   });
   const data = (await response.json()) as Record<string, unknown>;

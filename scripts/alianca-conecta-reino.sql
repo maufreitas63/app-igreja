@@ -1,6 +1,6 @@
--- =============================================================================
--- Aliança Conecta Reino — indicações, passivo de 40% e demonstrativo SaaS
--- =============================================================================
+-- Regras vigentes de cashback: scripts/alianca-cashback-perpetuo.sql
+-- Este arquivo permanece como histórico do modelo de 40% / 4 ciclos.
+-- Não reaplicar este script: list_admin_igrejas daqui está defasado.
 -- Super administrador: /igrejas (mãe) + /alianca-conecta-reino (baixa manual)
 -- Igreja mãe: aba em /financial
 -- Gatilho: webhook Stripe invoice.paid / invoice.payment_failed (service role)

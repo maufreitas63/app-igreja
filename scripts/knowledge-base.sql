@@ -740,7 +740,7 @@ Tudo nesta tela usa o mês escolhido no topo. Expanda cada cartão (resumo, resu
 Quem lança extrato, RD e orçamento usa Informações Financeiras na engrenagem. Aqui é a leitura de prestação de contas.
 
 ## Aliança
-Se a igreja é mãe no programa Aliança Conecta Reino, a seção Aliança mostra o recorte das ofertas de apoio — ela não efetiva o pagamento.$body$,
+Se a igreja indica outra no programa Aliança Conecta Reino, a seção Aliança mostra o cashback de 10% que abate na fatura desta igreja.$body$,
     '/financial',
     v_ops,
     60
@@ -749,33 +749,24 @@ Se a igreja é mãe no programa Aliança Conecta Reino, a seção Aliança mostr
   perform public._seed_knowledge_article(
     'alianca-conecta-reino',
     'Aliança Conecta Reino',
-    'Como funciona a premiação por indicação de novas igrejas?',
+    'Como funciona o cashback de indicação de novas igrejas?',
     $body$## O que é a Aliança Conecta Reino
-É o programa de indicação entre instâncias do Conecta+. Quando uma igreja (igreja mãe) indica outra igreja (igreja filha) e essa filha contrata e paga a assinatura da plataforma, nasce um direito de oferta de apoio ministerial para a mãe. Esse valor não entra no livro caixa do culto: é passivo da operação Conecta+, separado do dízimo e das ofertas da congregação.
+É o programa de indicação entre instâncias do Conecta+. Quando uma igreja indica outra e a igreja indicada paga o pacote, a igreja que indicou recebe 10% perpétuo de cashback/desconto na própria fatura.
 
 ## Como a indicação é registrada
-Somente o Super Administrador vincula a igreja mãe em Instâncias, no campo «Igreja mãe (indicação Aliança)». Uma igreja não pode indicar a si mesma nem fechar um ciclo na árvore (A indica B, B indica A). Cada igreja filha tem no máximo uma parceria ativa. Remover a indicação só é permitido se não houver oferta Aliança em aberto.
+Somente o Super Administrador vincula a igreja mãe em Instâncias. Uma igreja não indica a si mesma nem fecha ciclo na árvore. Cada igreja indicada tem uma parceria. O cálculo usa o tenant de cada igreja, sem misturar instâncias.
 
-## Quando nasce o direito à premiação
-O direito não nasce no cadastro da igreja, e sim no pagamento real da fatura Stripe da igreja filha (evento invoice.paid). Cada fatura paga, nas condições abaixo, gera uma oferta de 40% sobre o valor efetivamente pago. Fatura com valor zero não gera oferta. A mesma fatura não gera duas ofertas (o sistema é idempotente).
+## Quando nasce o desconto
+O desconto nasce no pagamento real da fatura da igreja indicada. A base é 10% do valor do pacote assinado por ela. A mesma fatura não gera dois créditos.
 
-## O valor da oferta (40%)
-A oferta é sempre 40% do valor pago naquela fatura da assinatura Conecta+ da igreja filha. Exemplo: se a filha paga R$ 1.000,00 no trimestre, a mãe tem direito a R$ 400,00 de oferta de apoio ministerial. O vencimento dessa oferta é 30 dias após a data em que a fatura foi paga.
+## As duas igrejas precisam estar ativas
+O benefício é perpétuo, mas só enquanto a igreja que indicou e a igreja indicada estão ativas e com a assinatura em dia. Se uma das duas for desativada ou ficar inadimplente, o percentual de 10% fica suspenso na hora.
 
-## Até 4 ciclos, em até 12 meses
-A parceria vale por 12 meses a partir do início e por no máximo quatro ofertas quitadas. Cada baixa manual («Pago / Oferta efetivada») avança um ciclo (1/4, 2/4, 3/4). No quarto pagamento, a parceria é encerrada. Depois disso, novas faturas da filha não geram mais passivo para aquela mãe. Se a fatura chegar depois do prazo de 12 meses, a parceria também encerra sem gerar nova oferta.
-
-## Adimplência das duas igrejas
-Mãe e filha precisam estar ativas e adimplentes na assinatura. Se a filha falhar no pagamento (invoice.payment_failed) ou qualquer uma das duas estiver inadimplente, a parceria fica suspensa e aquela fatura não gera oferta. Quando ambas voltam a ficar em dia, a parceria pode reativar nas próximas faturas, desde que ainda caiba no prazo de 12 meses e nos 4 ciclos.
-
-## A baixa é manual — o Stripe não paga a mãe
-O cartão da igreja filha quita a assinatura Conecta+ automaticamente. Os 40% da Aliança não são transferidos pelo Stripe. O Super Administrador, nesta tela, confirma a oferta de apoio ministerial («Marcar como paga»). Sem essa baixa, o passivo permanece em «A pagar» e a igreja mãe não recebe. A igreja mãe acompanha o recorte no Financeiro (seção Aliança), mas não efetiva a oferta.
+## Teto de 100%
+A soma do cashback em aberto da igreja que indicou não passa de 100% do valor do pacote assinado por ela. O que exceder esse teto não entra na fatura.
 
 ## O que aparece neste demonstrativo
-Receitas brutas: o que as igrejas pagaram de assinatura. A pagar (passivo): 40% ainda não quitados. Ofertas efetivadas: o que já foi marcado como pago. Saldo líquido (realizado): receita bruta menos o que já foi efetivado. O saldo «se todas as ofertas em aberto forem pagas» antecipa o efeito de quitar o passivo restante.
-
-## Encerramento
-A parceria encerra no 4º ciclo quitado, ao vencer o prazo de 12 meses, ou se a indicação for removida sem ciclos pagos e sem ofertas já pagas. Enquanto houver oferta em aberto, a mãe não pode ser desvinculada: é preciso quitar ou manter o vínculo.$body$,
+Receitas brutas: o que as igrejas pagaram de assinatura. Cashback a abater: 10% ainda não usado na fatura, só de pares ativos. Descontos na fatura: o que já foi abatido. A receita após descontos desconta esse abatimento.$body$,
     '/alianca-conecta-reino',
     v_sa,
     70

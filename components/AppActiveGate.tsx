@@ -16,7 +16,7 @@ const normalizePathname = (pathname: string) => {
 
 const isPublicUtilityRoute = (pathname: string) => {
   const normalized = normalizePathname(pathname);
-  return normalized === '/agenda-cancelar' || normalized === '/cracha-visitante';
+  return normalized === '/agenda-cancelar' || normalized === '/cracha-visitante' || normalized === '/alianca-indicacao';
 };
 
 const isLoginRoute = (pathname: string) => {

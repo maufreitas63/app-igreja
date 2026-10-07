@@ -530,7 +530,7 @@ Extrato, Relatório de Despesas e orçamento do mês escolhido. É a operação 
 Tudo filtra pelo mês de referência. Mês só planejado deixa o realizado vazio.
 
 ## Aliança
-Ofertas de apoio ministerial da Aliança aparecem no recorte da igreja mãe; a baixa dos 40% é na tela Aliança Conecta Reino.$body$,
+O cashback de 10% da Aliança aparece no recorte da igreja que indicou e abate na fatura dela.$body$,
     'maintenance-dashboard?panel=financials',
     v_ops,
     430

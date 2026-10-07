@@ -832,8 +832,8 @@ function IgrejasAdminPanel() {
                       disabled={editBusy}
                     />
                     <Text style={styles.logoHint}>
-                      A igreja mãe recebe 40% da assinatura trimestral desta instância, em até 4
-                      ciclos. O sistema recusa ciclos na árvore de indicações.
+                      A igreja que indicou recebe 10% perpétuo do pacote desta instância, como
+                      desconto na fatura dela, enquanto as duas estiverem ativas (teto de 100%).
                     </Text>
 
                     <Text style={styles.socialFieldLabel}>
@@ -1286,8 +1286,8 @@ function IgrejasAdminPanel() {
           disabled={saving}
         />
         <Text style={styles.logoHint}>
-          Opcional. A igreja selecionada recebe 40% da assinatura trimestral desta instância
-          (até 4 ciclos / 12 meses).
+          Opcional. A igreja selecionada recebe 10% perpétuo do pacote desta instância
+          como desconto na fatura dela, enquanto as duas estiverem ativas (teto de 100%).
         </Text>
 
         <Text style={styles.label}>Totem de check-in — celular</Text>

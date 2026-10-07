@@ -127,7 +127,7 @@ Checkout Stripe (cartão) fora do app. Fatura paga libera o período; falha deix
 Renovar ou rescindir usa os botões desta tela. Rescisão no fim do período não gera estorno automático.
 
 ## Não misturar
-Oferta de 40% da Aliança não é paga pelo Stripe à igreja mãe — a baixa é em Aliança Conecta Reino.$body$,
+Oferta de cashback de 10% da Aliança abate na fatura da igreja que indicou — não há baixa manual.$body$,
     '/billing',
     v_sa,
     100
@@ -574,7 +574,7 @@ CSV do banco no card Carga em lote (versão do mês). Comprovantes em lote: JPG 
 Fila de Relatórios de Despesas do mês (aprovar/pagar). Atas: publicar/renomear PDF (também visível em Administrativo).
 
 ## Aliança
-Os 40% não baixam aqui — tela Aliança Conecta Reino.$body$,
+O cashback de 10% abate na fatura da igreja que indicou.$body$,
     'maintenance-dashboard?panel=financials',
     v_ops,
     430

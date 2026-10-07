@@ -169,6 +169,8 @@ export default function FinancialScreen() {
             message: 'Não foi possível carregar a Aliança Conecta Reino.',
             daughters: [],
             payouts: [],
+            package_cents: 0,
+            cashback_open_cents: 0,
           });
         }
       } finally {

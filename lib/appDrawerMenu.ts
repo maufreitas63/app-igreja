@@ -417,7 +417,7 @@ export const APP_DRAWER_SETTINGS_ITEMS: AppDrawerSettingsItem[] = [
     label: 'Aliança Conecta Reino',
     moduleKey: 'menu_alianca',
     group: 'governanca',
-    hint: 'Indicações, passivo de 40% e baixa manual das ofertas',
+    hint: 'Indicações e cashback de 10% na fatura da igreja que indicou',
   },
   {
     letter: 'g10c',

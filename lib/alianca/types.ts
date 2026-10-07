@@ -1,9 +1,9 @@
-export const ALIANCA_REWARD_PCT = 0.4;
+export const ALIANCA_REWARD_PCT = 0.1;
 export const ALIANCA_MAX_CICLOS = 4;
 export const ALIANCA_PAYOUT_CATEGORY = 'Oferta de Apoio Ministerial - Aliança';
 
 export type AliancaPartnershipStatus = 'Ativo' | 'Encerrado' | 'Suspenso_Inadimplencia';
-export type AliancaPayoutStatus = 'A_Pagar' | 'Pago';
+export type AliancaPayoutStatus = 'A_Pagar' | 'Pago' | 'Creditado' | 'Abatido';
 
 export type AliancaDaughterRow = {
   filha_tenant_id: string;
@@ -37,6 +37,8 @@ export type AliancaMaePanel = {
   success: boolean;
   message?: string;
   tenant_id?: string;
+  package_cents: number;
+  cashback_open_cents: number;
   daughters: AliancaDaughterRow[];
   payouts: AliancaMaePayoutRow[];
 };
@@ -76,6 +78,8 @@ export type AliancaPartnerLead = {
   indicatedRole: string;
   indicatedPhone: string;
   indicatedChurchName: string;
+  churchAddress: string;
+  contactEmail: string;
   city: string;
   uf: string;
   estimatedMembers: number | null;

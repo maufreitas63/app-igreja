@@ -72,6 +72,8 @@ function stageLabel(code: string | null | undefined, subStage?: number | null) {
 
 type Draft = {
   indicatedChurchName: string;
+  churchAddress: string;
+  contactEmail: string;
   city: string;
   uf: string;
   estimatedMembers: string;
@@ -87,6 +89,8 @@ type Draft = {
 function draftFromLead(lead: AliancaPartnerLead): Draft {
   return {
     indicatedChurchName: lead.indicatedChurchName,
+    churchAddress: lead.churchAddress,
+    contactEmail: lead.contactEmail,
     city: lead.city,
     uf: lead.uf,
     estimatedMembers: lead.estimatedMembers == null ? '' : String(lead.estimatedMembers),
@@ -221,6 +225,8 @@ export function AliancaIndicadosList() {
       const result = await updateAliancaPartnerLead({
         leadId: selected.id,
         indicatedChurchName: draft.indicatedChurchName,
+        churchAddress: draft.churchAddress,
+        contactEmail: draft.contactEmail,
         city: draft.city,
         uf: draft.uf,
         estimatedMembers: membersRaw ? Number(membersRaw) : null,
@@ -341,6 +347,9 @@ export function AliancaIndicadosList() {
                           </Text>
                         </View>
                         <Text style={styles.meta}>{lead.indicatedRole || '—'}</Text>
+                        {lead.contactEmail ? (
+                          <Text style={styles.meta}>{lead.contactEmail}</Text>
+                        ) : null}
                         <Text style={styles.meta}>
                           {[lead.indicatedChurchName, lead.city, lead.uf].filter(Boolean).join(' · ')
                             || 'Igreja não informada'}
@@ -397,6 +406,8 @@ export function AliancaIndicadosList() {
                 <Text style={styles.modalTitle}>{selected.indicatedName}</Text>
                 <Text style={styles.meta}>Posição: {selected.indicatedRole || '—'}</Text>
                 <Text style={styles.meta}>Celular: {formatPhoneDisplay(selected.indicatedPhone)}</Text>
+                <Text style={styles.meta}>E-mail: {selected.contactEmail || '—'}</Text>
+                <Text style={styles.meta}>Endereço: {selected.churchAddress || '—'}</Text>
                 <Text style={styles.meta}>Quem indicou: {selected.referrerName || '—'}</Text>
                 <Text style={styles.meta}>
                   Instância:{' '}
@@ -463,6 +474,24 @@ export function AliancaIndicadosList() {
                   value={draft.indicatedChurchName}
                   onChangeText={(value) => setDraft({ ...draft, indicatedChurchName: value })}
                   placeholder="Nome da igreja / entidade"
+                  placeholderTextColor={MINIMAL_UI.textMuted}
+                />
+                <Text style={styles.fieldLabel}>Endereço da igreja</Text>
+                <TextInput
+                  style={styles.input}
+                  value={draft.churchAddress}
+                  onChangeText={(value) => setDraft({ ...draft, churchAddress: value })}
+                  placeholder="Rua, número, bairro"
+                  placeholderTextColor={MINIMAL_UI.textMuted}
+                />
+                <Text style={styles.fieldLabel}>E-mail</Text>
+                <TextInput
+                  style={styles.input}
+                  value={draft.contactEmail}
+                  autoCapitalize="none"
+                  keyboardType="email-address"
+                  onChangeText={(value) => setDraft({ ...draft, contactEmail: value })}
+                  placeholder="contato@igreja.org"
                   placeholderTextColor={MINIMAL_UI.textMuted}
                 />
                 <View style={styles.row2}>

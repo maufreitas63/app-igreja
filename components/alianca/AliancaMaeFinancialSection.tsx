@@ -29,40 +29,43 @@ export function AliancaMaeFinancialSection({ loading, panel, compact }: Props) {
   if (panel.daughters.length === 0 && panel.payouts.length === 0) {
     return (
       <Text style={styles.empty}>
-        Esta igreja ainda não indicou outras instâncias. Quando uma igreja filha pagar a
-        assinatura Conecta+, a oferta de apoio ministerial (40% por até 4 trimestres) aparece
-        aqui.
+        Esta igreja ainda não indicou outras instâncias. Quando uma igreja indicada pagar o
+        pacote, o cashback de 10% aparece aqui, limitado a 100% do pacote desta igreja.
       </Text>
     );
   }
 
   return (
     <View style={styles.body}>
-      <Text style={styles.category}>Oferta de Apoio Ministerial - Aliança</Text>
+      <Text style={styles.category}>Cashback Aliança — 10%</Text>
       <Text style={styles.hint}>
-        40% da assinatura trimestral da igreja filha, em até 4 ciclos (12 meses). A administração
-        central quita a oferta manualmente, em até 30 dias após o pagamento da fatura.
+        10% perpétuo do pacote da igreja indicada, como desconto na fatura desta igreja.
+        Vale enquanto as duas estiverem ativas. O desconto não passa de 100% do pacote daqui.
       </Text>
+      {panel.package_cents > 0 ? (
+        <Text style={styles.meta}>
+          Pacote desta igreja: {formatAliancaCents(panel.package_cents)} · cashback em aberto:{' '}
+          {formatAliancaCents(panel.cashback_open_cents)}
+        </Text>
+      ) : null}
 
       {panel.daughters.map((row) => (
         <View key={row.filha_tenant_id} style={styles.card}>
           <Text style={styles.cardTitle}>
             {row.filha_name} ({row.filha_code})
           </Text>
-          <Text style={styles.meta}>Bonificação: {row.status_label}</Text>
-          <Text style={styles.meta}>Ciclos quitados: {row.ciclos_pagos}/4</Text>
+          <Text style={styles.meta}>{row.status_label}</Text>
           {row.next_amount_cents != null ? (
             <Text style={styles.meta}>
-              Próxima oferta prevista: {formatAliancaCents(row.next_amount_cents)} até{' '}
-              {formatAliancaDate(row.next_due_at)}
+              Cashback disponível: {formatAliancaCents(row.next_amount_cents)}
             </Text>
           ) : (
-            <Text style={styles.meta}>Sem oferta provisionada no momento.</Text>
+            <Text style={styles.meta}>Sem cashback em aberto desta igreja.</Text>
           )}
         </View>
       ))}
 
-      <Text style={styles.subhead}>Extrato de ofertas</Text>
+      <Text style={styles.subhead}>Extrato de cashback</Text>
       {panel.payouts.length === 0 ? (
         <Text style={styles.empty}>Nenhum repasse registrado ainda.</Text>
       ) : (
@@ -72,10 +75,13 @@ export function AliancaMaeFinancialSection({ loading, panel, compact }: Props) {
               {row.filha_name} · {formatAliancaCents(row.reward_amount_cents)}
             </Text>
             <Text style={styles.meta}>
-              {row.status === 'Pago' ? 'Efetivada' : 'A pagar'}
-              {row.status === 'Pago'
-                ? ` em ${formatAliancaDate(row.paid_at)}`
-                : ` · previsão ${formatAliancaDate(row.due_at)}`}
+              {row.status === 'Abatido'
+                ? `Abatido na fatura em ${formatAliancaDate(row.paid_at)}`
+                : row.status === 'Creditado'
+                  ? 'Disponível na próxima fatura'
+                  : row.status === 'Pago'
+                    ? `Pago em ${formatAliancaDate(row.paid_at)} (modelo anterior)`
+                    : `A pagar até ${formatAliancaDate(row.due_at)} (modelo anterior)`}
             </Text>
           </View>
         ))

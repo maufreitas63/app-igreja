@@ -1,5 +1,6 @@
 import { AliancaIndicatePartnerSection } from '@/components/alianca/AliancaIndicatePartnerSection';
-import { KnowledgeSectionTitle } from '@/components/knowledge/KnowledgeSectionTitle';
+import { AliancaIndicationQrSection } from '@/components/alianca/AliancaIndicationQrSection';
+import { KnowledgeRouteInfo } from '@/components/knowledge/KnowledgeRouteInfo';
 import {
   getAliancaAdminStatement,
   settleAliancaPayoutAdmin,
@@ -24,11 +25,23 @@ import {
 } from 'react-native';
 import Toast from 'react-native-toast-message';
 
+function aliancaPayoutStatusText(
+  status: string,
+  paidAt: string | null,
+  dueAt: string | null
+): string {
+  if (status === 'Abatido') return `Abatido na fatura em ${formatAliancaDate(paidAt)}`;
+  if (status === 'Creditado') return 'Cashback disponível na próxima fatura';
+  if (status === 'Pago') return `Pago em ${formatAliancaDate(paidAt)} (modelo anterior)`;
+  return `A pagar até ${formatAliancaDate(dueAt)} (modelo anterior)`;
+}
+
 export function AliancaAdminDashboard() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [statement, setStatement] = useState<AliancaAdminStatement | null>(null);
+  const [statementOpen, setStatementOpen] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -47,7 +60,7 @@ export function AliancaAdminDashboard() {
   const handleSettle = async (payoutId: string, label: string) => {
     const confirmed = await confirmDialog(
       'Efetivar oferta Aliança',
-      `Marcar como paga a oferta para ${label}? Isso avança o ciclo da parceria (encerra no 4º).`,
+      `Marcar como paga a oferta antiga para ${label}? O cashback novo de 10% abate sozinho na fatura.`,
       'Marcar como paga',
       'Cancelar'
     );
@@ -71,15 +84,36 @@ export function AliancaAdminDashboard() {
 
   return (
     <View style={styles.root}>
-      <KnowledgeSectionTitle
-        title="Aliança Conecta Reino"
-        routeKey={KNOWLEDGE_ROUTE.alianca}
-        titleStyle={styles.title}
-        accessibilityLabel="Como funciona a premiação por indicação de novas igrejas"
-      />
+      <AliancaIndicationQrSection />
+
+      <View style={styles.statementHeader}>
+        <TouchableOpacity
+          style={styles.statementToggle}
+          onPress={() => setStatementOpen((open) => !open)}
+          activeOpacity={0.85}
+          accessibilityRole="button"
+          accessibilityState={{ expanded: statementOpen }}
+          accessibilityLabel={
+            statementOpen
+              ? 'Recolher demonstrativo da Aliança'
+              : 'Abrir demonstrativo da Aliança'
+          }
+        >
+          <Text style={styles.title}>
+            {statementOpen ? '▾' : '▸'} Aliança Conecta Reino
+          </Text>
+        </TouchableOpacity>
+        <KnowledgeRouteInfo
+          routeKey={KNOWLEDGE_ROUTE.alianca}
+          accessibilityLabel="Como funciona o cashback por indicação de novas igrejas"
+        />
+      </View>
+      {statementOpen ? (
+        <>
       <Text style={styles.hint}>
-        Demonstrativo das assinaturas Conecta+ (cartão, baixa imediata) e do passivo de 40% às
-        igrejas mães. A quitação é manual: oferta de apoio ministerial, em até 30 dias.
+        10% perpétuo de cashback/desconto sobre o pacote assinado pela igreja indicada,
+        condicionado à atividade de ambas as igrejas, limitado a 100% de desconto na fatura
+        da igreja que indicou.
       </Text>
 
       {loading ? (
@@ -94,26 +128,26 @@ export function AliancaAdminDashboard() {
               <Text style={styles.kpiValue}>{formatAliancaCents(statement.gross_revenue_cents)}</Text>
             </View>
             <View style={styles.kpi}>
-              <Text style={styles.kpiLabel}>A pagar (passivo)</Text>
+              <Text style={styles.kpiLabel}>Cashback a abater</Text>
               <Text style={styles.kpiValue}>{formatAliancaCents(statement.payout_pending_cents)}</Text>
             </View>
             <View style={styles.kpi}>
-              <Text style={styles.kpiLabel}>Ofertas efetivadas</Text>
+              <Text style={styles.kpiLabel}>Descontos na fatura</Text>
               <Text style={styles.kpiValue}>{formatAliancaCents(statement.payout_paid_cents)}</Text>
             </View>
             <View style={styles.kpi}>
-              <Text style={styles.kpiLabel}>Saldo líquido (realizado)</Text>
+              <Text style={styles.kpiLabel}>Receita após descontos</Text>
               <Text style={styles.kpiValue}>{formatAliancaCents(statement.net_realized_cents)}</Text>
             </View>
           </View>
           <Text style={styles.meta}>
-            Se todas as ofertas em aberto forem pagas, o saldo fica{' '}
+            Com o cashback ainda em aberto, a receita fica{' '}
             {formatAliancaCents(statement.net_after_pending_cents)}.
           </Text>
 
-          <Text style={styles.section}>Repasses</Text>
+          <Text style={styles.section}>Descontos</Text>
           {statement.payouts.length === 0 ? (
-            <Text style={styles.empty}>Nenhum passivo gerado ainda.</Text>
+            <Text style={styles.empty}>Nenhum cashback gerado ainda.</Text>
           ) : (
             statement.payouts.map((row) => (
               <View key={row.id} style={styles.row}>
@@ -121,15 +155,10 @@ export function AliancaAdminDashboard() {
                   {row.mae_name} ← {row.filha_name}
                 </Text>
                 <Text style={styles.meta}>
-                  {formatAliancaCents(row.reward_amount_cents)} (40% de{' '}
-                  {formatAliancaCents(row.gross_amount_cents)}) · ciclos {row.ciclos_pagos}/4 ·{' '}
-                  {row.status_global}
+                  {formatAliancaCents(row.reward_amount_cents)} sobre{' '}
+                  {formatAliancaCents(row.gross_amount_cents)} · {row.status_global}
                 </Text>
-                <Text style={styles.meta}>
-                  {row.status === 'Pago'
-                    ? `Pago em ${formatAliancaDate(row.paid_at)}`
-                    : `A pagar até ${formatAliancaDate(row.due_at)}`}
-                </Text>
+                <Text style={styles.meta}>{aliancaPayoutStatusText(row.status, row.paid_at, row.due_at)}</Text>
                 {row.status === 'A_Pagar' ? (
                   <TouchableOpacity
                     style={[styles.button, busyId === row.id && styles.buttonDisabled]}
@@ -149,6 +178,8 @@ export function AliancaAdminDashboard() {
           )}
         </>
       )}
+        </>
+      ) : null}
 
       <AliancaIndicatePartnerSection />
 
@@ -176,6 +207,17 @@ const styles = StyleSheet.create({
     width: '100%',
     paddingBottom: 24,
     gap: 8,
+  },
+  statementHeader: {
+    width: '100%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingHorizontal: 12,
+  },
+  statementToggle: {
+    flexShrink: 1,
   },
   title: {
     ...MINIMAL_SECTION_TITLE,

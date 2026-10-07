@@ -37,6 +37,8 @@ function mapMaePanel(raw: unknown): AliancaMaePanel {
     success: row.success === true,
     message: asTextOrNull(row.message) ?? undefined,
     tenant_id: asTextOrNull(row.tenant_id) ?? undefined,
+    package_cents: asNumber(row.package_cents),
+    cashback_open_cents: asNumber(row.cashback_open_cents),
     daughters: daughters.map((item) => {
       const d = asRecord(item) || {};
       return {
@@ -83,7 +85,7 @@ function mapAdminStatement(raw: unknown): AliancaAdminStatement {
     payout_paid_cents: asNumber(row.payout_paid_cents),
     net_realized_cents: asNumber(row.net_realized_cents),
     net_after_pending_cents: asNumber(row.net_after_pending_cents),
-    reward_pct: asNumber(row.reward_pct) || 0.4,
+    reward_pct: asNumber(row.reward_pct) || 0.1,
     payouts: payouts.map((item) => {
       const p = asRecord(item) || {};
       return {
@@ -112,11 +114,20 @@ export async function getAliancaMaePanel(): Promise<AliancaMaePanel> {
   const { data, error } = await supabase.rpc('get_alianca_mae_panel');
   if (error) {
     if (isSupabaseRpcMissingError(error, 'get_alianca_mae_panel')) {
-      return { success: false, message: MISSING_SQL, daughters: [], payouts: [] };
+      return {
+        success: false,
+        message: MISSING_SQL,
+        package_cents: 0,
+        cashback_open_cents: 0,
+        daughters: [],
+        payouts: [],
+      };
     }
     return {
       success: false,
       message: error.message || 'Não foi possível carregar a Aliança.',
+      package_cents: 0,
+      cashback_open_cents: 0,
       daughters: [],
       payouts: [],
     };
@@ -136,7 +147,7 @@ export async function getAliancaAdminStatement(): Promise<AliancaAdminStatement>
         payout_paid_cents: 0,
         net_realized_cents: 0,
         net_after_pending_cents: 0,
-        reward_pct: 0.4,
+        reward_pct: 0.1,
         payouts: [],
       };
     }
@@ -148,7 +159,7 @@ export async function getAliancaAdminStatement(): Promise<AliancaAdminStatement>
       payout_paid_cents: 0,
       net_realized_cents: 0,
       net_after_pending_cents: 0,
-      reward_pct: 0.4,
+      reward_pct: 0.1,
       payouts: [],
     };
   }
@@ -200,6 +211,8 @@ function mapPartnerLead(raw: unknown): AliancaPartnerLead | null {
     indicatedRole: asText(row.indicated_role),
     indicatedPhone: asText(row.indicated_phone),
     indicatedChurchName: asText(row.indicated_church_name),
+    churchAddress: asText(row.church_address),
+    contactEmail: asText(row.contact_email),
     city: asText(row.city),
     uf: asText(row.uf).toUpperCase(),
     estimatedMembers:
@@ -343,6 +356,8 @@ export async function setAliancaPartnerLeadStage(
 export async function updateAliancaPartnerLead(input: {
   leadId: string;
   indicatedChurchName: string;
+  churchAddress: string;
+  contactEmail: string;
   city: string;
   uf: string;
   estimatedMembers: number | null;
@@ -367,6 +382,8 @@ export async function updateAliancaPartnerLead(input: {
     p_last_contact_at: input.lastContactAt,
     p_next_action_at: input.nextActionAt,
     p_lost_reason: input.lostReason,
+    p_church_address: input.churchAddress,
+    p_contact_email: input.contactEmail,
   });
   if (error) {
     if (isSupabaseRpcMissingError(error, 'update_alianca_partner_lead')) {

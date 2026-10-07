@@ -11,6 +11,7 @@ import {
   persistFromCheckoutSession,
   persistStripeSubscription,
   readStripeMeta,
+  stripeFormPost,
   stripeGet,
   supabaseServiceRpc,
   unixToIso,
@@ -114,6 +115,12 @@ async function processAliancaInvoiceEvent(
   }
 
   const amountPaid = Number(invoice.amount_paid ?? 0);
+  const startingBalance = Number(invoice.starting_balance ?? 0);
+  const endingBalance = Number(invoice.ending_balance ?? 0);
+  const balanceApplied =
+    Number.isFinite(startingBalance) && Number.isFinite(endingBalance)
+      ? Math.max(0, Math.round(endingBalance - startingBalance))
+      : 0;
   const transitions = asRecord(invoice.status_transitions);
   const paidAt =
     unixToIso(transitions?.paid_at)
@@ -128,8 +135,34 @@ async function processAliancaInvoiceEvent(
     p_paid_at: paidAt,
     p_billing_reason: billingReason,
     p_stripe_subscription_id: subscriptionId,
+    p_balance_applied_cents: balanceApplied,
   });
-  return result.ok ? { ok: true } : { ok: false, message: result.message };
+  if (!result.ok) {
+    return { ok: false, message: result.message };
+  }
+
+  const payload = asRecord(result.data);
+  const cashbackCents = Number(payload?.cashback_cents ?? 0);
+  const maeCustomerId = typeof payload?.mae_stripe_customer_id === 'string'
+    ? payload.mae_stripe_customer_id.trim()
+    : '';
+  if (cashbackCents > 0 && maeCustomerId.startsWith('cus_') && stripeKey) {
+    const credit = await stripeFormPost(
+      stripeKey,
+      `customers/${maeCustomerId}/balance_transactions`,
+      {
+        amount: String(-Math.round(cashbackCents)),
+        currency: typeof invoice.currency === 'string' ? invoice.currency : 'brl',
+        description: 'Cashback Aliança Conecta Reino — 10% do pacote da igreja indicada',
+      },
+      `alianca-cashback-${invoiceId}`
+    );
+    if (!credit.ok) {
+      console.warn('Aliança: crédito Stripe não aplicado', credit.message);
+    }
+  }
+
+  return { ok: true };
 }
 
 async function upsertFromSubscription(
