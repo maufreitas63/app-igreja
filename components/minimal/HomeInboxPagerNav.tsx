@@ -4,7 +4,7 @@ import React from 'react';
 import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 
 type HomeInboxPagerNavProps = {
-  /** `toAvisos`: título Avisos + chevron à direita. `toEventos`: chevron à esquerda + Eventos. */
+  /** `toAvisos`: título dos avisos + chevron à direita. `toEventos`: chevron à esquerda + eventos. */
   variant: 'toAvisos' | 'toEventos';
   onPress: () => void;
 };
@@ -14,9 +14,8 @@ type HomeInboxPagerNavProps = {
  * Espelha o layout das figuras — título centralizado e chevron nas extremidades.
  */
 export function HomeInboxPagerNav({ variant, onPress }: HomeInboxPagerNavProps) {
-  const label = variant === 'toAvisos' ? 'Avisos' : 'Eventos';
-  const accessibilityLabel =
-    variant === 'toAvisos' ? 'Ir para avisos' : 'Voltar para próximos eventos';
+  const label = variant === 'toAvisos' ? 'Veja os Avisos Publicados' : 'Veja os Eventos Publicados';
+  const accessibilityLabel = label;
 
   return (
     <Pressable
