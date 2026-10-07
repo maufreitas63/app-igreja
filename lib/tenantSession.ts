@@ -79,7 +79,6 @@ export type SessionIgreja = {
   super_admin_geolocalizacao: boolean;
   cel_totem: string | null;
   senha_totem: string | null;
-  whatsapp_group_id: string | null;
 };
 
 export type ActiveIgrejaBranding = {
@@ -128,7 +127,6 @@ function mapSessionIgreja(row: Record<string, unknown> | null | undefined): Sess
     super_admin_geolocalizacao: row?.super_admin_geolocalizacao === false ? false : true,
     cel_totem: asText(row?.cel_totem) || null,
     senha_totem: asText(row?.senha_totem) || null,
-    whatsapp_group_id: asText(row?.whatsapp_group_id) || null,
   };
 }
 
@@ -749,35 +747,6 @@ export async function setIgrejaSocialLinksAdmin(
   }
 
   return result;
-}
-
-export async function setIgrejaWhatsappGroupAdmin(
-  tenantId: string,
-  whatsappGroupId: string | null | undefined
-) {
-  const { data, error } = await supabase.rpc('set_igreja_whatsapp_group_admin', {
-    p_tenant_id: tenantId.trim(),
-    p_whatsapp_group_id: whatsappGroupId?.trim() || null,
-  });
-
-  if (error) {
-    if (isSupabaseRpcMissingError(error, 'set_igreja_whatsapp_group_admin')) {
-      return {
-        success: false as const,
-        message: 'RPC ausente. Execute scripts/igreja-whatsapp-group.sql no Supabase.',
-      };
-    }
-    return {
-      success: false as const,
-      message: error.message?.trim() || 'Não foi possível salvar o grupo de WhatsApp.',
-    };
-  }
-
-  return data as {
-    success?: boolean;
-    message?: string;
-    whatsapp_group_id?: string | null;
-  };
 }
 
 export async function listIgrejaExitRedirectAdmin(): Promise<

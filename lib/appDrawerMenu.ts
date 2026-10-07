@@ -83,7 +83,6 @@ export type AppDrawerModuleKey =
   | 'profile_cadastro'
   | 'family_reception'
   | 'visitor_followup'
-  | 'whatsapp_group'
   | 'access_control'
   | 'mudanca_papeis'
   | 'transferencia_igreja'
@@ -259,13 +258,6 @@ export const APP_DRAWER_SETTINGS_ITEMS: AppDrawerSettingsItem[] = [
     moduleKey: 'menu_livros',
     group: 'pessoas',
     hint: 'Acervo com busca ISBN e cadastro manual',
-  },
-  {
-    letter: 'p11',
-    label: 'Mensagem ao grupo',
-    moduleKey: 'whatsapp_group',
-    group: 'pessoas',
-    hint: 'Envia um texto ao grupo de WhatsApp da igreja',
   },
   {
     letter: 'c1',
@@ -480,7 +472,6 @@ const MAINTENANCE_PANEL_BY_MODULE: Partial<Record<AppDrawerModuleKey, string>> =
   profile_cadastro: 'profile_cadastro',
   family_reception: 'family_reception',
   visitor_followup: 'visitor_followup',
-  whatsapp_group: 'whatsapp_group',
   access_control: 'access_control',
   mudanca_papeis: 'mudanca_papeis',
   transferencia_igreja: 'transferencia_igreja',
