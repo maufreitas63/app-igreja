@@ -25,6 +25,7 @@ import {
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { WhatsappGroupMessageDialog } from '@/components/WhatsappGroupMessageDialog';
 import { MinimalExitBar } from './MinimalExitBar';
 import {
   AppDrawerSettings,
@@ -48,6 +49,7 @@ const SETTINGS_ICONS: Partial<Record<AppDrawerModuleKey, React.ComponentProps<ty
   generosity_moderation: 'gift',
   family_reception: 'home',
   visitor_followup: 'handshake-o',
+  whatsapp_group: 'whatsapp',
   profile_cadastro: 'user-plus',
   menu_administrativo: 'briefcase',
   Events: 'calendar',
@@ -82,6 +84,7 @@ const SETTINGS_ICONS: Partial<Record<AppDrawerModuleKey, React.ComponentProps<ty
 };
 
 export function AppDrawer() {
+  const [whatsappDialogOpen, setWhatsappDialogOpen] = useState(false);
   const { isOpen, closeDrawer } = useAppDrawer();
   const { items, settingsItems, loading, refresh, canAccessSettings } = useAppDrawerMenu();
   const router = useRouter();
@@ -125,6 +128,14 @@ export function AppDrawer() {
       return;
     }
     traceClick('drawer', 'settings-item-navigate', { moduleKey, label });
+
+    if (moduleKey === 'whatsapp_group') {
+      setSettingsOpen(false);
+      closeDrawer();
+      setWhatsappDialogOpen(true);
+      return;
+    }
+
     markDrawerNavigation();
     setSettingsOpen(false);
     closeDrawer();
@@ -252,23 +263,34 @@ export function AppDrawer() {
 
   // Web: overlay no AppShell, sem Modal — o Modal do RN dispara history.back()
   // e o Expo Router desfaz a tela (Ghost / Perfil / qualquer item).
-  if (Platform.OS === 'web') {
-    if (!isOpen) {
-      return null;
-    }
+  const whatsappDialog = (
+    <WhatsappGroupMessageDialog
+      visible={whatsappDialogOpen}
+      onClose={() => setWhatsappDialogOpen(false)}
+    />
+  );
 
-    return <View style={styles.shellOverlay}>{drawerBody}</View>;
+  if (Platform.OS === 'web') {
+    return (
+      <>
+        {isOpen ? <View style={styles.shellOverlay}>{drawerBody}</View> : null}
+        {whatsappDialog}
+      </>
+    );
   }
 
   return (
-    <Modal
-      animationType="slide"
-      transparent
-      visible={isOpen}
-      onRequestClose={settingsOpen ? () => setSettingsOpen(false) : closeDrawer}
-    >
-      {drawerBody}
-    </Modal>
+    <>
+      <Modal
+        animationType="slide"
+        transparent
+        visible={isOpen}
+        onRequestClose={settingsOpen ? () => setSettingsOpen(false) : closeDrawer}
+      >
+        {drawerBody}
+      </Modal>
+      {whatsappDialog}
+    </>
   );
 }
 

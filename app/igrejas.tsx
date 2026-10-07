@@ -24,6 +24,7 @@ import {
   setIgrejaActiveAdmin,
   setIgrejaOfferingsAdmin,
   setIgrejaSocialLinksAdmin,
+  setIgrejaWhatsappGroupAdmin,
   setIgrejaSuperAdminGeolocalizacaoAdmin,
   setIgrejaTotemCredentialsAdmin,
   type SessionIgreja,
@@ -51,6 +52,7 @@ type SocialDraft = {
   website: string;
   instagram: string;
   youtube: string;
+  whatsappGroup: string;
   exitRedirect: boolean;
 };
 type OfferingsDraft = {
@@ -80,6 +82,7 @@ function IgrejasAdminPanel() {
   const [createWebsite, setCreateWebsite] = useState('');
   const [createInstagram, setCreateInstagram] = useState('');
   const [createYoutube, setCreateYoutube] = useState('');
+  const [createWhatsappGroup, setCreateWhatsappGroup] = useState('');
   const [createCnpj, setCreateCnpj] = useState('');
   const [createPixInstitution, setCreatePixInstitution] = useState('');
   const [createPixKey, setCreatePixKey] = useState('');
@@ -108,6 +111,7 @@ function IgrejasAdminPanel() {
         website: church.website_url ?? '',
         instagram: church.instagram_url ?? '',
         youtube: church.youtube_url ?? '',
+        whatsappGroup: church.whatsapp_group_id ?? '',
         exitRedirect: flagByTenant.get(church.id) === true,
       };
       nextOfferings[church.id] = {
@@ -181,6 +185,7 @@ function IgrejasAdminPanel() {
         website: church.website_url ?? '',
         instagram: church.instagram_url ?? '',
         youtube: church.youtube_url ?? '',
+        whatsappGroup: church.whatsapp_group_id ?? prev[church.id]?.whatsappGroup ?? '',
         exitRedirect: prev[church.id]?.exitRedirect === true,
       },
     }));
@@ -221,6 +226,7 @@ function IgrejasAdminPanel() {
         website: '',
         instagram: '',
         youtube: '',
+        whatsappGroup: '',
         exitRedirect: false,
       };
     const offerings =
@@ -253,6 +259,17 @@ function IgrejasAdminPanel() {
         if (editLogoPreview) {
           await load();
         }
+        return;
+      }
+
+      const whatsapp = await setIgrejaWhatsappGroupAdmin(church.id, draft.whatsappGroup);
+      if (!whatsapp?.success) {
+        Toast.show({
+          type: 'error',
+          text1: 'Editar instância',
+          text2: whatsapp?.message || 'Não foi possível salvar o grupo de WhatsApp.',
+        });
+        await load();
         return;
       }
 
@@ -365,6 +382,17 @@ function IgrejasAdminPanel() {
         }
       }
 
+      if (tenantId && createWhatsappGroup.trim()) {
+        const whatsapp = await setIgrejaWhatsappGroupAdmin(tenantId, createWhatsappGroup);
+        if (!whatsapp?.success) {
+          Toast.show({
+            type: 'error',
+            text1: 'Instância criada',
+            text2: whatsapp?.message || 'Grupo de WhatsApp não foi salvo. Use Editar na lista.',
+          });
+        }
+      }
+
       if (tenantId && (createWebsite.trim() || createInstagram.trim() || createYoutube.trim())) {
         const social = await setIgrejaSocialLinksAdmin(
           tenantId,
@@ -447,6 +475,7 @@ function IgrejasAdminPanel() {
       setCreateWebsite('');
       setCreateInstagram('');
       setCreateYoutube('');
+      setCreateWhatsappGroup('');
       setCreateCnpj('');
       setCreatePixInstitution('');
       setCreatePixKey('');
@@ -685,6 +714,7 @@ function IgrejasAdminPanel() {
                 website: '',
                 instagram: '',
                 youtube: '',
+                whatsappGroup: '',
                 exitRedirect: false,
               };
             const offeringsDraft =
@@ -976,6 +1006,25 @@ function IgrejasAdminPanel() {
                       keyboardType="url"
                       editable={!editBusy}
                     />
+                    <Text style={styles.socialFieldLabel}>Grupo de WhatsApp</Text>
+                    <TextInput
+                      style={styles.input}
+                      value={draft.whatsappGroup}
+                      onChangeText={(value) =>
+                        setSocialDrafts((prev) => ({
+                          ...prev,
+                          [church.id]: { ...draft, whatsappGroup: value },
+                        }))
+                      }
+                      placeholder="ID ou link do grupo para envio de mensagens"
+                      placeholderTextColor={MINIMAL_UI.textMuted}
+                      autoCapitalize="none"
+                      autoCorrect={false}
+                      editable={!editBusy}
+                    />
+                    <Text style={styles.logoHint}>
+                      Identificação do grupo de WhatsApp desta igreja, usada no envio de mensagens.
+                    </Text>
 
                     <Text style={styles.socialFieldLabel}>CNPJ (dízimos/ofertas)</Text>
                     <TextInput
@@ -1209,8 +1258,18 @@ function IgrejasAdminPanel() {
           autoCorrect={false}
           keyboardType="url"
         />
+        <Text style={styles.label}>Grupo de WhatsApp</Text>
+        <TextInput
+          style={styles.input}
+          value={createWhatsappGroup}
+          onChangeText={setCreateWhatsappGroup}
+          placeholder="ID ou link do grupo para envio de mensagens"
+          placeholderTextColor={MINIMAL_UI.textMuted}
+          autoCapitalize="none"
+          autoCorrect={false}
+        />
         <Text style={styles.logoHint}>
-          Site e redes usados no menu Redes Sociais quando esta instância estiver ativa.
+          Site, redes e o grupo de WhatsApp usados quando esta instância estiver ativa.
         </Text>
 
         <Text style={styles.label}>CNPJ (dízimos/ofertas)</Text>
