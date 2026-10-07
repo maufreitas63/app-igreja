@@ -6,7 +6,7 @@ import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-n
 
 export const INBOX_EVENT_ROW_HEIGHT = 80;
 export const INBOX_VISIBLE_EVENT_ROWS = 4;
-export const INBOX_EVENT_ROW_GAP = 8;
+export const INBOX_EVENT_ROW_GAP = 12;
 export const INBOX_LIST_MAX_HEIGHT =
   INBOX_EVENT_ROW_HEIGHT * INBOX_VISIBLE_EVENT_ROWS +
   INBOX_EVENT_ROW_GAP * Math.max(0, INBOX_VISIBLE_EVENT_ROWS - 1);

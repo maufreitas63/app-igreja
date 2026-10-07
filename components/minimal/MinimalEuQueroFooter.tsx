@@ -195,9 +195,13 @@ export function MinimalEuQueroFooter() {
 
 const styles = StyleSheet.create({
   wrap: {
-    gap: 12,
-    paddingTop: 8,
-    backgroundColor: MINIMAL_UI.background,
+    gap: 14,
+    marginTop: 8,
+    paddingTop: 16,
+    paddingBottom: 4,
+    borderTopWidth: 1,
+    borderTopColor: MINIMAL_UI.divider,
+    backgroundColor: MINIMAL_UI.rowHover,
     width: '100%',
     alignSelf: 'stretch',
   },

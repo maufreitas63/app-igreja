@@ -33,7 +33,11 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
   },
   homeFooter: {
-    flexShrink: 1,
+    flexShrink: 0,
     minHeight: 0,
+    width: '95%',
+    maxWidth: '95%',
+    alignSelf: 'flex-start',
+    paddingTop: 8,
   },
 });

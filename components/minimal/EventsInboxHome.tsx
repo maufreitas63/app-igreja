@@ -569,7 +569,9 @@ const styles = StyleSheet.create({
     maxWidth: '100%',
     flexShrink: 0,
     zIndex: 2,
-    backgroundColor: MINIMAL_UI.background,
+    marginTop: 16,
+    marginBottom: 4,
+    backgroundColor: 'transparent',
   },
   sectionTitle: MINIMAL_SECTION_TITLE,
   loader: {
