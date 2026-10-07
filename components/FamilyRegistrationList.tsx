@@ -790,7 +790,7 @@ export const FamilyRegistrationList = ({
     MEMBER_CHECKBOX_HEIGHT,
     totalMemberRowsHeight - MEMBER_ROW_PADDING_VERTICAL * 2
   );
-  const showBulkCheckbox = hasEventOpen && !quorumMode;
+  const showBulkCheckbox = hasEventOpen && !quorumMode && visibleMembers.length > 1;
 
   return (
     <View style={styles.wrapper}>
