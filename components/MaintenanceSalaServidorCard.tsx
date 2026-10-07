@@ -1,3 +1,4 @@
+import { ClassLessonForm } from '@/components/ClassLessonForm';
 import {
   RoomRosterAlbum,
   RoomRosterViewSwitch,
@@ -113,6 +114,7 @@ export const MaintenanceSalaServidorCard = ({
   } = useDashboardSelectedEvent({ enablePolling: false });
 
   const [selectedGroupedRoom, setSelectedGroupedRoom] = useState<GroupedRoomKey | null>(null);
+  const [lessonRoom, setLessonRoom] = useState<GroupedRoomKey | null>(null);
   const [rosterView, setRosterView] = useState<RoomRosterView>('list');
   const [rosterDetailId, setRosterDetailId] = useState<string | null>(null);
   const [roomEntryPendingIds, setRoomEntryPendingIds] = useState<string[]>([]);
@@ -735,6 +737,7 @@ export const MaintenanceSalaServidorCard = ({
 
               return (
                 <View key={room.key} style={styles.groupedAudienceSelectorItem}>
+                  <View style={styles.groupedAudienceSelectorTop}>
                   <TouchableOpacity
                     style={[
                       styles.groupedAudienceSelectorChip,
@@ -802,6 +805,26 @@ export const MaintenanceSalaServidorCard = ({
                       <Text style={styles.finalizeRoomButtonText}>X</Text>
                     </TouchableOpacity>
                   ) : null}
+                  </View>
+                  <TouchableOpacity
+                    style={[
+                      styles.lessonPlanButton,
+                      minimal && styles.lessonPlanButtonMinimal,
+                    ]}
+                    onPress={() => setLessonRoom(room.key)}
+                    activeOpacity={0.85}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Planejamento da aula de ${room.label}`}
+                  >
+                    <Text
+                      style={[
+                        styles.lessonPlanButtonText,
+                        minimal && styles.lessonPlanButtonTextMinimal,
+                      ]}
+                    >
+                      Planejamento da aula
+                    </Text>
+                  </TouchableOpacity>
                 </View>
               );
             })}
@@ -1130,6 +1153,18 @@ export const MaintenanceSalaServidorCard = ({
           </View>
         </View>
       ) : null}
+      {lessonRoom && selectedEvent ? (
+        <ClassLessonForm
+          visible
+          eventId={selectedEvent.id}
+          eventDate={selectedEvent.event_date}
+          roomKey={lessonRoom}
+          roomLabel={
+            availableGroupedRooms.find((room) => room.key === lessonRoom)?.label ?? lessonRoom
+          }
+          onClose={() => setLessonRoom(null)}
+        />
+      ) : null}
     </View>
   );
 };
@@ -1333,9 +1368,38 @@ const styles = StyleSheet.create({
     flexBasis: '45%',
     minWidth: 0,
     maxWidth: '100%',
+    flexDirection: 'column',
+    alignItems: 'stretch',
+    gap: 8,
+  },
+  groupedAudienceSelectorTop: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
+    width: '100%',
+    minWidth: 0,
+  },
+  lessonPlanButton: {
+    width: '100%',
+    minHeight: 40,
+    borderRadius: 10,
+    borderWidth: 0,
+    backgroundColor: 'rgba(29, 78, 216, 0.12)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+  },
+  lessonPlanButtonMinimal: {
+    backgroundColor: MINIMAL_UI.rowHover,
+  },
+  lessonPlanButtonText: {
+    color: '#1D4ED8',
+    fontSize: 13,
+    fontWeight: '800',
+  },
+  lessonPlanButtonTextMinimal: {
+    color: MINIMAL_UI.blueDark,
   },
   groupedAudienceSelectorChip: {
     flex: 1,
