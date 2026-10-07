@@ -1,4 +1,5 @@
 import { InstanceQrCode } from '@/components/InstanceQrCode';
+import { registerAliancaIndicationInvite } from '@/lib/alianca/aliancaApi';
 import {
   buildAliancaIndicationInviteMessage,
   buildAliancaIndicationUrl,
@@ -91,7 +92,21 @@ export function AliancaIndicationQrSection() {
         text1: 'WhatsApp',
         text2: 'Não foi possível abrir o WhatsApp.',
       });
+      return;
     }
+
+    void registerAliancaIndicationInvite({
+      recipientName: guestName,
+      recipientPhone: invitePhone,
+    }).then((result) => {
+      if (!result.success) {
+        Toast.show({
+          type: 'error',
+          text1: 'Convite WhatsApp',
+          text2: result.message,
+        });
+      }
+    });
   };
 
   return (

@@ -266,8 +266,8 @@ export function AliancaIndicadosList() {
   if (leads.length === 0) {
     return (
       <Text style={styles.empty}>
-        Nenhum indicado ainda. As indicações feitas em Aliança Conecta Reino entram na primeira
-        coluna do funil.
+        Nenhum indicado no funil ainda. Os convites de WhatsApp ficam na lista acima até o
+        formulário chegar.
       </Text>
     );
   }

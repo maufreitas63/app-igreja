@@ -1,4 +1,5 @@
 import { AliancaIndicadosList } from '@/components/alianca/AliancaIndicadosList';
+import { AliancaPendingInvites } from '@/components/alianca/AliancaPendingInvites';
 import { KnowledgeSectionTitle } from '@/components/knowledge/KnowledgeSectionTitle';
 import { CloseFooterBar } from '@/components/minimal/CloseFooterBar';
 import { MinimalScreenLayout } from '@/components/minimal/MinimalScreenLayout';
@@ -45,6 +46,7 @@ export default function AliancaIndicadosScreen() {
             Funil exclusivo do Super Administrador. Avance uma coluna por vez; a atividade (1.1 a
             6.3) fica no card. 5.4 encerra a tratativa sem ir ao fechamento.
           </Text>
+          <AliancaPendingInvites />
           <AliancaIndicadosList />
         </View>
       </MinimalScreenLayout>

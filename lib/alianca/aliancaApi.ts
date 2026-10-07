@@ -272,6 +272,76 @@ function mapPartnerLeadNotification(raw: unknown): AliancaPartnerLeadNotificatio
   };
 }
 
+export type AliancaIndicationInvite = {
+  id: string;
+  tenantId: string;
+  instanceCode: string;
+  instanceName: string;
+  senderName: string;
+  recipientName: string;
+  recipientPhone: string;
+  sentAt: string | null;
+};
+
+export async function registerAliancaIndicationInvite(input: {
+  recipientName: string;
+  recipientPhone: string;
+}): Promise<{ success: boolean; message: string }> {
+  const { data, error } = await supabase.rpc('register_alianca_indication_invite', {
+    p_recipient_name: input.recipientName,
+    p_recipient_phone: input.recipientPhone,
+  });
+  if (error) {
+    return { success: false, message: error.message || 'Falha ao registrar o convite.' };
+  }
+  const row = asRecord(data) || {};
+  return {
+    success: row.success === true,
+    message: asText(row.message) || (row.success === true ? 'Convite registrado.' : 'Falha.'),
+  };
+}
+
+export async function listAliancaIndicationInvites(): Promise<{
+  success: boolean;
+  message?: string;
+  invites: AliancaIndicationInvite[];
+}> {
+  const { data, error } = await supabase.rpc('list_alianca_indication_invites');
+  if (error) {
+    return {
+      success: false,
+      message: error.message || 'Não foi possível carregar os convites.',
+      invites: [],
+    };
+  }
+  const row = asRecord(data) || {};
+  const invites = Array.isArray(row.invites)
+    ? row.invites
+        .map((item) => {
+          const invite = asRecord(item);
+          if (!invite) return null;
+          const id = asText(invite.id);
+          if (!id) return null;
+          return {
+            id,
+            tenantId: asText(invite.tenant_id),
+            instanceCode: asText(invite.instance_code),
+            instanceName: asText(invite.instance_name),
+            senderName: asText(invite.sender_name),
+            recipientName: asText(invite.recipient_name),
+            recipientPhone: asText(invite.recipient_phone),
+            sentAt: asTextOrNull(invite.sent_at),
+          };
+        })
+        .filter((item): item is AliancaIndicationInvite => item != null)
+    : [];
+  return {
+    success: row.success === true,
+    message: asTextOrNull(row.message) ?? undefined,
+    invites,
+  };
+}
+
 export async function submitAliancaPartnerLead(input: {
   indicatedName: string;
   indicatedRole: string;
