@@ -861,11 +861,22 @@ export const FamilyRegistrationList = ({
               >
                 {isBusy || allPending ? (
                   <ActivityIndicator size="small" color={MINIMAL_UI.icon} />
-                ) : allRegistered ? (
-                  <Text style={[styles.bulkCheckboxMark, minimal && styles.bulkCheckboxMarkMinimal]}>
-                    ✓
-                  </Text>
-                ) : null}
+                ) : (
+                  <View style={styles.bulkTodos}>
+                    {'TODOS'.split('').map((letter, index) => (
+                      <Text
+                        key={`${letter}-${index}`}
+                        style={[
+                          styles.bulkTodosLetter,
+                          allRegistered && styles.bulkTodosLetterChecked,
+                          allRegistered && minimal && styles.bulkTodosLetterCheckedMinimal,
+                        ]}
+                      >
+                        {letter}
+                      </Text>
+                    ))}
+                  </View>
+                )}
               </View>
             </TouchableOpacity>
           ) : null}
@@ -1144,12 +1155,21 @@ const styles = StyleSheet.create({
   bulkCheckboxDisabled: {
     opacity: 0.5,
   },
-  bulkCheckboxMark: {
-    color: MINIMAL_UI.background,
-    fontSize: 13,
-    fontWeight: '900',
+  bulkTodos: {
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  bulkCheckboxMarkMinimal: {
+  bulkTodosLetter: {
+    color: MINIMAL_UI.icon,
+    fontSize: 10,
+    fontWeight: '800',
+    lineHeight: 13,
+    textAlign: 'center',
+  },
+  bulkTodosLetterChecked: {
+    color: MINIMAL_UI.background,
+  },
+  bulkTodosLetterCheckedMinimal: {
     color: MINIMAL_UI.background,
   },
   helperErrorText: {
