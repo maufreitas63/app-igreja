@@ -1,7 +1,7 @@
-import { CloseFooterBar } from '@/components/minimal/CloseFooterBar';
+import { CloseButton, CloseFooterBar } from '@/components/minimal/CloseFooterBar';
 import { fetchClassLesson, saveClassLesson } from '@/lib/classLessonApi';
 import { getEventCalendarDate } from '@/lib/eventDate';
-import { MINIMAL_UI } from '@/lib/minimalUiTheme';
+import { MINIMAL_SCREEN_PADDING_LEFT, MINIMAL_SCREEN_PADDING_RIGHT, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import type { ClassRoomKey } from '@/types/class-lesson';
 import React, { useEffect, useState } from 'react';
 import {
@@ -11,7 +11,6 @@ import {
   StyleSheet,
   Text,
   TextInput,
-  TouchableOpacity,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -139,6 +138,7 @@ export function ClassLessonForm({
             contentContainerStyle={styles.content}
             keyboardShouldPersistTaps="handled"
           >
+            <View style={styles.fields}>
             <Field label="Título ou tema central" value={title} onChangeText={setTitle} />
             <Field label="Passagem bíblica principal" value={biblePassage} onChangeText={setBiblePassage} />
             <Field
@@ -163,19 +163,16 @@ export function ClassLessonForm({
               onChangeText={setFamilyExtension}
               multiline
             />
-            <TouchableOpacity
-              style={[styles.saveButton, saving && styles.saveButtonDisabled]}
-              onPress={() => void handleSave()}
-              disabled={saving}
-              accessibilityRole="button"
-              accessibilityLabel="Salvar planejamento da aula"
-            >
-              {saving ? (
-                <ActivityIndicator color={MINIMAL_UI.onDark} />
-              ) : (
-                <Text style={styles.saveText}>Salvar planejamento</Text>
-              )}
-            </TouchableOpacity>
+            </View>
+            <View style={[styles.saveWrap, saving && styles.saveWrapBusy]} pointerEvents={saving ? 'none' : 'auto'}>
+              <View style={styles.saveInner}>
+                <CloseButton
+                  label="Salvar planejamento"
+                  accessibilityLabel="Salvar planejamento da aula"
+                  onPress={() => void handleSave()}
+                />
+              </View>
+            </View>
           </ScrollView>
         )}
         <CloseFooterBar onPress={onClose} accessibilityLabel="Fechar planejamento da aula" />
@@ -236,8 +233,11 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   content: {
-    paddingHorizontal: 16,
     paddingBottom: 24,
+    gap: 12,
+  },
+  fields: {
+    paddingHorizontal: 16,
     gap: 12,
   },
   field: {
@@ -274,21 +274,14 @@ const styles = StyleSheet.create({
     color: MINIMAL_UI.textMuted,
     marginTop: -6,
   },
-  saveButton: {
-    marginTop: 4,
-    borderRadius: 10,
-    borderWidth: 0,
-    backgroundColor: MINIMAL_UI.accent,
-    minHeight: 48,
-    alignItems: 'center',
-    justifyContent: 'center',
+  saveWrap: {
+    paddingLeft: MINIMAL_SCREEN_PADDING_LEFT,
+    paddingRight: MINIMAL_SCREEN_PADDING_RIGHT,
   },
-  saveButtonDisabled: {
+  saveWrapBusy: {
     opacity: 0.6,
   },
-  saveText: {
-    color: MINIMAL_UI.onDark,
-    fontSize: 15,
-    fontWeight: '800',
+  saveInner: {
+    paddingHorizontal: 16,
   },
 });
