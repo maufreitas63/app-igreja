@@ -555,6 +555,31 @@ export function MaintenanceScalesCard({
         <View style={[styles.formCard, minimal && styles.formCardMinimal]}>
           <Text style={[styles.formTitle, minimal && styles.formTitleMinimal]}>Nova escala</Text>
 
+          <FieldLabel minimal={minimal}>Data do serviço</FieldLabel>
+          <Pressable
+            onPress={() => setServiceDatePickerVisible(true)}
+            accessibilityRole="button"
+            accessibilityLabel="Selecionar data do serviço"
+          >
+            <View style={[styles.dateInput, styles.dateInputTrigger, minimal && styles.dateInputMinimal]}>
+              <Text
+                style={[
+                  styles.dateInputText,
+                  minimal && styles.dateInputTextMinimal,
+                  !serviceDateInput.trim() && styles.dateInputPlaceholder,
+                  minimal && !serviceDateInput.trim() && styles.dateInputPlaceholderMinimal,
+                ]}
+              >
+                {serviceDateInput.trim() || 'DD/MM/AAAA'}
+              </Text>
+              <MaterialIcons
+                name="calendar-today"
+                size={18}
+                color={minimal ? MINIMAL_UI.textMuted : '#94A3B8'}
+              />
+            </View>
+          </Pressable>
+
           <FieldLabel minimal={minimal}>Servo</FieldLabel>
           {loadingVolunteers ? (
             <ActivityIndicator
@@ -587,31 +612,6 @@ export function MaintenanceScalesCard({
               Nenhum servo ativo para este tipo. Cadastre em {SCALE_VOLUNTEERS_MENU_LABEL}.
             </Text>
           )}
-
-          <FieldLabel minimal={minimal}>Data do serviço</FieldLabel>
-          <Pressable
-            onPress={() => setServiceDatePickerVisible(true)}
-            accessibilityRole="button"
-            accessibilityLabel="Selecionar data do serviço"
-          >
-            <View style={[styles.dateInput, styles.dateInputTrigger, minimal && styles.dateInputMinimal]}>
-              <Text
-                style={[
-                  styles.dateInputText,
-                  minimal && styles.dateInputTextMinimal,
-                  !serviceDateInput.trim() && styles.dateInputPlaceholder,
-                  minimal && !serviceDateInput.trim() && styles.dateInputPlaceholderMinimal,
-                ]}
-              >
-                {serviceDateInput.trim() || 'DD/MM/AAAA'}
-              </Text>
-              <MaterialIcons
-                name="calendar-today"
-                size={18}
-                color={minimal ? MINIMAL_UI.textMuted : '#94A3B8'}
-              />
-            </View>
-          </Pressable>
 
           <TouchableOpacity
             style={[
@@ -893,7 +893,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    borderRadius: 999,
+    borderRadius: 10,
+    borderWidth: 0,
     backgroundColor: '#3A96DD',
     paddingHorizontal: 12,
     paddingVertical: 8,
@@ -1066,6 +1067,7 @@ const styles = StyleSheet.create({
   saveButton: {
     marginTop: 4,
     borderRadius: 10,
+    borderWidth: 0,
     backgroundColor: '#10b981',
     paddingVertical: 12,
     alignItems: 'center',
@@ -1229,7 +1231,8 @@ const styles = StyleSheet.create({
   },
   newButtonMinimal: {
     ...CONTAIN_WIDTH,
-    borderRadius: 12,
+    borderRadius: 10,
+    borderWidth: 0,
     justifyContent: 'center',
     backgroundColor: MINIMAL_UI.blueDark,
   },
@@ -1322,7 +1325,8 @@ const styles = StyleSheet.create({
   },
   saveButtonMinimal: {
     ...CONTAIN_WIDTH,
-    borderRadius: 12,
+    borderRadius: 10,
+    borderWidth: 0,
     backgroundColor: MINIMAL_UI.blueDark,
   },
   saveButtonTextMinimal: {
