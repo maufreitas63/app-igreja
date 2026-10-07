@@ -345,6 +345,7 @@ export type PastoralRequestHistoryItem = {
   handler_name?: string | null;
   cancellation_requested_at?: string | null;
   cancellation_request_reason?: string | null;
+  archived_at?: string | null;
 };
 
 export const MIN_PASTORAL_CANCELLATION_REASON_LENGTH = 3;
@@ -395,6 +396,7 @@ export const mapPastoralRequestFromRecord = (
     handler_name: parsePastoralOptionalText(record.handler_name),
     cancellation_requested_at: parsePastoralOptionalText(record.cancellation_requested_at),
     cancellation_request_reason: parsePastoralOptionalText(record.cancellation_request_reason),
+    archived_at: parsePastoralOptionalText(record.archived_at),
   };
 };
 
@@ -480,6 +482,10 @@ export const getPastoralRequestDeleteBlockedMessage = () =>
 export const hasPastoralCancellationRequested = (
   item: Pick<PastoralRequestHistoryItem, 'cancellation_requested_at'>
 ) => parsePastoralOptionalText(item.cancellation_requested_at) != null;
+
+export const isPastoralRequestArchived = (
+  item: Pick<PastoralRequestHistoryItem, 'archived_at'>
+) => parsePastoralOptionalText(item.archived_at) != null;
 
 /** Índice do estágio atual (-1 = ainda não iniciou acompanhamento, ex.: status `new`). */
 export const getPastoralFollowUpStageIndex = (
@@ -622,7 +628,9 @@ export async function fetchMyPastoralRequests(profileId: string): Promise<Pastor
   }
 
   if (Array.isArray(data)) {
-    return data.map((row) => mapPastoralRequestFromRecord(row as Record<string, unknown>));
+    return data
+      .map((row) => mapPastoralRequestFromRecord(row as Record<string, unknown>))
+      .filter((row) => !isPastoralRequestArchived(row));
   }
 
   return [];

@@ -24,6 +24,7 @@ import { formatIbsManualUiPhone } from '@/lib/ibsManualDisplayMask';
 import { confirmDialog } from '@/lib/confirmDialog';
 import {
   hasPastoralCancellationRequested,
+  isPastoralRequestArchived,
   normalizePastoralFollowUpStage,
   formatPastoralBeneficiarySummary,
   formatPastoralRequestForLabel,
@@ -128,9 +129,13 @@ export function MaintenancePastoralCareCard({
   const cancellationRequested = selectedRequest
     ? hasPastoralCancellationRequested(selectedRequest)
     : false;
+  const requestArchived = selectedRequest
+    ? isPastoralRequestArchived(selectedRequest)
+    : false;
 
   const canCancelSelectedRequest =
     cancellationRequested
+    && !requestArchived
     && canApprovePastoralCancellation(accessContext)
     && !isIntercessionReadOnly;
 
@@ -414,6 +419,7 @@ export function MaintenancePastoralCareCard({
                     ]}
                   >
                     {formatRequestDateTimeLabel(request.created_at)}
+                    {isPastoralRequestArchived(request) ? ' · arquivado' : ''}
                   </Text>
                 </TouchableOpacity>
               );
@@ -588,7 +594,9 @@ export function MaintenancePastoralCareCard({
                 const currentStage = selectedRequest.followUpStage;
                 const isDone = isFollowUpStageDone(currentStage, stage);
                 const canAdvance =
-                  canUpdateSelectedRequest && canAdvanceToFollowUpStage(currentStage, stage);
+                  !requestArchived
+                  && canUpdateSelectedRequest
+                  && canAdvanceToFollowUpStage(currentStage, stage);
                 const isLocked = !isDone && !canAdvance;
 
                 return (
@@ -661,12 +669,12 @@ export function MaintenancePastoralCareCard({
                       const motivoLabel = selectedRequest?.motivo?.trim() || 'este pedido';
                       const reasonText = selectedRequest?.cancellation_request_reason?.trim();
                       const dialogMessage = reasonText
-                        ? `O solicitante pediu o cancelamento de "${motivoLabel}".\n\nJustificativa:\n${reasonText}\n\nDeseja excluir este pedido do banco de dados?`
-                        : `O solicitante pediu o cancelamento de "${motivoLabel}".\n\nDeseja excluir este pedido do banco de dados?`;
+                        ? `O solicitante pediu o arquivamento de "${motivoLabel}".\n\nJustificativa:\n${reasonText}\n\nO pedido sai da lista de quem solicitou e permanece neste histórico.`
+                        : `O solicitante pediu o arquivamento de "${motivoLabel}".\n\nO pedido sai da lista de quem solicitou e permanece neste histórico.`;
                       const confirmed = await confirmDialog(
-                        'Excluir pedido',
+                        'Arquivar pedido',
                         dialogMessage,
-                        'Excluir',
+                        'Arquivar',
                         'Voltar',
                         { destructive: true }
                       );
@@ -690,14 +698,14 @@ export function MaintenancePastoralCareCard({
                       Toast.show({
                         type: 'success',
                         text1: 'Cuidado pastoral',
-                        text2: 'Pedido excluído.',
+                        text2: 'Pedido arquivado. O solicitante não vê mais este pedido.',
                         visibilityTime: 3500,
                       });
                     })();
                   }}
                   disabled={isApprovingCancellation || rpcMissing || !selectedRequestId}
                   activeOpacity={0.85}
-                  accessibilityLabel="Excluir pedido com solicitação de cancelamento"
+                  accessibilityLabel="Arquivar pedido pastoral"
                 >
                   {isApprovingCancellation ? (
                     <ActivityIndicator
@@ -712,7 +720,7 @@ export function MaintenancePastoralCareCard({
                         minimal && styles.deleteCancellationButtonTextMinimal,
                       ]}
                     >
-                      Excluir
+                      Arquivar
                     </Text>
                   )}
                 </TouchableOpacity>
@@ -725,7 +733,7 @@ export function MaintenancePastoralCareCard({
                 style={styles.stageLoader}
               />
             ) : null}
-            {cancellationRequested ? (
+            {requestArchived || cancellationRequested ? (
               <View
                 style={[
                   styles.cancellationRequestBox,
@@ -738,7 +746,9 @@ export function MaintenancePastoralCareCard({
                     minimal && styles.cancellationRequestTitleMinimal,
                   ]}
                 >
-                  Solicitação de cancelamento
+                  {requestArchived
+                    ? 'Arquivado/encerrado'
+                    : 'Solicitação de arquivamento/encerramento'}
                 </Text>
                 <Text
                   style={[
@@ -746,8 +756,9 @@ export function MaintenancePastoralCareCard({
                     minimal && styles.cancellationRequestMessageMinimal,
                   ]}
                 >
-                  O solicitante pediu o cancelamento de &quot;
-                  {selectedRequest?.motivo?.trim() || 'este pedido'}&quot;.
+                  {requestArchived
+                    ? 'Este pedido saiu da lista de quem solicitou e permanece aqui para análise.'
+                    : `O solicitante pediu o arquivamento de "${selectedRequest?.motivo?.trim() || 'este pedido'}".`}
                 </Text>
                 {selectedRequest?.cancellation_request_reason?.trim() ? (
                   <>

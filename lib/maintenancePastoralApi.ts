@@ -254,7 +254,7 @@ async function fetchMaintenancePastoralRequestsDirect(profileId: string) {
   const { data, error } = await supabase
     .from('pastoral_requests')
     .select(
-      'id, created_at, motivo, situacao, description, destination_label, request_for, beneficiary_name, beneficiary_relationship, beneficiary_details, status, confidential, updated_at, handler_profile_id, handler_name, cancellation_requested_at, cancellation_request_reason'
+      'id, created_at, motivo, situacao, description, destination_label, request_for, beneficiary_name, beneficiary_relationship, beneficiary_details, status, confidential, updated_at, handler_profile_id, handler_name, cancellation_requested_at, cancellation_request_reason, archived_at'
     )
     .eq('profile_id', profileId)
     .order('created_at', { ascending: false });
@@ -424,12 +424,16 @@ export async function approvePastoralCancellation(requestId: string) {
       message:
         typeof row.message === 'string'
           ? row.message
-          : 'Não foi possível cancelar o pedido.',
+          : 'Não foi possível arquivar o pedido.',
     };
   }
 
   return {
     success: true as const,
     message: typeof row.message === 'string' ? row.message : undefined,
+    archivedAt:
+      typeof row.archived_at === 'string' && row.archived_at.trim()
+        ? row.archived_at.trim()
+        : new Date().toISOString(),
   };
 }

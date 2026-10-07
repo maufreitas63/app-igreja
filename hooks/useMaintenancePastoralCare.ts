@@ -268,18 +268,16 @@ export function useMaintenancePastoralCare(enabled: boolean) {
         const result = await approvePastoralCancellation(requestId);
 
         if (!result.success) {
-          setError(result.message ?? 'Não foi possível cancelar o pedido.');
+          setError(result.message ?? 'Não foi possível arquivar o pedido.');
           return result;
         }
 
-        const remaining = requests.filter((row) => row.id !== requestId);
-        const nextSelectedRequestId =
-          selectedRequestId && selectedRequestId !== requestId
-            ? selectedRequestId
-            : remaining[0]?.id ?? null;
-
-        setRequests(remaining);
-        setSelectedRequestId(nextSelectedRequestId);
+        const archivedAt = result.archivedAt ?? new Date().toISOString();
+        setRequests((current) =>
+          current.map((row) =>
+            row.id === requestId ? { ...row, archived_at: archivedAt } : row
+          )
+        );
         await reloadSubmitters();
 
         return result;
@@ -298,7 +296,7 @@ export function useMaintenancePastoralCare(enabled: boolean) {
         }
 
         const message =
-          err instanceof Error ? err.message : 'Não foi possível cancelar o pedido.';
+          err instanceof Error ? err.message : 'Não foi possível arquivar o pedido.';
 
         setError(message);
         return { success: false as const, message };
@@ -306,7 +304,7 @@ export function useMaintenancePastoralCare(enabled: boolean) {
         setIsApprovingCancellation(false);
       }
     },
-    [reloadSubmitters, requests, resolveMaintenanceRpcError, selectedRequestId]
+    [reloadSubmitters, resolveMaintenanceRpcError]
   );
 
   const selectProfileId = useCallback((profileId: string | null) => {

@@ -304,7 +304,7 @@ export default function PastoralHistoryScreen() {
       lastHistoryFetchAtRef.current = Date.now();
       await appAlert(
         'Solicitação enviada',
-        'O Cuidado Pastoral foi notificado. Aguarde a confirmação do cancelamento.'
+        'O Cuidado Pastoral foi notificado. Quando o pedido for arquivado, ele sai da sua lista.'
       );
     } catch (error) {
       console.error('Erro ao solicitar cancelamento pastoral:', error);
@@ -346,7 +346,7 @@ export default function PastoralHistoryScreen() {
                   useVigilanceTheme && styles.cancellationModalTitleVigilance,
                 ]}
               >
-                Solicitar cancelamento
+                Solicitar arquivamento/encerramento
               </Text>
               <Text
                 style={[
@@ -354,8 +354,8 @@ export default function PastoralHistoryScreen() {
                   useVigilanceTheme && styles.cancellationModalHintVigilance,
                 ]}
               >
-                Informe o motivo do cancelamento. O Cuidado Pastoral verá esta justificativa
-                antes de confirmar a exclusão.
+                Informe o motivo. O Cuidado Pastoral verá esta justificativa antes de
+                arquivar o pedido. Depois disso ele sai da sua lista.
               </Text>
               <TextInput
                 accessibilityLabel="Justificativa do cancelamento"
@@ -778,7 +778,7 @@ export default function PastoralHistoryScreen() {
                         useVigilanceTheme && styles.cancellationPendingTitleVigilance,
                       ]}
                     >
-                      Cancelamento solicitado
+                      Arquivamento/encerramento solicitado
                     </Text>
                     {item.cancellation_request_reason?.trim() ? (
                       <Text
@@ -796,14 +796,14 @@ export default function PastoralHistoryScreen() {
                         useVigilanceTheme && styles.cancellationPendingHintVigilance,
                       ]}
                     >
-                      Aguarde o Cuidado Pastoral confirmar a exclusão.
+                      Aguarde o Cuidado Pastoral arquivar este pedido.
                     </Text>
                   </View>
                 ) : null}
 
                 {canRequestCancellation ? (
                   <TouchableOpacity
-                    accessibilityLabel="Solicitar cancelamento do pedido pastoral"
+                    accessibilityLabel="Solicitar arquivamento/encerramento do pedido pastoral"
                     accessibilityRole="button"
                     activeOpacity={0.85}
                     disabled={isSubmittingCancellation}
@@ -826,7 +826,7 @@ export default function PastoralHistoryScreen() {
                           useVigilanceTheme && styles.requestCancellationButtonTextVigilance,
                         ]}
                       >
-                        Solicitar cancelamento
+                        Solicitar arquivamento/encerramento
                       </Text>
                     )}
                   </TouchableOpacity>
