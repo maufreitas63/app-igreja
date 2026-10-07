@@ -209,6 +209,7 @@ export function CloseFooterBar({
         importantForAccessibility="no-hide-descendants"
       />
       <View
+        dataSet={{ abigailObstacle: 'footer' }}
         style={[
           styles.dock,
           variant === 'dark' ? styles.dockDark : styles.dockMinimal,

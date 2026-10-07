@@ -2,6 +2,7 @@
 import '@/lib/rnWebDeprecationGuard';
 import { Buffer } from 'buffer';
 
+import { LeadershipAiFab } from '@/components/LeadershipAiFab';
 import { AppBackHandler } from '@/components/AppBackHandler';
 import { AppShell } from '@/components/AppShell';
 import { ConfirmDialogHost } from '@/components/ConfirmDialogHost';
@@ -79,6 +80,9 @@ export default function RootLayout() {
         <PwaInstallPrompt />
         <GhostModeBanner />
         <ConfirmDialogHost />
+        <View style={styles.fabHost} pointerEvents="box-none">
+          <LeadershipAiFab />
+        </View>
         <View style={styles.toastHost}>
           <Toast config={appToastConfig} topOffset={Platform.OS === 'web' ? 12 : 48} />
         </View>
@@ -97,6 +101,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#0f172a',
+  },
+  fabHost: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 60,
+    pointerEvents: 'box-none',
   },
   toastHost: Platform.select({
     web: {
