@@ -24,9 +24,10 @@ import { requestConfirmDialog } from '@/lib/confirmDialogHost';
 import { formatPhoneDisplay } from '@/lib/familyRegistration';
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import {
   ActivityIndicator,
-  Modal,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -36,6 +37,13 @@ import {
   View,
 } from 'react-native';
 import Toast from 'react-native-toast-message';
+
+function mountLeadDetail(node: React.ReactElement) {
+  if (Platform.OS === 'web' && typeof document !== 'undefined') {
+    return createPortal(node, document.body);
+  }
+  return node;
+}
 
 function formatWhen(value: string | null, withTime = false) {
   if (!value) return '—';
@@ -179,7 +187,13 @@ export function AliancaIndicadosList() {
     }
   };
 
+  const closeDetail = () => {
+    setSelected(null);
+    setDraft(null);
+  };
+
   const handleDelete = async (lead: AliancaPartnerLead) => {
+    closeDetail();
     const confirmed = await requestConfirmDialog({
       title: 'Excluir indicado',
       message: `Excluir ${lead.indicatedName} da lista de indicados? Esta ação não pode ser desfeita.`,
@@ -202,8 +216,7 @@ export function AliancaIndicadosList() {
       });
       if (result.success) {
         setLeads((current) => current.filter((item) => item.id !== lead.id));
-        setSelected(null);
-        setDraft(null);
+        closeDetail();
       }
     } finally {
       setBusyId(null);
@@ -390,15 +403,9 @@ export function AliancaIndicadosList() {
         })}
       </ScrollView>
 
-      <Modal
-        visible={selected != null}
-        animationType="slide"
-        transparent
-        onRequestClose={() => {
-          setSelected(null);
-          setDraft(null);
-        }}
-      >
+      {selected != null
+        ? mountLeadDetail(
+            <View nativeID="alianca-lead-detail" style={styles.webSheet}>
         <View style={styles.modalBackdrop}>
           <View style={styles.modalCard}>
             {selected && draft ? (
@@ -604,15 +611,16 @@ export function AliancaIndicadosList() {
                     onPress={() => void handleDelete(selected)}
                     disabled={busyId === selected.id}
                     style={styles.deleteButton}
+                    accessibilityRole="button"
+                    accessibilityLabel="Excluir indicado"
                   >
                     <Text style={styles.deleteButtonText}>Excluir</Text>
                   </Pressable>
                   <Pressable
-                    onPress={() => {
-                      setSelected(null);
-                      setDraft(null);
-                    }}
+                    onPress={closeDetail}
                     style={styles.closeBtn}
+                    accessibilityRole="button"
+                    accessibilityLabel="Fechar"
                   >
                     <Text style={styles.closeBtnText}>Fechar</Text>
                   </Pressable>
@@ -621,7 +629,9 @@ export function AliancaIndicadosList() {
             ) : null}
           </View>
         </View>
-      </Modal>
+        </View>
+          )
+        : null}
     </View>
   );
 }
@@ -790,6 +800,11 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: 'rgba(15, 23, 42, 0.35)',
     justifyContent: 'flex-end',
+  },
+  webSheet: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 80,
+    ...(Platform.OS === 'web' ? { position: 'fixed' as unknown as 'absolute' } : null),
   },
   modalCard: {
     maxHeight: '92%',
