@@ -201,7 +201,7 @@ const styles = StyleSheet.create({
     paddingBottom: 4,
     borderTopWidth: 1,
     borderTopColor: MINIMAL_UI.divider,
-    backgroundColor: MINIMAL_UI.rowHover,
+    backgroundColor: '#EEF3F8',
     width: '100%',
     alignSelf: 'stretch',
   },
@@ -232,7 +232,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   itemPressed: {
-    backgroundColor: MINIMAL_UI.rowHover,
+    backgroundColor: '#E4EBF3',
   },
   iconWrap: {
     width: 40,
