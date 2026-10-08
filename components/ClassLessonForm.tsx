@@ -2,13 +2,12 @@ import { CuratedLessonThemesModal } from '@/components/CuratedLessonThemesModal'
 import { CloseButton, CloseFooterBar } from '@/components/minimal/CloseFooterBar';
 import { fetchClassLesson, saveClassLesson } from '@/lib/classLessonApi';
 import { suggestClassLessonFamily } from '@/lib/classLessonFamilyApi';
-import { applyCuratedLessonTheme } from '@/lib/curatedLessonThemes';
 import { getEventCalendarDate } from '@/lib/eventDate';
 import { MINIMAL_SCREEN_PADDING_LEFT, MINIMAL_SCREEN_PADDING_RIGHT, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import type { ClassRoomKey, LessonCategory } from '@/types/class-lesson';
 import type { CuratedLessonTheme } from '@/types/lesson-theme';
 import * as Clipboard from 'expo-clipboard';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Modal,
@@ -47,6 +46,9 @@ export function ClassLessonForm({
   onClose,
 }: Props) {
   const classDateLabel = formatClassDate(eventDate);
+  const planningRoomKey = useRef(roomKey);
+  const planningRoomLabel = useRef(roomLabel);
+  const lessonLoadToken = useRef(0);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [suggesting, setSuggesting] = useState(false);
@@ -65,12 +67,13 @@ export function ClassLessonForm({
     }
 
     let cancelled = false;
+    const token = lessonLoadToken.current;
     setLoading(true);
 
     void (async () => {
       try {
-        const lesson = await fetchClassLesson(eventId, roomKey);
-        if (cancelled) {
+        const lesson = await fetchClassLesson(eventId, planningRoomKey.current);
+        if (cancelled || token !== lessonLoadToken.current) {
           return;
         }
         setTitle(lesson?.title ?? '');
@@ -97,7 +100,7 @@ export function ClassLessonForm({
     return () => {
       cancelled = true;
     };
-  }, [eventId, roomKey, visible]);
+  }, [eventId, visible]);
 
   const handleSuggestFamily = async () => {
     if (suggesting || saving || loading) {
@@ -118,8 +121,8 @@ export function ClassLessonForm({
     try {
       const suggestion = await suggestClassLessonFamily({
         eventId,
-        roomKey,
-        roomLabel,
+        roomKey: planningRoomKey.current,
+        roomLabel: planningRoomLabel.current,
         title,
         biblePassage,
         mainObjective,
@@ -181,30 +184,44 @@ export function ClassLessonForm({
   };
 
   const handleSwapTheme = async (theme: CuratedLessonTheme) => {
-    await applyCuratedLessonTheme({
-      eventId,
-      eventDate,
-      rooms: [{ key: roomKey, label: roomLabel }],
-      theme,
-    });
+    lessonLoadToken.current += 1;
+    const nextTitle = theme.title.trim();
+    const nextPassage = theme.bible_passage.trim();
+    const nextObjective = theme.core_lesson.trim();
+    const nextResources = theme.activity_suggestion.trim();
 
-    const lesson = await fetchClassLesson(eventId, roomKey);
-    setTitle(lesson?.title ?? theme.title);
-    setBiblePassage(lesson?.bible_passage ?? theme.bible_passage);
-    setMainObjective(lesson?.main_objective ?? theme.core_lesson);
-    setResourcesNotes(lesson?.resources_notes ?? theme.activity_suggestion);
-    setFamilyExtension(lesson?.family_extension ?? '');
-    setCategory(lesson?.category ?? theme.category);
+    setTitle(nextTitle);
+    setBiblePassage(nextPassage);
+    setMainObjective(nextObjective);
+    setResourcesNotes(nextResources);
+    setCategory(theme.category);
     setFamilyCopied(false);
-    Toast.show({
-      type: 'success',
-      text1: 'Planejamento da aula',
-      text2: `Tema gravado em ${roomLabel}.`,
-    });
+    setSuggesting(true);
+
+    try {
+      const suggestion = await suggestClassLessonFamily({
+        eventId,
+        roomKey: planningRoomKey.current,
+        roomLabel: planningRoomLabel.current,
+        title: nextTitle,
+        biblePassage: nextPassage,
+        mainObjective: nextObjective,
+      });
+      setFamilyExtension(suggestion);
+    } catch (error) {
+      setFamilyExtension('');
+      Toast.show({
+        type: 'error',
+        text1: 'Conversa em família',
+        text2: error instanceof Error ? error.message : 'Não foi possível atualizar a conversa.',
+      });
+    } finally {
+      setSuggesting(false);
+    }
   };
 
   const handleSave = async () => {
-    if (saving || loading) {
+    if (saving || loading || suggesting) {
       return;
     }
 
@@ -220,7 +237,7 @@ export function ClassLessonForm({
     setSaving(true);
 
     try {
-      await saveClassLesson(eventId, roomKey, {
+      await saveClassLesson(eventId, planningRoomKey.current, {
         title,
         bible_passage: biblePassage,
         main_objective: mainObjective,
@@ -232,7 +249,7 @@ export function ClassLessonForm({
       Toast.show({
         type: 'success',
         text1: 'Planejamento da aula',
-        text2: 'Planejamento gravado.',
+        text2: `Planejamento gravado em ${planningRoomLabel.current}.`,
       });
       onClose();
     } catch (error) {
