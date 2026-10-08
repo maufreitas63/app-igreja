@@ -115,6 +115,42 @@ export async function listClassLessonTrail(roomKey: ClassRoomKey): Promise<Class
     .sort((left, right) => right.classDate.localeCompare(left.classDate) || left.title.localeCompare(right.title, 'pt-BR'));
 }
 
+export type EventClassLessonTitles = {
+  kids: string | null;
+  teens: string | null;
+};
+
+/** Títulos visíveis na Agenda da Família. Falha silenciosa se a função ainda não existir. */
+export async function fetchEventClassLessonTitles(eventId: string): Promise<EventClassLessonTitles> {
+  const empty: EventClassLessonTitles = { kids: null, teens: null };
+
+  try {
+    const payload = await rpcPayload('list_event_class_lesson_titles', { p_event_id: eventId });
+    if (payload.success !== true) {
+      return empty;
+    }
+
+    const rows = Array.isArray(payload.titles) ? payload.titles : [];
+    const titles = { ...empty };
+    for (const row of rows) {
+      const record = asRecord(row);
+      const roomKey = String(record.room_key ?? '').trim();
+      const title = String(record.title ?? '').trim();
+      if (!title) {
+        continue;
+      }
+      if (roomKey === 'KIDS') {
+        titles.kids = title;
+      } else if (roomKey === 'TEENS') {
+        titles.teens = title;
+      }
+    }
+    return titles;
+  } catch {
+    return empty;
+  }
+}
+
 export async function fetchClassLesson(eventId: string, roomKey: ClassRoomKey): Promise<ClassLesson | null> {
   const payload = await rpcPayload('get_class_lesson', {
     p_event_id: eventId,

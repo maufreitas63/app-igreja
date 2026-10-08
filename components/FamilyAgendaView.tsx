@@ -13,6 +13,8 @@ export type FamilyAgendaViewProps = {
   capacityRatio: number;
   registrationSection?: ReactNode;
   loginRequiredMessage?: string | null;
+  /** Títulos já formatados da aula Infantil/Jovens do evento selecionado. */
+  classLessonLines?: string[];
 };
 
 /** Visualização pura da Agenda da Família (Card 1) — identidade MINIMAL_UI. */
@@ -25,6 +27,7 @@ export function FamilyAgendaView({
   capacityRatio,
   registrationSection,
   loginRequiredMessage = null,
+  classLessonLines = [],
 }: FamilyAgendaViewProps) {
   const selectedEventTime = selectedEvent
     ? formatEventDateTimeLabel(selectedEvent.event_date, selectedEvent.event_end_date)
@@ -62,6 +65,15 @@ export function FamilyAgendaView({
                 {selectedEventTime ? <Text style={styles.eventMeta}>{selectedEventTime}</Text> : null}
                 {selectedEvent.event_local ? (
                   <Text style={styles.eventLocation}>{selectedEvent.event_local}</Text>
+                ) : null}
+                {classLessonLines.length ? (
+                  <View style={styles.eventLessonBlock}>
+                    {classLessonLines.map((line) => (
+                      <Text key={line} style={styles.eventLesson} numberOfLines={2}>
+                        {line}
+                      </Text>
+                    ))}
+                  </View>
                 ) : null}
               </>
             ) : (
@@ -188,6 +200,17 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginTop: 2,
     opacity: 0.88,
+  },
+  eventLessonBlock: {
+    marginTop: 6,
+    gap: 2,
+    alignSelf: 'stretch',
+  },
+  eventLesson: {
+    color: MINIMAL_UI.text,
+    fontSize: 12,
+    fontWeight: '700',
+    lineHeight: 16,
   },
   placeholderText: {
     color: MINIMAL_UI.text,

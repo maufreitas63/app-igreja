@@ -12,6 +12,7 @@ import {
   normalizeFamilyCode,
   resolveFamilyIdForPhone,
 } from '@/lib/family';
+import { fetchEventClassLessonTitles } from '@/lib/classLessonApi';
 import { fetchFamilyAudienceMembers } from '@/lib/familyAudienceMembers';
 import { formatFullName, normalizeFullNameKey } from '@/lib/fullName';
 import {
@@ -93,6 +94,7 @@ export function FamilyAgendaModal({ visible, initialEventId, onClose, onNeedsAud
     family_id?: string | null;
   } | null>(null);
   const [isProfileLoading, setIsProfileLoading] = useState(false);
+  const [classLessonLines, setClassLessonLines] = useState<string[]>([]);
 
   const hasEligibleKidsForRooms = kidsDeliveryRows.length > 0;
 
@@ -248,6 +250,39 @@ export function FamilyAgendaModal({ visible, initialEventId, onClose, onNeedsAud
     }
 
     void writeDashboardSelectedEventId(selectedEvent.id);
+  }, [selectedEvent?.id, visible]);
+
+  useEffect(() => {
+    const eventId = selectedEvent?.id;
+    if (!visible || !eventId) {
+      setClassLessonLines([]);
+      return undefined;
+    }
+
+    let cancelled = false;
+    void fetchEventClassLessonTitles(eventId).then((titles) => {
+      if (cancelled) {
+        return;
+      }
+      const kids = titles.kids?.trim() ?? '';
+      const teens = titles.teens?.trim() ?? '';
+      if (kids && teens && kids === teens) {
+        setClassLessonLines([`${KIDS_ROOM_DISPLAY_LABEL} e ${TEENS_ROOM_DISPLAY_LABEL}: ${kids}`]);
+        return;
+      }
+      const lines: string[] = [];
+      if (kids) {
+        lines.push(`${KIDS_ROOM_DISPLAY_LABEL}: ${kids}`);
+      }
+      if (teens) {
+        lines.push(`${TEENS_ROOM_DISPLAY_LABEL}: ${teens}`);
+      }
+      setClassLessonLines(lines);
+    });
+
+    return () => {
+      cancelled = true;
+    };
   }, [selectedEvent?.id, visible]);
 
   useEffect(() => {
@@ -609,6 +644,7 @@ export function FamilyAgendaModal({ visible, initialEventId, onClose, onNeedsAud
                 ? 'Faça login para se inscrever em eventos.'
                 : null
             }
+            classLessonLines={classLessonLines}
           />
         )}
       </ScrollView>
