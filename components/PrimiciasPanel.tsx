@@ -11,6 +11,7 @@ import {
   PRIMICIAS_CATEGORY_LABEL,
   remainingPrimiciasQuantity,
   togglePrimiciasPledge,
+  withPrimiciasBasketDemand,
   type PrimiciasItem,
   type PrimiciasOccurrence,
 } from '@/lib/primiciasApi';
@@ -223,11 +224,12 @@ export const PrimiciasPanel = forwardRef<PrimiciasPanelHandle>(function Primicia
   );
 
   const grouped = useMemo(() => {
+    const requested = withPrimiciasBasketDemand(items, occurrence?.basketCount ?? 1);
     return PRIMICIAS_CATEGORIES.map((category) => ({
       category,
-      items: items.filter((item) => item.category === category),
+      items: requested.filter((item) => item.category === category),
     })).filter((group) => group.items.length > 0);
-  }, [items]);
+  }, [items, occurrence?.basketCount]);
 
   useImperativeHandle(ref, () => ({
     collapseOpenSections: () => {
@@ -347,7 +349,8 @@ export const PrimiciasPanel = forwardRef<PrimiciasPanelHandle>(function Primicia
       <Text style={styles.title}>Prímicias</Text>
       {occurrence ? (
         <Text style={styles.lead}>
-          Campanha em {formatPrimiciasIsoDate(occurrence.eventDate)}. Toque no item para doar. Se a
+          Campanha em {formatPrimiciasIsoDate(occurrence.eventDate)}
+          {occurrence.basketCount > 1 ? `, pedido de ${occurrence.basketCount} cestas` : ''}. Toque no item para doar. Se a
           quantidade for maior que 1, escolha quantos você leva, até o saldo. O texto fica riscado
           quando o saldo chega a zero. Os itens voltam a ficar livres{' '}
           {formatPrimiciasIsoDate(occurrence.resetOn)}, 10 dias após a data.

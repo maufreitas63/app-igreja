@@ -52,6 +52,7 @@ export type PrimiciasOccurrence = {
   eventLocal: string;
   resetOn: string;
   title: string;
+  basketCount: number;
 };
 
 export type PrimiciasListResult = {
@@ -113,6 +114,24 @@ export function remainingPrimiciasQuantity(item: Pick<PrimiciasItem, 'quantity' 
 /** Itens com saldo — um compromisso parcial não esgota a quantidade. */
 export function countPendingPrimiciasItems(items: PrimiciasItem[]) {
   return items.filter((item) => remainingPrimiciasQuantity(item) > 0).length;
+}
+
+export function withPrimiciasBasketDemand(items: PrimiciasItem[], basketCount: number) {
+  const factor = Math.max(1, Math.floor(basketCount) || 1);
+
+  if (factor === 1) {
+    return items;
+  }
+
+  return items.map((item) => ({
+    ...item,
+    quantity: item.quantity * factor,
+  }));
+}
+
+export function formatPrimiciasBasketCount(count: number) {
+  const safe = Math.max(1, Math.floor(count) || 1);
+  return safe === 1 ? '1 cesta' : `${safe} cestas`;
 }
 
 export function formatPrimiciasPendingCount(items: PrimiciasItem[]) {
@@ -239,6 +258,7 @@ const parseOccurrence = (value: unknown): PrimiciasOccurrence | null => {
     eventLocal: String(row.event_local ?? '').trim() || 'Campanha Prímicias',
     resetOn: String(row.reset_on ?? '').slice(0, 10),
     title: String(row.title ?? PRIMICIAS_EVENT_TITLE).trim() || PRIMICIAS_EVENT_TITLE,
+    basketCount: Math.max(1, Math.floor(Number(row.basket_count ?? 1)) || 1),
   };
 };
 
@@ -314,6 +334,16 @@ export async function deletePrimiciasItem(itemId: string) {
   }
 
   return String(payload.message ?? 'Item excluído.');
+}
+
+export async function savePrimiciasBasketCount(count: number) {
+  const payload = await rpcPayload('save_primicias_basket_count', { p_count: count });
+
+  if (payload.success !== true) {
+    throw new Error(String(payload.message ?? 'Não foi possível gravar as cestas.'));
+  }
+
+  return String(payload.message ?? 'Cestas gravadas.');
 }
 
 export async function savePrimiciasEventDate(eventDate: string) {

@@ -10,11 +10,14 @@ import {
   formatPrimiciasIsoDate,
   formatPrimiciasItemLine,
   formatPrimiciasPendingCount,
+  formatPrimiciasBasketCount,
   listPrimiciasHistory,
   listPrimiciasItems,
   PRIMICIAS_CATEGORIES,
   PRIMICIAS_CATEGORY_LABEL,
+  savePrimiciasBasketCount,
   savePrimiciasEventDate,
+  withPrimiciasBasketDemand,
   type PrimiciasCategory,
   type PrimiciasHistoryDay,
   type PrimiciasItem,
@@ -62,6 +65,8 @@ export function MaintenancePrimiciasCard({ isActive = true, panelHeight, minimal
   const [eventDateInput, setEventDateInput] = useState('');
   const [datePickerOpen, setDatePickerOpen] = useState(false);
   const [savingDate, setSavingDate] = useState(false);
+  const [basketCount, setBasketCount] = useState(1);
+  const [savingBaskets, setSavingBaskets] = useState(false);
   const [category, setCategory] = useState<PrimiciasCategory>('alimenticios');
   const [quantity, setQuantity] = useState('1');
   const [unit, setUnit] = useState('');
@@ -79,6 +84,9 @@ export function MaintenancePrimiciasCard({ isActive = true, panelHeight, minimal
 
     if (result.occurrence?.eventDate) {
       setEventDateInput(formatPrimiciasIsoDate(result.occurrence.eventDate));
+    }
+    if (result.occurrence) {
+      setBasketCount(result.occurrence.basketCount);
     }
   }, []);
 
@@ -137,6 +145,9 @@ export function MaintenancePrimiciasCard({ isActive = true, panelHeight, minimal
 
     try {
       const message = await savePrimiciasEventDate(iso);
+      if (basketCount > 1 || occurrence) {
+        await savePrimiciasBasketCount(basketCount);
+      }
       await load();
       Toast.show({ type: 'success', text1: 'Prímicias', text2: message });
     } catch (err) {
@@ -147,6 +158,32 @@ export function MaintenancePrimiciasCard({ isActive = true, panelHeight, minimal
       });
     } finally {
       setSavingDate(false);
+    }
+  };
+
+  const handleBasketCount = async (next: number) => {
+    const count = Math.min(99, Math.max(1, next));
+    setBasketCount(count);
+
+    if (!occurrence) {
+      return;
+    }
+
+    setSavingBaskets(true);
+
+    try {
+      const message = await savePrimiciasBasketCount(count);
+      await load();
+      Toast.show({ type: 'success', text1: 'Prímicias', text2: message });
+    } catch (err) {
+      Toast.show({
+        type: 'error',
+        text1: 'Prímicias',
+        text2: err instanceof Error ? err.message : 'Não foi possível gravar as cestas.',
+      });
+      await load().catch(() => undefined);
+    } finally {
+      setSavingBaskets(false);
     }
   };
 
@@ -216,7 +253,7 @@ export function MaintenancePrimiciasCard({ isActive = true, panelHeight, minimal
     <View style={[maintenancePanelStyles.panel, { height: contentHeight }]}>
       <MaintenanceHelpInfoTitle
         title="Gestão de Prímicias"
-        helpText="Trate a campanha como um evento: defina a data, cadastre ou exclua itens (quantidade, unidade, nome e peso). Ao doar, o membro entra na agenda. Dez dias após a data, os compromissos são arquivados no histórico e os itens ficam livres para a próxima data."
+        helpText="Trate a campanha como um evento: defina a data e quantas cestas ela pede. Cada item cadastrado é a quantidade de uma cesta. Na doação, o pedido é essa quantidade vezes o número de cestas. Dez dias após a data, os compromissos são arquivados no histórico e os itens ficam livres para a próxima data."
         minimal={minimal}
       />
 
@@ -239,6 +276,38 @@ export function MaintenancePrimiciasCard({ isActive = true, panelHeight, minimal
               {eventDateInput.trim() || 'Toque para escolher a data'}
             </Text>
           </TouchableOpacity>
+          <Text style={styles.formLabel}>Quantidade de cestas</Text>
+          <View style={styles.basketRow}>
+            <TouchableOpacity
+              style={styles.basketStep}
+              onPress={() => void handleBasketCount(basketCount - 1)}
+              disabled={savingBaskets || basketCount <= 1}
+              accessibilityRole="button"
+              accessibilityLabel="Diminuir quantidade de cestas"
+            >
+              <Text style={styles.basketStepText}>−</Text>
+            </TouchableOpacity>
+            <View
+              style={styles.basketCount}
+              accessibilityRole="text"
+              accessibilityLabel={`Quantidade de cestas da campanha: ${formatPrimiciasBasketCount(basketCount)}`}
+            >
+              {savingBaskets ? (
+                <ActivityIndicator size="small" color={MINIMAL_UI.accent} />
+              ) : (
+                <Text style={styles.dateButtonText}>{formatPrimiciasBasketCount(basketCount)}</Text>
+              )}
+            </View>
+            <TouchableOpacity
+              style={styles.basketStep}
+              onPress={() => void handleBasketCount(basketCount + 1)}
+              disabled={savingBaskets || basketCount >= 99}
+              accessibilityRole="button"
+              accessibilityLabel="Aumentar quantidade de cestas"
+            >
+              <Text style={styles.basketStepText}>+</Text>
+            </TouchableOpacity>
+          </View>
           {occurrence ? (
             <Text style={styles.pledgeMeta}>
               Evento na agenda em {formatPrimiciasIsoDate(occurrence.eventDate)}. Itens liberam de
@@ -322,7 +391,9 @@ export function MaintenancePrimiciasCard({ isActive = true, panelHeight, minimal
             <PrimiciasCollapsibleSection
               key={group.category}
               title={PRIMICIAS_CATEGORY_LABEL[group.category]}
-              subtitle={formatPrimiciasPendingCount(group.items)}
+              subtitle={formatPrimiciasPendingCount(
+                withPrimiciasBasketDemand(group.items, basketCount)
+              )}
             >
               {group.items.map((item) => {
                 const pledged = item.pledges.length > 0;
@@ -483,6 +554,38 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: MINIMAL_UI.text,
+  },
+  basketRow: {
+    flexDirection: 'row',
+    alignItems: 'stretch',
+    gap: 8,
+  },
+  basketStep: {
+    width: 44,
+    borderWidth: 1,
+    borderColor: MINIMAL_UI.border,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: MINIMAL_UI.background,
+  },
+  basketStepText: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: MINIMAL_UI.text,
+    lineHeight: 26,
+  },
+  basketCount: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: MINIMAL_UI.border,
+    borderRadius: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    backgroundColor: MINIMAL_UI.background,
+    alignItems: 'flex-start',
+    justifyContent: 'center',
+    minHeight: 41,
   },
   historyDay: {
     gap: 4,
