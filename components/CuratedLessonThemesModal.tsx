@@ -18,19 +18,24 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 type Props = {
   visible: boolean;
   onClose: () => void;
+  onInclude: (theme: CuratedLessonTheme) => Promise<void>;
 };
 
-export function CuratedLessonThemesModal({ visible, onClose }: Props) {
+export function CuratedLessonThemesModal({ visible, onClose, onInclude }: Props) {
   const [themes, setThemes] = useState<CuratedLessonTheme[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [category, setCategory] = useState<LessonCategory | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [including, setIncluding] = useState(false);
+  const [includeError, setIncludeError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!visible) {
       setCategory(null);
       setSelectedId(null);
+      setIncluding(false);
+      setIncludeError(null);
       return;
     }
 
@@ -69,11 +74,35 @@ export function CuratedLessonThemesModal({ visible, onClose }: Props) {
   const selected = filtered.find((theme) => theme.id === selectedId) ?? null;
 
   const goBack = () => {
+    if (including) {
+      return;
+    }
+    setIncludeError(null);
     if (selected) {
       setSelectedId(null);
       return;
     }
     setCategory(null);
+  };
+
+  const handleInclude = async () => {
+    if (!selected || including) {
+      return;
+    }
+
+    setIncluding(true);
+    setIncludeError(null);
+
+    try {
+      await onInclude(selected);
+      onClose();
+    } catch (includeFailure: unknown) {
+      setIncludeError(
+        includeFailure instanceof Error ? includeFailure.message : 'Não foi possível incluir o tema no planejamento.'
+      );
+    } finally {
+      setIncluding(false);
+    }
   };
 
   return (
@@ -126,16 +155,42 @@ export function CuratedLessonThemesModal({ visible, onClose }: Props) {
                 </Pressable>
               ))
             )}
-            {category ? (
+            {selected ? (
+              <View style={styles.actionRow}>
+                <Pressable
+                  onPress={() => void handleInclude()}
+                  disabled={including}
+                  style={[styles.include, including && styles.includeBusy]}
+                  accessibilityRole="button"
+                  accessibilityLabel="Incluir no Planejamento"
+                >
+                  {including ? (
+                    <ActivityIndicator color={MINIMAL_UI.onDark} />
+                  ) : (
+                    <Text style={styles.includeText}>Incluir no Planejamento</Text>
+                  )}
+                </Pressable>
+                <Pressable
+                  onPress={goBack}
+                  disabled={including}
+                  style={styles.back}
+                  accessibilityRole="button"
+                  accessibilityLabel="Voltar aos temas"
+                >
+                  <Text style={styles.backText}>Voltar aos temas</Text>
+                </Pressable>
+              </View>
+            ) : category ? (
               <Pressable
                 onPress={goBack}
                 style={styles.back}
                 accessibilityRole="button"
-                accessibilityLabel={selected ? 'Voltar aos temas' : 'Voltar às categorias'}
+                accessibilityLabel="Voltar às categorias"
               >
-                <Text style={styles.backText}>{selected ? 'Voltar aos temas' : 'Voltar às categorias'}</Text>
+                <Text style={styles.backText}>Voltar às categorias</Text>
               </Pressable>
             ) : null}
+            {includeError ? <Text style={styles.includeError}>{includeError}</Text> : null}
           </ScrollView>
         )}
         <CloseFooterBar onPress={onClose} accessibilityLabel="Fechar temas da aula" />
@@ -232,10 +287,39 @@ const styles = StyleSheet.create({
     lineHeight: 21,
     color: MINIMAL_UI.text,
   },
+  actionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  include: {
+    flex: 1,
+    minHeight: 44,
+    borderRadius: 10,
+    backgroundColor: MINIMAL_UI.accent,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 12,
+  },
+  includeBusy: {
+    opacity: 0.7,
+  },
+  includeText: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: MINIMAL_UI.onDark,
+    textAlign: 'center',
+  },
+  includeError: {
+    fontSize: 13,
+    lineHeight: 18,
+    color: MINIMAL_UI.text,
+  },
   back: {
     minHeight: 44,
     alignItems: 'center',
     justifyContent: 'center',
+    paddingHorizontal: 8,
   },
   backText: {
     fontSize: 14,

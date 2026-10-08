@@ -15,7 +15,10 @@ import { MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { useEventRegistrationsByStatus, registrationHasCareAlert } from '@/hooks/useEventRegistrationsByStatus';
 import type { EventRegistrationGroupItem } from '@/hooks/useEventRegistrationsByStatus';
 import { readDashboardSelectedEventId } from '@/lib/dashboardSelectedEvent';
-import { formatEventDateTimeLabel } from '@/lib/eventDate';
+import { saveClassLesson } from '@/lib/classLessonApi';
+import { suggestClassLessonFamily } from '@/lib/classLessonFamilyApi';
+import { formatEventDateTimeLabel, getEventCalendarDate } from '@/lib/eventDate';
+import type { CuratedLessonTheme } from '@/types/lesson-theme';
 import { normalizeFamilyCode, resolveFamilyCodeFromVolunteerInput } from '@/lib/family';
 import { fetchFamilyAudienceMembers } from '@/lib/familyAudienceMembers';
 import { normalizeFullNameKey } from '@/lib/fullName';
@@ -538,6 +541,68 @@ export const MaintenanceSalaServidorCard = ({
     setFamilyCodeModalOpen(false);
     void handleFamilyQrScan(familyId);
   }, [entityPrefix, familyCodeInput, handleFamilyQrScan]);
+
+  const includeThemeInPlanning = useCallback(
+    async (theme: CuratedLessonTheme) => {
+      if (!selectedEvent) {
+        throw new Error('Selecione o culto para incluir o tema no planejamento.');
+      }
+
+      if (availableGroupedRooms.length === 0) {
+        throw new Error('Não há sala aberta neste culto.');
+      }
+
+      const classDate = getEventCalendarDate(selectedEvent.event_date) ?? '';
+      const settled = await Promise.allSettled(
+        availableGroupedRooms.map(async (room) => {
+          const familyExtension = await suggestClassLessonFamily({
+            eventId: selectedEvent.id,
+            roomKey: room.key,
+            roomLabel: room.label,
+            title: theme.title,
+            biblePassage: theme.bible_passage,
+            mainObjective: theme.core_lesson,
+          });
+
+          await saveClassLesson(selectedEvent.id, room.key, {
+            title: theme.title,
+            bible_passage: theme.bible_passage,
+            main_objective: theme.core_lesson,
+            resources_notes: theme.activity_suggestion,
+            family_extension: familyExtension,
+            class_date: classDate,
+            category: theme.category,
+          });
+
+          return room.label;
+        })
+      );
+
+      const savedLabels = settled.flatMap((result) => (result.status === 'fulfilled' ? [result.value] : []));
+      const failedLabels = availableGroupedRooms
+        .filter((_, index) => settled[index]?.status === 'rejected')
+        .map((room) => room.label);
+
+      if (savedLabels.length === 0) {
+        const reason = settled.find((result) => result.status === 'rejected');
+        throw new Error(
+          reason?.status === 'rejected' && reason.reason instanceof Error
+            ? reason.reason.message
+            : 'Não foi possível incluir o tema no planejamento.'
+        );
+      }
+
+      Toast.show({
+        type: failedLabels.length > 0 ? 'error' : 'success',
+        text1: 'Planejamento da aula',
+        text2:
+          failedLabels.length > 0
+            ? `Tema gravado em ${savedLabels.join(' e ')}. Não foi possível concluir ${failedLabels.join(' e ')}.`
+            : `Tema e conversa em família gravados em ${savedLabels.join(' e ')}.`,
+      });
+    },
+    [availableGroupedRooms, selectedEvent]
+  );
 
   const isLoading = loadingEvents || loadingGroupedRegistrations || loadingRoomServidores;
   const hasSalaResources = availableGroupedRooms.length > 0;
@@ -1196,7 +1261,11 @@ export const MaintenanceSalaServidorCard = ({
           onClose={() => setLessonRoom(null)}
         />
       ) : null}
-      <CuratedLessonThemesModal visible={themesOpen} onClose={() => setThemesOpen(false)} />
+      <CuratedLessonThemesModal
+        visible={themesOpen}
+        onClose={() => setThemesOpen(false)}
+        onInclude={includeThemeInPlanning}
+      />
     </View>
   );
 };
