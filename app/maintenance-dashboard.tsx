@@ -99,6 +99,10 @@ import {
   replicateMaintenanceEventFromRecord,
   saveMaintenanceEvent,
 } from '@/lib/saveMaintenanceEvent';
+import { CuratedLessonThemesModal } from '@/components/CuratedLessonThemesModal';
+import { applyCuratedLessonTheme } from '@/lib/curatedLessonThemes';
+import type { ClassRoomKey } from '@/types/class-lesson';
+import type { CuratedLessonTheme } from '@/types/lesson-theme';
 import {
   isUnlimitedEventCapacity,
   UNLIMITED_EVENT_CAPACITY_LABEL,
@@ -400,6 +404,17 @@ const FeatureToggleColumn = ({
   </View>
 );
 
+const classRoomsForLessonTheme = (roomOptions: ChurchRoomSetting[], enabledRoomKeys: string[]) =>
+  roomOptions.flatMap((room) => {
+    if (room.room_key !== 'KIDS' && room.room_key !== 'TEENS') {
+      return [];
+    }
+    if (!enabledRoomKeys.includes(room.room_key)) {
+      return [];
+    }
+    return [{ key: room.room_key as ClassRoomKey, label: room.display_label }];
+  });
+
 export default function MaintenanceDashboard() {
   const { width: pageWidth, height: windowHeight } = useWindowDimensions();
   const { panel: panelParam, presentation: presentationParam } = useLocalSearchParams<{
@@ -434,6 +449,8 @@ export default function MaintenanceDashboard() {
   const [eventRoomOptions, setEventRoomOptions] = useState<ChurchRoomSetting[]>(
     DEFAULT_CHURCH_ROOM_SETTINGS
   );
+  const [lessonThemesOpen, setLessonThemesOpen] = useState(false);
+  const [pendingLessonTheme, setPendingLessonTheme] = useState<CuratedLessonTheme | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isReplicatingSeven, setIsReplicatingSeven] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -517,6 +534,8 @@ export default function MaintenanceDashboard() {
     cancelDeleteConfirm();
     setSelectedEventId('__new__');
     setForm(emptyMaintenanceEventForm());
+    setPendingLessonTheme(null);
+    setLessonThemesOpen(false);
   }, [cancelDeleteConfirm]);
 
   const startEditEvent = useCallback((event: MaintenanceEvent) => {
@@ -524,6 +543,8 @@ export default function MaintenanceDashboard() {
     cancelDeleteConfirm();
     setSelectedEventId(event.id);
     setForm(formFromMaintenanceEvent(event));
+    setPendingLessonTheme(null);
+    setLessonThemesOpen(false);
   }, [cancelDeleteConfirm]);
 
   const closeEditor = useCallback(() => {
@@ -531,6 +552,8 @@ export default function MaintenanceDashboard() {
     cancelDeleteConfirm();
     setSelectedEventId(null);
     setForm(emptyMaintenanceEventForm());
+    setPendingLessonTheme(null);
+    setLessonThemesOpen(false);
   }, [cancelDeleteConfirm]);
 
   const beginDeleteConfirm = useCallback(() => {
@@ -672,6 +695,36 @@ export default function MaintenanceDashboard() {
 
       await refetch();
       const wasCreating = selectedEventId === '__new__';
+      let themeNote = '';
+
+      if (pendingLessonTheme) {
+        const rooms = classRoomsForLessonTheme(eventRoomOptions, form.enabledRoomKeys);
+        const eventId = result.eventId ?? null;
+
+        if (!eventId) {
+          themeNote = ' O tema não foi gravado porque o culto não pôde ser localizado.';
+        } else if (rooms.length === 0) {
+          themeNote = ' Marque Infantil ou Jovens para gravar o tema.';
+        } else {
+          try {
+            const applied = await applyCuratedLessonTheme({
+              eventId,
+              eventDate: validation.payload.event_date,
+              rooms,
+              theme: pendingLessonTheme,
+            });
+            themeNote =
+              applied.failedLabels.length > 0
+                ? ` Tema gravado em ${applied.savedLabels.join(' e ')}. Não foi possível concluir ${applied.failedLabels.join(' e ')}.`
+                : ` Tema e conversa em família gravados em ${applied.savedLabels.join(' e ')}.`;
+          } catch (themeError) {
+            themeNote = ` O evento foi salvo, mas o tema não entrou: ${
+              themeError instanceof Error ? themeError.message : 'falha ao gravar a aula.'
+            }`;
+          }
+        }
+      }
+
       closeEditor();
       const purgedCount = result.purgedCheckins ?? 0;
       Toast.show({
@@ -681,9 +734,9 @@ export default function MaintenanceDashboard() {
           result.purgeWarning
             ? result.purgeWarning
             : purgedCount > 0
-              ? `${purgedCount} check-in(s) removido(s) — famílias precisam validar novamente.`
-              : 'Alterações gravadas com sucesso.',
-        visibilityTime: result.purgeWarning ? 8000 : 4000,
+              ? `${purgedCount} check-in(s) removido(s) — famílias precisam validar novamente.${themeNote}`
+              : `Alterações gravadas com sucesso.${themeNote}`,
+        visibilityTime: result.purgeWarning || themeNote ? 8000 : 4000,
       });
     } catch (saveError) {
       console.error('Erro ao salvar evento:', saveError);
@@ -698,7 +751,7 @@ export default function MaintenanceDashboard() {
     } finally {
       setIsSaving(false);
     }
-  }, [canBypassEventPastDateLock, closeEditor, form, isSaving, refetch, selectedEventId]);
+  }, [canBypassEventPastDateLock, closeEditor, eventRoomOptions, form, isSaving, pendingLessonTheme, refetch, selectedEventId]);
 
   const handleReplicateSevenDays = useCallback(async () => {
     if (isCreating || !selectedEventId) {
@@ -1544,6 +1597,8 @@ export default function MaintenanceDashboard() {
                   onPress={startNewEvent}
                   activeOpacity={0.85}
                   disabled={deleteConfirmPending || isBusy}
+                  accessibilityRole="button"
+                  accessibilityLabel="Novo evento"
                 >
                   <FontAwesome
                     name="plus"
@@ -2101,6 +2156,31 @@ export default function MaintenanceDashboard() {
                       minimal={isMinimalPresentation}
                       halfWidth={isMinimalPresentation}
                     />
+                    <View
+                      style={[
+                        styles.lessonThemeSlot,
+                        isMinimalPresentation && styles.featureToggleColumnHalf,
+                      ]}
+                    >
+                      <Pressable
+                        style={({ pressed }) => [
+                          styles.lessonThemeButton,
+                          pressed && styles.actionPressed,
+                          isBusy && styles.lessonThemeButtonBusy,
+                        ]}
+                        onPress={() => setLessonThemesOpen(true)}
+                        disabled={isBusy}
+                        accessibilityRole="button"
+                        accessibilityLabel="Temas pré-cadastrados da aula"
+                      >
+                        <Text style={styles.lessonThemeButtonText}>Temas da aula</Text>
+                      </Pressable>
+                      {pendingLessonTheme ? (
+                        <Text style={styles.lessonThemeCaption} numberOfLines={2}>
+                          {pendingLessonTheme.title}
+                        </Text>
+                      ) : null}
+                    </View>
                   </View>
                 </View>
 
@@ -2325,6 +2405,16 @@ export default function MaintenanceDashboard() {
           </View>
         ) : null}
 
+        <CuratedLessonThemesModal
+          visible={lessonThemesOpen}
+          onClose={() => setLessonThemesOpen(false)}
+          onInclude={async (theme) => {
+            if (classRoomsForLessonTheme(eventRoomOptions, form.enabledRoomKeys).length === 0) {
+              throw new Error('Marque Infantil ou Jovens para incluir o tema neste evento.');
+            }
+            setPendingLessonTheme(theme);
+          }}
+        />
         <MonthlyDatePickerModal
           visible={eventDatePickerVisible}
           value={form.eventDateInput}
@@ -3334,6 +3424,44 @@ const styles = StyleSheet.create({
   featureToggleColumnHalf: {
     width: '48%',
     maxWidth: '48%',
+  },
+  lessonThemeSlot: {
+    width: '48%',
+    maxWidth: '48%',
+    minWidth: 0,
+    alignItems: 'flex-start',
+    justifyContent: 'center',
+    gap: 4,
+  },
+  lessonThemeButton: {
+    width: 132,
+    maxWidth: '100%',
+    minHeight: 40,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#CA8A04',
+    backgroundColor: '#FACC15',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+  },
+  lessonThemeButtonBusy: {
+    opacity: 0.6,
+  },
+  lessonThemeButtonText: {
+    color: '#422006',
+    fontSize: 13,
+    fontWeight: '800',
+    textAlign: 'center',
+  },
+  lessonThemeCaption: {
+    width: '100%',
+    color: '#422006',
+    fontSize: 11,
+    lineHeight: 14,
+    fontWeight: '700',
+    textAlign: 'left',
   },
   totemBlock: {
     flexShrink: 0,

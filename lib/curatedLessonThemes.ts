@@ -1,4 +1,8 @@
+import { saveClassLesson } from '@/lib/classLessonApi';
+import { suggestClassLessonFamily } from '@/lib/classLessonFamilyApi';
+import { getEventCalendarDate } from '@/lib/eventDate';
 import { supabase } from '@/lib/supabase';
+import type { ClassRoomKey } from '@/types/class-lesson';
 import { parseLessonCategory } from '@/types/class-lesson';
 import type { CuratedLessonTheme } from '@/types/lesson-theme';
 
@@ -41,4 +45,57 @@ export async function listCuratedLessonThemes(): Promise<CuratedLessonTheme[]> {
   return (Array.isArray(data) ? data : [])
     .map(parseTheme)
     .filter((theme): theme is CuratedLessonTheme => theme !== null);
+}
+
+export async function applyCuratedLessonTheme(input: {
+  eventId: string;
+  eventDate: string | null;
+  rooms: { key: ClassRoomKey; label: string }[];
+  theme: CuratedLessonTheme;
+}): Promise<{ savedLabels: string[]; failedLabels: string[] }> {
+  if (input.rooms.length === 0) {
+    throw new Error('Marque Infantil ou Jovens para incluir o tema.');
+  }
+
+  const classDate = getEventCalendarDate(input.eventDate) ?? '';
+  const settled = await Promise.allSettled(
+    input.rooms.map(async (room) => {
+      const familyExtension = await suggestClassLessonFamily({
+        eventId: input.eventId,
+        roomKey: room.key,
+        roomLabel: room.label,
+        title: input.theme.title,
+        biblePassage: input.theme.bible_passage,
+        mainObjective: input.theme.core_lesson,
+      });
+
+      await saveClassLesson(input.eventId, room.key, {
+        title: input.theme.title,
+        bible_passage: input.theme.bible_passage,
+        main_objective: input.theme.core_lesson,
+        resources_notes: input.theme.activity_suggestion,
+        family_extension: familyExtension,
+        class_date: classDate,
+        category: input.theme.category,
+      });
+
+      return room.label;
+    })
+  );
+
+  const savedLabels = settled.flatMap((result) => (result.status === 'fulfilled' ? [result.value] : []));
+  const failedLabels = input.rooms
+    .filter((_, index) => settled[index]?.status === 'rejected')
+    .map((room) => room.label);
+
+  if (savedLabels.length === 0) {
+    const reason = settled.find((result) => result.status === 'rejected');
+    throw new Error(
+      reason?.status === 'rejected' && reason.reason instanceof Error
+        ? reason.reason.message
+        : 'Não foi possível incluir o tema no planejamento.'
+    );
+  }
+
+  return { savedLabels, failedLabels };
 }

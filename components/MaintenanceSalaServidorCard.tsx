@@ -15,9 +15,8 @@ import { MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { useEventRegistrationsByStatus, registrationHasCareAlert } from '@/hooks/useEventRegistrationsByStatus';
 import type { EventRegistrationGroupItem } from '@/hooks/useEventRegistrationsByStatus';
 import { readDashboardSelectedEventId } from '@/lib/dashboardSelectedEvent';
-import { saveClassLesson } from '@/lib/classLessonApi';
-import { suggestClassLessonFamily } from '@/lib/classLessonFamilyApi';
-import { formatEventDateTimeLabel, getEventCalendarDate } from '@/lib/eventDate';
+import { applyCuratedLessonTheme } from '@/lib/curatedLessonThemes';
+import { formatEventDateTimeLabel } from '@/lib/eventDate';
 import type { CuratedLessonTheme } from '@/types/lesson-theme';
 import { normalizeFamilyCode, resolveFamilyCodeFromVolunteerInput } from '@/lib/family';
 import { fetchFamilyAudienceMembers } from '@/lib/familyAudienceMembers';
@@ -552,53 +551,20 @@ export const MaintenanceSalaServidorCard = ({
         throw new Error('Não há sala aberta neste culto.');
       }
 
-      const classDate = getEventCalendarDate(selectedEvent.event_date) ?? '';
-      const settled = await Promise.allSettled(
-        availableGroupedRooms.map(async (room) => {
-          const familyExtension = await suggestClassLessonFamily({
-            eventId: selectedEvent.id,
-            roomKey: room.key,
-            roomLabel: room.label,
-            title: theme.title,
-            biblePassage: theme.bible_passage,
-            mainObjective: theme.core_lesson,
-          });
-
-          await saveClassLesson(selectedEvent.id, room.key, {
-            title: theme.title,
-            bible_passage: theme.bible_passage,
-            main_objective: theme.core_lesson,
-            resources_notes: theme.activity_suggestion,
-            family_extension: familyExtension,
-            class_date: classDate,
-            category: theme.category,
-          });
-
-          return room.label;
-        })
-      );
-
-      const savedLabels = settled.flatMap((result) => (result.status === 'fulfilled' ? [result.value] : []));
-      const failedLabels = availableGroupedRooms
-        .filter((_, index) => settled[index]?.status === 'rejected')
-        .map((room) => room.label);
-
-      if (savedLabels.length === 0) {
-        const reason = settled.find((result) => result.status === 'rejected');
-        throw new Error(
-          reason?.status === 'rejected' && reason.reason instanceof Error
-            ? reason.reason.message
-            : 'Não foi possível incluir o tema no planejamento.'
-        );
-      }
+      const applied = await applyCuratedLessonTheme({
+        eventId: selectedEvent.id,
+        eventDate: selectedEvent.event_date,
+        rooms: availableGroupedRooms.map((room) => ({ key: room.key, label: room.label })),
+        theme,
+      });
 
       Toast.show({
-        type: failedLabels.length > 0 ? 'error' : 'success',
+        type: applied.failedLabels.length > 0 ? 'error' : 'success',
         text1: 'Planejamento da aula',
         text2:
-          failedLabels.length > 0
-            ? `Tema gravado em ${savedLabels.join(' e ')}. Não foi possível concluir ${failedLabels.join(' e ')}.`
-            : `Tema e conversa em família gravados em ${savedLabels.join(' e ')}.`,
+          applied.failedLabels.length > 0
+            ? `Tema gravado em ${applied.savedLabels.join(' e ')}. Não foi possível concluir ${applied.failedLabels.join(' e ')}.`
+            : `Tema e conversa em família gravados em ${applied.savedLabels.join(' e ')}.`,
       });
     },
     [availableGroupedRooms, selectedEvent]

@@ -31,7 +31,7 @@ import { supabase } from '@/lib/supabase';
 import type { PostgrestError } from '@supabase/supabase-js';
 
 export type SaveMaintenanceEventResult =
-  | { ok: true; purgedCheckins?: number; purgeWarning?: string }
+  | { ok: true; eventId?: string | null; purgedCheckins?: number; purgeWarning?: string }
   | { ok: false; message: string; code?: string };
 
 export const DUPLICATE_EVENT_MESSAGE =
@@ -286,7 +286,8 @@ export const saveMaintenanceEvent = async (
       return { ok: false, message: error.message, code: error.code };
     }
 
-    return { ok: true };
+    const eventId = await findConflictingEventId(payload);
+    return { ok: true, eventId };
   }
 
   if (!selectedEventId) {
@@ -330,6 +331,7 @@ export const saveMaintenanceEvent = async (
 
   return {
     ok: true,
+    eventId: selectedEventId,
     ...(purgedCheckins > 0 ? { purgedCheckins } : {}),
     ...(purgeWarning ? { purgeWarning } : {}),
   };
