@@ -1,9 +1,12 @@
+import { CuratedLessonThemesModal } from '@/components/CuratedLessonThemesModal';
 import { CloseButton, CloseFooterBar } from '@/components/minimal/CloseFooterBar';
 import { fetchClassLesson, saveClassLesson } from '@/lib/classLessonApi';
 import { suggestClassLessonFamily } from '@/lib/classLessonFamilyApi';
+import { applyCuratedLessonTheme } from '@/lib/curatedLessonThemes';
 import { getEventCalendarDate } from '@/lib/eventDate';
 import { MINIMAL_SCREEN_PADDING_LEFT, MINIMAL_SCREEN_PADDING_RIGHT, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import type { ClassRoomKey, LessonCategory } from '@/types/class-lesson';
+import type { CuratedLessonTheme } from '@/types/lesson-theme';
 import * as Clipboard from 'expo-clipboard';
 import React, { useEffect, useState } from 'react';
 import {
@@ -54,6 +57,7 @@ export function ClassLessonForm({
   const [resourcesNotes, setResourcesNotes] = useState('');
   const [familyExtension, setFamilyExtension] = useState('');
   const [category, setCategory] = useState<LessonCategory | null>(null);
+  const [themesOpen, setThemesOpen] = useState(false);
 
   useEffect(() => {
     if (!visible) {
@@ -176,6 +180,29 @@ export function ClassLessonForm({
     setFamilyCopied(true);
   };
 
+  const handleSwapTheme = async (theme: CuratedLessonTheme) => {
+    await applyCuratedLessonTheme({
+      eventId,
+      eventDate,
+      rooms: [{ key: roomKey, label: roomLabel }],
+      theme,
+    });
+
+    const lesson = await fetchClassLesson(eventId, roomKey);
+    setTitle(lesson?.title ?? theme.title);
+    setBiblePassage(lesson?.bible_passage ?? theme.bible_passage);
+    setMainObjective(lesson?.main_objective ?? theme.core_lesson);
+    setResourcesNotes(lesson?.resources_notes ?? theme.activity_suggestion);
+    setFamilyExtension(lesson?.family_extension ?? '');
+    setCategory(lesson?.category ?? theme.category);
+    setFamilyCopied(false);
+    Toast.show({
+      type: 'success',
+      text1: 'Planejamento da aula',
+      text2: `Tema gravado em ${roomLabel}.`,
+    });
+  };
+
   const handleSave = async () => {
     if (saving || loading) {
       return;
@@ -220,14 +247,26 @@ export function ClassLessonForm({
   };
 
   return (
+    <>
     <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
       <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
         <View style={styles.header}>
-          <Text style={styles.title}>Planejamento da aula</Text>
-          <Text style={styles.subtitle}>
-            {roomLabel}
-            {classDateLabel ? ` · ${classDateLabel}` : ''}
-          </Text>
+          <View style={styles.headerText}>
+            <Text style={styles.title}>Planejamento da aula</Text>
+            <Text style={styles.subtitle}>
+              {roomLabel}
+              {classDateLabel ? ` · ${classDateLabel}` : ''}
+            </Text>
+          </View>
+          <Pressable
+            onPress={() => setThemesOpen(true)}
+            disabled={loading || saving || suggesting}
+            style={[styles.swapThemeButton, (loading || saving || suggesting) && styles.swapThemeButtonBusy]}
+            accessibilityRole="button"
+            accessibilityLabel={`Trocar o tema da aula de ${roomLabel}`}
+          >
+            <Text style={styles.swapThemeButtonText}>Trocar tema</Text>
+          </Pressable>
         </View>
         {loading ? (
           <ActivityIndicator color={MINIMAL_UI.accent} style={styles.loader} />
@@ -320,6 +359,12 @@ export function ClassLessonForm({
         <CloseFooterBar onPress={onClose} accessibilityLabel="Fechar planejamento da aula" />
       </SafeAreaView>
     </Modal>
+    <CuratedLessonThemesModal
+      visible={themesOpen}
+      onClose={() => setThemesOpen(false)}
+      onInclude={handleSwapTheme}
+    />
+    </>
   );
 }
 
@@ -354,10 +399,40 @@ const styles = StyleSheet.create({
     backgroundColor: MINIMAL_UI.background,
   },
   header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
     paddingHorizontal: 16,
     paddingTop: 8,
     paddingBottom: 8,
+  },
+  headerText: {
+    flex: 1,
+    minWidth: 0,
     gap: 2,
+  },
+  swapThemeButton: {
+    width: 132,
+    flexShrink: 0,
+    minHeight: 40,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#CA8A04',
+    backgroundColor: '#FACC15',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+  },
+  swapThemeButtonBusy: {
+    opacity: 0.6,
+  },
+  swapThemeButtonText: {
+    color: '#422006',
+    fontSize: 13,
+    fontWeight: '800',
+    textAlign: 'center',
   },
   title: {
     fontSize: 18,
