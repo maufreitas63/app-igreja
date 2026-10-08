@@ -14,6 +14,8 @@ type Props = {
   fixedTop?: React.ReactNode;
   children: React.ReactNode;
   footer?: React.ReactNode;
+  /** O rodapé ocupa a largura inteira, sem o recuo lateral do corpo. */
+  footerBleed?: boolean;
   contentContainerStyle?: ViewStyle;
   /** Quando false, o conteúdo ocupa flex:1 sem ScrollView (telas com listas internas). */
   scroll?: boolean;
@@ -27,6 +29,7 @@ function MinimalScreenLayoutBody({
   fixedTop,
   children,
   footer,
+  footerBleed = false,
   contentContainerStyle,
   scroll = true,
   showGreeting = false,
@@ -60,7 +63,7 @@ function MinimalScreenLayoutBody({
             ) : null}
           </View>
 
-          {footer ? <View style={styles.footer}>{footer}</View> : null}
+          {footer ? <View style={[styles.footer, footerBleed && styles.footerBleed]}>{footer}</View> : null}
         </View>
       </View>
     </SafeAreaView>
@@ -154,5 +157,9 @@ const styles = StyleSheet.create({
     maxWidth: '100%',
     minWidth: 0,
     alignSelf: 'stretch',
+  },
+  footerBleed: {
+    paddingLeft: 0,
+    paddingRight: 0,
   },
 });
