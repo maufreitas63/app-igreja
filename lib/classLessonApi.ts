@@ -8,6 +8,7 @@ import type {
   LessonServerInfo,
   RoomType,
 } from '@/types/class-lesson';
+import { parseLessonCategory } from '@/types/class-lesson';
 
 const SQL_HINT = 'O planejamento de aula ainda não está disponível neste ambiente.';
 
@@ -37,6 +38,7 @@ const parseLesson = (value: unknown): ClassLesson | null => {
     main_objective: String(row.main_objective ?? ''),
     resources_notes: String(row.resources_notes ?? ''),
     family_extension: String(row.family_extension ?? ''),
+    category: parseLessonCategory(row.category),
   };
 };
 
@@ -94,6 +96,7 @@ const parseLessonDetail = (value: unknown): ClassLessonDetail | null => {
     mainObjective: String(row.main_objective ?? ''),
     resourcesNotes: String(row.resources_notes ?? '').trim() || null,
     familyExtension: String(row.family_extension ?? '').trim() || null,
+    category: parseLessonCategory(row.category),
     servers,
   };
 };
@@ -108,7 +111,8 @@ export async function listClassLessonTrail(roomKey: ClassRoomKey): Promise<Class
   const rows = Array.isArray(payload.lessons) ? payload.lessons : [];
   return rows
     .map(parseLessonDetail)
-    .filter((lesson): lesson is ClassLessonDetail => lesson !== null);
+    .filter((lesson): lesson is ClassLessonDetail => lesson !== null)
+    .sort((left, right) => right.classDate.localeCompare(left.classDate) || left.title.localeCompare(right.title, 'pt-BR'));
 }
 
 export async function fetchClassLesson(eventId: string, roomKey: ClassRoomKey): Promise<ClassLesson | null> {
@@ -137,6 +141,7 @@ export async function saveClassLesson(
     p_main_objective: input.main_objective.trim(),
     p_resources_notes: input.resources_notes?.trim() ?? '',
     p_family_extension: input.family_extension?.trim() ?? '',
+    p_category: input.category,
   });
 
   if (payload.success !== true) {

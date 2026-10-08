@@ -3,6 +3,7 @@ import { useRoomDisplayLabels } from '@/hooks/useRoomDisplayLabels';
 import { listClassLessonTrail } from '@/lib/classLessonApi';
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
 import type { ClassLessonDetail, ClassRoomKey } from '@/types/class-lesson';
+import { lessonCategoryInfo } from '@/types/class-lesson';
 import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
@@ -79,7 +80,9 @@ export function TeachingTrailPanel() {
         <Text style={styles.empty}>Nenhuma aula registrada nesta sala.</Text>
       ) : (
         <ScrollView contentContainerStyle={styles.list}>
-          {lessons.map((lesson) => (
+          {lessons.map((lesson) => {
+            const category = lessonCategoryInfo(lesson.category);
+            return (
             <Pressable
               key={lesson.id}
               style={styles.row}
@@ -89,8 +92,10 @@ export function TeachingTrailPanel() {
             >
               <Text style={styles.date}>{formatClassDate(lesson.classDate)}</Text>
               <Text style={styles.lessonTitle}>{lesson.title}</Text>
+              {category ? <Text style={styles.category}>{category.title}</Text> : null}
             </Pressable>
-          ))}
+            );
+          })}
         </ScrollView>
       )}
       <LessonDetailModal
@@ -193,5 +198,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
     color: MINIMAL_UI.text,
+  },
+  category: {
+    fontSize: 13,
+    lineHeight: 18,
+    color: MINIMAL_UI.textMuted,
   },
 });

@@ -3,7 +3,8 @@ import { fetchClassLesson, saveClassLesson } from '@/lib/classLessonApi';
 import { suggestClassLessonFamily } from '@/lib/classLessonFamilyApi';
 import { getEventCalendarDate } from '@/lib/eventDate';
 import { MINIMAL_SCREEN_PADDING_LEFT, MINIMAL_SCREEN_PADDING_RIGHT, MINIMAL_UI } from '@/lib/minimalUiTheme';
-import type { ClassRoomKey } from '@/types/class-lesson';
+import type { ClassRoomKey, LessonCategory } from '@/types/class-lesson';
+import { LESSON_CATEGORIES } from '@/types/class-lesson';
 import * as Clipboard from 'expo-clipboard';
 import React, { useEffect, useState } from 'react';
 import {
@@ -53,6 +54,7 @@ export function ClassLessonForm({
   const [mainObjective, setMainObjective] = useState('');
   const [resourcesNotes, setResourcesNotes] = useState('');
   const [familyExtension, setFamilyExtension] = useState('');
+  const [category, setCategory] = useState<LessonCategory | null>(null);
 
   useEffect(() => {
     if (!visible) {
@@ -73,6 +75,7 @@ export function ClassLessonForm({
         setMainObjective(lesson?.main_objective ?? '');
         setResourcesNotes(lesson?.resources_notes ?? '');
         setFamilyExtension(lesson?.family_extension ?? '');
+        setCategory(lesson?.category ?? null);
       } catch (error) {
         if (!cancelled) {
           Toast.show({
@@ -145,6 +148,7 @@ export function ClassLessonForm({
     setMainObjective('');
     setResourcesNotes('');
     setFamilyExtension('');
+    setCategory(null);
     setFamilyCopied(false);
   };
 
@@ -178,6 +182,15 @@ export function ClassLessonForm({
       return;
     }
 
+    if (!category) {
+      Toast.show({
+        type: 'error',
+        text1: 'Planejamento da aula',
+        text2: 'Escolha o eixo temático da aula.',
+      });
+      return;
+    }
+
     setSaving(true);
 
     try {
@@ -188,6 +201,7 @@ export function ClassLessonForm({
         resources_notes: resourcesNotes,
         family_extension: familyExtension,
         class_date: getEventCalendarDate(eventDate) ?? '',
+        category,
       });
       Toast.show({
         type: 'success',
@@ -225,6 +239,30 @@ export function ClassLessonForm({
             keyboardShouldPersistTaps="handled"
           >
             <View style={styles.fields}>
+            <Text style={styles.section}>Eixo temático</Text>
+            <Text style={styles.sectionHint}>
+              Escolha a categoria que organiza o que a sala vai aprender nesta aula.
+            </Text>
+            {LESSON_CATEGORIES.map((item) => {
+              const selected = category === item.code;
+              return (
+                <Pressable
+                  key={item.code}
+                  onPress={() => setCategory(item.code)}
+                  style={[styles.categoryCard, selected && styles.categoryCardSelected]}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected }}
+                  accessibilityLabel={`${item.title}. ${item.description}`}
+                >
+                  <Text style={[styles.categoryTitle, selected && styles.categoryTitleSelected]}>
+                    {item.title}
+                  </Text>
+                  <Text style={[styles.categoryDescription, selected && styles.categoryDescriptionSelected]}>
+                    {item.description}
+                  </Text>
+                </Pressable>
+              );
+            })}
             <Field label="Título ou tema central" value={title} onChangeText={setTitle} />
             <Field label="Passagem bíblica principal" value={biblePassage} onChangeText={setBiblePassage} />
             <Field
@@ -402,6 +440,32 @@ const styles = StyleSheet.create({
     lineHeight: 18,
     color: MINIMAL_UI.textMuted,
     marginTop: -6,
+  },
+  categoryCard: {
+    borderRadius: 10,
+    backgroundColor: MINIMAL_UI.rowHover,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    gap: 4,
+  },
+  categoryCardSelected: {
+    backgroundColor: MINIMAL_UI.accent,
+  },
+  categoryTitle: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: MINIMAL_UI.blueDark,
+  },
+  categoryTitleSelected: {
+    color: MINIMAL_UI.onDark,
+  },
+  categoryDescription: {
+    fontSize: 13,
+    lineHeight: 18,
+    color: MINIMAL_UI.text,
+  },
+  categoryDescriptionSelected: {
+    color: MINIMAL_UI.onDark,
   },
   suggestButton: {
     minHeight: 44,

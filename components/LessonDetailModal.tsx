@@ -1,6 +1,7 @@
 import { CloseFooterBar } from '@/components/minimal/CloseFooterBar';
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
 import type { ClassLessonDetail, RoomType } from '@/types/class-lesson';
+import { lessonCategoryInfo } from '@/types/class-lesson';
 import React from 'react';
 import { Image, Modal, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -19,6 +20,8 @@ const formatClassDate = (value: string) => {
 const roomFallback = (roomType: RoomType) => (roomType === 'jovens' ? 'Sala Jovens' : 'Sala Infantil');
 
 export function LessonDetailModal({ lesson, roomLabel, onClose }: Props) {
+  const category = lesson ? lessonCategoryInfo(lesson.category) : null;
+
   return (
     <Modal visible={lesson !== null} animationType="slide" onRequestClose={onClose}>
       <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
@@ -30,6 +33,12 @@ export function LessonDetailModal({ lesson, roomLabel, onClose }: Props) {
               <Text style={styles.date}>{formatClassDate(lesson.classDate)}</Text>
             </View>
             <ScrollView contentContainerStyle={styles.content}>
+              {category ? (
+                <View style={styles.categoryBox}>
+                  <Text style={styles.categoryTitle}>{category.title}</Text>
+                  <Text style={styles.categoryText}>{category.description}</Text>
+                </View>
+              ) : null}
               <Detail label="Passagem bíblica principal" value={lesson.biblePassage} />
               <Detail label="Objetivo principal" value={lesson.mainObjective} />
               {lesson.resourcesNotes ? (
@@ -131,6 +140,22 @@ const styles = StyleSheet.create({
     color: MINIMAL_UI.blueDark,
   },
   familyText: {
+    fontSize: 15,
+    lineHeight: 21,
+    color: MINIMAL_UI.text,
+  },
+  categoryBox: {
+    borderRadius: 10,
+    backgroundColor: '#EFF6FF',
+    padding: 14,
+    gap: 6,
+  },
+  categoryTitle: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: MINIMAL_UI.blueDark,
+  },
+  categoryText: {
     fontSize: 15,
     lineHeight: 21,
     color: MINIMAL_UI.text,

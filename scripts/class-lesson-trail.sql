@@ -1,4 +1,5 @@
 -- Trilha de ensino: servidores da aula e leitura para as famílias, isolada por instância.
+-- Eixo temático (category): scripts/class-lesson-categories.sql
 -- Aplica: npx supabase db query --linked -f scripts/class-lesson-trail.sql
 
 create or replace function public.is_kids_room_servidor_scale(

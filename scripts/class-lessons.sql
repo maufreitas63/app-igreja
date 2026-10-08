@@ -1,4 +1,5 @@
 -- Planejamento de aula das salas Infantil e Jovens, isolado por instância.
+-- Eixo temático (category): scripts/class-lesson-categories.sql
 -- Aplica: npx supabase db query --linked -f scripts/class-lessons.sql
 
 create table if not exists public.class_lessons (
