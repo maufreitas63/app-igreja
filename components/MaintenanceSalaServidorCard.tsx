@@ -1,4 +1,5 @@
 import { ClassLessonForm } from '@/components/ClassLessonForm';
+import { CuratedLessonThemesModal } from '@/components/CuratedLessonThemesModal';
 import {
   RoomRosterAlbum,
   RoomRosterViewSwitch,
@@ -115,6 +116,7 @@ export const MaintenanceSalaServidorCard = ({
 
   const [selectedGroupedRoom, setSelectedGroupedRoom] = useState<GroupedRoomKey | null>(null);
   const [lessonRoom, setLessonRoom] = useState<GroupedRoomKey | null>(null);
+  const [themesOpen, setThemesOpen] = useState(false);
   const [rosterView, setRosterView] = useState<RoomRosterView>('list');
   const [rosterDetailId, setRosterDetailId] = useState<string | null>(null);
   const [roomEntryPendingIds, setRoomEntryPendingIds] = useState<string[]>([]);
@@ -806,15 +808,44 @@ export const MaintenanceSalaServidorCard = ({
                     </TouchableOpacity>
                   ) : null}
                   </View>
+                </View>
+              );
+            })}
+          </View>
+          <View style={styles.lessonPlanRow}>
+            {availableGroupedRooms.map((room, index) => (
+              <React.Fragment key={`${room.key}-plan`}>
+                <TouchableOpacity
+                  style={[
+                    styles.lessonPlanButton,
+                    styles.lessonPlanButtonInRow,
+                    minimal && styles.lessonPlanButtonMinimal,
+                  ]}
+                  onPress={() => setLessonRoom(room.key)}
+                  activeOpacity={0.85}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Planejamento da aula de ${room.label}`}
+                >
+                  <Text
+                    style={[
+                      styles.lessonPlanButtonText,
+                      minimal && styles.lessonPlanButtonTextMinimal,
+                    ]}
+                  >
+                    Planejamento da aula
+                  </Text>
+                </TouchableOpacity>
+                {index === 0 && availableGroupedRooms.length > 1 ? (
                   <TouchableOpacity
                     style={[
                       styles.lessonPlanButton,
+                      styles.lessonThemesButton,
                       minimal && styles.lessonPlanButtonMinimal,
                     ]}
-                    onPress={() => setLessonRoom(room.key)}
+                    onPress={() => setThemesOpen(true)}
                     activeOpacity={0.85}
                     accessibilityRole="button"
-                    accessibilityLabel={`Planejamento da aula de ${room.label}`}
+                    accessibilityLabel="Temas pré-cadastrados da aula"
                   >
                     <Text
                       style={[
@@ -822,12 +853,12 @@ export const MaintenanceSalaServidorCard = ({
                         minimal && styles.lessonPlanButtonTextMinimal,
                       ]}
                     >
-                      Planejamento da aula
+                      Temas da aula
                     </Text>
                   </TouchableOpacity>
-                </View>
-              );
-            })}
+                ) : null}
+              </React.Fragment>
+            ))}
           </View>
 
           <View style={styles.groupedAudienceServidorNamesRow}>
@@ -1165,6 +1196,7 @@ export const MaintenanceSalaServidorCard = ({
           onClose={() => setLessonRoom(null)}
         />
       ) : null}
+      <CuratedLessonThemesModal visible={themesOpen} onClose={() => setThemesOpen(false)} />
     </View>
   );
 };
@@ -1390,6 +1422,22 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 10,
     paddingVertical: 8,
+  },
+  lessonPlanRow: {
+    flexDirection: 'row',
+    alignItems: 'stretch',
+    gap: 8,
+    width: '100%',
+  },
+  lessonPlanButtonInRow: {
+    flex: 1,
+    width: undefined,
+    minWidth: 0,
+  },
+  lessonThemesButton: {
+    flexGrow: 0,
+    flexShrink: 0,
+    width: 132,
   },
   lessonPlanButtonMinimal: {
     backgroundColor: '#FACC15',
