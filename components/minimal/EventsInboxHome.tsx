@@ -41,7 +41,7 @@ import { MINIMAL_SECTION_TITLE, MINIMAL_TYPO, MINIMAL_UI } from '@/lib/minimalUi
 import { useActiveEvents } from '@/hooks/useActiveEvents';
 import { supabase } from '@/lib/supabase';
 import { useLocalSearchParams } from 'expo-router';
-import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   AccessibilityInfo,
   ActivityIndicator,
@@ -284,13 +284,6 @@ export function EventsInboxHome() {
     setFlipDirection(null);
   }, [flipDirection, resolvedPageWidth]);
 
-  useLayoutEffect(() => {
-    if (flipDirection !== 'forward' || resolvedPageWidth <= 0) {
-      return;
-    }
-    pagerRef.current?.scrollTo({ x: resolvedPageWidth, animated: false });
-  }, [flipDirection, resolvedPageWidth]);
-
   const openPage = useCallback(
     (direction: 'forward' | 'back') => {
       if (flipDirection) {
@@ -371,6 +364,122 @@ export function EventsInboxHome() {
       : { minHeight: minPageHeight, flex: 1 }),
   };
 
+  const renderEventsSheet = () => (
+    <View style={[styles.page, pageSizeStyle]}>
+      <View style={styles.inboxSection}>
+        <KnowledgeSectionTitle
+          title="Proximos Eventos"
+          routeKey={KNOWLEDGE_ROUTE.home}
+          titleStyle={styles.sectionTitle}
+          leftSlot={
+            <HomeBirthdayTag
+              aniversariantes={aniversariantes}
+              casais={casaisAniversario}
+              canCopy={birthdayCanCopy}
+            />
+          }
+        />
+        <InboxList
+          items={inboxItems}
+          emptyMessage="Nenhum evento disponível no momento."
+          onItemPress={handleItemPress}
+          fillAvailable
+        />
+      </View>
+    </View>
+  );
+
+  const renderAvisosSheet = () => (
+    <View style={[styles.page, pageSizeStyle]}>
+      <View style={styles.avisosSection}>
+        <Text style={styles.sectionTitle}>Avisos</Text>
+        {avisosLoading ? (
+          <ActivityIndicator color={MINIMAL_UI.icon} style={styles.loader} />
+        ) : avisos.length === 0
+          && pastoralNotices.length === 0
+          && campaignNotices.length === 0
+          && opportunityNotices.length === 0
+          && generosityNotices.length === 0
+          && emprestimoNotices.length === 0
+          && scaleSwapNotices.length === 0 ? (
+          avisosError ? (
+            <Text style={styles.error}>{avisosError}</Text>
+          ) : (
+            <Text style={styles.emptyAvisos}>Nenhum aviso publicado no momento.</Text>
+          )
+        ) : (
+          <ScrollView
+            style={styles.avisosList}
+            contentContainerStyle={styles.avisosListContent}
+            nestedScrollEnabled
+            showsVerticalScrollIndicator
+            keyboardShouldPersistTaps="handled"
+            bounces
+          >
+            {opportunityNotices.map((item) => (
+              <View key={`opportunity-${item.id}`} style={styles.avisoCard}>
+                <Text style={styles.avisoTitle} numberOfLines={2}>
+                  {item.title}
+                </Text>
+                <Text style={styles.avisoBody}>{item.body}</Text>
+              </View>
+            ))}
+            {generosityNotices.map((item) => (
+              <View key={`generosity-${item.id}`} style={styles.avisoCard}>
+                <Text style={styles.avisoTitle} numberOfLines={2}>
+                  {item.title}
+                </Text>
+                <Text style={styles.avisoBody}>{item.body}</Text>
+              </View>
+            ))}
+            {emprestimoNotices.map((item) => (
+              <View key={`emprestimo-${item.id}`} style={styles.avisoCard}>
+                <Text style={styles.avisoTitle} numberOfLines={2}>
+                  {item.title}
+                </Text>
+                <Text style={styles.avisoBody}>{item.body}</Text>
+              </View>
+            ))}
+            {scaleSwapNotices.map((item) => (
+              <View key={`scale-swap-${item.id}`} style={styles.avisoCard}>
+                <Text style={styles.avisoTitle} numberOfLines={2}>
+                  {item.title}
+                </Text>
+                <Text style={styles.avisoBody}>{item.body}</Text>
+              </View>
+            ))}
+            {pastoralNotices.map((item) => (
+              <View key={`pastoral-${item.id}`} style={styles.avisoCard}>
+                <Text style={styles.avisoTitle} numberOfLines={2}>
+                  {item.title}
+                </Text>
+                <Text style={styles.avisoBody}>{item.body}</Text>
+              </View>
+            ))}
+            {campaignNotices.map((item) => (
+              <View key={`campaign-${item.id}`} style={styles.avisoCard}>
+                <Text style={styles.avisoTitle} numberOfLines={2}>
+                  {item.title}
+                </Text>
+                <Text style={styles.avisoBody}>{item.body}</Text>
+              </View>
+            ))}
+            {avisos.map((item) => (
+              <View key={item.id} style={styles.avisoCard}>
+                {item.title ? (
+                  <Text style={styles.avisoTitle} numberOfLines={2}>
+                    {item.title}
+                  </Text>
+                ) : null}
+                <Text style={styles.avisoBody}>{item.body}</Text>
+              </View>
+            ))}
+          </ScrollView>
+        )}
+      </View>
+    </View>
+  );
+
   return (
     <View style={styles.root}>
       {!agendaOpen ? (
@@ -399,145 +508,15 @@ export function EventsInboxHome() {
           onScrollEndDrag={handlePagerScrollEnd}
           keyboardShouldPersistTaps="handled"
         >
-          <View style={[styles.page, pageSizeStyle]}>
-            <View style={styles.inboxSection}>
-              <KnowledgeSectionTitle
-                title="Proximos Eventos"
-                routeKey={KNOWLEDGE_ROUTE.home}
-                titleStyle={styles.sectionTitle}
-                leftSlot={
-                  <HomeBirthdayTag
-                    aniversariantes={aniversariantes}
-                    casais={casaisAniversario}
-                    canCopy={birthdayCanCopy}
-                  />
-                }
-              />
-              <InboxList
-                items={inboxItems}
-                emptyMessage="Nenhum evento disponível no momento."
-                onItemPress={handleItemPress}
-                fillAvailable
-              />
-            </View>
-          </View>
-
-          <View style={[styles.page, pageSizeStyle]}>
-            <View style={styles.avisosSection}>
-              <Text style={styles.sectionTitle}>Avisos</Text>
-              {avisosLoading ? (
-                <ActivityIndicator color={MINIMAL_UI.icon} style={styles.loader} />
-              ) : avisos.length === 0
-                && pastoralNotices.length === 0
-                && campaignNotices.length === 0
-                && opportunityNotices.length === 0
-                && generosityNotices.length === 0
-                && emprestimoNotices.length === 0
-                && scaleSwapNotices.length === 0 ? (
-                avisosError ? (
-                  <Text style={styles.error}>{avisosError}</Text>
-                ) : (
-                  <Text style={styles.emptyAvisos}>Nenhum aviso publicado no momento.</Text>
-                )
-              ) : (
-                <ScrollView
-                  style={styles.avisosList}
-                  contentContainerStyle={styles.avisosListContent}
-                  nestedScrollEnabled
-                  showsVerticalScrollIndicator
-                  keyboardShouldPersistTaps="handled"
-                  bounces
-                >
-                  {opportunityNotices.map((item) => (
-                    <View key={`opportunity-${item.id}`} style={styles.avisoCard}>
-                      <Text style={styles.avisoTitle} numberOfLines={2}>
-                        {item.title}
-                      </Text>
-                      <Text style={styles.avisoBody}>{item.body}</Text>
-                    </View>
-                  ))}
-                  {generosityNotices.map((item) => (
-                    <View key={`generosity-${item.id}`} style={styles.avisoCard}>
-                      <Text style={styles.avisoTitle} numberOfLines={2}>
-                        {item.title}
-                      </Text>
-                      <Text style={styles.avisoBody}>{item.body}</Text>
-                    </View>
-                  ))}
-                  {emprestimoNotices.map((item) => (
-                    <View key={`emprestimo-${item.id}`} style={styles.avisoCard}>
-                      <Text style={styles.avisoTitle} numberOfLines={2}>
-                        {item.title}
-                      </Text>
-                      <Text style={styles.avisoBody}>{item.body}</Text>
-                    </View>
-                  ))}
-                  {scaleSwapNotices.map((item) => (
-                    <View key={`scale-swap-${item.id}`} style={styles.avisoCard}>
-                      <Text style={styles.avisoTitle} numberOfLines={2}>
-                        {item.title}
-                      </Text>
-                      <Text style={styles.avisoBody}>{item.body}</Text>
-                    </View>
-                  ))}
-                  {pastoralNotices.map((item) => (
-                    <View key={`pastoral-${item.id}`} style={styles.avisoCard}>
-                      <Text style={styles.avisoTitle} numberOfLines={2}>
-                        {item.title}
-                      </Text>
-                      <Text style={styles.avisoBody}>{item.body}</Text>
-                    </View>
-                  ))}
-                  {campaignNotices.map((item) => (
-                    <View key={`campaign-${item.id}`} style={styles.avisoCard}>
-                      <Text style={styles.avisoTitle} numberOfLines={2}>
-                        {item.title}
-                      </Text>
-                      <Text style={styles.avisoBody}>{item.body}</Text>
-                    </View>
-                  ))}
-                  {avisos.map((item) => (
-                    <View key={item.id} style={styles.avisoCard}>
-                      {item.title ? (
-                        <Text style={styles.avisoTitle} numberOfLines={2}>
-                          {item.title}
-                        </Text>
-                      ) : null}
-                      <Text style={styles.avisoBody}>{item.body}</Text>
-                    </View>
-                  ))}
-                </ScrollView>
-              )}
-            </View>
-          </View>
+          {renderEventsSheet()}
+          {renderAvisosSheet()}
         </ScrollView>
         {flipDirection ? (
           <BookFlipTransition
             direction={flipDirection}
-            from={
-              <View style={[styles.page, pageSizeStyle]}>
-                <View style={styles.inboxSection}>
-                  <KnowledgeSectionTitle
-                    title="Proximos Eventos"
-                    routeKey={KNOWLEDGE_ROUTE.home}
-                    titleStyle={styles.sectionTitle}
-                    leftSlot={
-                      <HomeBirthdayTag
-                        aniversariantes={aniversariantes}
-                        casais={casaisAniversario}
-                        canCopy={birthdayCanCopy}
-                      />
-                    }
-                  />
-                  <InboxList
-                    items={inboxItems}
-                    emptyMessage="Nenhum evento disponível no momento."
-                    onItemPress={handleItemPress}
-                    fillAvailable
-                  />
-                </View>
-              </View>
-            }
+            pageWidth={resolvedPageWidth}
+            renderLeaf={renderEventsSheet}
+            renderUnder={renderAvisosSheet}
             onDone={finishFlip}
           />
         ) : null}
