@@ -46,7 +46,8 @@ as $$
   )
     from public.alianca_partner_leads l
     join public.igrejas i on i.id = l.tenant_id
-   where l.id = p_id;
+   where l.id = p_id
+     and l.tenant_id = public.current_session_tenant_id();
 $$;
 
 create or replace function public.get_alianca_indication_context(p_tenant_id uuid)
@@ -261,12 +262,13 @@ set row_security = off
 as $$
 declare
   v_actor uuid := public.current_session_profile_id();
+  v_tenant uuid := public.current_session_tenant_id();
   v_priority text;
   v_uf text;
   v_members integer;
   v_email text := nullif(lower(btrim(coalesce(p_contact_email, ''))), '');
 begin
-  if v_actor is null then
+  if v_actor is null or v_tenant is null then
     return jsonb_build_object('success', false, 'message', 'Sessão inválida.');
   end if;
   begin
@@ -321,7 +323,8 @@ begin
            else v_email
          end,
          updated_at = now()
-   where id = p_lead_id;
+   where id = p_lead_id
+     and tenant_id = v_tenant;
 
   if not found then
     return jsonb_build_object('success', false, 'message', 'Indicado não encontrado.');

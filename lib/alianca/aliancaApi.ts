@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase';
 import { isSupabaseRpcMissingError } from '@/lib/supabaseRpc';
+import { getStoredTenantId } from '@/lib/tenantSession';
 import { aliancaPartnerLeadSubStage } from '@/lib/alianca/partnerLeadStages';
 import type {
   AliancaAdminStatement,
@@ -109,6 +110,11 @@ function mapAdminStatement(raw: unknown): AliancaAdminStatement {
 }
 
 const MISSING_SQL = 'RPC Aliança ausente. Execute scripts/alianca-conecta-reino.sql.';
+
+async function activeTenantId(): Promise<string | null> {
+  const id = (await getStoredTenantId())?.trim();
+  return id || null;
+}
 
 export async function getAliancaMaePanel(): Promise<AliancaMaePanel> {
   const { data, error } = await supabase.rpc('get_alianca_mae_panel');
@@ -315,16 +321,18 @@ export async function listAliancaIndicationInvites(): Promise<{
     };
   }
   const row = asRecord(data) || {};
+  const tenantId = await activeTenantId();
   const invites = Array.isArray(row.invites)
     ? row.invites
         .map((item) => {
           const invite = asRecord(item);
           if (!invite) return null;
           const id = asText(invite.id);
-          if (!id) return null;
+          const inviteTenantId = asText(invite.tenant_id);
+          if (!id || !tenantId || inviteTenantId !== tenantId) return null;
           return {
             id,
-            tenantId: asText(invite.tenant_id),
+            tenantId: inviteTenantId,
             instanceCode: asText(invite.instance_code),
             instanceName: asText(invite.instance_name),
             senderName: asText(invite.sender_name),
@@ -384,13 +392,20 @@ export async function listAliancaPartnerLeads(): Promise<{
     };
   }
   const row = asRecord(data) || {};
+  const tenantId = await activeTenantId();
   const leads = Array.isArray(row.leads)
-    ? row.leads.map(mapPartnerLead).filter((item): item is AliancaPartnerLead => item != null)
+    ? row.leads
+        .map(mapPartnerLead)
+        .filter((item): item is AliancaPartnerLead => item != null && item.tenantId === tenantId)
     : [];
+  const leadIds = new Set(leads.map((item) => item.id));
   const notifications = Array.isArray(row.notifications)
     ? row.notifications
         .map(mapPartnerLeadNotification)
-        .filter((item): item is AliancaPartnerLeadNotification => item != null)
+        .filter(
+          (item): item is AliancaPartnerLeadNotification =>
+            item != null && leadIds.has(item.leadId)
+        )
     : [];
   return {
     success: row.success === true,

@@ -23,6 +23,7 @@ import type {
 import { requestConfirmDialog } from '@/lib/confirmDialogHost';
 import { formatPhoneDisplay } from '@/lib/familyRegistration';
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
+import { subscribeActiveTenantChange } from '@/lib/tenantSession';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import {
@@ -139,6 +140,9 @@ export function AliancaIndicadosList() {
 
   useEffect(() => {
     void load();
+    return subscribeActiveTenantChange(() => {
+      void load();
+    });
   }, [load]);
 
   const grouped = useMemo(() => {

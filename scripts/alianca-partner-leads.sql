@@ -192,9 +192,10 @@ set row_security = off
 as $$
 declare
   v_actor uuid := public.current_session_profile_id();
+  v_tenant uuid := public.current_session_tenant_id();
   v_items jsonb;
 begin
-  if v_actor is null then
+  if v_actor is null or v_tenant is null then
     return jsonb_build_object('success', false, 'message', 'Sessão inválida.', 'leads', '[]'::jsonb);
   end if;
   if not public.profile_has_super_admin_role(v_actor) then
@@ -223,7 +224,8 @@ begin
   )
     into v_items
     from public.alianca_partner_leads l
-    join public.igrejas i on i.id = l.tenant_id;
+    join public.igrejas i on i.id = l.tenant_id
+   where l.tenant_id = v_tenant;
 
   return jsonb_build_object('success', true, 'leads', coalesce(v_items, '[]'::jsonb));
 end;
@@ -244,10 +246,11 @@ set row_security = off
 as $$
 declare
   v_actor uuid := public.current_session_profile_id();
+  v_tenant uuid := public.current_session_tenant_id();
   v_stage text := lower(btrim(coalesce(p_stage, '')));
   v_sub integer := coalesce(p_sub_stage, 1);
 begin
-  if v_actor is null then
+  if v_actor is null or v_tenant is null then
     return jsonb_build_object('success', false, 'message', 'Sessão inválida.');
   end if;
   if not public.profile_has_super_admin_role(v_actor) then
@@ -278,7 +281,8 @@ begin
      set stage = v_stage,
          sub_stage = v_sub,
          updated_at = now()
-   where id = p_lead_id;
+   where id = p_lead_id
+     and tenant_id = v_tenant;
 
   if not found then
     return jsonb_build_object('success', false, 'message', 'Indicado não encontrado.');
@@ -302,8 +306,9 @@ set row_security = off
 as $$
 declare
   v_actor uuid := public.current_session_profile_id();
+  v_tenant uuid := public.current_session_tenant_id();
 begin
-  if v_actor is null then
+  if v_actor is null or v_tenant is null then
     return jsonb_build_object('success', false, 'message', 'Sessão inválida.');
   end if;
   if not public.profile_has_super_admin_role(v_actor) then
@@ -314,7 +319,8 @@ begin
   end if;
 
   delete from public.alianca_partner_leads
-   where id = p_lead_id;
+   where id = p_lead_id
+     and tenant_id = v_tenant;
 
   if not found then
     return jsonb_build_object('success', false, 'message', 'Indicado não encontrado.');

@@ -1,6 +1,7 @@
 import { listAliancaIndicationInvites, type AliancaIndicationInvite } from '@/lib/alianca/aliancaApi';
 import { formatPhoneDisplay } from '@/lib/familyRegistration';
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
+import { subscribeActiveTenantChange } from '@/lib/tenantSession';
 import React, { useCallback, useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
@@ -29,6 +30,9 @@ export function AliancaPendingInvites() {
 
   useEffect(() => {
     void load();
+    return subscribeActiveTenantChange(() => {
+      void load();
+    });
   }, [load]);
 
   return (

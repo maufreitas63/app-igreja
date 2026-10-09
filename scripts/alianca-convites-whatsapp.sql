@@ -109,9 +109,10 @@ set row_security = off
 as $$
 declare
   v_actor uuid := public.current_session_profile_id();
+  v_tenant uuid := public.current_session_tenant_id();
   v_items jsonb;
 begin
-  if v_actor is null then
+  if v_actor is null or v_tenant is null then
     return jsonb_build_object('success', false, 'message', 'Sessão inválida.', 'invites', '[]'::jsonb);
   end if;
   if not public.profile_has_super_admin_role(v_actor) then
@@ -145,6 +146,7 @@ begin
         from public.alianca_indication_invites inv
         join public.igrejas i on i.id = inv.tenant_id
        where inv.converted_at is null
+         and inv.tenant_id = v_tenant
        order by inv.sent_at desc
        limit 80
     ) q;

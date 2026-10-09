@@ -703,10 +703,11 @@ set row_security = off
 as $$
 declare
   v_actor uuid := public.current_session_profile_id();
+  v_tenant uuid := public.current_session_tenant_id();
   v_items jsonb;
   v_notes jsonb;
 begin
-  if v_actor is null then
+  if v_actor is null or v_tenant is null then
     return jsonb_build_object('success', false, 'message', 'Sessão inválida.', 'leads', '[]'::jsonb, 'notifications', '[]'::jsonb);
   end if;
   if not public.profile_has_super_admin_role(v_actor) then
@@ -723,7 +724,8 @@ begin
     '[]'::jsonb
   )
     into v_items
-    from public.alianca_partner_leads x;
+    from public.alianca_partner_leads x
+   where x.tenant_id = v_tenant;
 
   select coalesce(
     jsonb_agg(
@@ -740,10 +742,12 @@ begin
   )
     into v_notes
     from (
-      select *
-        from public.alianca_partner_lead_notifications
-       where is_read = false
-       order by created_at desc
+      select n.*
+        from public.alianca_partner_lead_notifications n
+        join public.alianca_partner_leads l on l.id = n.lead_id
+       where n.is_read = false
+         and l.tenant_id = v_tenant
+       order by n.created_at desc
        limit 20
     ) n;
 
@@ -771,13 +775,14 @@ set row_security = off
 as $$
 declare
   v_actor uuid := public.current_session_profile_id();
+  v_tenant uuid := public.current_session_tenant_id();
   v_stage text := lower(btrim(coalesce(p_stage, '')));
   v_sub integer := coalesce(p_sub_stage, 1);
   v_current record;
   v_from_ord integer;
   v_to_ord integer;
 begin
-  if v_actor is null then
+  if v_actor is null or v_tenant is null then
     return jsonb_build_object('success', false, 'message', 'Sessão inválida.');
   end if;
   begin
@@ -811,6 +816,7 @@ begin
     into v_current
     from public.alianca_partner_leads
    where id = p_lead_id
+     and tenant_id = v_tenant
    for update;
 
   if not found then
@@ -848,7 +854,8 @@ begin
            when stage is distinct from v_stage then now()
            else entered_stage_at
          end
-   where id = p_lead_id;
+   where id = p_lead_id
+     and tenant_id = v_tenant;
 
   return jsonb_build_object(
     'success', true,
@@ -952,9 +959,10 @@ set row_security = off
 as $$
 declare
   v_actor uuid := public.current_session_profile_id();
+  v_tenant uuid := public.current_session_tenant_id();
   v_items jsonb;
 begin
-  if v_actor is null then
+  if v_actor is null or v_tenant is null then
     return jsonb_build_object('success', false, 'message', 'Sessão inválida.', 'movements', '[]'::jsonb);
   end if;
   if not public.profile_has_super_admin_role(v_actor) then
@@ -966,6 +974,14 @@ begin
   end if;
   if p_lead_id is null then
     return jsonb_build_object('success', false, 'message', 'Indicado não informado.', 'movements', '[]'::jsonb);
+  end if;
+  if not exists (
+    select 1
+      from public.alianca_partner_leads l
+     where l.id = p_lead_id
+       and l.tenant_id = v_tenant
+  ) then
+    return jsonb_build_object('success', false, 'message', 'Indicado não encontrado.', 'movements', '[]'::jsonb);
   end if;
 
   select coalesce(
@@ -1002,8 +1018,9 @@ set row_security = off
 as $$
 declare
   v_actor uuid := public.current_session_profile_id();
+  v_tenant uuid := public.current_session_tenant_id();
 begin
-  if v_actor is null then
+  if v_actor is null or v_tenant is null then
     return jsonb_build_object('success', false, 'message', 'Sessão inválida.');
   end if;
   begin
@@ -1017,7 +1034,8 @@ begin
   end if;
 
   delete from public.alianca_partner_leads
-   where id = p_lead_id;
+   where id = p_lead_id
+     and tenant_id = v_tenant;
 
   if not found then
     return jsonb_build_object('success', false, 'message', 'Indicado não encontrado.');
