@@ -47,43 +47,107 @@ export async function listCuratedLessonThemes(): Promise<CuratedLessonTheme[]> {
     .filter((theme): theme is CuratedLessonTheme => theme !== null);
 }
 
+type LessonThemeWriteListener = (write: { eventId: string }) => void;
+
+const lessonThemeWriteListeners = new Set<LessonThemeWriteListener>();
+
+export function subscribeLessonThemeWrites(listener: LessonThemeWriteListener) {
+  lessonThemeWriteListeners.add(listener);
+  return () => {
+    lessonThemeWriteListeners.delete(listener);
+  };
+}
+
+const notifyLessonThemeWrite = (eventId: string) => {
+  lessonThemeWriteListeners.forEach((listener) => listener({ eventId }));
+};
+
+export type AppliedLessonTheme = {
+  savedLabels: string[];
+  failedLabels: string[];
+  familyLabels: string[];
+};
+
+export function lessonThemeApplyMessage(applied: AppliedLessonTheme) {
+  const saved = applied.savedLabels.join(' e ');
+  const familyReady =
+    applied.savedLabels.length > 0 && applied.familyLabels.length === applied.savedLabels.length;
+
+  if (applied.failedLabels.length > 0) {
+    return {
+      type: 'error' as const,
+      text2: `Tema gravado em ${saved}. Não foi possível concluir ${applied.failedLabels.join(' e ')}.`,
+    };
+  }
+
+  if (!familyReady) {
+    return {
+      type: 'success' as const,
+      text2: `Tema gravado em ${saved}. A conversa em família não foi gerada.`,
+    };
+  }
+
+  return {
+    type: 'success' as const,
+    text2: `Tema e conversa em família gravados em ${saved}.`,
+  };
+}
+
 export async function applyCuratedLessonTheme(input: {
   eventId: string;
   eventDate: string | null;
   rooms: { key: ClassRoomKey; label: string }[];
   theme: CuratedLessonTheme;
-}): Promise<{ savedLabels: string[]; failedLabels: string[] }> {
+}): Promise<AppliedLessonTheme> {
   if (input.rooms.length === 0) {
-    throw new Error('Marque Infantil ou Jovens para incluir o tema.');
+    throw new Error('Não há sala infantil ou de jovens para incluir o tema.');
   }
 
   const classDate = getEventCalendarDate(input.eventDate) ?? '';
   const settled = await Promise.allSettled(
     input.rooms.map(async (room) => {
-      const familyExtension = await suggestClassLessonFamily({
-        eventId: input.eventId,
-        roomKey: room.key,
-        roomLabel: room.label,
-        title: input.theme.title,
-        biblePassage: input.theme.bible_passage,
-        mainObjective: input.theme.core_lesson,
-      });
-
-      await saveClassLesson(input.eventId, room.key, {
+      const lesson = {
         title: input.theme.title,
         bible_passage: input.theme.bible_passage,
         main_objective: input.theme.core_lesson,
         resources_notes: input.theme.activity_suggestion,
-        family_extension: familyExtension,
         class_date: classDate,
         category: input.theme.category,
+      };
+
+      await saveClassLesson(input.eventId, room.key, {
+        ...lesson,
+        family_extension: '',
       });
 
-      return room.label;
+      try {
+        const familyExtension = await suggestClassLessonFamily({
+          eventId: input.eventId,
+          roomKey: room.key,
+          roomLabel: room.label,
+          title: input.theme.title,
+          biblePassage: input.theme.bible_passage,
+          mainObjective: input.theme.core_lesson,
+        });
+
+        if (familyExtension.trim()) {
+          await saveClassLesson(input.eventId, room.key, {
+            ...lesson,
+            family_extension: familyExtension,
+          });
+          return { label: room.label, familyOk: true };
+        }
+      } catch {
+        // O tema da sala já foi gravado. A conversa em família fica vazia.
+      }
+
+      return { label: room.label, familyOk: false };
     })
   );
 
-  const savedLabels = settled.flatMap((result) => (result.status === 'fulfilled' ? [result.value] : []));
+  const saved = settled.flatMap((result) => (result.status === 'fulfilled' ? [result.value] : []));
+  const savedLabels = saved.map((item) => item.label);
+  const familyLabels = saved.filter((item) => item.familyOk).map((item) => item.label);
   const failedLabels = input.rooms
     .filter((_, index) => settled[index]?.status === 'rejected')
     .map((room) => room.label);
@@ -97,5 +161,6 @@ export async function applyCuratedLessonTheme(input: {
     );
   }
 
-  return { savedLabels, failedLabels };
+  notifyLessonThemeWrite(input.eventId);
+  return { savedLabels, failedLabels, familyLabels };
 }

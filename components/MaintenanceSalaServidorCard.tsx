@@ -15,7 +15,7 @@ import { MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { useEventRegistrationsByStatus, registrationHasCareAlert } from '@/hooks/useEventRegistrationsByStatus';
 import type { EventRegistrationGroupItem } from '@/hooks/useEventRegistrationsByStatus';
 import { readDashboardSelectedEventId } from '@/lib/dashboardSelectedEvent';
-import { applyCuratedLessonTheme } from '@/lib/curatedLessonThemes';
+import { applyCuratedLessonTheme, lessonThemeApplyMessage } from '@/lib/curatedLessonThemes';
 import { formatEventDateTimeLabel } from '@/lib/eventDate';
 import type { CuratedLessonTheme } from '@/types/lesson-theme';
 import { normalizeFamilyCode, resolveFamilyCodeFromVolunteerInput } from '@/lib/family';
@@ -547,27 +547,24 @@ export const MaintenanceSalaServidorCard = ({
         throw new Error('Selecione o culto para incluir o tema no planejamento.');
       }
 
-      if (availableGroupedRooms.length === 0) {
-        throw new Error('Não há sala aberta neste culto.');
-      }
-
       const applied = await applyCuratedLessonTheme({
         eventId: selectedEvent.id,
         eventDate: selectedEvent.event_date,
-        rooms: availableGroupedRooms.map((room) => ({ key: room.key, label: room.label })),
+        rooms: [
+          { key: 'KIDS', label: kidsRoomLabel },
+          { key: 'TEENS', label: teensRoomLabel },
+        ],
         theme,
       });
+      const notice = lessonThemeApplyMessage(applied);
 
       Toast.show({
-        type: applied.failedLabels.length > 0 ? 'error' : 'success',
+        type: notice.type,
         text1: 'Planejamento da aula',
-        text2:
-          applied.failedLabels.length > 0
-            ? `Tema gravado em ${applied.savedLabels.join(' e ')}. Não foi possível concluir ${applied.failedLabels.join(' e ')}.`
-            : `Tema e conversa em família gravados em ${applied.savedLabels.join(' e ')}.`,
+        text2: notice.text2,
       });
     },
-    [availableGroupedRooms, selectedEvent]
+    [kidsRoomLabel, selectedEvent, teensRoomLabel]
   );
 
   const isLoading = loadingEvents || loadingGroupedRegistrations || loadingRoomServidores;

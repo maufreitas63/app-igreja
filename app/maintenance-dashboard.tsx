@@ -4,6 +4,7 @@ import {
   summarizeMaintenanceEvent,
   isMaintenanceEventFormDateInPast,
   toggleEnabledRoomKey,
+  buildMaintenanceEventPayload,
   validateMaintenanceEventForm,
   type MaintenanceEventFormState,
 } from '@/lib/maintenanceEventForm';
@@ -100,7 +101,7 @@ import {
   saveMaintenanceEvent,
 } from '@/lib/saveMaintenanceEvent';
 import { CuratedLessonThemesModal } from '@/components/CuratedLessonThemesModal';
-import { applyCuratedLessonTheme } from '@/lib/curatedLessonThemes';
+import { applyCuratedLessonTheme, lessonThemeApplyMessage } from '@/lib/curatedLessonThemes';
 import type { ClassRoomKey } from '@/types/class-lesson';
 import type { CuratedLessonTheme } from '@/types/lesson-theme';
 import {
@@ -404,16 +405,20 @@ const FeatureToggleColumn = ({
   </View>
 );
 
-const classRoomsForLessonTheme = (roomOptions: ChurchRoomSetting[], enabledRoomKeys: string[]) =>
-  roomOptions.flatMap((room) => {
-    if (room.room_key !== 'KIDS' && room.room_key !== 'TEENS') {
-      return [];
+const bothClassRoomsForLessonTheme = (roomOptions: ChurchRoomSetting[]) => {
+  const labels = new Map<ClassRoomKey, string>();
+
+  for (const room of roomOptions) {
+    if (room.room_key === 'KIDS' || room.room_key === 'TEENS') {
+      labels.set(room.room_key, room.display_label?.trim() || (room.room_key === 'KIDS' ? 'Infantil' : 'Jovens'));
     }
-    if (!enabledRoomKeys.includes(room.room_key)) {
-      return [];
-    }
-    return [{ key: room.room_key as ClassRoomKey, label: room.display_label }];
-  });
+  }
+
+  return [
+    { key: 'KIDS' as const, label: labels.get('KIDS') || 'Infantil' },
+    { key: 'TEENS' as const, label: labels.get('TEENS') || 'Jovens' },
+  ];
+};
 
 export default function MaintenanceDashboard() {
   const { width: pageWidth, height: windowHeight } = useWindowDimensions();
@@ -451,6 +456,7 @@ export default function MaintenanceDashboard() {
   );
   const [lessonThemesOpen, setLessonThemesOpen] = useState(false);
   const [pendingLessonTheme, setPendingLessonTheme] = useState<CuratedLessonTheme | null>(null);
+  const [lessonThemeWritten, setLessonThemeWritten] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isReplicatingSeven, setIsReplicatingSeven] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -535,6 +541,7 @@ export default function MaintenanceDashboard() {
     setSelectedEventId('__new__');
     setForm(emptyMaintenanceEventForm());
     setPendingLessonTheme(null);
+    setLessonThemeWritten(false);
     setLessonThemesOpen(false);
   }, [cancelDeleteConfirm]);
 
@@ -544,6 +551,7 @@ export default function MaintenanceDashboard() {
     setSelectedEventId(event.id);
     setForm(formFromMaintenanceEvent(event));
     setPendingLessonTheme(null);
+    setLessonThemeWritten(false);
     setLessonThemesOpen(false);
   }, [cancelDeleteConfirm]);
 
@@ -553,6 +561,7 @@ export default function MaintenanceDashboard() {
     setSelectedEventId(null);
     setForm(emptyMaintenanceEventForm());
     setPendingLessonTheme(null);
+    setLessonThemeWritten(false);
     setLessonThemesOpen(false);
   }, [cancelDeleteConfirm]);
 
@@ -697,14 +706,12 @@ export default function MaintenanceDashboard() {
       const wasCreating = selectedEventId === '__new__';
       let themeNote = '';
 
-      if (pendingLessonTheme) {
-        const rooms = classRoomsForLessonTheme(eventRoomOptions, form.enabledRoomKeys);
+      if (pendingLessonTheme && !lessonThemeWritten) {
+        const rooms = bothClassRoomsForLessonTheme(eventRoomOptions);
         const eventId = result.eventId ?? null;
 
         if (!eventId) {
           themeNote = ' O tema não foi gravado porque o culto não pôde ser localizado.';
-        } else if (rooms.length === 0) {
-          themeNote = ' Marque Infantil ou Jovens para gravar o tema.';
         } else {
           try {
             const applied = await applyCuratedLessonTheme({
@@ -713,10 +720,7 @@ export default function MaintenanceDashboard() {
               rooms,
               theme: pendingLessonTheme,
             });
-            themeNote =
-              applied.failedLabels.length > 0
-                ? ` Tema gravado em ${applied.savedLabels.join(' e ')}. Não foi possível concluir ${applied.failedLabels.join(' e ')}.`
-                : ` Tema e conversa em família gravados em ${applied.savedLabels.join(' e ')}.`;
+            themeNote = ` ${lessonThemeApplyMessage(applied).text2}`;
           } catch (themeError) {
             themeNote = ` O evento foi salvo, mas o tema não entrou: ${
               themeError instanceof Error ? themeError.message : 'falha ao gravar a aula.'
@@ -751,7 +755,7 @@ export default function MaintenanceDashboard() {
     } finally {
       setIsSaving(false);
     }
-  }, [canBypassEventPastDateLock, closeEditor, eventRoomOptions, form, isSaving, pendingLessonTheme, refetch, selectedEventId]);
+  }, [canBypassEventPastDateLock, closeEditor, eventRoomOptions, form, isSaving, lessonThemeWritten, pendingLessonTheme, refetch, selectedEventId]);
 
   const handleReplicateSevenDays = useCallback(async () => {
     if (isCreating || !selectedEventId) {
@@ -2409,10 +2413,34 @@ export default function MaintenanceDashboard() {
           visible={lessonThemesOpen}
           onClose={() => setLessonThemesOpen(false)}
           onInclude={async (theme) => {
-            if (classRoomsForLessonTheme(eventRoomOptions, form.enabledRoomKeys).length === 0) {
-              throw new Error('Marque Infantil ou Jovens para incluir o tema neste evento.');
+            const rooms = bothClassRoomsForLessonTheme(eventRoomOptions);
+            const eventId = selectedEventId && selectedEventId !== '__new__' ? selectedEventId : null;
+
+            if (!eventId) {
+              setPendingLessonTheme(theme);
+              setLessonThemeWritten(false);
+              Toast.show({
+                type: 'success',
+                text1: 'Temas da aula',
+                text2: 'O tema entra em Infantil e Jovens quando o evento for salvo.',
+              });
+              return;
             }
+
+            const applied = await applyCuratedLessonTheme({
+              eventId,
+              eventDate: buildMaintenanceEventPayload(form).event_date,
+              rooms,
+              theme,
+            });
             setPendingLessonTheme(theme);
+            setLessonThemeWritten(applied.failedLabels.length === 0);
+            const notice = lessonThemeApplyMessage(applied);
+            Toast.show({
+              type: notice.type,
+              text1: 'Temas da aula',
+              text2: notice.text2,
+            });
           }}
         />
         <MonthlyDatePickerModal

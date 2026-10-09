@@ -123,7 +123,7 @@ const supabaseRpc = async (env, functionName, payload, request) => {
   }
 };
 
-const readGeminiKey = async (env) => {
+const readGeminiKey = async (env, request, eventId, roomKey) => {
   const fromEnv = String(env?.GEMINI_API_KEY ?? '').trim();
   if (fromEnv.startsWith('AIza')) {
     return fromEnv;
@@ -150,6 +150,21 @@ const readGeminiKey = async (env) => {
     }
   } catch (error) {
     console.error('class-lesson-family.key', error);
+  }
+
+  try {
+    const fromPlanning = await supabaseRpc(
+      env,
+      'obter_chave_gemini_planejamento_aula',
+      { p_event_id: eventId, p_room_key: roomKey },
+      request
+    );
+    const key = String(fromPlanning ?? '').trim();
+    if (key.startsWith('AIza')) {
+      return key;
+    }
+  } catch (error) {
+    console.error('class-lesson-family.key-rpc', error);
   }
 
   return null;
@@ -319,7 +334,7 @@ const handlePost = async (request, env) => {
     );
   }
 
-  const apiKey = await readGeminiKey(env);
+  const apiKey = await readGeminiKey(env, request, eventId, roomKey);
 
   if (!apiKey) {
     return jsonResponse(

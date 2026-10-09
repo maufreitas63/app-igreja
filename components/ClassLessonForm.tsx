@@ -1,6 +1,7 @@
 import { CuratedLessonThemesModal } from '@/components/CuratedLessonThemesModal';
 import { CloseButton, CloseFooterBar } from '@/components/minimal/CloseFooterBar';
 import { fetchClassLesson, saveClassLesson } from '@/lib/classLessonApi';
+import { subscribeLessonThemeWrites } from '@/lib/curatedLessonThemes';
 import { suggestClassLessonFamily } from '@/lib/classLessonFamilyApi';
 import { getEventCalendarDate } from '@/lib/eventDate';
 import { MINIMAL_SCREEN_PADDING_LEFT, MINIMAL_SCREEN_PADDING_RIGHT, MINIMAL_UI } from '@/lib/minimalUiTheme';
@@ -60,6 +61,17 @@ export function ClassLessonForm({
   const [familyExtension, setFamilyExtension] = useState('');
   const [category, setCategory] = useState<LessonCategory | null>(null);
   const [themesOpen, setThemesOpen] = useState(false);
+  const [externalWrite, setExternalWrite] = useState(0);
+
+  useEffect(
+    () =>
+      subscribeLessonThemeWrites((write) => {
+        if (write.eventId === eventId) {
+          setExternalWrite((current) => current + 1);
+        }
+      }),
+    [eventId]
+  );
 
   useEffect(() => {
     if (!visible) {
@@ -100,7 +112,7 @@ export function ClassLessonForm({
     return () => {
       cancelled = true;
     };
-  }, [eventId, visible]);
+  }, [eventId, externalWrite, visible]);
 
   const handleSuggestFamily = async () => {
     if (suggesting || saving || loading) {
