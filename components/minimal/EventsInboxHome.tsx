@@ -64,7 +64,7 @@ export function EventsInboxHome() {
   const [pageWidth, setPageWidth] = useState(0);
   const [pageHeight, setPageHeight] = useState(0);
   const [pagerIndex, setPagerIndex] = useState(0);
-  const [flippingToAvisos, setFlippingToAvisos] = useState(false);
+  const [flipDirection, setFlipDirection] = useState<'forward' | 'back' | null>(null);
   const [reduceMotion, setReduceMotion] = useState(false);
   const [avisos, setAvisos] = useState<EventAvisoRow[]>([]);
   const [pastoralNotices, setPastoralNotices] = useState<PastoralSlotNotice[]>([]);
@@ -277,29 +277,34 @@ export function EventsInboxHome() {
     };
   }, []);
 
-  const finishFlipToAvisos = useCallback(() => {
-    pagerRef.current?.scrollTo({ x: resolvedPageWidth, animated: false });
-    setPagerIndex(1);
-    setFlippingToAvisos(false);
-  }, [resolvedPageWidth]);
+  const finishFlip = useCallback(() => {
+    const next = flipDirection === 'back' ? 0 : 1;
+    pagerRef.current?.scrollTo({ x: next * resolvedPageWidth, animated: false });
+    setPagerIndex(next);
+    setFlipDirection(null);
+  }, [flipDirection, resolvedPageWidth]);
 
   useLayoutEffect(() => {
-    if (!flippingToAvisos || resolvedPageWidth <= 0) {
+    if (flipDirection !== 'forward' || resolvedPageWidth <= 0) {
       return;
     }
     pagerRef.current?.scrollTo({ x: resolvedPageWidth, animated: false });
-  }, [flippingToAvisos, resolvedPageWidth]);
+  }, [flipDirection, resolvedPageWidth]);
 
-  const openAvisos = useCallback(() => {
-    if (flippingToAvisos) {
-      return;
-    }
-    if (reduceMotion || resolvedPageWidth <= 0 || pageHeight <= 0) {
-      scrollToPage(1);
-      return;
-    }
-    setFlippingToAvisos(true);
-  }, [flippingToAvisos, pageHeight, reduceMotion, resolvedPageWidth, scrollToPage]);
+  const openPage = useCallback(
+    (direction: 'forward' | 'back') => {
+      if (flipDirection) {
+        return;
+      }
+      const next = direction === 'back' ? 0 : 1;
+      if (reduceMotion || resolvedPageWidth <= 0 || pageHeight <= 0) {
+        scrollToPage(next);
+        return;
+      }
+      setFlipDirection(direction);
+    },
+    [flipDirection, pageHeight, reduceMotion, resolvedPageWidth, scrollToPage]
+  );
 
   const handlePagerScrollEnd = useCallback(
     (event: NativeSyntheticEvent<NativeScrollEvent>) => {
@@ -506,8 +511,9 @@ export function EventsInboxHome() {
             </View>
           </View>
         </ScrollView>
-        {flippingToAvisos ? (
+        {flipDirection ? (
           <BookFlipTransition
+            direction={flipDirection}
             from={
               <View style={[styles.page, pageSizeStyle]}>
                 <View style={styles.inboxSection}>
@@ -532,20 +538,14 @@ export function EventsInboxHome() {
                 </View>
               </View>
             }
-            onDone={finishFlipToAvisos}
+            onDone={finishFlip}
           />
         ) : null}
         </View>
         <View style={styles.pagerNavDock}>
           <HomeInboxPagerNav
             variant={pagerIndex === 0 ? 'toAvisos' : 'toEventos'}
-            onPress={() => {
-              if (pagerIndex === 0) {
-                openAvisos();
-                return;
-              }
-              scrollToPage(0);
-            }}
+            onPress={() => openPage(pagerIndex === 0 ? 'forward' : 'back')}
           />
         </View>
         </>

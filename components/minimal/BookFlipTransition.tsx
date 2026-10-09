@@ -9,20 +9,25 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
+type BookFlipDirection = 'forward' | 'back';
+
 type BookFlipTransitionProps = {
   from: React.ReactNode;
+  direction?: BookFlipDirection;
   onDone: () => void;
 };
 
 const FLIP_MS = 720;
 
 /**
- * Vira a folha da esquerda para a direita do leitor: a página atual gira
- * no eixo esquerdo e revela a seguinte. Só transform e opacidade, para
- * ficar na composição. Se a animação não concluir, um prazo encerra a troca.
+ * A folha gira no eixo esquerdo. `forward` afasta a página atual e revela a
+ * seguinte. `back` traz a página anterior, que está à esquerda, no movimento
+ * contrário. Só transform e opacidade. Se a animação não concluir, um prazo
+ * encerra a troca.
  */
-export function BookFlipTransition({ from, onDone }: BookFlipTransitionProps) {
+export function BookFlipTransition({ from, direction = 'forward', onDone }: BookFlipTransitionProps) {
   const progress = useSharedValue(0);
+  const turningBack = useSharedValue(direction === 'back');
   const onDoneRef = useRef(onDone);
   const finishedRef = useRef(false);
   onDoneRef.current = onDone;
@@ -37,6 +42,7 @@ export function BookFlipTransition({ from, onDone }: BookFlipTransitionProps) {
 
   useEffect(() => {
     finishedRef.current = false;
+    turningBack.value = direction === 'back';
     progress.value = 0;
     progress.value = withTiming(
       1,
@@ -49,12 +55,13 @@ export function BookFlipTransition({ from, onDone }: BookFlipTransitionProps) {
     );
     const timer = setTimeout(complete, FLIP_MS + 80);
     return () => clearTimeout(timer);
-  }, [complete, progress]);
+  }, [complete, direction, progress, turningBack]);
 
   const turningStyle = useAnimatedStyle(() => {
-    const turn = progress.value * -180;
+    const turn = turningBack.value ? -180 + progress.value * 180 : progress.value * -180;
+    const faceVisible = turningBack.value ? progress.value >= 0.5 : progress.value < 0.5;
     return {
-      opacity: progress.value < 0.5 ? 1 : 0,
+      opacity: faceVisible ? 1 : 0,
       transform: [{ perspective: 1400 }, { rotateY: `${turn}deg` }],
     };
   });
