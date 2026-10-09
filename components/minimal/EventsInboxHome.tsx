@@ -1,4 +1,5 @@
 import { FamilyAgendaModal } from '@/components/FamilyAgendaModal';
+import { BookFlipTransition } from '@/components/minimal/BookFlipTransition';
 import { HomeBirthdayTag } from '@/components/minimal/HomeBirthdayTag';
 import { HomeInboxPagerNav } from '@/components/minimal/HomeInboxPagerNav';
 import {
@@ -40,8 +41,9 @@ import { MINIMAL_SECTION_TITLE, MINIMAL_TYPO, MINIMAL_UI } from '@/lib/minimalUi
 import { useActiveEvents } from '@/hooks/useActiveEvents';
 import { supabase } from '@/lib/supabase';
 import { useLocalSearchParams } from 'expo-router';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import {
+  AccessibilityInfo,
   ActivityIndicator,
   NativeScrollEvent,
   NativeSyntheticEvent,
@@ -62,6 +64,8 @@ export function EventsInboxHome() {
   const [pageWidth, setPageWidth] = useState(0);
   const [pageHeight, setPageHeight] = useState(0);
   const [pagerIndex, setPagerIndex] = useState(0);
+  const [flippingToAvisos, setFlippingToAvisos] = useState(false);
+  const [reduceMotion, setReduceMotion] = useState(false);
   const [avisos, setAvisos] = useState<EventAvisoRow[]>([]);
   const [pastoralNotices, setPastoralNotices] = useState<PastoralSlotNotice[]>([]);
   const [campaignNotices, setCampaignNotices] = useState<CampaignNotice[]>([]);
@@ -259,6 +263,44 @@ export function EventsInboxHome() {
     [resolvedPageWidth]
   );
 
+  useEffect(() => {
+    let alive = true;
+    void AccessibilityInfo.isReduceMotionEnabled().then((enabled) => {
+      if (alive) {
+        setReduceMotion(enabled);
+      }
+    });
+    const subscription = AccessibilityInfo.addEventListener('reduceMotionChanged', setReduceMotion);
+    return () => {
+      alive = false;
+      subscription.remove();
+    };
+  }, []);
+
+  const finishFlipToAvisos = useCallback(() => {
+    pagerRef.current?.scrollTo({ x: resolvedPageWidth, animated: false });
+    setPagerIndex(1);
+    setFlippingToAvisos(false);
+  }, [resolvedPageWidth]);
+
+  useLayoutEffect(() => {
+    if (!flippingToAvisos || resolvedPageWidth <= 0) {
+      return;
+    }
+    pagerRef.current?.scrollTo({ x: resolvedPageWidth, animated: false });
+  }, [flippingToAvisos, resolvedPageWidth]);
+
+  const openAvisos = useCallback(() => {
+    if (flippingToAvisos) {
+      return;
+    }
+    if (reduceMotion || resolvedPageWidth <= 0 || pageHeight <= 0) {
+      scrollToPage(1);
+      return;
+    }
+    setFlippingToAvisos(true);
+  }, [flippingToAvisos, pageHeight, reduceMotion, resolvedPageWidth, scrollToPage]);
+
   const handlePagerScrollEnd = useCallback(
     (event: NativeSyntheticEvent<NativeScrollEvent>) => {
       const x = event.nativeEvent.contentOffset.x;
@@ -328,6 +370,7 @@ export function EventsInboxHome() {
     <View style={styles.root}>
       {!agendaOpen ? (
         <>
+        <View style={styles.pagerHost}>
         <ScrollView
           ref={pagerRef}
           horizontal
@@ -463,10 +506,46 @@ export function EventsInboxHome() {
             </View>
           </View>
         </ScrollView>
+        {flippingToAvisos ? (
+          <BookFlipTransition
+            from={
+              <View style={[styles.page, pageSizeStyle]}>
+                <View style={styles.inboxSection}>
+                  <KnowledgeSectionTitle
+                    title="Proximos Eventos"
+                    routeKey={KNOWLEDGE_ROUTE.home}
+                    titleStyle={styles.sectionTitle}
+                    leftSlot={
+                      <HomeBirthdayTag
+                        aniversariantes={aniversariantes}
+                        casais={casaisAniversario}
+                        canCopy={birthdayCanCopy}
+                      />
+                    }
+                  />
+                  <InboxList
+                    items={inboxItems}
+                    emptyMessage="Nenhum evento disponível no momento."
+                    onItemPress={handleItemPress}
+                    fillAvailable
+                  />
+                </View>
+              </View>
+            }
+            onDone={finishFlipToAvisos}
+          />
+        ) : null}
+        </View>
         <View style={styles.pagerNavDock}>
           <HomeInboxPagerNav
             variant={pagerIndex === 0 ? 'toAvisos' : 'toEventos'}
-            onPress={() => scrollToPage(pagerIndex === 0 ? 1 : 0)}
+            onPress={() => {
+              if (pagerIndex === 0) {
+                openAvisos();
+                return;
+              }
+              scrollToPage(0);
+            }}
           />
         </View>
         </>
@@ -487,6 +566,12 @@ const styles = StyleSheet.create({
     alignSelf: 'stretch',
     backgroundColor: MINIMAL_UI.background,
     overflow: 'hidden',
+  },
+  pagerHost: {
+    flex: 1,
+    minHeight: 0,
+    width: '100%',
+    position: 'relative',
   },
   pager: {
     flex: 1,
