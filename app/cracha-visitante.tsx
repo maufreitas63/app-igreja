@@ -1,6 +1,7 @@
 import { useEntityPrefix } from '@/context/EntityPrefixContext';
 import { formatFamilyCodeShortDisplay, normalizeFamilyCode } from '@/lib/family';
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
+import { usePreAuthScreenPresence } from '@/hooks/usePreAuthScreenPresence';
 import { useLocalSearchParams } from 'expo-router';
 import React, { useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
@@ -11,6 +12,7 @@ import QRCode from 'react-native-qrcode-svg';
  * Query: ?c=CODIGO_FAMILIA
  */
 export default function CrachaVisitanteScreen() {
+  usePreAuthScreenPresence();
   const { prefix: entityPrefix } = useEntityPrefix();
   const params = useLocalSearchParams<{ c?: string | string[] }>();
   const raw = Array.isArray(params.c) ? params.c[0] : params.c;

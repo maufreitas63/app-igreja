@@ -1,4 +1,5 @@
 import { Image } from 'expo-image';
+import { usePreAuthScreenPresence } from '@/hooks/usePreAuthScreenPresence';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import type { Href } from 'expo-router';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
@@ -88,6 +89,7 @@ function ReadOnlyText({
 }
 
 export default function IndexScreen() {
+  usePreAuthScreenPresence();
   const {
     [SIGN_OUT_QUERY_PARAM]: signedOutParam,
     phone: phoneParam,

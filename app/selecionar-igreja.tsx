@@ -6,6 +6,7 @@ import {
   type SessionIgreja,
 } from '@/lib/tenantSession';
 import { resolveRegisteredUserLoginRoute } from '@/lib/profileOnboarding';
+import { usePreAuthScreenPresence } from '@/hooks/usePreAuthScreenPresence';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
@@ -18,6 +19,7 @@ import {
 import Toast from 'react-native-toast-message';
 
 export default function SelecionarIgrejaScreen() {
+  usePreAuthScreenPresence();
   const router = useRouter();
   const params = useLocalSearchParams<{ phone?: string }>();
   const phone =

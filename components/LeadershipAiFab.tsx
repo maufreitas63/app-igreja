@@ -1,12 +1,17 @@
 import { AiAssistantChatPanel } from '@/components/AiAssistantChatPanel';
 import { CloseFooterBar } from '@/components/minimal/CloseFooterBar';
 import { useSessionCanUseAiAssistant } from '@/hooks/useSessionIsLeadership';
+import {
+  isAbigailFabRouteAllowed,
+  isPreAuthScreenFocused,
+  subscribePreAuthScreenFocused,
+} from '@/lib/abigailFabVisibility';
 import { ABIGAIL_NAME } from '@/lib/abigailPersona';
 import { sessionCanUseAiAssistant } from '@/lib/aiLeadershipAccess';
 import { boxShadowStyle } from '@/lib/boxShadow';
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { MaterialIcons } from '@expo/vector-icons';
-import { useFocusEffect } from 'expo-router';
+import { useFocusEffect, usePathname, useSegments } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import {
@@ -127,10 +132,27 @@ function measureFloatingBottom(safeBottom: number): number {
 }
 
 export function LeadershipAiFab() {
-  const { allowed, refresh } = useSessionCanUseAiAssistant();
+  const pathname = usePathname();
+  const segments = useSegments();
+  const [preAuthFocused, setPreAuthFocused] = useState(() => isPreAuthScreenFocused());
+  const routeAllowed = !preAuthFocused && isAbigailFabRouteAllowed(pathname, segments);
+  const { allowed, refresh } = useSessionCanUseAiAssistant(routeAllowed);
   const [open, setOpen] = useState(false);
   const [chatKey, setChatKey] = useState(0);
   const [bottom, setBottom] = useState(FAB_MARGIN);
+
+  useEffect(() => {
+    setPreAuthFocused(isPreAuthScreenFocused());
+    return subscribePreAuthScreenFocused(() => {
+      setPreAuthFocused(isPreAuthScreenFocused());
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!routeAllowed) {
+      setOpen(false);
+    }
+  }, [routeAllowed]);
 
   useFocusEffect(
     useCallback(() => {
@@ -156,7 +178,7 @@ export function LeadershipAiFab() {
   };
 
   useEffect(() => {
-    if (Platform.OS !== 'web' || typeof document === 'undefined' || !allowed) {
+    if (Platform.OS !== 'web' || typeof document === 'undefined' || !allowed || !routeAllowed) {
       return;
     }
 
@@ -204,7 +226,7 @@ export function LeadershipAiFab() {
       window.visualViewport?.removeEventListener('scroll', measure);
       probe.remove();
     };
-  }, [allowed]);
+  }, [allowed, routeAllowed]);
 
   useEffect(() => {
     if (Platform.OS !== 'web' || !open || typeof document === 'undefined') {
@@ -228,7 +250,7 @@ export function LeadershipAiFab() {
     };
   }, [open]);
 
-  if (!allowed) {
+  if (!allowed || !routeAllowed) {
     return null;
   }
 

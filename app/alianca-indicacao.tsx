@@ -8,6 +8,7 @@ import {
   View,
 } from 'react-native';
 import React, { useEffect, useMemo, useState } from 'react';
+import { usePreAuthScreenPresence } from '@/hooks/usePreAuthScreenPresence';
 import { useLocalSearchParams } from 'expo-router';
 import { formatCep, lookupViaCep } from '@/lib/cepUtils';
 import { formatBrazilCepInput, formatBrazilPhoneInput } from '@/lib/inputMasks';
@@ -26,6 +27,7 @@ function asRecord(value: unknown): Record<string, unknown> | null {
 }
 
 export default function AliancaIndicacaoScreen() {
+  usePreAuthScreenPresence();
   const params = useLocalSearchParams<{
     igreja?: string | string[];
     responsavel?: string | string[];

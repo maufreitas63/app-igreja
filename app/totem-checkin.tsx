@@ -23,6 +23,7 @@ import { supabase } from '@/lib/supabase';
 import { isTotemDeviceSession } from '@/lib/totemDevice';
 import { getWebCameraProbe, requestWebCameraForTotem } from '@/lib/totemWebCamera';
 import { Camera, CameraView, useCameraPermissions } from 'expo-camera';
+import { usePreAuthScreenPresence } from '@/hooks/usePreAuthScreenPresence';
 import { useFocusEffect, useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -81,6 +82,7 @@ const isWebTotem = Platform.OS === 'web';
 const cameraViewAvailable = typeof CameraView === 'function';
 
 export default function TotemCheckinScreen() {
+  usePreAuthScreenPresence();
   const exitSessionUi = useExitSessionUi();
   const router = useRouter();
   const accessStatus = useLeadershipRouteGuard({

@@ -9,6 +9,7 @@ import { VIGILANCE_SCALES_UI } from '@/lib/dashboardCardThemes';
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { clearUserSession } from '@/lib/userSession';
 import { FontAwesome } from '@expo/vector-icons';
+import { usePreAuthScreenPresence } from '@/hooks/usePreAuthScreenPresence';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import type { Href } from 'expo-router';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
@@ -60,6 +61,7 @@ const buildLoginRouteAfterRecovery = (phoneValue: string, emailMasked?: string) 
 };
 
 export default function ForgotPasswordScreen() {
+  usePreAuthScreenPresence();
   const router = useRouter();
   const params = useLocalSearchParams<{ phone?: string }>();
   const initialPhone =

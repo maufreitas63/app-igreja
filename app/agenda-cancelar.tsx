@@ -4,6 +4,7 @@ import {
   eventoAgendaFromCancelParams,
 } from '@/lib/calendarIcs';
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
+import { usePreAuthScreenPresence } from '@/hooks/usePreAuthScreenPresence';
 import { useLocalSearchParams } from 'expo-router';
 import * as Linking from 'expo-linking';
 import React, { useEffect, useMemo } from 'react';
@@ -19,6 +20,7 @@ function firstParam(value: string | string[] | undefined) {
 }
 
 export default function AgendaCancelarScreen() {
+  usePreAuthScreenPresence();
   const params = useLocalSearchParams<{
     uid?: string | string[];
     start?: string | string[];

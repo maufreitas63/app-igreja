@@ -1,5 +1,6 @@
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { FontAwesome } from '@expo/vector-icons';
+import { usePreAuthScreenPresence } from '@/hooks/usePreAuthScreenPresence';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
 import {
@@ -73,6 +74,7 @@ function readPhoneRouteParam(raw: string | string[] | undefined): string {
 }
 
 export default function RegisterScreen() {
+  usePreAuthScreenPresence();
   const params = useLocalSearchParams();
   const phoneValue = readPhoneRouteParam(params.phone as string | string[] | undefined);
   useRejectTotemPhoneFromMemberRoutes(phoneValue);

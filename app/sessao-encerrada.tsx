@@ -1,11 +1,13 @@
 import { Image } from 'expo-image';
 import { PWA_SIGNED_OUT_ROUTE, SIGN_OUT_QUERY_PARAM } from '@/lib/userSession';
+import { usePreAuthScreenPresence } from '@/hooks/usePreAuthScreenPresence';
 import { useRouter } from 'expo-router';
 import React, { useEffect } from 'react';
 import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 
 /** Tela neutra após sair do app quando o sistema não permite fechar a janela. */
 export default function SessaoEncerradaScreen() {
+  usePreAuthScreenPresence();
   const router = useRouter();
 
   useEffect(() => {

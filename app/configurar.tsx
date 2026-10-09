@@ -3,6 +3,7 @@ import {
   persistPreferredIgrejaCode,
 } from '@/lib/tenantSession';
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
+import { usePreAuthScreenPresence } from '@/hooks/usePreAuthScreenPresence';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
@@ -13,6 +14,7 @@ import { ActivityIndicator, StyleSheet, View } from 'react-native';
  * Captura o código e envia para a tela de login.
  */
 export default function ConfigurarInstanciaScreen() {
+  usePreAuthScreenPresence();
   const router = useRouter();
   const { codigo, igreja, code } = useLocalSearchParams<{
     codigo?: string | string[];
