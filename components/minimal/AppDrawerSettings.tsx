@@ -1,5 +1,4 @@
 import { CloseFooterBar } from '@/components/minimal/CloseFooterBar';
-import { APP_DRAWER_SETTINGS_GROUPS } from '@/lib/appDrawerMenu';
 import { MINIMAL_ICON, MINIMAL_TYPO, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { traceClick } from '@/lib/devClickTrace';
 import { FontAwesome } from '@expo/vector-icons';
@@ -146,6 +145,55 @@ function TrailGroup({
   );
 }
 
+const TRAIL_AFTER_MODULE = 'small_groups_management';
+const TRAIL_BEFORE_MODULE = 'pastoral_care';
+
+function trailInsertIndex(items: AppDrawerSettingsRow[]) {
+  const afterGroups = items.findIndex((item) => item.id === TRAIL_AFTER_MODULE);
+  if (afterGroups >= 0) {
+    return afterGroups + 1;
+  }
+  const beforePastoral = items.findIndex((item) => item.id === TRAIL_BEFORE_MODULE);
+  if (beforePastoral >= 0) {
+    return beforePastoral;
+  }
+  return items.length;
+}
+
+function SectionRows({
+  section,
+  trail,
+}: {
+  section: AppDrawerSettingsSection;
+  trail: React.ReactNode;
+}) {
+  if (section.id !== 'pessoas' || !trail) {
+    return (
+      <>
+        {section.items.map((item) => (
+          <SettingsRowView key={item.id} item={item} />
+        ))}
+      </>
+    );
+  }
+
+  const insertAt = trailInsertIndex(section.items);
+  const before = section.items.slice(0, insertAt);
+  const after = section.items.slice(insertAt);
+
+  return (
+    <>
+      {before.map((item) => (
+        <SettingsRowView key={item.id} item={item} />
+      ))}
+      {trail}
+      {after.map((item) => (
+        <SettingsRowView key={item.id} item={item} />
+      ))}
+    </>
+  );
+}
+
 export function AppDrawerSettings({
   onClose,
   sections,
@@ -160,18 +208,18 @@ export function AppDrawerSettings({
   const showTrailGroup = trailItems.length > 0;
 
   const visibleSections = useMemo(
-    () => sections.filter((section) => section.items.length > 0),
-    [sections]
+    () =>
+      sections.filter(
+        (section) => section.items.length > 0 || (section.id === 'pessoas' && showTrailGroup)
+      ),
+    [sections, showTrailGroup]
   );
-
-  const trailOnlyTitle =
-    APP_DRAWER_SETTINGS_GROUPS.find((group) => group.id === 'governanca')?.title ?? 'Governança e TI';
 
   const toggleSection = (sectionId: string) => {
     setExpandedSectionId((current) => {
       const next = current === sectionId ? null : sectionId;
       traceClick('drawer-settings', 'section-toggle', { id: sectionId, open: next === sectionId });
-      if (next !== 'governanca') {
+      if (next !== 'pessoas') {
         setTrailMenuOpen(false);
       }
       return next;
@@ -230,63 +278,23 @@ export function AppDrawerSettings({
                 />
               </Pressable>
               {expanded ? (
-                <>
-                  {section.id === 'governanca' ? (
-                    <>
-                      {section.items
-                        .filter((item) => item.id !== 'menu_billing' && item.id !== 'menu_alianca')
-                        .map((item) => (
-                          <SettingsRowView key={item.id} item={item} />
-                        ))}
-                      {showTrailGroup ? (
-                        <TrailGroup
-                          items={trailItems}
-                          open={trailMenuOpen}
-                          onToggle={() => setTrailMenuOpen((open) => !open)}
-                        />
-                      ) : null}
-                      {section.items
-                        .filter((item) => item.id === 'menu_billing' || item.id === 'menu_alianca')
-                        .map((item) => (
-                          <SettingsRowView key={item.id} item={item} />
-                        ))}
-                    </>
-                  ) : (
-                    section.items.map((item) => (
-                      <SettingsRowView key={item.id} item={item} />
-                    ))
-                  )}
-                </>
+                <SectionRows
+                  section={section}
+                  trail={
+                    section.id === 'pessoas' && showTrailGroup ? (
+                      <TrailGroup
+                        items={trailItems}
+                        open={trailMenuOpen}
+                        onToggle={() => setTrailMenuOpen((open) => !open)}
+                      />
+                    ) : null
+                  }
+                />
               ) : null}
             </View>
           );
         })}
 
-        {showTrailGroup && !visibleSections.some((section) => section.id === 'governanca') ? (
-          <View style={styles.section}>
-            <Pressable
-              onPress={() => toggleSection('governanca')}
-              accessibilityRole="button"
-              accessibilityState={{ expanded: expandedSectionId === 'governanca' }}
-              accessibilityLabel={trailOnlyTitle}
-              style={({ pressed }) => [styles.sectionHeader, pressed && styles.sectionHeaderPressed]}
-            >
-              <Text style={styles.sectionTitle}>{trailOnlyTitle}</Text>
-              <FontAwesome
-                name={expandedSectionId === 'governanca' ? 'chevron-down' : 'chevron-right'}
-                size={12}
-                color={MINIMAL_UI.onDark}
-              />
-            </Pressable>
-            {expandedSectionId === 'governanca' ? (
-              <TrailGroup
-                items={trailItems}
-                open={trailMenuOpen}
-                onToggle={() => setTrailMenuOpen((open) => !open)}
-              />
-            ) : null}
-          </View>
-        ) : null}
       </ScrollView>
 
       {pinnedItem ? (

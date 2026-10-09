@@ -153,18 +153,18 @@ export const APP_DRAWER_SETTINGS_ITEMS: AppDrawerSettingsItem[] = [
     hint: 'Nomes afetivos e atribuição de membros',
   },
   {
+    letter: 'p10',
+    label: 'Livros doados',
+    moduleKey: 'menu_livros',
+    group: 'operacao',
+    hint: 'Acervo com busca ISBN e cadastro manual',
+  },
+  {
     letter: 's2',
     label: 'Totem de check-in',
     moduleKey: 'menu_totem',
     group: 'operacao',
     hint: 'Leitor de QR no hall',
-  },
-  {
-    letter: 's3',
-    label: 'Autorização de imagem e voz',
-    moduleKey: 'menu_autorizacao_midia',
-    group: 'operacao',
-    hint: 'Termos LGPD e confirmação por e-mail',
   },
   {
     letter: 'p0',
@@ -187,17 +187,17 @@ export const APP_DRAWER_SETTINGS_ITEMS: AppDrawerSettingsItem[] = [
     hint: 'D+1 WhatsApp, D+4 célula, D+8 culto — após a Recepção Familiar',
   },
   {
+    letter: 'p1a',
+    label: 'Cadastro de Usuário',
+    moduleKey: 'profile_cadastro',
+    group: 'pessoas',
+  },
+  {
     letter: 'p1',
     label: 'Lista de Membros',
     moduleKey: 'menu_membros',
     group: 'pessoas',
     hint: 'Diretório da comunidade',
-  },
-  {
-    letter: 'p1a',
-    label: 'Cadastro de Usuário',
-    moduleKey: 'profile_cadastro',
-    group: 'pessoas',
   },
   {
     letter: 'p1b',
@@ -220,17 +220,38 @@ export const APP_DRAWER_SETTINGS_ITEMS: AppDrawerSettingsItem[] = [
     group: 'pessoas',
   },
   {
+    letter: 'p5',
+    label: 'Gestão de Pequenos Grupos',
+    moduleKey: 'small_groups_management',
+    group: 'pessoas',
+  },
+  {
+    letter: 'g1',
+    label: 'Temas da Trilha',
+    moduleKey: 'discipleship_themes',
+    group: 'pessoas',
+    hint: 'Textos, vídeos e reflexões dos passos',
+  },
+  {
+    letter: 'g2',
+    label: 'Trilha — Reconhecimentos',
+    moduleKey: 'discipleship_alerts',
+    group: 'pessoas',
+    hint: 'Alunos 100% prontos para certificado',
+  },
+  {
+    letter: 'g3',
+    label: 'Resetar Trilha',
+    moduleKey: 'discipleship_reset',
+    group: 'pessoas',
+    hint: 'Reiniciar progresso de um usuário nesta igreja',
+  },
+  {
     letter: 'p4',
     label: 'Cuidados Pastorais',
     moduleKey: 'pastoral_care',
     group: 'pessoas',
     hint: 'Fila e slots',
-  },
-  {
-    letter: 'p5',
-    label: 'Gestão de Pequenos Grupos',
-    moduleKey: 'small_groups_management',
-    group: 'pessoas',
   },
   {
     letter: 'p6',
@@ -243,21 +264,7 @@ export const APP_DRAWER_SETTINGS_ITEMS: AppDrawerSettingsItem[] = [
     label: 'Moderação do Mural',
     moduleKey: 'generosity_moderation',
     group: 'pessoas',
-    hint: 'Doações e pedidos de empréstimo',
-  },
-  {
-    letter: 'p9',
-    label: 'Administrativo',
-    moduleKey: 'menu_administrativo',
-    group: 'pessoas',
-    hint: 'Atos constitutivos',
-  },
-  {
-    letter: 'p10',
-    label: 'Livros doados',
-    moduleKey: 'menu_livros',
-    group: 'pessoas',
-    hint: 'Acervo com busca ISBN e cadastro manual',
+    hint: 'Doações e pedidos de empréstimo do Mural de Generosidade',
   },
   {
     letter: 'c1',
@@ -269,19 +276,6 @@ export const APP_DRAWER_SETTINGS_ITEMS: AppDrawerSettingsItem[] = [
     letter: 'c2',
     label: 'Cronograma de Eventos',
     moduleKey: 'Event_gantt',
-    group: 'culto',
-  },
-  {
-    letter: 'c3',
-    label: 'Manutenção de Avisos',
-    moduleKey: 'event_orchestration',
-    group: 'culto',
-    hint: 'Comunicados da home',
-  },
-  {
-    letter: 'c4',
-    label: 'Sala(s) - Check In',
-    moduleKey: 'sala_servidor',
     group: 'culto',
   },
   {
@@ -303,17 +297,23 @@ export const APP_DRAWER_SETTINGS_ITEMS: AppDrawerSettingsItem[] = [
     group: 'culto',
   },
   {
+    letter: 'c3',
+    label: 'Manutenção de Avisos',
+    moduleKey: 'event_orchestration',
+    group: 'culto',
+    hint: 'Comunicados da home',
+  },
+  {
+    letter: 'c4',
+    label: 'Sala(s) - Check In',
+    moduleKey: 'sala_servidor',
+    group: 'culto',
+  },
+  {
     letter: 'c8',
     label: 'Presença',
     moduleKey: 'quorum_presence',
     group: 'culto',
-  },
-  {
-    letter: 'f1',
-    label: 'Informações Financeiras',
-    moduleKey: 'financials',
-    group: 'financas',
-    hint: 'Extratos, RD e orçamento',
   },
   {
     letter: 'f2',
@@ -329,31 +329,17 @@ export const APP_DRAWER_SETTINGS_ITEMS: AppDrawerSettingsItem[] = [
     hint: 'Itens em espécie da campanha',
   },
   {
+    letter: 'f1',
+    label: 'Informações Financeiras',
+    moduleKey: 'financials',
+    group: 'financas',
+    hint: 'Extratos, RD e orçamento',
+  },
+  {
     letter: 'f3',
     label: 'Modelo Preditivo',
     moduleKey: 'predictive_insights',
     group: 'financas',
-  },
-  {
-    letter: 'g1',
-    label: 'Temas da Trilha',
-    moduleKey: 'discipleship_themes',
-    group: 'governanca',
-    hint: 'Textos, vídeos e reflexões dos passos',
-  },
-  {
-    letter: 'g2',
-    label: 'Trilha — Reconhecimentos',
-    moduleKey: 'discipleship_alerts',
-    group: 'governanca',
-    hint: 'Alunos 100% prontos para certificado',
-  },
-  {
-    letter: 'g3',
-    label: 'Resetar Trilha',
-    moduleKey: 'discipleship_reset',
-    group: 'governanca',
-    hint: 'Reiniciar progresso de um usuário nesta igreja',
   },
   {
     letter: 'g0',
@@ -370,6 +356,13 @@ export const APP_DRAWER_SETTINGS_ITEMS: AppDrawerSettingsItem[] = [
     hint: 'Editar artigos da ajuda in-app',
   },
   {
+    letter: 'p9',
+    label: 'Administrativo',
+    moduleKey: 'menu_administrativo',
+    group: 'governanca',
+    hint: 'Atos constitutivos',
+  },
+  {
     letter: 'g4',
     label: 'Relatórios',
     moduleKey: 'relatorios',
@@ -380,6 +373,13 @@ export const APP_DRAWER_SETTINGS_ITEMS: AppDrawerSettingsItem[] = [
     label: 'Controle de Acesso',
     moduleKey: 'access_control',
     group: 'governanca',
+  },
+  {
+    letter: 's3',
+    label: 'Autorização de imagem e voz',
+    moduleKey: 'menu_autorizacao_midia',
+    group: 'governanca',
+    hint: 'Termos LGPD e confirmação por e-mail',
   },
   {
     letter: 'g6',
@@ -404,6 +404,13 @@ export const APP_DRAWER_SETTINGS_ITEMS: AppDrawerSettingsItem[] = [
     label: 'Modo Ghost',
     moduleKey: 'auditor',
     group: 'governanca',
+  },
+  {
+    letter: 'g12',
+    label: 'Chave Gemini',
+    moduleKey: 'ai_assistant',
+    group: 'governanca',
+    hint: 'API da Abigail — somente Super Administrador',
   },
   {
     letter: 'g10',
@@ -432,13 +439,6 @@ export const APP_DRAWER_SETTINGS_ITEMS: AppDrawerSettingsItem[] = [
     moduleKey: 'menu_igrejas',
     group: 'governanca',
     hint: 'Criar e alternar ambientes de igreja',
-  },
-  {
-    letter: 'g12',
-    label: 'Chave Gemini',
-    moduleKey: 'ai_assistant',
-    group: 'governanca',
-    hint: 'API da Abigail — somente Super Administrador',
   },
 ];
 
