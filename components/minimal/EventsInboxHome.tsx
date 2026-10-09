@@ -37,7 +37,9 @@ import { loadBirthdaysClassData } from '@/lib/birthdaysClassData';
 import type { BirthdaysClassEntry } from '@/lib/birthdaysClassTypes';
 import { isBirthdayToday } from '@/lib/birthdaysClassUtils';
 import { loadWeddingAnniversariesToday, type WeddingAnniversaryCouple } from '@/lib/weddingAnniversaryData';
+import { isHomePageFlipEnabled } from '@/lib/appParameters';
 import { MINIMAL_SECTION_TITLE, MINIMAL_TYPO, MINIMAL_UI } from '@/lib/minimalUiTheme';
+import { subscribeActiveTenantChange } from '@/lib/tenantSession';
 import { useActiveEvents } from '@/hooks/useActiveEvents';
 import { supabase } from '@/lib/supabase';
 import { useLocalSearchParams } from 'expo-router';
@@ -65,6 +67,7 @@ export function EventsInboxHome() {
   const [pageHeight, setPageHeight] = useState(0);
   const [pagerIndex, setPagerIndex] = useState(0);
   const [flipDirection, setFlipDirection] = useState<'forward' | 'back' | null>(null);
+  const [pageFlipEnabled, setPageFlipEnabled] = useState(false);
   const [reduceMotion, setReduceMotion] = useState(false);
   const [avisos, setAvisos] = useState<EventAvisoRow[]>([]);
   const [pastoralNotices, setPastoralNotices] = useState<PastoralSlotNotice[]>([]);
@@ -277,6 +280,39 @@ export function EventsInboxHome() {
     };
   }, []);
 
+  useEffect(() => {
+    let alive = true;
+
+    const load = () => {
+      void isHomePageFlipEnabled()
+        .then((enabled) => {
+          if (!alive) {
+            return;
+          }
+          setPageFlipEnabled(enabled);
+          if (!enabled) {
+            setFlipDirection(null);
+          }
+        })
+        .catch(() => {
+          if (alive) {
+            setPageFlipEnabled(false);
+            setFlipDirection(null);
+          }
+        });
+    };
+
+    load();
+    const unsubscribe = subscribeActiveTenantChange(() => {
+      load();
+    });
+
+    return () => {
+      alive = false;
+      unsubscribe();
+    };
+  }, []);
+
   const finishFlip = useCallback(() => {
     const next = flipDirection === 'back' ? 0 : 1;
     pagerRef.current?.scrollTo({ x: next * resolvedPageWidth, animated: false });
@@ -290,13 +326,13 @@ export function EventsInboxHome() {
         return;
       }
       const next = direction === 'back' ? 0 : 1;
-      if (reduceMotion || resolvedPageWidth <= 0 || pageHeight <= 0) {
+      if (!pageFlipEnabled || reduceMotion || resolvedPageWidth <= 0 || pageHeight <= 0) {
         scrollToPage(next);
         return;
       }
       setFlipDirection(direction);
     },
-    [flipDirection, pageHeight, reduceMotion, resolvedPageWidth, scrollToPage]
+    [flipDirection, pageFlipEnabled, pageHeight, reduceMotion, resolvedPageWidth, scrollToPage]
   );
 
   const handlePagerScrollEnd = useCallback(
@@ -511,7 +547,7 @@ export function EventsInboxHome() {
           {renderEventsSheet()}
           {renderAvisosSheet()}
         </ScrollView>
-        {flipDirection ? (
+        {pageFlipEnabled && flipDirection ? (
           <BookFlipTransition
             direction={flipDirection}
             pageWidth={resolvedPageWidth}

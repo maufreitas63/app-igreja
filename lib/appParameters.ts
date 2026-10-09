@@ -5,6 +5,8 @@ import { isSupabaseRpcMissing } from '@/lib/supabaseRpc';
 
 export const EXIBIR_NOMES_TECNICOS_PARAMETER = 'Exibir_nomes_tecnicos';
 export const LGPD_ATIVO_PARAMETER = 'LGPD_Ativo';
+/** Virada de página na home. Ausente ou diferente de `sim` mantém a troca estática. */
+export const PAGE_FLIP_PARAMETER = 'Page_Flip';
 
 export const SALVAR_APP_PARAMETER_ADMIN_SQL_HINT =
   'Execute no Supabase: scripts/salvar-app-parameter-admin.sql';
@@ -137,6 +139,11 @@ export function isProfileLgpdPending(
 export async function isLgpdAtivoEnabled() {
   const value = await getAppParameterValue(LGPD_ATIVO_PARAMETER);
   return resolveLgpdAtivoFromParameter(value);
+}
+
+export async function isHomePageFlipEnabled() {
+  const value = await getAppParameterValue(PAGE_FLIP_PARAMETER);
+  return isAppParameterSim(value);
 }
 
 function parseRpcJsonPayload(data: unknown): Record<string, unknown> {
