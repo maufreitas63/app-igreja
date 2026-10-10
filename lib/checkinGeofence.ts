@@ -1,5 +1,8 @@
-/** Raio padrão do geofence (metros) — espelha `geo_checkin_radius_meters()` no Supabase. */
-export const GEOFENCE_RADIUS_METERS = 30;
+/** Raio padrão do geofence do evento (metros), quando o local favorito não informa outro. */
+export const DEFAULT_EVENT_GEOFENCE_RADIUS_METERS = 150;
+
+/** Raio legado usado só quando o chamador não informa a distância do local. */
+export const GEOFENCE_RADIUS_METERS = DEFAULT_EVENT_GEOFENCE_RADIUS_METERS;
 
 /** Leituras GPS consecutivas dentro do raio antes de disparar o check-in. */
 export const REQUIRED_CONSECUTIVE_GPS_READINGS = 3;

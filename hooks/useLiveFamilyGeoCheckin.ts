@@ -6,7 +6,7 @@ import {
   isEventWithinGeofenceCheckinWindow,
   parseGeofenceHoursBeforeParameter,
 } from '@/lib/checkInVisibility';
-import { parseGeofenceRadiusMeters } from '@/lib/checkinGeofence';
+import { DEFAULT_EVENT_GEOFENCE_RADIUS_METERS } from '@/lib/checkinGeofence';
 import {
   fetchFamilyHasEventAudience,
   fetchFamilyHasGeoCheckinConfirmed,
@@ -28,7 +28,6 @@ export function useLiveFamilyGeoCheckin(options: {
 }) {
   const { events, preferredEventId, familyId, onNeedsAudience, onConfirmed } = options;
   const [geoCheckinTempoValue, setGeoCheckinTempoValue] = useState<string | null>(null);
-  const [geoCheckinRaioValue, setGeoCheckinRaioValue] = useState<string | null>(null);
   const [hasFamilyPreCheckin, setHasFamilyPreCheckin] = useState(false);
   const [hasFamilyGeoCheckinConfirmed, setHasFamilyGeoCheckinConfirmed] = useState(false);
 
@@ -37,22 +36,17 @@ export function useLiveFamilyGeoCheckin(options: {
 
     void (async () => {
       try {
-        const [tempo, raio] = await Promise.all([
-          getAppParameterValue(APP_PARAMETER.CHECK_IN_GEOFENCE_TEMPO),
-          getAppParameterValue(APP_PARAMETER.CHECK_IN_GEOFENCE_RAIO_METROS),
-        ]);
+        const tempo = await getAppParameterValue(APP_PARAMETER.CHECK_IN_GEOFENCE_TEMPO);
 
         if (cancelled) {
           return;
         }
 
         setGeoCheckinTempoValue(tempo?.trim() || null);
-        setGeoCheckinRaioValue(raio?.trim() || null);
       } catch (error) {
         console.warn('Parâmetros de geofence:', error);
         if (!cancelled) {
           setGeoCheckinTempoValue(null);
-          setGeoCheckinRaioValue(null);
         }
       }
     })();
@@ -65,11 +59,6 @@ export function useLiveFamilyGeoCheckin(options: {
   const geoCheckinHoursBefore = useMemo(
     () => parseGeofenceHoursBeforeParameter(geoCheckinTempoValue),
     [geoCheckinTempoValue]
-  );
-
-  const geoCheckinRadiusMeters = useMemo(
-    () => parseGeofenceRadiusMeters(geoCheckinRaioValue),
-    [geoCheckinRaioValue]
   );
 
   const targetEvent = useMemo(() => {
@@ -94,12 +83,15 @@ export function useLiveFamilyGeoCheckin(options: {
 
   const {
     coordinates: eventGeofenceCoordinates,
+    radiusMeters: eventGeofenceRadiusMeters,
     loading: eventGeofenceLoading,
     error: eventGeofenceError,
   } = useEventGeofenceCoordinates(
     targetEvent?.event_local,
     geoCheckinAtivoEnabled && Boolean(targetEvent?.event_local?.trim())
   );
+
+  const geoCheckinRadiusMeters = eventGeofenceRadiusMeters ?? DEFAULT_EVENT_GEOFENCE_RADIUS_METERS;
 
   const geoCheckinEvent = useMemo(
     () =>

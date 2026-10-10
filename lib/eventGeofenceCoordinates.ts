@@ -1,5 +1,8 @@
 import type { EventFavoriteLocation } from '@/lib/eventFavoriteLocationsApi';
-import type { GeoCoordinates } from '@/lib/checkinGeofence';
+import {
+  DEFAULT_EVENT_GEOFENCE_RADIUS_METERS,
+  type GeoCoordinates,
+} from '@/lib/checkinGeofence';
 import { normalizeLocationKey } from '@/lib/locationKey';
 
 const hasValidCoordinates = (location: Pick<EventFavoriteLocation, 'latitude' | 'longitude'>) => {
@@ -14,13 +17,21 @@ const hasValidCoordinates = (location: Pick<EventFavoriteLocation, 'latitude' | 
   );
 };
 
+export type EventGeofenceMatch = {
+  coordinates: GeoCoordinates;
+  radiusMeters: number;
+};
+
 /** Vincula `events.event_local` ao registro em `event_favorite_locations.name`. */
-export const resolveEventGeofenceCoordinates = (
+export const resolveEventGeofence = (
   eventLocal: string | null | undefined,
   locations: ReadonlyArray<
-    Pick<EventFavoriteLocation, 'name' | 'latitude' | 'longitude' | 'is_active' | 'sort_order'>
+    Pick<
+      EventFavoriteLocation,
+      'name' | 'latitude' | 'longitude' | 'is_active' | 'sort_order' | 'geofence_radius_meters'
+    >
   >
-): GeoCoordinates | null => {
+): EventGeofenceMatch | null => {
   const key = normalizeLocationKey(eventLocal);
 
   if (!key) {
@@ -45,8 +56,26 @@ export const resolveEventGeofenceCoordinates = (
     return null;
   }
 
+  const radius = match.geofence_radius_meters;
+
   return {
-    latitude: match.latitude,
-    longitude: match.longitude,
+    coordinates: {
+      latitude: match.latitude,
+      longitude: match.longitude,
+    },
+    radiusMeters:
+      typeof radius === 'number' && Number.isFinite(radius) && radius > 0
+        ? radius
+        : DEFAULT_EVENT_GEOFENCE_RADIUS_METERS,
   };
 };
+
+export const resolveEventGeofenceCoordinates = (
+  eventLocal: string | null | undefined,
+  locations: ReadonlyArray<
+    Pick<
+      EventFavoriteLocation,
+      'name' | 'latitude' | 'longitude' | 'is_active' | 'sort_order' | 'geofence_radius_meters'
+    >
+  >
+): GeoCoordinates | null => resolveEventGeofence(eventLocal, locations)?.coordinates ?? null;

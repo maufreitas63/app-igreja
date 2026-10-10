@@ -9,6 +9,7 @@ export type EventFavoriteLocation = {
   longitude: number | null;
   capacity: number;
   sort_order: number;
+  geofence_radius_meters: number;
   is_active: boolean;
 };
 
@@ -20,6 +21,7 @@ export type EventFavoriteLocationInput = {
   longitude: number | null;
   capacity: number;
   sort_order: number;
+  geofence_radius_meters: number;
   is_active: boolean;
 };
 
@@ -30,6 +32,9 @@ export const EVENT_FAVORITE_LOCATIONS_CEP_SQL_HINT =
   'Execute scripts/event-favorite-locations-cep.sql no Supabase para habilitar o campo CEP nos locais favoritos.';
 
 const FAVORITE_LOCATION_COLUMNS =
+  'id, name, cep, address, latitude, longitude, capacity, sort_order, geofence_radius_meters, is_active';
+
+const FAVORITE_LOCATION_COLUMNS_WITHOUT_RADIUS =
   'id, name, cep, address, latitude, longitude, capacity, sort_order, is_active';
 
 const isMissingFavoriteLocationsTableError = (error: { code?: string; message?: string } | null) => {
@@ -57,11 +62,41 @@ export const isMissingFavoriteLocationsCepColumnError = (
   const message = (error.message ?? '').toLowerCase();
 
   return (
-    error.code === 'PGRST204'
-    || (message.includes('cep') && message.includes('event_favorite_locations'))
-    || (message.includes('column') && message.includes('cep') && message.includes('does not exist'))
+    message.includes('cep')
+    && (
+      error.code === 'PGRST204'
+      || message.includes('event_favorite_locations')
+      || message.includes('does not exist')
+    )
   );
 };
+
+const isMissingFavoriteLocationsRadiusColumnError = (
+  error: { code?: string; message?: string } | null
+) => {
+  if (!error) {
+    return false;
+  }
+
+  const message = (error.message ?? '').toLowerCase();
+
+  return (
+    error.code === 'PGRST204'
+    && message.includes('geofence_radius_meters')
+  );
+};
+
+const withDefaultRadius = (
+  row: Omit<EventFavoriteLocation, 'geofence_radius_meters'> & {
+    geofence_radius_meters?: number | null;
+  }
+): EventFavoriteLocation => ({
+  ...row,
+  geofence_radius_meters:
+    typeof row.geofence_radius_meters === 'number' && row.geofence_radius_meters > 0
+      ? row.geofence_radius_meters
+      : 150,
+});
 
 const normalizePayload = (input: EventFavoriteLocationInput) => ({
   name: input.name.trim(),
@@ -71,6 +106,7 @@ const normalizePayload = (input: EventFavoriteLocationInput) => ({
   longitude: input.longitude,
   capacity: input.capacity,
   sort_order: input.sort_order,
+  geofence_radius_meters: input.geofence_radius_meters,
   is_active: input.is_active,
 });
 
@@ -90,6 +126,26 @@ export const fetchEventFavoriteLocations = async (): Promise<{
       return { rows: [], schemaMissing: true, cepColumnMissing: false };
     }
 
+    if (isMissingFavoriteLocationsRadiusColumnError(error)) {
+      const fallback = await supabase
+        .from('event_favorite_locations')
+        .select(FAVORITE_LOCATION_COLUMNS_WITHOUT_RADIUS)
+        .order('sort_order', { ascending: true })
+        .order('name', { ascending: true });
+
+      if (fallback.error) {
+        throw fallback.error;
+      }
+
+      return {
+        rows: ((fallback.data as Omit<EventFavoriteLocation, 'geofence_radius_meters'>[]) ?? []).map(
+          (row) => withDefaultRadius(row)
+        ),
+        schemaMissing: false,
+        cepColumnMissing: false,
+      };
+    }
+
     if (isMissingFavoriteLocationsCepColumnError(error)) {
       const fallback = await supabase
         .from('event_favorite_locations')
@@ -101,10 +157,9 @@ export const fetchEventFavoriteLocations = async (): Promise<{
         throw fallback.error;
       }
 
-      const rows = ((fallback.data as Omit<EventFavoriteLocation, 'cep'>[]) ?? []).map((row) => ({
-        ...row,
-        cep: null,
-      }));
+      const rows = ((fallback.data as Omit<EventFavoriteLocation, 'cep' | 'geofence_radius_meters'>[]) ?? []).map(
+        (row) => withDefaultRadius({ ...row, cep: null })
+      );
 
       return {
         rows,
@@ -117,7 +172,7 @@ export const fetchEventFavoriteLocations = async (): Promise<{
   }
 
   return {
-    rows: (data as EventFavoriteLocation[]) ?? [],
+    rows: ((data as EventFavoriteLocation[]) ?? []).map((row) => withDefaultRadius(row)),
     schemaMissing: false,
     cepColumnMissing: false,
   };
@@ -134,7 +189,7 @@ export const createEventFavoriteLocation = async (input: EventFavoriteLocationIn
     throw error;
   }
 
-  return data as EventFavoriteLocation;
+  return withDefaultRadius(data as EventFavoriteLocation);
 };
 
 export const updateEventFavoriteLocation = async (
@@ -152,7 +207,7 @@ export const updateEventFavoriteLocation = async (
     throw error;
   }
 
-  return data as EventFavoriteLocation;
+  return withDefaultRadius(data as EventFavoriteLocation);
 };
 
 export const deleteEventFavoriteLocation = async (id: string) => {

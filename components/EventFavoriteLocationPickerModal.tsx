@@ -54,6 +54,7 @@ type FormState = {
   longitude: string;
   capacity: string;
   sortOrder: string;
+  geofenceRadiusMeters: string;
   isActive: boolean;
 };
 
@@ -65,6 +66,7 @@ const emptyForm = (): FormState => ({
   longitude: '',
   capacity: '',
   sortOrder: '0',
+  geofenceRadiusMeters: '150',
   isActive: true,
 });
 
@@ -76,6 +78,7 @@ const formFromLocation = (location: EventFavoriteLocation): FormState => ({
   longitude: location.longitude === null ? '' : String(location.longitude),
   capacity: String(location.capacity),
   sortOrder: String(location.sort_order),
+  geofenceRadiusMeters: String(location.geofence_radius_meters > 0 ? location.geofence_radius_meters : 150),
   isActive: location.is_active,
 });
 
@@ -219,6 +222,7 @@ export function EventFavoriteLocationPickerModal({
     const name = form.name.trim();
     const capacity = Number.parseInt(form.capacity.replace(/\D/g, ''), 10);
     const sortOrder = Number.parseInt(form.sortOrder.replace(/\D/g, ''), 10) || 0;
+    const geofenceRadiusMeters = Number.parseInt(form.geofenceRadiusMeters.replace(/\D/g, ''), 10);
     const latitude = parseOptionalCoordinate(form.latitude);
     const longitude = parseOptionalCoordinate(form.longitude);
 
@@ -229,6 +233,11 @@ export function EventFavoriteLocationPickerModal({
 
     if (!Number.isFinite(capacity) || capacity <= 0) {
       setFormError('Informe a capacidade com um número maior que zero.');
+      return null;
+    }
+
+    if (!Number.isFinite(geofenceRadiusMeters) || geofenceRadiusMeters <= 0) {
+      setFormError('Informe a distância do geofence em metros, maior que zero.');
       return null;
     }
 
@@ -245,6 +254,7 @@ export function EventFavoriteLocationPickerModal({
       longitude,
       capacity,
       sort_order: sortOrder,
+      geofence_radius_meters: geofenceRadiusMeters,
       is_active: form.isActive,
     };
   };
@@ -544,7 +554,7 @@ export function EventFavoriteLocationPickerModal({
               </View>
 
               <View style={styles.coordRow}>
-                <View style={styles.coordField}>
+                <View style={styles.orderField}>
                   {renderFieldLabel('Ordem')}
                   <TextInput
                     style={styles.input}
@@ -553,6 +563,17 @@ export function EventFavoriteLocationPickerModal({
                     value={form.sortOrder}
                     keyboardType="number-pad"
                     onChangeText={(text) => patchForm({ sortOrder: text.replace(/\D/g, '') })}
+                  />
+                </View>
+                <View style={styles.radiusField}>
+                  {renderFieldLabel('Geofence (m)')}
+                  <TextInput
+                    style={styles.input}
+                    placeholder="150"
+                    placeholderTextColor={MINIMAL_UI.textMuted}
+                    value={form.geofenceRadiusMeters}
+                    keyboardType="number-pad"
+                    onChangeText={(text) => patchForm({ geofenceRadiusMeters: text.replace(/\D/g, '') })}
                   />
                 </View>
               </View>
@@ -911,6 +932,16 @@ const styles = StyleSheet.create({
     flex: 1,
     gap: 6,
     minWidth: 0,
+  },
+  orderField: {
+    width: 88,
+    flexShrink: 0,
+    gap: 6,
+  },
+  radiusField: {
+    flex: 1,
+    minWidth: 0,
+    gap: 6,
   },
   switchRow: {
     flexDirection: 'row',
