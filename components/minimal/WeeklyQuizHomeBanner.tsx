@@ -2,8 +2,8 @@ import { fetchMemberWeeklyQuiz, formatSermonDateLabel } from '@/lib/weeklyQuizAp
 import { withFailClosedReturn } from '@/lib/failClosedNavigation';
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { subscribeActiveTenantChange } from '@/lib/tenantSession';
-import { useRouter } from 'expo-router';
-import React, { useCallback, useEffect, useState } from 'react';
+import { useFocusEffect, useRouter } from 'expo-router';
+import React, { useCallback, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 export function WeeklyQuizHomeBanner() {
@@ -32,12 +32,14 @@ export function WeeklyQuizHomeBanner() {
     }
   }, []);
 
-  useEffect(() => {
-    void load();
-    return subscribeActiveTenantChange(() => {
+  useFocusEffect(
+    useCallback(() => {
       void load();
-    });
-  }, [load]);
+      return subscribeActiveTenantChange(() => {
+        void load();
+      });
+    }, [load])
+  );
 
   if (!title) {
     return null;

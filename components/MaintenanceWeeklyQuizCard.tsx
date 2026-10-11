@@ -17,7 +17,6 @@ import { MINIMAL_UI } from '@/lib/minimalUiTheme';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   ScrollView,
   StyleSheet,
   Text,
@@ -39,19 +38,17 @@ const EMPTY_SNAPSHOT: WeeklyQuizAdminSnapshot = {
   ranking: [],
 };
 
-const confirmAction = (title: string, message: string) =>
-  new Promise<boolean>((resolve) => {
-    Alert.alert(title, message, [
-      { text: 'Cancelar', style: 'cancel', onPress: () => resolve(false) },
-      { text: 'Excluir', style: 'destructive', onPress: () => resolve(true) },
-    ]);
-  });
+type PendingReset = {
+  quizId: string;
+  mode: 'scores' | 'quiz';
+};
 
 export function MaintenanceWeeklyQuizCard({ isActive = true, panelHeight }: Props) {
   const [snapshot, setSnapshot] = useState<WeeklyQuizAdminSnapshot>(EMPTY_SNAPSHOT);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [pendingReset, setPendingReset] = useState<PendingReset | null>(null);
   const contentHeight = computeMaintenanceContentHeight(panelHeight);
 
   const load = useCallback(async () => {
@@ -185,46 +182,62 @@ export function MaintenanceWeeklyQuizCard({ isActive = true, panelHeight }: Prop
             ) : (
               <Text style={styles.hint}>Transcrição arquivada. O resumo entra ao refazer as perguntas.</Text>
             )}
-            <View style={styles.actions}>
-              <TouchableOpacity
-                accessibilityRole="button"
-                disabled={busy}
-                onPress={() => {
-                  void (async () => {
-                    const confirmed = await confirmAction(
-                      'Excluir quiz desta data',
-                      'As perguntas e a pontuação desta data serão apagadas. A transcrição e o resumo permanecem arquivados para refazer o quiz.'
+            {pendingReset?.quizId === quiz.id ? (
+              <View style={styles.actions}>
+                <Text style={styles.summary}>
+                  {pendingReset.mode === 'scores'
+                    ? 'As perguntas permanecem. Os pontos desta data saem do total e o quiz volta a abrir para resposta.'
+                    : 'As perguntas e a pontuação desta data serão apagadas. A transcrição e o resumo permanecem arquivados.'}
+                </Text>
+                <TouchableOpacity
+                  accessibilityRole="button"
+                  disabled={busy}
+                  onPress={() => {
+                    const mode = pendingReset.mode;
+                    setPendingReset(null);
+                    void run(() =>
+                      mode === 'scores' ? clearWeeklyQuizScores(quiz.id) : deletePublishedWeeklyQuiz(quiz.id)
                     );
-
-                    if (confirmed) {
-                      await run(() => deletePublishedWeeklyQuiz(quiz.id));
-                    }
-                  })();
-                }}
-                style={styles.dangerButton}
-              >
-                <Text style={styles.dangerButtonText}>Excluir quiz desta data</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                accessibilityRole="button"
-                disabled={busy}
-                onPress={() => {
-                  void (async () => {
-                    const confirmed = await confirmAction(
-                      'Excluir pontuação',
-                      'As perguntas permanecem. Os pontos desta data saem do total e os membros podem responder o quiz de novo.'
-                    );
-
-                    if (confirmed) {
-                      await run(() => clearWeeklyQuizScores(quiz.id));
-                    }
-                  })();
-                }}
-                style={styles.secondaryButton}
-              >
-                <Text style={styles.secondaryButtonText}>Excluir pontuação e liberar refação</Text>
-              </TouchableOpacity>
-            </View>
+                  }}
+                  style={styles.dangerButton}
+                >
+                  <Text style={styles.dangerButtonText}>
+                    {busy
+                      ? 'Excluindo…'
+                      : pendingReset.mode === 'scores'
+                        ? 'Confirmar exclusão da pontuação'
+                        : 'Confirmar exclusão do quiz'}
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  accessibilityRole="button"
+                  disabled={busy}
+                  onPress={() => setPendingReset(null)}
+                  style={styles.secondaryButton}
+                >
+                  <Text style={styles.secondaryButtonText}>Cancelar</Text>
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <View style={styles.actions}>
+                <TouchableOpacity
+                  accessibilityRole="button"
+                  disabled={busy}
+                  onPress={() => setPendingReset({ quizId: quiz.id, mode: 'quiz' })}
+                  style={styles.dangerButton}
+                >
+                  <Text style={styles.dangerButtonText}>Excluir quiz desta data</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  accessibilityRole="button"
+                  disabled={busy}
+                  onPress={() => setPendingReset({ quizId: quiz.id, mode: 'scores' })}
+                  style={styles.secondaryButton}
+                >
+                  <Text style={styles.secondaryButtonText}>Excluir pontuação e liberar refação</Text>
+                </TouchableOpacity>
+              </View>
+            )}
           </View>
         ))
       )}

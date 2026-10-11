@@ -9,8 +9,8 @@ import {
   submitWeeklyQuizAnswer,
   type WeeklyQuizMemberQuiz,
 } from '@/lib/weeklyQuizApi';
-import { useLocalSearchParams } from 'expo-router';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useFocusEffect, useLocalSearchParams } from 'expo-router';
+import React, { useCallback, useMemo, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 export default function QuizSemanalScreen() {
@@ -47,9 +47,11 @@ export default function QuizSemanalScreen() {
     }
   }, []);
 
-  useEffect(() => {
-    void load();
-  }, [load]);
+  useFocusEffect(
+    useCallback(() => {
+      void load();
+    }, [load])
+  );
 
   const question = quiz?.questions[cursor] ?? null;
   const finished = Boolean(quiz?.completed);
