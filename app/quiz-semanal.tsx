@@ -10,7 +10,7 @@ import {
   type WeeklyQuizMemberQuiz,
 } from '@/lib/weeklyQuizApi';
 import { useFocusEffect, useLocalSearchParams } from 'expo-router';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Modal,
@@ -35,6 +35,8 @@ export default function QuizSemanalScreen() {
   const [totalScore, setTotalScore] = useState(0);
   const [cursor, setCursor] = useState(0);
   const [contextOpen, setContextOpen] = useState(false);
+  const contextShownRef = useRef(false);
+  const openContextOnEntry = String(params.contexto ?? '') === '1';
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -60,8 +62,21 @@ export default function QuizSemanalScreen() {
   useFocusEffect(
     useCallback(() => {
       void load();
+      return () => {
+        contextShownRef.current = false;
+        setContextOpen(false);
+      };
     }, [load])
   );
+
+  useEffect(() => {
+    if (!openContextOnEntry || !quiz || contextShownRef.current) {
+      return;
+    }
+
+    contextShownRef.current = true;
+    setContextOpen(true);
+  }, [openContextOnEntry, quiz]);
 
   const question = quiz?.questions[cursor] ?? null;
   const finished = Boolean(quiz?.completed);
@@ -116,19 +131,7 @@ export default function QuizSemanalScreen() {
 
   return (
     <MinimalScreenLayout footer={<CloseFooterBar onPress={returnToCaller} />}>
-      <View style={styles.header}>
-        <Text style={styles.kicker}>Quiz semanal</Text>
-        {quiz ? (
-          <TouchableOpacity
-            accessibilityRole="button"
-            accessibilityLabel="Contexto da pregação"
-            onPress={() => setContextOpen(true)}
-            style={styles.contextButton}
-          >
-            <Text style={styles.contextButtonText}>Contexto</Text>
-          </TouchableOpacity>
-        ) : null}
-      </View>
+      <Text style={styles.kicker}>Quiz semanal</Text>
       {loading ? <ActivityIndicator color={MINIMAL_UI.accent} style={styles.loader} /> : null}
       {error ? <Text style={styles.error}>{error}</Text> : null}
 
@@ -230,32 +233,12 @@ export default function QuizSemanalScreen() {
 }
 
 const styles = StyleSheet.create({
-  header: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: 12,
-  },
   kicker: {
     color: MINIMAL_UI.accent,
-    flex: 1,
     fontSize: 13,
     fontWeight: '800',
     letterSpacing: 0.4,
     textTransform: 'uppercase',
-  },
-  contextButton: {
-    backgroundColor: '#EEF3F8',
-    borderColor: MINIMAL_UI.border,
-    borderRadius: 8,
-    borderWidth: 1,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-  },
-  contextButtonText: {
-    color: MINIMAL_UI.accent,
-    fontSize: 13,
-    fontWeight: '800',
   },
   modalOverlay: {
     flex: 1,

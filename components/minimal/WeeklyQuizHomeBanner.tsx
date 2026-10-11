@@ -52,7 +52,7 @@ export function WeeklyQuizHomeBanner() {
       onPress={() => {
         router.push({
           pathname: '/quiz-semanal',
-          params: withFailClosedReturn(),
+          params: withFailClosedReturn({ contexto: '1' }),
         });
       }}
       style={({ pressed }) => [styles.banner, pressed && styles.pressed]}
