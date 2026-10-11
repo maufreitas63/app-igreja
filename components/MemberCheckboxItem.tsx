@@ -4,7 +4,7 @@ import { formatShortName } from '@/lib/formatShortName';
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { FontAwesome } from '@expo/vector-icons';
 import React from 'react';
-import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 
 type Props = {
   member: FamilyMember;
@@ -87,7 +87,12 @@ export const MemberCheckboxItem = ({
 
   return (
     <View style={styles.row}>
-      <TouchableOpacity
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={isChecked ? `Desmarcar ${displayName}` : `Registrar check-in de ${displayName}`}
+        accessibilityState={{ checked: isChecked, disabled: disabled || isLoading, busy: isLoading }}
+        disabled={disabled || isLoading}
+        onPress={onToggle}
         style={[
           styles.checkbox,
           minimal && styles.checkboxMinimal,
@@ -97,16 +102,13 @@ export const MemberCheckboxItem = ({
           isRegistered && styles.checkboxRegistered,
           isRegistered && minimal && styles.checkboxRegisteredMinimal,
         ]}
-        onPress={onToggle}
-        disabled={disabled || isLoading}
-        activeOpacity={0.8}
       >
         {isLoading ? (
           <ActivityIndicator size="small" color={MINIMAL_UI.icon} />
         ) : isChecked ? (
           <Text style={[styles.checkmark, minimal && styles.checkmarkMinimal]}>✓</Text>
         ) : null}
-      </TouchableOpacity>
+      </Pressable>
       <View style={styles.info}>
         <View style={styles.nameRow}>
           <Text style={[styles.name, minimal && styles.nameMinimal]} numberOfLines={1}>
@@ -203,6 +205,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: 'transparent',
+    ...(Platform.OS === 'web'
+      ? ({
+          cursor: 'pointer',
+          appearance: 'none',
+          padding: 0,
+          boxSizing: 'border-box',
+        } as object)
+      : null),
   },
   checkboxMinimal: {
     borderColor: MINIMAL_UI.icon,

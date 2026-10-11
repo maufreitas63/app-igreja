@@ -21,7 +21,7 @@ import { GeoCheckinStatusBanner } from '@/components/GeoCheckinStatusBanner';
 import { MinimalRoomSelosRow } from '@/components/minimal/MinimalRoomSelosRow';
 import { FontAwesome } from '@expo/vector-icons';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Alert, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, FlatList, Platform, Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { MemberCheckboxItem } from './MemberCheckboxItem';
 import { AudienceCareRestrictionsModal } from './AudienceCareRestrictionsModal';
 import {
@@ -186,6 +186,7 @@ export const FamilyRegistrationList = ({
   const [soloToggleLoading, setSoloToggleLoading] = useState(false);
   const [careMemberId, setCareMemberId] = useState<string | null>(null);
   const [careUsesProfileId, setCareUsesProfileId] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   useEffect(() => {
     setPendingRegisterIds([]);
@@ -446,6 +447,7 @@ export const FamilyRegistrationList = ({
 
     const confirming = !soloRegistered;
     setSoloToggleLoading(true);
+    setActionError(null);
     let confirmedOk = false;
 
     try {
@@ -465,6 +467,7 @@ export const FamilyRegistrationList = ({
           : soloRegistered
             ? 'Não foi possível remover sua inscrição do evento.'
             : 'Não foi possível registrar sua inscrição no evento.';
+      setActionError(message);
       Alert.alert('Erro', message);
     } finally {
       setSoloToggleLoading(false);
@@ -511,7 +514,7 @@ export const FamilyRegistrationList = ({
   const persistFamilyRegistrations = useCallback(
     async (memberIds: string[]) => {
       if (!eventId || !hasFamilyId) {
-        return;
+        throw new Error('Não foi possível registrar o check-in. A família desta conta não foi encontrada.');
       }
 
       const payload = {
@@ -584,6 +587,7 @@ export const FamilyRegistrationList = ({
     const nextMemberIds = resolveTargetMemberIds(memberId);
     const shouldOfferCalendar = !isCurrentlyRegistered && registeredMemberIds.length === 0;
     let confirmedOk = false;
+    setActionError(null);
 
     try {
       if (isCurrentlyRegistered) {
@@ -607,6 +611,7 @@ export const FamilyRegistrationList = ({
           : isCurrentlyRegistered
             ? 'Nao foi possivel remover o participante do evento.'
             : 'Nao foi possivel registrar o participante no evento.';
+      setActionError(message);
       Alert.alert('Erro', message);
     } finally {
       setPendingRegisterIds([]);
@@ -624,6 +629,7 @@ export const FamilyRegistrationList = ({
     }
 
     const confirming = !allRegistered;
+    setActionError(null);
     const targetMembers = allRegistered
       ? visibleMembers.filter((member) => registeredMemberIds.includes(member.id))
       : visibleMembers.filter((member) => !registeredMemberIds.includes(member.id));
@@ -657,6 +663,7 @@ export const FamilyRegistrationList = ({
           : allRegistered
             ? 'Nao foi possivel remover todos os participantes do evento.'
             : 'Nao foi possivel registrar todos os participantes do evento.';
+      setActionError(message);
       Alert.alert('Erro', message);
     } finally {
       setPendingRegisterIds([]);
@@ -803,6 +810,7 @@ export const FamilyRegistrationList = ({
       {registeredMembersError ? (
         <Text style={styles.helperErrorText}>Nao foi possivel verificar as inscricoes ja existentes.</Text>
       ) : null}
+      {actionError ? <Text style={styles.helperErrorText}>{actionError}</Text> : null}
       <View style={[styles.headerRow, minimal && styles.headerRowMinimal]}>
         {minimal && !hideRoomSelos && (showKidsIndicator || showTeensIndicator) ? (
           <View style={styles.headerSelosWrap}>
@@ -832,22 +840,22 @@ export const FamilyRegistrationList = ({
       <View style={[styles.listFrame, minimal && styles.listFrameMinimal]}>
         <View style={styles.listWithBulkRow}>
           {showBulkCheckbox ? (
-            <TouchableOpacity
+            <Pressable
+              accessibilityRole="button"
               accessibilityLabel={
-                allRegistered ? 'Desmarcar toda a família' : 'Marcar toda a família'
+                allRegistered ? 'Desmarcar toda a família' : 'Registrar check-in de toda a família'
               }
-              accessibilityRole="checkbox"
               accessibilityState={{ checked: allRegistered, disabled: isBusy || allPending }}
-              style={[
+              style={({ pressed }) => [
                 styles.bulkCheckboxColumn,
                 { paddingTop: bulkTopOffset },
                 (isBusy || allPending) && styles.bulkCheckboxColumnDisabled,
+                pressed && styles.bulkCheckboxPressed,
               ]}
               onPress={() => {
                 void toggleAllMembers();
               }}
               disabled={isBusy || allPending}
-              activeOpacity={0.8}
             >
               <View
                 style={[
@@ -878,7 +886,7 @@ export const FamilyRegistrationList = ({
                   </View>
                 )}
               </View>
-            </TouchableOpacity>
+            </Pressable>
           ) : null}
           <View style={styles.listContainer}>
         <FlatList
@@ -1101,6 +1109,18 @@ const styles = StyleSheet.create({
     flexShrink: 0,
     alignItems: 'center',
     justifyContent: 'flex-start',
+    ...(Platform.OS === 'web'
+      ? ({
+          cursor: 'pointer',
+          appearance: 'none',
+          backgroundColor: 'transparent',
+          borderWidth: 0,
+          padding: 0,
+        } as object)
+      : null),
+  },
+  bulkCheckboxPressed: {
+    opacity: 0.75,
   },
   bulkCheckboxColumnDisabled: {
     opacity: 0.5,
