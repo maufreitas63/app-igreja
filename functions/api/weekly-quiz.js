@@ -120,7 +120,38 @@ const supabaseRpc = async (env, functionName, payload, request) => {
   return body;
 };
 
-const resolveGeminiApiKey = async (env) => {
+const resolveActorProfileId = async (env, request) => {
+  const sessionToken = request.headers.get('x-session-token')?.trim() || '';
+  const realProfileId = await supabaseRpc(
+    env,
+    'resolve_profile_session_token',
+    { p_token: sessionToken },
+    request
+  );
+
+  if (!realProfileId || typeof realProfileId !== 'string') {
+    return null;
+  }
+
+  const ghostProfileId = request.headers.get('x-ghost-profile-id')?.trim() || '';
+
+  if (ghostProfileId && ghostProfileId !== realProfileId) {
+    const canGhost = await supabaseRpc(
+      env,
+      'can_operate_ghost_mode',
+      { p_profile_id: realProfileId },
+      request
+    );
+
+    if (canGhost === true) {
+      return ghostProfileId;
+    }
+  }
+
+  return realProfileId;
+};
+
+const resolveGeminiApiKey = async (env, request) => {
   const supabaseUrl = getSupabaseUrl(env);
   const supabaseKey = getSupabaseKey(env);
 
@@ -147,6 +178,26 @@ const resolveGeminiApiKey = async (env) => {
     } catch (error) {
       console.error('weekly-quiz.ai_server_config', error);
     }
+  }
+
+  try {
+    const actorProfileId = await resolveActorProfileId(env, request);
+
+    if (actorProfileId) {
+      const fromDatabase = await supabaseRpc(
+        env,
+        'obter_chave_gemini_ia_lideranca',
+        { p_actor_profile_id: actorProfileId },
+        request
+      );
+      const key = typeof fromDatabase === 'string' ? fromDatabase.trim() : '';
+
+      if (key.startsWith('AIza')) {
+        return key;
+      }
+    }
+  } catch (error) {
+    console.error('weekly-quiz.obter_chave_gemini', error);
   }
 
   const fromEnv = env?.GEMINI_API_KEY?.trim();
@@ -554,7 +605,7 @@ const handlePost = async (request, env) => {
     return jsonResponse({ error: 'A data de publicação desta pregação não pôde ser lida.' }, 502);
   }
 
-  const geminiApiKey = await resolveGeminiApiKey(env);
+  const geminiApiKey = await resolveGeminiApiKey(env, request);
 
   if (!geminiApiKey) {
     return jsonResponse(
