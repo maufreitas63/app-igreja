@@ -1,0 +1,12 @@
+---
+description: Sempre informar o link do commit no GitHub
+alwaysApply: true
+---
+
+# Referência do commit no GitHub
+
+Sempre que a resposta citar um commit publicado neste repositório, inclua o link completo do GitHub, com o hash inteiro:
+
+`https://github.com/maufreitas63/app-igreja/commit/<hash>`
+
+O hash curto sozinho não substitui o link.
