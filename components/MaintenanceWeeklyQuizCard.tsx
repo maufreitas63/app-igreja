@@ -1,4 +1,6 @@
 import {
+  clearWeeklyQuizScores,
+  deletePublishedWeeklyQuiz,
   discardWeeklyQuizDraft,
   fetchWeeklyQuizAdminSnapshot,
   formatSermonDateLabel,
@@ -15,6 +17,7 @@ import { MINIMAL_UI } from '@/lib/minimalUiTheme';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   ScrollView,
   StyleSheet,
   Text,
@@ -31,8 +34,18 @@ type Props = {
 const EMPTY_SNAPSHOT: WeeklyQuizAdminSnapshot = {
   youtubeUrl: null,
   draft: null,
+  published: [],
+  archives: [],
   ranking: [],
 };
+
+const confirmAction = (title: string, message: string) =>
+  new Promise<boolean>((resolve) => {
+    Alert.alert(title, message, [
+      { text: 'Cancelar', style: 'cancel', onPress: () => resolve(false) },
+      { text: 'Excluir', style: 'destructive', onPress: () => resolve(true) },
+    ]);
+  });
 
 export function MaintenanceWeeklyQuizCard({ isActive = true, panelHeight }: Props) {
   const [snapshot, setSnapshot] = useState<WeeklyQuizAdminSnapshot>(EMPTY_SNAPSHOT);
@@ -86,7 +99,7 @@ export function MaintenanceWeeklyQuizCard({ isActive = true, panelHeight }: Prop
     >
       <Text style={maintenancePanelStyles.panelTitle}>Quiz semanal</Text>
       <Text style={styles.lead}>
-        Busca a pregação mais recente do canal desta igreja, gera 10 perguntas e só publica depois da prévia.
+        Busca a pregação mais recente do canal desta igreja, gera 10 perguntas e só publica depois da prévia. A transcrição e o resumo ficam arquivados para refazer as perguntas.
       </Text>
 
       {loading ? <ActivityIndicator color={MINIMAL_UI.accent} /> : null}
@@ -149,6 +162,101 @@ export function MaintenanceWeeklyQuizCard({ isActive = true, panelHeight }: Prop
             </TouchableOpacity>
           </View>
         </View>
+      ) : null}
+
+      <Text style={styles.rankingTitle}>Quizzes por data</Text>
+      {snapshot.published.length === 0 ? (
+        <Text style={styles.hint}>Nenhum quiz publicado nesta igreja.</Text>
+      ) : (
+        snapshot.published.map((quiz) => (
+          <View key={quiz.id} style={styles.sermonCard}>
+            <Text style={styles.previewTitle}>{quiz.title}</Text>
+            <Text style={styles.hint}>
+              {formatSermonDateLabel(quiz.sermonPublishedAt) || 'Data indisponível'}
+              {' · '}
+              {quiz.participantCount === 1
+                ? '1 pessoa respondeu'
+                : `${quiz.participantCount} pessoas responderam`}
+            </Text>
+            {quiz.contextSummary ? (
+              <Text style={styles.summary} numberOfLines={4}>
+                {quiz.contextSummary}
+              </Text>
+            ) : (
+              <Text style={styles.hint}>Transcrição arquivada. O resumo entra ao refazer as perguntas.</Text>
+            )}
+            <View style={styles.actions}>
+              <TouchableOpacity
+                accessibilityRole="button"
+                disabled={busy}
+                onPress={() => {
+                  void (async () => {
+                    const confirmed = await confirmAction(
+                      'Excluir quiz desta data',
+                      'As perguntas e a pontuação desta data serão apagadas. A transcrição e o resumo permanecem arquivados para refazer o quiz.'
+                    );
+
+                    if (confirmed) {
+                      await run(() => deletePublishedWeeklyQuiz(quiz.id));
+                    }
+                  })();
+                }}
+                style={styles.dangerButton}
+              >
+                <Text style={styles.dangerButtonText}>Excluir quiz desta data</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                accessibilityRole="button"
+                disabled={busy}
+                onPress={() => {
+                  void (async () => {
+                    const confirmed = await confirmAction(
+                      'Excluir pontuação',
+                      'As perguntas permanecem. Os pontos desta data saem do total e os membros podem responder o quiz de novo.'
+                    );
+
+                    if (confirmed) {
+                      await run(() => clearWeeklyQuizScores(quiz.id));
+                    }
+                  })();
+                }}
+                style={styles.secondaryButton}
+              >
+                <Text style={styles.secondaryButtonText}>Excluir pontuação e liberar refação</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        ))
+      )}
+
+      {snapshot.archives.length ? (
+        <>
+          <Text style={styles.rankingTitle}>Pregações arquivadas sem quiz</Text>
+          {snapshot.archives.map((sermon) => (
+            <View key={sermon.videoId} style={styles.sermonCard}>
+              <Text style={styles.previewTitle}>{sermon.title}</Text>
+              <Text style={styles.hint}>
+                {formatSermonDateLabel(sermon.sermonPublishedAt) || 'Data indisponível'}
+                {' · transcrição arquivada'}
+              </Text>
+              {sermon.contextSummary ? (
+                <Text style={styles.summary} numberOfLines={4}>
+                  {sermon.contextSummary}
+                </Text>
+              ) : null}
+              <TouchableOpacity
+                accessibilityRole="button"
+                disabled={busy || Boolean(draft)}
+                onPress={() => void run(() => generateWeeklyQuizDraft(sermon.videoId))}
+                style={[styles.primaryButton, (busy || Boolean(draft)) && styles.buttonDisabled]}
+              >
+                <Text style={styles.primaryButtonText}>
+                  {busy ? 'Gerando perguntas…' : 'Refazer perguntas desta data'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          ))}
+        </>
       ) : null}
 
       <Text style={styles.rankingTitle}>Ranking cumulativo</Text>
@@ -250,6 +358,30 @@ const styles = StyleSheet.create({
   },
   actions: {
     gap: 8,
+  },
+  sermonCard: {
+    backgroundColor: MINIMAL_UI.rowHover,
+    borderRadius: 12,
+    gap: 8,
+    padding: 12,
+  },
+  summary: {
+    color: MINIMAL_UI.text,
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  dangerButton: {
+    borderColor: '#FECACA',
+    borderRadius: 10,
+    borderWidth: 1,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+  },
+  dangerButtonText: {
+    color: '#B91C1C',
+    fontSize: 15,
+    fontWeight: '700',
+    textAlign: 'center',
   },
   rankingTitle: {
     color: MINIMAL_UI.text,

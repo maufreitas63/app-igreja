@@ -28,9 +28,27 @@ export type WeeklyQuizRankingRow = {
   points: number;
 };
 
+export type WeeklyQuizPublished = {
+  id: string;
+  title: string;
+  videoId: string;
+  sermonPublishedAt: string;
+  participantCount: number;
+  contextSummary: string;
+};
+
+export type WeeklyQuizArchivedSermon = {
+  videoId: string;
+  title: string;
+  sermonPublishedAt: string;
+  contextSummary: string;
+};
+
 export type WeeklyQuizAdminSnapshot = {
   youtubeUrl: string | null;
   draft: WeeklyQuizDraft | null;
+  published: WeeklyQuizPublished[];
+  archives: WeeklyQuizArchivedSermon[];
   ranking: WeeklyQuizRankingRow[];
 };
 
@@ -138,12 +156,64 @@ const parseDraft = (value: unknown): WeeklyQuizDraft | null => {
   };
 };
 
+const parsePublishedQuiz = (value: unknown): WeeklyQuizPublished | null => {
+  if (!value || typeof value !== 'object') {
+    return null;
+  }
+
+  const row = value as Record<string, unknown>;
+  const id = asText(row.id);
+
+  if (!id) {
+    return null;
+  }
+
+  return {
+    id,
+    title: asText(row.title) || 'Pregação',
+    videoId: asText(row.videoId),
+    sermonPublishedAt: asText(row.sermonPublishedAt),
+    participantCount: asNumber(row.participantCount),
+    contextSummary: asText(row.contextSummary),
+  };
+};
+
+const parseArchivedSermon = (value: unknown): WeeklyQuizArchivedSermon | null => {
+  if (!value || typeof value !== 'object') {
+    return null;
+  }
+
+  const row = value as Record<string, unknown>;
+  const videoId = asText(row.videoId);
+
+  if (!videoId) {
+    return null;
+  }
+
+  return {
+    videoId,
+    title: asText(row.title) || 'Pregação',
+    sermonPublishedAt: asText(row.sermonPublishedAt),
+    contextSummary: asText(row.contextSummary),
+  };
+};
+
 export const parseWeeklyQuizAdminSnapshot = (value: unknown): WeeklyQuizAdminSnapshot => {
   const row = value && typeof value === 'object' ? (value as Record<string, unknown>) : {};
 
   return {
     youtubeUrl: asText(row.youtubeUrl) || null,
     draft: parseDraft(row.draft),
+    published: Array.isArray(row.published)
+      ? row.published
+          .map(parsePublishedQuiz)
+          .filter((item): item is WeeklyQuizPublished => item !== null)
+      : [],
+    archives: Array.isArray(row.archives)
+      ? row.archives
+          .map(parseArchivedSermon)
+          .filter((item): item is WeeklyQuizArchivedSermon => item !== null)
+      : [],
     ranking: Array.isArray(row.ranking)
       ? row.ranking.map((item) => {
           const rank = item as Record<string, unknown>;
@@ -220,6 +290,26 @@ export const publishWeeklyQuiz = async (quizId: string) => {
 
   if (error) {
     throw new Error(rpcErrorMessage(error, 'Não foi possível publicar o quiz.'));
+  }
+
+  return parseWeeklyQuizAdminSnapshot(data);
+};
+
+export const deletePublishedWeeklyQuiz = async (quizId: string) => {
+  const { data, error } = await supabase.rpc('weekly_quiz_delete_published', { p_quiz_id: quizId });
+
+  if (error) {
+    throw new Error(rpcErrorMessage(error, 'Não foi possível excluir o quiz desta data.'));
+  }
+
+  return parseWeeklyQuizAdminSnapshot(data);
+};
+
+export const clearWeeklyQuizScores = async (quizId: string) => {
+  const { data, error } = await supabase.rpc('weekly_quiz_clear_scores', { p_quiz_id: quizId });
+
+  if (error) {
+    throw new Error(rpcErrorMessage(error, 'Não foi possível excluir a pontuação deste quiz.'));
   }
 
   return parseWeeklyQuizAdminSnapshot(data);
@@ -333,7 +423,7 @@ const resolveWeeklyQuizEndpoint = () => {
   return aiEndpoint.replace(/\/functions\/v1\/ai-chat$/, '/functions/v1/weekly-quiz');
 };
 
-export const generateWeeklyQuizDraft = async () => {
+export const generateWeeklyQuizDraft = async (videoId?: string) => {
   const response = await supabaseSessionFetch(resolveWeeklyQuizEndpoint(), {
     method: 'POST',
     timeoutMs: 180_000,
@@ -342,7 +432,7 @@ export const generateWeeklyQuizDraft = async () => {
       Authorization: `Bearer ${getSupabaseAnonKey()}`,
       apikey: getSupabaseAnonKey(),
     },
-    body: JSON.stringify({ action: 'generate' }),
+    body: JSON.stringify({ action: 'generate', videoId: videoId || undefined }),
   });
 
   const payload = (await response.json().catch(() => null)) as
