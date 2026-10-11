@@ -25,6 +25,7 @@ export type MaintenancePanelContent =
   | 'profile_access_insights'
   | 'auditor'
   | 'event_orchestration'
+  | 'weekly_quiz'
   | 'suggestions_improvements';
 
 export type MaintenanceShortcutIconName =
@@ -85,6 +86,7 @@ export const MAINTENANCE_SHORTCUT_ICONS: Record<
   profile_access_insights: 'history',
   auditor: 'user-secret',
   event_orchestration: 'bullhorn',
+  weekly_quiz: 'comments',
   suggestions_improvements: 'comments',
 };
 
@@ -116,6 +118,7 @@ export const MAINTENANCE_SHORTCUT_ICON_COLORS: Record<MaintenancePanelContent, s
   profile_access_insights: '#FCD34D',
   auditor: '#FB7185',
   event_orchestration: '#38BDF8',
+  weekly_quiz: '#DC2626',
   suggestions_improvements: '#38BDF8',
 };
 

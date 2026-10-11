@@ -83,6 +83,7 @@ export type AppDrawerModuleKey =
   | 'profile_cadastro'
   | 'family_reception'
   | 'visitor_followup'
+  | 'weekly_quiz'
   | 'access_control'
   | 'mudanca_papeis'
   | 'transferencia_igreja'
@@ -304,6 +305,13 @@ export const APP_DRAWER_SETTINGS_ITEMS: AppDrawerSettingsItem[] = [
     hint: 'Comunicados da home',
   },
   {
+    letter: 'c3b',
+    label: 'Quiz semanal',
+    moduleKey: 'weekly_quiz',
+    group: 'culto',
+    hint: 'Pregação do YouTube, 10 perguntas e ranking',
+  },
+  {
     letter: 'c4',
     label: 'Sala(s) - Check In',
     moduleKey: 'sala_servidor',
@@ -450,6 +458,7 @@ const MAINTENANCE_PANEL_BY_MODULE: Partial<Record<AppDrawerModuleKey, string>> =
   Events: 'events',
   Event_gantt: 'events_gantt',
   event_orchestration: 'event_orchestration',
+  weekly_quiz: 'weekly_quiz',
   sala_servidor: 'sala_servidor',
   scales_type: 'scale_types',
   scales_volunteers: 'scale_volunteers',

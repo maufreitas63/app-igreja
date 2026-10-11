@@ -38,6 +38,7 @@ import { MaintenanceIgrejaTransferCard } from '@/components/MaintenanceIgrejaTra
 import { MaintenanceEventOrchestrationCard } from '@/components/MaintenanceEventOrchestrationCard';
 import { MaintenanceFamilyReceptionCard } from '@/components/MaintenanceFamilyReceptionCard';
 import { MaintenanceVisitorFollowupCard } from '@/components/MaintenanceVisitorFollowupCard';
+import { MaintenanceWeeklyQuizCard } from '@/components/MaintenanceWeeklyQuizCard';
 import { MaintenanceProfileCadastroCard } from '@/components/MaintenanceProfileCadastroCard';
 import { MaintenanceProfileAccessInsightsCard } from '@/components/MaintenanceProfileAccessInsightsCard';
 import { MaintenanceGhostModeCard } from '@/components/MaintenanceGhostModeCard';
@@ -183,13 +184,15 @@ type MaintenanceCarouselCard = {
   | 'discipleship_themes'
   | 'discipleship_alerts'
   | 'discipleship_reset'
-  | 'event_orchestration';
+  | 'event_orchestration'
+  | 'weekly_quiz';
 };
 
 const MAINTENANCE_PANEL_CARDS: MaintenanceCarouselCard[] = [
   { id: '1', title: 'Programação de Eventos', content: 'events' },
   { id: '2', title: 'Cronograma de Eventos', content: 'events_gantt' },
   { id: '15', title: 'Manutenção de Avisos', content: 'event_orchestration' },
+  { id: '31', title: 'Quiz semanal', content: 'weekly_quiz' },
   { id: '3', title: 'Sala(s) - Check In', content: 'sala_servidor' },
   { id: '5', title: 'Tipos de Escala', content: 'scale_types' },
   { id: '6', title: SCALE_VOLUNTEERS_MENU_LABEL, content: 'scale_volunteers' },
@@ -1197,6 +1200,7 @@ export default function MaintenanceDashboard() {
             !isMinimalPresentation && item.content === 'profile_access_insights' && styles.panelCardInnerPadding,
             !isMinimalPresentation && item.content === 'auditor' && styles.panelCardInnerPadding,
             !isMinimalPresentation && item.content === 'event_orchestration' && styles.panelCardInnerPadding,
+            !isMinimalPresentation && item.content === 'weekly_quiz' && styles.panelCardInnerPadding,
           ]}
         >
           {item.content === 'quorum_presence' ? (
@@ -1411,6 +1415,19 @@ export default function MaintenanceDashboard() {
               ]}
             >
               <MaintenanceFamilyReceptionCard
+                isActive
+                panelHeight={cardHeight}
+                minimal={isMinimalPresentation}
+              />
+            </View>
+          ) : item.content === 'weekly_quiz' ? (
+            <View
+              style={[
+                styles.familyReceptionPanel,
+                isMinimalPresentation && styles.familyReceptionPanelMinimal,
+              ]}
+            >
+              <MaintenanceWeeklyQuizCard
                 isActive
                 panelHeight={cardHeight}
                 minimal={isMinimalPresentation}

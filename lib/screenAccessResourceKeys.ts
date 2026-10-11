@@ -41,6 +41,7 @@ export const MAINTENANCE_PANEL_CONTENT_TO_ACCESS_KEY: Record<string, string> = {
   primicias_management: 'maintenance.card.primicias_management',
   volunteer_mural: 'maintenance.volunteer.mural',
   generosity_moderation: 'maintenance.card.generosity_moderation',
+  weekly_quiz: 'maintenance.card.weekly_quiz',
 };
 
 export function resolveDashboardCardAccessResourceKey(

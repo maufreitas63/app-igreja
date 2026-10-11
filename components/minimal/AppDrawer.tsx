@@ -53,6 +53,7 @@ const SETTINGS_ICONS: Partial<Record<AppDrawerModuleKey, React.ComponentProps<ty
   Events: 'calendar',
   Event_gantt: 'sliders',
   event_orchestration: 'bullhorn',
+  weekly_quiz: 'youtube-play',
   sala_servidor: 'building',
   scales_type: 'tags',
   scales_volunteers: 'users',

@@ -2,6 +2,7 @@ import { FamilyAgendaModal } from '@/components/FamilyAgendaModal';
 import { BookFlipTransition } from '@/components/minimal/BookFlipTransition';
 import { HomeBirthdayTag } from '@/components/minimal/HomeBirthdayTag';
 import { HomeInboxPagerNav } from '@/components/minimal/HomeInboxPagerNav';
+import { WeeklyQuizHomeBanner } from '@/components/minimal/WeeklyQuizHomeBanner';
 import {
   InboxList,
   INBOX_LIST_MAX_HEIGHT,
@@ -520,6 +521,7 @@ export function EventsInboxHome() {
     <View style={styles.root}>
       {!agendaOpen ? (
         <>
+        <WeeklyQuizHomeBanner />
         <View style={styles.pagerHost}>
         <ScrollView
           ref={pagerRef}
