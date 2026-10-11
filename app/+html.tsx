@@ -43,6 +43,12 @@ html, body, #root {
   max-width: 100%;
   overflow-x: hidden;
 }
+html.home-pull-locked,
+html.home-pull-locked body,
+html.home-pull-locked #root,
+html.home-pull-locked #root * {
+  overscroll-behavior-y: none;
+}
 `,
           }}
         />

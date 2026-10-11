@@ -1,3 +1,4 @@
+import { consumeHomePullDownGesture } from '@/hooks/useHomePullDownGuard';
 import { runAppBackInterceptor } from '@/lib/appBackIntercept';
 import { isDrawerNavigationPending, installDrawerNavigationCapture } from '@/lib/drawerNavigationIntent';
 import { ghostBlocksHomeBounce } from '@/lib/ghostNavigation';
@@ -149,6 +150,15 @@ export function AppBackHandler() {
       }
 
       if (onHome) {
+        if (consumeHomePullDownGesture()) {
+          try {
+            window.history.pushState({ appBackHandler: true }, '', window.location.href);
+          } catch {
+            // ignore
+          }
+          return;
+        }
+
         askExitSession();
         return;
       }

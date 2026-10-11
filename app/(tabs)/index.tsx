@@ -3,6 +3,7 @@ import { MinimalMainPanel } from '@/components/minimal/MinimalMainPanel';
 import { MinimalEuQueroFooter } from '@/components/minimal/MinimalEuQueroFooter';
 import { MinimalScreenLayout } from '@/components/minimal/MinimalScreenLayout';
 import { useHomeBackExitConfirmation } from '@/hooks/useHomeBackExitConfirmation';
+import { useHomePullDownGuard } from '@/hooks/useHomePullDownGuard';
 import { MINIMAL_SCREEN_PADDING_LEFT, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -13,6 +14,7 @@ const HOME_CONTENT_WIDTH = `${(95 * (1 - SCREEN_PADDING_LEFT - SCREEN_PADDING_RI
 
 export default function DashboardIndexScreen() {
   useHomeBackExitConfirmation();
+  useHomePullDownGuard();
 
   return (
     <MinimalScreenLayout
