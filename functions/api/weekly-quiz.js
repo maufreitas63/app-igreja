@@ -6,7 +6,9 @@ const CORS_HEADERS = {
 
 const GEMINI_API_BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
 const GEMINI_MODELS = ['gemini-3.6-flash', 'gemini-flash-latest'];
-const DEFAULT_SUPABASE_URL = 'https://hvqbetpgrwvzunmyxpwa.supabase.co';
+const DEFAULT_SUPABASE_URL = 'https://bldbrsuiwctoaxzcrjoc.supabase.co';
+const DEFAULT_SUPABASE_ANON_KEY =
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJsZGJyc3Vpd2N0b2F4emNyam9jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0NTgyMTQsImV4cCI6MjA5NTAzNDIxNH0.q2ME_1_Qatxfc6Aas02H7A6y6dUpk4BsNQyDIeQYVgU';
 
 const jsonResponse = (payload, status = 200) =>
   new Response(JSON.stringify(payload), {
@@ -46,6 +48,7 @@ const getSupabaseKey = (env) => {
     env?.SUPABASE_SERVICE_ROLE_KEY,
     env?.SUPABASE_ANON_KEY,
     env?.EXPO_PUBLIC_SUPABASE_ANON_KEY,
+    DEFAULT_SUPABASE_ANON_KEY,
   ];
 
   for (const raw of candidates) {
@@ -54,7 +57,7 @@ const getSupabaseKey = (env) => {
     }
   }
 
-  return '';
+  return DEFAULT_SUPABASE_ANON_KEY;
 };
 
 const copyIdentityHeaders = (request) => {
