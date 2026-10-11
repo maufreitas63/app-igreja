@@ -212,7 +212,7 @@ export default function QuizSemanalScreen() {
               onPress={() => setContextOpen(false)}
               style={styles.closeButton}
             >
-              <Text style={styles.closeButtonText}>Fechar</Text>
+              <Text style={styles.closeButtonText}>Iniciar Quiz</Text>
             </TouchableOpacity>
           </View>
         </View>
