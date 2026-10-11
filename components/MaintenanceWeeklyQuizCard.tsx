@@ -19,6 +19,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Modal,
+  Platform,
   ScrollView,
   StyleSheet,
   Text,
@@ -327,13 +328,27 @@ export function MaintenanceWeeklyQuizCard({ isActive = true, panelHeight }: Prop
     >
       <View style={styles.transcriptScreen}>
         <Text style={styles.transcriptTitle}>{transcriptTitle}</Text>
-        <ScrollView style={styles.transcriptScroll} contentContainerStyle={styles.transcriptContent}>
-          {transcriptLoading ? (
-            <ActivityIndicator color={MINIMAL_UI.accent} />
-          ) : (
-            <Text style={styles.transcriptBody}>{transcriptText}</Text>
-          )}
-        </ScrollView>
+        {Platform.OS === 'web' ? (
+          React.createElement(
+            'div',
+            { className: 'sermon-transcript-scroll', style: webTranscriptScrollStyle },
+            transcriptLoading
+              ? React.createElement(ActivityIndicator, { color: MINIMAL_UI.accent })
+              : React.createElement('div', { style: webTranscriptBodyStyle }, transcriptText)
+          )
+        ) : (
+          <ScrollView
+            style={styles.transcriptScroll}
+            contentContainerStyle={styles.transcriptContent}
+            showsVerticalScrollIndicator
+          >
+            {transcriptLoading ? (
+              <ActivityIndicator color={MINIMAL_UI.accent} />
+            ) : (
+              <Text style={styles.transcriptBody}>{transcriptText}</Text>
+            )}
+          </ScrollView>
+        )}
         <TouchableOpacity accessibilityRole="button" onPress={closeTranscript} style={styles.primaryButton}>
           <Text style={styles.primaryButtonText}>Fechar</Text>
         </TouchableOpacity>
@@ -479,7 +494,10 @@ const styles = StyleSheet.create({
   transcriptScreen: {
     backgroundColor: '#FFFFFF',
     flex: 1,
+    flexDirection: 'column',
     height: '100%',
+    minHeight: 0,
+    overflow: 'hidden',
     gap: 12,
     paddingBottom: 16,
     paddingHorizontal: 16,
@@ -492,13 +510,31 @@ const styles = StyleSheet.create({
   },
   transcriptScroll: {
     flex: 1,
+    minHeight: 0,
   },
   transcriptContent: {
+    flexGrow: 0,
     paddingBottom: 12,
   },
   transcriptBody: {
     color: MINIMAL_UI.text,
+    flexShrink: 0,
     fontSize: 15,
     lineHeight: 22,
   },
 });
+
+const webTranscriptScrollStyle = {
+  flex: '1 1 auto',
+  minHeight: 0,
+  overflowX: 'hidden',
+  overflowY: 'scroll',
+  paddingRight: 8,
+} as const;
+
+const webTranscriptBodyStyle = {
+  color: MINIMAL_UI.text,
+  fontSize: 15,
+  lineHeight: '22px',
+  whiteSpace: 'pre-wrap',
+} as const;

@@ -49,6 +49,21 @@ html.home-pull-locked #root,
 html.home-pull-locked #root * {
   overscroll-behavior-y: none;
 }
+.sermon-transcript-scroll {
+  scrollbar-gutter: stable;
+  scrollbar-width: auto;
+  scrollbar-color: #1d4ed8 #eef3f8;
+}
+.sermon-transcript-scroll::-webkit-scrollbar {
+  width: 12px;
+}
+.sermon-transcript-scroll::-webkit-scrollbar-track {
+  background: #eef3f8;
+}
+.sermon-transcript-scroll::-webkit-scrollbar-thumb {
+  background: #1d4ed8;
+  border-radius: 6px;
+}
 `,
           }}
         />
