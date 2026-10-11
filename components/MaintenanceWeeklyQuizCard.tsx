@@ -3,6 +3,7 @@ import {
   deletePublishedWeeklyQuiz,
   discardWeeklyQuizDraft,
   fetchWeeklyQuizAdminSnapshot,
+  fetchWeeklyQuizSermonTranscript,
   formatSermonDateLabel,
   generateWeeklyQuizDraft,
   publishWeeklyQuiz,
@@ -17,6 +18,7 @@ import { MINIMAL_UI } from '@/lib/minimalUiTheme';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
+  Modal,
   ScrollView,
   StyleSheet,
   Text,
@@ -49,6 +51,9 @@ export function MaintenanceWeeklyQuizCard({ isActive = true, panelHeight }: Prop
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pendingReset, setPendingReset] = useState<PendingReset | null>(null);
+  const [transcriptTitle, setTranscriptTitle] = useState<string | null>(null);
+  const [transcriptText, setTranscriptText] = useState('');
+  const [transcriptLoading, setTranscriptLoading] = useState(false);
   const contentHeight = computeMaintenanceContentHeight(panelHeight);
 
   const load = useCallback(async () => {
@@ -88,7 +93,28 @@ export function MaintenanceWeeklyQuizCard({ isActive = true, panelHeight }: Prop
   const draft = snapshot.draft;
   const sermonDate = formatSermonDateLabel(draft?.sermonPublishedAt);
 
+  const openTranscript = async (videoId: string, title: string) => {
+    setTranscriptTitle(title);
+    setTranscriptText('');
+    setTranscriptLoading(true);
+
+    try {
+      const text = await fetchWeeklyQuizSermonTranscript(videoId);
+      setTranscriptText(text || 'Esta pregação não tem transcrição arquivada.');
+    } catch (err) {
+      setTranscriptText(err instanceof Error ? err.message : 'Não foi possível abrir a transcrição.');
+    } finally {
+      setTranscriptLoading(false);
+    }
+  };
+
+  const closeTranscript = () => {
+    setTranscriptTitle(null);
+    setTranscriptText('');
+  };
+
   return (
+    <>
     <ScrollView
       style={[maintenancePanelStyles.panel, { maxHeight: contentHeight }]}
       contentContainerStyle={styles.content}
@@ -182,6 +208,14 @@ export function MaintenanceWeeklyQuizCard({ isActive = true, panelHeight }: Prop
             ) : (
               <Text style={styles.hint}>Transcrição arquivada. O resumo entra ao refazer as perguntas.</Text>
             )}
+            <TouchableOpacity
+              accessibilityRole="button"
+              disabled={busy || !quiz.videoId}
+              onPress={() => void openTranscript(quiz.videoId, quiz.title)}
+              style={styles.secondaryButton}
+            >
+              <Text style={styles.secondaryButtonText}>Ver transcrição</Text>
+            </TouchableOpacity>
             {pendingReset?.quizId === quiz.id ? (
               <View style={styles.actions}>
                 <Text style={styles.summary}>
@@ -285,6 +319,27 @@ export function MaintenanceWeeklyQuizCard({ isActive = true, panelHeight }: Prop
         ))
       )}
     </ScrollView>
+    <Modal
+      visible={transcriptTitle !== null}
+      animationType="fade"
+      presentationStyle="fullScreen"
+      onRequestClose={closeTranscript}
+    >
+      <View style={styles.transcriptScreen}>
+        <Text style={styles.transcriptTitle}>{transcriptTitle}</Text>
+        <ScrollView style={styles.transcriptScroll} contentContainerStyle={styles.transcriptContent}>
+          {transcriptLoading ? (
+            <ActivityIndicator color={MINIMAL_UI.accent} />
+          ) : (
+            <Text style={styles.transcriptBody}>{transcriptText}</Text>
+          )}
+        </ScrollView>
+        <TouchableOpacity accessibilityRole="button" onPress={closeTranscript} style={styles.primaryButton}>
+          <Text style={styles.primaryButtonText}>Fechar</Text>
+        </TouchableOpacity>
+      </View>
+    </Modal>
+    </>
   );
 }
 
@@ -420,5 +475,30 @@ const styles = StyleSheet.create({
   rankPoints: {
     color: MINIMAL_UI.text,
     fontWeight: '800',
+  },
+  transcriptScreen: {
+    backgroundColor: '#FFFFFF',
+    flex: 1,
+    height: '100%',
+    gap: 12,
+    paddingBottom: 16,
+    paddingHorizontal: 16,
+    paddingTop: 20,
+  },
+  transcriptTitle: {
+    color: MINIMAL_UI.text,
+    fontSize: 18,
+    fontWeight: '800',
+  },
+  transcriptScroll: {
+    flex: 1,
+  },
+  transcriptContent: {
+    paddingBottom: 12,
+  },
+  transcriptBody: {
+    color: MINIMAL_UI.text,
+    fontSize: 15,
+    lineHeight: 22,
   },
 });

@@ -327,6 +327,17 @@ export const discardWeeklyQuizDraft = async (quizId: string) => {
   return parseWeeklyQuizAdminSnapshot(data);
 };
 
+export const fetchWeeklyQuizSermonTranscript = async (videoId: string) => {
+  const { data, error } = await supabase.rpc('weekly_quiz_sermon_archive', { p_video_id: videoId });
+
+  if (error) {
+    throw new Error(rpcErrorMessage(error, 'Não foi possível abrir a transcrição.'));
+  }
+
+  const row = data && typeof data === 'object' ? (data as Record<string, unknown>) : null;
+  return asText(row?.transcript);
+};
+
 export type WeeklyQuizRankRow = {
   position: number;
   name: string;
