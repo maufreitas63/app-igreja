@@ -11,7 +11,16 @@ import {
 } from '@/lib/weeklyQuizApi';
 import { useFocusEffect, useLocalSearchParams } from 'expo-router';
 import React, { useCallback, useMemo, useState } from 'react';
-import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Modal,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 
 export default function QuizSemanalScreen() {
   const params = useLocalSearchParams();
@@ -25,6 +34,7 @@ export default function QuizSemanalScreen() {
   const [quiz, setQuiz] = useState<WeeklyQuizMemberQuiz | null>(null);
   const [totalScore, setTotalScore] = useState(0);
   const [cursor, setCursor] = useState(0);
+  const [contextOpen, setContextOpen] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -106,7 +116,19 @@ export default function QuizSemanalScreen() {
 
   return (
     <MinimalScreenLayout footer={<CloseFooterBar onPress={returnToCaller} />}>
-      <Text style={styles.kicker}>Quiz semanal</Text>
+      <View style={styles.header}>
+        <Text style={styles.kicker}>Quiz semanal</Text>
+        {quiz ? (
+          <TouchableOpacity
+            accessibilityRole="button"
+            accessibilityLabel="Contexto da pregação"
+            onPress={() => setContextOpen(true)}
+            style={styles.contextButton}
+          >
+            <Text style={styles.contextButtonText}>Contexto</Text>
+          </TouchableOpacity>
+        ) : null}
+      </View>
       {loading ? <ActivityIndicator color={MINIMAL_UI.accent} style={styles.loader} /> : null}
       {error ? <Text style={styles.error}>{error}</Text> : null}
 
@@ -166,6 +188,33 @@ export default function QuizSemanalScreen() {
         </View>
       ) : null}
 
+      <Modal
+        visible={contextOpen}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setContextOpen(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <Pressable style={styles.modalBackdrop} onPress={() => setContextOpen(false)} />
+          <View style={styles.modalCard}>
+            <Text style={styles.modalTitle}>Contexto da pregação</Text>
+            {quiz?.title ? <Text style={styles.meta}>{quiz.title}</Text> : null}
+            <ScrollView style={styles.modalScroll} contentContainerStyle={styles.modalScrollContent}>
+              <Text style={styles.body}>
+                {quiz?.contextSummary || 'O contexto desta pregação ainda não está disponível.'}
+              </Text>
+            </ScrollView>
+            <TouchableOpacity
+              accessibilityRole="button"
+              onPress={() => setContextOpen(false)}
+              style={styles.closeButton}
+            >
+              <Text style={styles.closeButtonText}>Fechar</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
       {quiz && finished ? (
         <View style={styles.result}>
           {!question ? <Text style={styles.title}>{quiz.title}</Text> : null}
@@ -181,12 +230,70 @@ export default function QuizSemanalScreen() {
 }
 
 const styles = StyleSheet.create({
+  header: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
   kicker: {
     color: MINIMAL_UI.accent,
+    flex: 1,
     fontSize: 13,
     fontWeight: '800',
     letterSpacing: 0.4,
     textTransform: 'uppercase',
+  },
+  contextButton: {
+    borderColor: MINIMAL_UI.border,
+    borderRadius: 8,
+    borderWidth: 1,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  contextButtonText: {
+    color: MINIMAL_UI.accent,
+    fontSize: 13,
+    fontWeight: '800',
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    paddingHorizontal: 20,
+  },
+  modalBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(15, 23, 42, 0.45)',
+  },
+  modalCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    gap: 12,
+    maxHeight: '80%',
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+  },
+  modalTitle: {
+    color: MINIMAL_UI.text,
+    fontSize: 18,
+    fontWeight: '800',
+  },
+  modalScroll: {
+    flexGrow: 0,
+  },
+  modalScrollContent: {
+    paddingBottom: 4,
+  },
+  closeButton: {
+    alignItems: 'center',
+    backgroundColor: MINIMAL_UI.blueDark,
+    borderRadius: 10,
+    paddingVertical: 12,
+  },
+  closeButtonText: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '800',
   },
   loader: {
     marginTop: 16,

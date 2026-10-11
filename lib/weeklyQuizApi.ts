@@ -69,6 +69,7 @@ export type WeeklyQuizMemberQuiz = {
   title: string;
   videoId: string;
   sermonPublishedAt: string;
+  contextSummary: string;
   completed: boolean;
   weekScore: number;
   answeredCount: number;
@@ -263,6 +264,7 @@ export const parseWeeklyQuizMemberState = (value: unknown): WeeklyQuizMemberStat
       title: asText(quizRow.title),
       videoId: asText(quizRow.videoId),
       sermonPublishedAt: asText(quizRow.sermonPublishedAt),
+      contextSummary: asText(quizRow.contextSummary),
       completed: quizRow.completed === true,
       weekScore: asNumber(quizRow.weekScore),
       answeredCount: asNumber(quizRow.answeredCount),
