@@ -439,7 +439,7 @@ const resolveWeeklyQuizEndpoint = () => {
 export const generateWeeklyQuizDraft = async (videoId?: string) => {
   const response = await supabaseSessionFetch(resolveWeeklyQuizEndpoint(), {
     method: 'POST',
-    timeoutMs: 180_000,
+    timeoutMs: 420_000,
     headers: {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${getSupabaseAnonKey()}`,

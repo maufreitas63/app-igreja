@@ -123,7 +123,7 @@ export function MaintenanceWeeklyQuizCard({ isActive = true, panelHeight }: Prop
     >
       <Text style={maintenancePanelStyles.panelTitle}>Quiz semanal</Text>
       <Text style={styles.lead}>
-        Busca a pregação mais recente do canal desta igreja, gera 10 perguntas e só publica depois da prévia. A transcrição e o resumo ficam arquivados para refazer as perguntas.
+        Busca a pregação mais recente, transcreve a mensagem do início ao fim e gera 10 perguntas sobre essa transcrição completa. A prévia precisa ser publicada para o membro ver o quiz.
       </Text>
 
       {loading ? <ActivityIndicator color={MINIMAL_UI.accent} /> : null}
@@ -140,7 +140,7 @@ export function MaintenanceWeeklyQuizCard({ isActive = true, panelHeight }: Prop
         style={[styles.primaryButton, (busy || !snapshot.youtubeUrl || Boolean(draft)) && styles.buttonDisabled]}
       >
         <Text style={styles.primaryButtonText}>
-          {busy ? 'Buscando pregação…' : 'Buscar pregação mais recente'}
+          {busy ? 'Transcrevendo a pregação…' : 'Buscar pregação mais recente'}
         </Text>
       </TouchableOpacity>
 
@@ -299,7 +299,7 @@ export function MaintenanceWeeklyQuizCard({ isActive = true, panelHeight }: Prop
                 style={[styles.primaryButton, (busy || Boolean(draft)) && styles.buttonDisabled]}
               >
                 <Text style={styles.primaryButtonText}>
-                  {busy ? 'Gerando perguntas…' : 'Refazer perguntas desta data'}
+                  {busy ? 'Transcrevendo a pregação…' : 'Refazer perguntas desta data'}
                 </Text>
               </TouchableOpacity>
             </View>

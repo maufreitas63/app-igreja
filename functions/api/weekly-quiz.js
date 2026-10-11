@@ -407,57 +407,151 @@ const fetchCaptionTranscript = async (videoId) => {
 const geminiResponseText = (payload) =>
   payload?.candidates?.[0]?.content?.parts?.map((part) => part?.text || '').join('\n') ?? '';
 
+const geminiFinishReason = (payload) => String(payload?.candidates?.[0]?.finishReason ?? '');
+
+const cleanupTranscript = (value) =>
+  String(value || '')
+    .replace(/\r/g, '')
+    .replace(/[ \t]+\n/g, '\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .replace(/[ \t]{2,}/g, ' ')
+    .trim();
+
+const transcriptForQuiz = (transcript) => {
+  const text = cleanupTranscript(transcript);
+
+  if (text.length <= 100000) {
+    return text;
+  }
+
+  const head = text.slice(0, 40000);
+  const tail = text.slice(-40000);
+  const middleStart = Math.max(0, Math.floor(text.length / 2) - 10000);
+  const middle = text.slice(middleStart, middleStart + 20000);
+
+  return `${head}\n\n[...]\n\n${middle}\n\n[...]\n\n${tail}`;
+};
+
 const transcribeYoutubeVideo = async (apiKey, videoId, title) => {
   const watchUrl = `https://www.youtube.com/watch?v=${encodeURIComponent(videoId)}`;
   const instruction = [
-    'Transcreva em português do Brasil a pregação propriamente dita.',
-    'Inclua a exposição bíblica, o texto explicado e a mensagem pregada.',
-    'Deixe de fora orações, saudações, avisos, testemunhos e comentários de cunho pessoal.',
-    'Não resuma e não invente falas, histórias ou versículos.',
+    'Transcreva em português do Brasil a pregação inteira, do início ao fim.',
+    'Siga a ordem falada: a abertura da mensagem, todo o desenvolvimento e a conclusão.',
+    'Não resuma, não pule trechos da pregação e não invente falas, histórias ou versículos.',
     'Quando a pregação citar a Bíblia, registre livro, capítulo e versículo como foram ditos.',
-    'Devolva só o texto corrido da mensagem.',
+    'Pode omitir apenas o que não é a mensagem: oração da liturgia, saudação da plateia, avisos e testemunhos de outras pessoas.',
+    'A própria pregação, do primeiro ponto ao último, entra por completo.',
+    'Se a resposta acabar antes do fim, pare numa frase completa e termine com [[CONTINUA]].',
+    'Se a pregação tiver terminado, não escreva [[CONTINUA]].',
     `Título: ${title}`,
   ].join('\n');
   let lastError = 'Não foi possível transcrever o áudio desta pregação.';
 
   for (const model of GEMINI_MODELS) {
+    let combined = '';
+    let previousTail = '';
+    let failed = false;
+
     try {
-      const response = await fetch(`${GEMINI_API_BASE}/${model}:generateContent?key=${apiKey}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [
-            {
-              role: 'user',
-              parts: [
-                { file_data: { file_uri: watchUrl } },
-                { text: instruction },
+      for (let part = 0; part < 6; part += 1) {
+        const prompt = part === 0
+          ? instruction
+          : [
+              instruction,
+              'Continue a transcrição exatamente do ponto em que parou.',
+              'Não repita o trecho já transcrito.',
+              'O texto anterior termina assim:',
+              previousTail,
+            ].join('\n');
+        let payload = null;
+        let accepted = false;
+
+        for (const maxOutputTokens of [65536, 8192]) {
+          const response = await fetch(`${GEMINI_API_BASE}/${model}:generateContent?key=${apiKey}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: [
+                {
+                  role: 'user',
+                  parts: [
+                    { file_data: { file_uri: watchUrl } },
+                    { text: prompt },
+                  ],
+                },
               ],
-            },
-          ],
-          generationConfig: { temperature: 0.2, maxOutputTokens: 8192 },
-        }),
-      });
-      const payload = await response.json();
+              generationConfig: { temperature: 0.1, maxOutputTokens },
+            }),
+          });
+          payload = await response.json();
 
-      if (!response.ok) {
-        lastError = payload?.error?.message || `Gemini recusou a transcrição (${response.status}).`;
-        continue;
+          if (response.ok) {
+            accepted = true;
+            break;
+          }
+
+          lastError = payload?.error?.message || `Gemini recusou a transcrição (${response.status}).`;
+          const tokenLimit = /maxOutputTokens|output token|too large/i.test(lastError);
+
+          if (!tokenLimit) {
+            break;
+          }
+        }
+
+        if (!accepted) {
+          failed = true;
+          break;
+        }
+
+        const raw = geminiResponseText(payload).trim();
+        const asksContinue = raw.includes('[[CONTINUA]]');
+        const text = cleanupTranscript(raw.replace(/\[\[CONTINUA\]\]/g, ''));
+
+        if (text.length < 80) {
+          lastError = 'A transcrição do áudio ficou curta demais para gerar o quiz.';
+          failed = true;
+          break;
+        }
+
+        combined = combined ? `${combined}\n\n${text}` : text;
+        const reachedEnd = !asksContinue && geminiFinishReason(payload) !== 'MAX_TOKENS';
+
+        if (reachedEnd) {
+          return cleanupTranscript(combined);
+        }
+
+        previousTail = text.slice(-900);
       }
-
-      const transcript = geminiResponseText(payload).replace(/\s+/g, ' ').trim();
-
-      if (transcript.length >= 400) {
-        return transcript;
-      }
-
-      lastError = 'A transcrição do áudio ficou curta demais para gerar o quiz.';
     } catch (error) {
       lastError = error?.message || lastError;
+      failed = true;
+    }
+
+    if (!failed && combined.length >= 400) {
+      return cleanupTranscript(combined);
     }
   }
 
   throw new Error(lastError);
+};
+
+const resolveFullTranscript = async (apiKey, videoId, title) => {
+  const captions = await fetchCaptionTranscript(videoId);
+
+  if (captions.length >= 20000) {
+    return captions;
+  }
+
+  try {
+    const spoken = await transcribeYoutubeVideo(apiKey, videoId, title);
+    return spoken.length >= captions.length ? spoken : captions;
+  } catch (error) {
+    if (captions.length >= 400) {
+      return captions;
+    }
+
+    throw error;
+  }
 };
 
 const extractJson = (text) => {
@@ -528,12 +622,13 @@ const generateQuestions = async (apiKey, transcript, title) => {
     'Devolva JSON puro, sem markdown, neste formato:',
     '{"questions":[{"prompt":"","options":["","","",""],"correctIndex":0,"bibleBook":"","bibleChapter":1,"bibleVerse":1,"bibleReference":""}]}',
     'Regras: exatamente 10 perguntas; 4 alternativas; uma correta; correctIndex de 0 a 3.',
+    'As perguntas devem percorrer a pregação do início, do meio e da conclusão, não só a abertura.',
     'A referência bíblica precisa ser um texto citado na exposição da pregação, com livro, capítulo e versículo.',
     'Não invente versículo, história ou aplicação que não estejam na mensagem pregada.',
     'As alternativas erradas devem ser plausíveis, mas não podem contradizer a citação usada.',
   ].join('\n');
 
-  const userText = `Título: ${title}\n\nTranscrição:\n${transcript.slice(0, 18000)}`;
+  const userText = `Título: ${title}\n\nTranscrição completa:\n${transcriptForQuiz(transcript)}`;
   let lastError = 'Não foi possível gerar as perguntas.';
 
   for (const model of GEMINI_MODELS) {
@@ -544,7 +639,7 @@ const generateQuestions = async (apiKey, transcript, title) => {
         body: JSON.stringify({
           systemInstruction: { parts: [{ text: system }] },
           contents: [{ role: 'user', parts: [{ text: userText }] }],
-          generationConfig: { temperature: 0.3, responseMimeType: 'application/json' },
+          generationConfig: { temperature: 0.3, maxOutputTokens: 8192, responseMimeType: 'application/json' },
         }),
       });
 
@@ -569,11 +664,11 @@ const generateSermonSummary = async (apiKey, transcript, title) => {
     'Escreva um resumo contextual em português do Brasil da pregação.',
     'Use só a exposição bíblica, o texto explicado e a mensagem pregada.',
     'Deixe de fora orações, saudações, avisos, testemunhos e comentários de cunho pessoal.',
-    'Diga o texto bíblico central, a tese da mensagem e os pontos que a pregação desenvolveu.',
+    'Diga o texto bíblico central, a tese da mensagem e os pontos que a pregação desenvolveu do início ao fim.',
     'Não invente versículos nem aplicações que não estejam na transcrição.',
     'Devolva só o resumo, em 3 a 6 parágrafos curtos.',
   ].join('\n');
-  const userText = `Título: ${title}\n\nTranscrição:\n${transcript.slice(0, 18000)}`;
+  const userText = `Título: ${title}\n\nTranscrição completa:\n${transcriptForQuiz(transcript)}`;
   let lastError = 'Não foi possível resumir a pregação.';
 
   for (const model of GEMINI_MODELS) {
@@ -690,13 +785,11 @@ const handlePost = async (request, env) => {
       return jsonResponse({ error: error?.message || 'Não foi possível ler a pregação arquivada.' }, 400);
     }
 
-    transcript = String(archive?.transcript ?? '').trim();
-    summary = String(archive?.contextSummary ?? '').trim();
     const publishedAt = new Date(archive?.sermonPublishedAt);
 
-    if (transcript.length < 400 || Number.isNaN(publishedAt.getTime())) {
+    if (!archive?.sermonPublishedAt || Number.isNaN(publishedAt.getTime())) {
       return jsonResponse(
-        { error: 'Esta data não tem transcrição arquivada para refazer as perguntas.' },
+        { error: 'Esta data não tem pregação arquivada para refazer as perguntas.' },
         404
       );
     }
@@ -706,6 +799,15 @@ const handlePost = async (request, env) => {
       title: String(archive?.title ?? '').trim() || 'Pregação',
       publishedAt: publishedAt.toISOString(),
     };
+
+    try {
+      transcript = await resolveFullTranscript(geminiApiKey, sermon.videoId, sermon.title);
+    } catch (error) {
+      return jsonResponse(
+        { error: error?.message || 'Não foi possível transcrever esta pregação do início ao fim.' },
+        422
+      );
+    }
   } else {
     const youtubeUrl = String(prepared?.youtubeUrl ?? '').trim();
     let videos;
@@ -739,36 +841,12 @@ const handlePost = async (request, env) => {
     };
 
     try {
-      const archive = await supabaseRpc(
-        env,
-        'weekly_quiz_sermon_archive',
-        { p_video_id: video.videoId },
-        request
+      transcript = await resolveFullTranscript(geminiApiKey, sermon.videoId, sermon.title);
+    } catch (error) {
+      return jsonResponse(
+        { error: error?.message || 'Não foi possível transcrever o áudio desta pregação.' },
+        422
       );
-      const archivedTranscript = String(archive?.transcript ?? '').trim();
-
-      if (archivedTranscript.length >= 400) {
-        transcript = archivedTranscript;
-        summary = String(archive?.contextSummary ?? '').trim();
-      }
-    } catch {
-      transcript = '';
-      summary = '';
-    }
-
-    if (transcript.length < 400) {
-      transcript = await fetchCaptionTranscript(video.videoId);
-    }
-
-    if (transcript.length < 400) {
-      try {
-        transcript = await transcribeYoutubeVideo(geminiApiKey, video.videoId, video.title);
-      } catch (error) {
-        return jsonResponse(
-          { error: error?.message || 'Não foi possível transcrever o áudio desta pregação.' },
-          422
-        );
-      }
     }
   }
 
