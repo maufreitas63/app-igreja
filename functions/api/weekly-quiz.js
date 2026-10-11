@@ -432,8 +432,9 @@ const transcriptForQuiz = (transcript) => {
   return `${head}\n\n[...]\n\n${middle}\n\n[...]\n\n${tail}`;
 };
 
-const transcribeYoutubeVideo = async (apiKey, videoId, title) => {
+const transcribeNextPart = async (apiKey, videoId, title, previous) => {
   const watchUrl = `https://www.youtube.com/watch?v=${encodeURIComponent(videoId)}`;
+  const prior = cleanupTranscript(previous).slice(-900);
   const instruction = [
     'Transcreva em português do Brasil a pregação inteira, do início ao fim.',
     'Siga a ordem falada: a abertura da mensagem, todo o desenvolvimento e a conclusão.',
@@ -444,114 +445,60 @@ const transcribeYoutubeVideo = async (apiKey, videoId, title) => {
     'Se a resposta acabar antes do fim, pare numa frase completa e termine com [[CONTINUA]].',
     'Se a pregação tiver terminado, não escreva [[CONTINUA]].',
     `Título: ${title}`,
-  ].join('\n');
+    prior
+      ? `Continue exatamente depois deste trecho, sem repetir o que já foi transcrito:\n${prior}`
+      : '',
+  ].filter(Boolean).join('\n');
   let lastError = 'Não foi possível transcrever o áudio desta pregação.';
 
   for (const model of GEMINI_MODELS) {
-    let combined = '';
-    let previousTail = '';
-    let failed = false;
-
     try {
-      for (let part = 0; part < 6; part += 1) {
-        const prompt = part === 0
-          ? instruction
-          : [
-              instruction,
-              'Continue a transcrição exatamente do ponto em que parou.',
-              'Não repita o trecho já transcrito.',
-              'O texto anterior termina assim:',
-              previousTail,
-            ].join('\n');
-        let payload = null;
-        let accepted = false;
-
-        for (const maxOutputTokens of [65536, 8192]) {
-          const response = await fetch(`${GEMINI_API_BASE}/${model}:generateContent?key=${apiKey}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              contents: [
-                {
-                  role: 'user',
-                  parts: [
-                    { file_data: { file_uri: watchUrl } },
-                    { text: prompt },
-                  ],
-                },
+      const response = await fetch(`${GEMINI_API_BASE}/${model}:generateContent?key=${apiKey}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [
+            {
+              role: 'user',
+              parts: [
+                { file_data: { file_uri: watchUrl } },
+                { text: instruction },
               ],
-              generationConfig: { temperature: 0.1, maxOutputTokens },
-            }),
-          });
-          payload = await response.json();
+            },
+          ],
+          generationConfig: {
+            temperature: 0.1,
+            maxOutputTokens: 8192,
+            thinkingConfig: { thinkingBudget: 0 },
+          },
+        }),
+      });
+      const payload = await response.json();
 
-          if (response.ok) {
-            accepted = true;
-            break;
-          }
-
-          lastError = payload?.error?.message || `Gemini recusou a transcrição (${response.status}).`;
-          const tokenLimit = /maxOutputTokens|output token|too large/i.test(lastError);
-
-          if (!tokenLimit) {
-            break;
-          }
-        }
-
-        if (!accepted) {
-          failed = true;
-          break;
-        }
-
-        const raw = geminiResponseText(payload).trim();
-        const asksContinue = raw.includes('[[CONTINUA]]');
-        const text = cleanupTranscript(raw.replace(/\[\[CONTINUA\]\]/g, ''));
-
-        if (text.length < 80) {
-          lastError = 'A transcrição do áudio ficou curta demais para gerar o quiz.';
-          failed = true;
-          break;
-        }
-
-        combined = combined ? `${combined}\n\n${text}` : text;
-        const reachedEnd = !asksContinue && geminiFinishReason(payload) !== 'MAX_TOKENS';
-
-        if (reachedEnd) {
-          return cleanupTranscript(combined);
-        }
-
-        previousTail = text.slice(-900);
+      if (!response.ok) {
+        lastError = payload?.error?.message || `Gemini recusou a transcrição (${response.status}).`;
+        continue;
       }
+
+      const raw = geminiResponseText(payload).trim();
+      const asksContinue = raw.includes('[[CONTINUA]]');
+      const text = cleanupTranscript(raw.replace(/\[\[CONTINUA\]\]/g, ''));
+
+      if (text.length < 80) {
+        lastError = 'A transcrição do áudio ficou curta demais para gerar o quiz.';
+        continue;
+      }
+
+      return {
+        text,
+        done: !asksContinue && geminiFinishReason(payload) !== 'MAX_TOKENS',
+      };
     } catch (error) {
       lastError = error?.message || lastError;
-      failed = true;
-    }
-
-    if (!failed && combined.length >= 400) {
-      return cleanupTranscript(combined);
     }
   }
 
   throw new Error(lastError);
-};
-
-const resolveFullTranscript = async (apiKey, videoId, title) => {
-  const captions = await fetchCaptionTranscript(videoId);
-
-  if (captions.length >= 20000) {
-    return captions;
-  }
-
-  try {
-    const spoken = await transcribeYoutubeVideo(apiKey, videoId, title);
-    return spoken.length >= captions.length ? spoken : captions;
-  } catch (error) {
-    if (captions.length >= 400) {
-      return captions;
-    }
-
-    throw error;
-  }
 };
 
 const extractJson = (text) => {
@@ -639,7 +586,12 @@ const generateQuestions = async (apiKey, transcript, title) => {
         body: JSON.stringify({
           systemInstruction: { parts: [{ text: system }] },
           contents: [{ role: 'user', parts: [{ text: userText }] }],
-          generationConfig: { temperature: 0.3, maxOutputTokens: 8192, responseMimeType: 'application/json' },
+          generationConfig: {
+            temperature: 0.3,
+            maxOutputTokens: 8192,
+            responseMimeType: 'application/json',
+            thinkingConfig: { thinkingBudget: 0 },
+          },
         }),
       });
 
@@ -679,7 +631,11 @@ const generateSermonSummary = async (apiKey, transcript, title) => {
         body: JSON.stringify({
           systemInstruction: { parts: [{ text: system }] },
           contents: [{ role: 'user', parts: [{ text: userText }] }],
-          generationConfig: { temperature: 0.2, maxOutputTokens: 2048 },
+          generationConfig: {
+            temperature: 0.2,
+            maxOutputTokens: 2048,
+            thinkingConfig: { thinkingBudget: 0 },
+          },
         }),
       });
       const payload = await response.json();
@@ -728,6 +684,30 @@ const storeQuizDraft = async (env, request, sermon, transcript, summary, questio
     request
   );
 
+const saveTranscript = (env, request, sermon, transcript, complete) =>
+  supabaseRpc(
+    env,
+    'weekly_quiz_save_transcript',
+    {
+      p_video_id: sermon.videoId,
+      p_title: sermon.title,
+      p_sermon_published_at: sermon.publishedAt,
+      p_transcript: transcript,
+      p_complete: complete,
+    },
+    request
+  );
+
+const readSermonArchive = async (env, request, videoId) => {
+  try {
+    return await supabaseRpc(env, 'weekly_quiz_sermon_archive', { p_video_id: videoId }, request);
+  } catch (error) {
+    const wrapped = new Error(error?.message || 'Não foi possível ler a pregação arquivada.');
+    wrapped.status = Number(error?.status) || 400;
+    throw wrapped;
+  }
+};
+
 const handlePost = async (request, env) => {
   const sessionToken = request.headers.get('x-session-token')?.trim() || '';
 
@@ -736,7 +716,12 @@ const handlePost = async (request, env) => {
   }
 
   const body = await readJsonBody(request);
+  const action = String(body?.action ?? '').trim();
   const requestedVideoId = String(body?.videoId ?? '').trim();
+
+  if (action === 'generate') {
+    return jsonResponse({ error: 'Atualize a página e busque a pregação de novo.' }, 409);
+  }
 
   let prepared;
 
@@ -768,21 +753,14 @@ const handlePost = async (request, env) => {
   }
 
   let sermon = null;
-  let transcript = '';
-  let summary = '';
 
   if (requestedVideoId) {
     let archive;
 
     try {
-      archive = await supabaseRpc(
-        env,
-        'weekly_quiz_sermon_archive',
-        { p_video_id: requestedVideoId },
-        request
-      );
+      archive = await readSermonArchive(env, request, requestedVideoId);
     } catch (error) {
-      return jsonResponse({ error: error?.message || 'Não foi possível ler a pregação arquivada.' }, 400);
+      return jsonResponse({ error: error.message }, Number(error.status) || 400);
     }
 
     const publishedAt = new Date(archive?.sermonPublishedAt);
@@ -798,16 +776,9 @@ const handlePost = async (request, env) => {
       videoId: requestedVideoId,
       title: String(archive?.title ?? '').trim() || 'Pregação',
       publishedAt: publishedAt.toISOString(),
+      transcript: String(archive?.transcript ?? '').trim(),
+      transcriptComplete: archive?.transcriptComplete === true,
     };
-
-    try {
-      transcript = await resolveFullTranscript(geminiApiKey, sermon.videoId, sermon.title);
-    } catch (error) {
-      return jsonResponse(
-        { error: error?.message || 'Não foi possível transcrever esta pregação do início ao fim.' },
-        422
-      );
-    }
   } else {
     const youtubeUrl = String(prepared?.youtubeUrl ?? '').trim();
     let videos;
@@ -838,28 +809,62 @@ const handlePost = async (request, env) => {
       videoId: video.videoId,
       title: video.title,
       publishedAt: publishedAt.toISOString(),
+      transcript: '',
+      transcriptComplete: false,
     };
 
     try {
-      transcript = await resolveFullTranscript(geminiApiKey, sermon.videoId, sermon.title);
-    } catch (error) {
-      return jsonResponse(
-        { error: error?.message || 'Não foi possível transcrever o áudio desta pregação.' },
-        422
-      );
+      const archive = await readSermonArchive(env, request, sermon.videoId);
+      sermon.transcript = String(archive?.transcript ?? '').trim();
+      sermon.transcriptComplete = archive?.transcriptComplete === true;
+    } catch {
+      sermon.transcript = '';
     }
   }
 
-  try {
-    if (summary.length < 80) {
-      summary = await generateSermonSummary(geminiApiKey, transcript, sermon.title);
+  if (action === 'compose') {
+    if (!sermon.transcriptComplete || sermon.transcript.length < 400) {
+      return jsonResponse(
+        { error: 'A transcrição da pregação ainda está incompleta. Toque de novo para continuar.' },
+        409
+      );
     }
 
-    const questions = await generateQuestions(geminiApiKey, transcript, sermon.title);
-    const snapshot = await storeQuizDraft(env, request, sermon, transcript, summary, questions);
-    return jsonResponse({ snapshot });
+    try {
+      const summary = await generateSermonSummary(geminiApiKey, sermon.transcript, sermon.title);
+      const questions = await generateQuestions(geminiApiKey, sermon.transcript, sermon.title);
+      const snapshot = await storeQuizDraft(env, request, sermon, sermon.transcript, summary, questions);
+      return jsonResponse({ snapshot });
+    } catch (error) {
+      const message = error?.message || 'Não foi possível gravar a prévia do quiz.';
+      const status = Number(error?.status) >= 400 ? Number(error.status) : 422;
+      return jsonResponse({ error: message }, status);
+    }
+  }
+
+  if (sermon.transcriptComplete && sermon.transcript.length >= 400) {
+    return jsonResponse({ videoId: sermon.videoId, done: true, chars: sermon.transcript.length });
+  }
+
+  let previous = sermon.transcript.length >= 8000 ? sermon.transcript : '';
+
+  try {
+    if (!previous) {
+      const captions = await fetchCaptionTranscript(sermon.videoId);
+
+      if (captions.length >= 20000) {
+        await saveTranscript(env, request, sermon, captions, true);
+        return jsonResponse({ videoId: sermon.videoId, done: true, chars: captions.length });
+      }
+    }
+
+    const part = await transcribeNextPart(geminiApiKey, sermon.videoId, sermon.title, previous);
+    const transcript = cleanupTranscript(previous ? `${previous}\n\n${part.text}` : part.text);
+    const done = part.done || transcript.length >= 140000;
+    await saveTranscript(env, request, sermon, transcript, done);
+    return jsonResponse({ videoId: sermon.videoId, done, chars: transcript.length });
   } catch (error) {
-    const message = error?.message || 'Não foi possível gravar a prévia do quiz.';
+    const message = error?.message || 'Não foi possível transcrever esta pregação do início ao fim.';
     const status = Number(error?.status) >= 400 ? Number(error.status) : 422;
     return jsonResponse({ error: message }, status);
   }

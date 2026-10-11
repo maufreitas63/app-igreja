@@ -436,25 +436,69 @@ const resolveWeeklyQuizEndpoint = () => {
   return aiEndpoint.replace(/\/functions\/v1\/ai-chat$/, '/functions/v1/weekly-quiz');
 };
 
-export const generateWeeklyQuizDraft = async (videoId?: string) => {
-  const response = await supabaseSessionFetch(resolveWeeklyQuizEndpoint(), {
-    method: 'POST',
-    timeoutMs: 420_000,
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${getSupabaseAnonKey()}`,
-      apikey: getSupabaseAnonKey(),
-    },
-    body: JSON.stringify({ action: 'generate', videoId: videoId || undefined }),
-  });
+const postWeeklyQuiz = async (body: { action: 'transcribe' | 'compose'; videoId?: string }) => {
+  let response: Response;
 
-  const payload = (await response.json().catch(() => null)) as
-    | { snapshot?: unknown; error?: string }
-    | null;
-
-  if (!response.ok) {
-    throw new Error(payload?.error || 'Não foi possível buscar a pregação e gerar o quiz.');
+  try {
+    response = await supabaseSessionFetch(resolveWeeklyQuizEndpoint(), {
+      method: 'POST',
+      timeoutMs: 110_000,
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${getSupabaseAnonKey()}`,
+        apikey: getSupabaseAnonKey(),
+      },
+      body: JSON.stringify(body),
+    });
+  } catch (error) {
+    const aborted = error instanceof Error && error.name === 'AbortError';
+    throw new Error(
+      aborted
+        ? 'A transcrição passou do tempo limite. Toque de novo para continuar de onde parou.'
+        : 'Não foi possível buscar a pregação e gerar o quiz.'
+    );
   }
 
+  const raw = await response.text();
+  const payload = (() => {
+    try {
+      return JSON.parse(raw) as { snapshot?: unknown; error?: string; videoId?: string; done?: boolean };
+    } catch {
+      return null;
+    }
+  })();
+
+  if (!response.ok) {
+    throw new Error(
+      payload?.error
+        || (response.status === 524
+          ? 'A transcrição passou do tempo limite. Toque de novo para continuar de onde parou.'
+          : 'Não foi possível buscar a pregação e gerar o quiz.')
+    );
+  }
+
+  return payload;
+};
+
+export const generateWeeklyQuizDraft = async (videoId?: string) => {
+  let currentVideoId = videoId || '';
+
+  for (let part = 0; part < 5; part += 1) {
+    const step = await postWeeklyQuiz({
+      action: 'transcribe',
+      videoId: currentVideoId || undefined,
+    });
+    currentVideoId = step?.videoId || currentVideoId;
+
+    if (step?.done) {
+      break;
+    }
+
+    if (part === 4) {
+      throw new Error('A transcrição ainda não chegou ao fim da pregação. Toque de novo para continuar.');
+    }
+  }
+
+  const payload = await postWeeklyQuiz({ action: 'compose', videoId: currentVideoId });
   return parseWeeklyQuizAdminSnapshot(payload?.snapshot);
 };
