@@ -22,6 +22,35 @@ const markHomePullDown = () => {
   }, 700);
 };
 
+const interactiveTarget = (target: EventTarget | null) => {
+  let node = target instanceof Element ? target : null;
+
+  while (node && node !== document.body) {
+    const tag = node.tagName;
+    const role = node.getAttribute('role');
+
+    if (
+      tag === 'BUTTON'
+      || tag === 'A'
+      || tag === 'INPUT'
+      || tag === 'TEXTAREA'
+      || tag === 'SELECT'
+      || tag === 'LABEL'
+      || role === 'button'
+      || role === 'checkbox'
+      || role === 'switch'
+      || role === 'link'
+      || node.hasAttribute('tabindex')
+    ) {
+      return true;
+    }
+
+    node = node.parentElement;
+  }
+
+  return false;
+};
+
 const verticalScroller = (target: EventTarget | null) => {
   let node = target instanceof Element ? target : null;
 
@@ -54,14 +83,19 @@ export function useHomePullDownGuard() {
 
     let startX = 0;
     let startY = 0;
+    let startedOnControl = false;
 
     const onTouchStart = (event: TouchEvent) => {
       const touch = event.touches[0];
       startX = touch?.clientX ?? 0;
       startY = touch?.clientY ?? 0;
+      startedOnControl = interactiveTarget(event.target);
     };
 
     const onTouchMove = (event: TouchEvent) => {
+      if (startedOnControl) {
+        return;
+      }
       const touch = event.touches[0];
 
       if (!touch) {
