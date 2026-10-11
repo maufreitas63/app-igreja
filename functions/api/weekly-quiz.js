@@ -410,10 +410,12 @@ const geminiResponseText = (payload) =>
 const transcribeYoutubeVideo = async (apiKey, videoId, title) => {
   const watchUrl = `https://www.youtube.com/watch?v=${encodeURIComponent(videoId)}`;
   const instruction = [
-    'Transcreva em português do Brasil somente o que é falado neste vídeo.',
+    'Transcreva em português do Brasil a pregação propriamente dita.',
+    'Inclua a exposição bíblica, o texto explicado e a mensagem pregada.',
+    'Deixe de fora orações, saudações, avisos, testemunhos e comentários de cunho pessoal.',
     'Não resuma e não invente falas, histórias ou versículos.',
-    'Quando a pessoa citar a Bíblia, registre livro, capítulo e versículo como foram ditos.',
-    'Devolva só o texto corrido da fala.',
+    'Quando a pregação citar a Bíblia, registre livro, capítulo e versículo como foram ditos.',
+    'Devolva só o texto corrido da mensagem.',
     `Título: ${title}`,
   ].join('\n');
   let lastError = 'Não foi possível transcrever o áudio desta pregação.';
@@ -519,12 +521,15 @@ const normalizeQuestions = (payload) => {
 
 const generateQuestions = async (apiKey, transcript, title) => {
   const system = [
-    'Você cria um quiz de múltipla escolha somente com o que está na transcrição da pregação.',
+    'Você cria um quiz de múltipla escolha só com o conteúdo específico da pregação.',
+    'Use a exposição bíblica, o texto explicado e a mensagem pregada.',
+    'Deixe de fora orações, saudações, avisos, testemunhos e comentários de cunho pessoal.',
+    'Não pergunte o que foi orado, a vida particular de quem pregou, nem opinião pessoal fora do texto.',
     'Devolva JSON puro, sem markdown, neste formato:',
     '{"questions":[{"prompt":"","options":["","","",""],"correctIndex":0,"bibleBook":"","bibleChapter":1,"bibleVerse":1,"bibleReference":""}]}',
     'Regras: exatamente 10 perguntas; 4 alternativas; uma correta; correctIndex de 0 a 3.',
-    'A referência bíblica precisa ser um texto citado na pregação, com livro, capítulo e versículo.',
-    'Não invente versículo, história ou aplicação que não esteja na mensagem.',
+    'A referência bíblica precisa ser um texto citado na exposição da pregação, com livro, capítulo e versículo.',
+    'Não invente versículo, história ou aplicação que não estejam na mensagem pregada.',
     'As alternativas erradas devem ser plausíveis, mas não podem contradizer a citação usada.',
   ].join('\n');
 
