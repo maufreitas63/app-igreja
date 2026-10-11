@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   Platform,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   View,
@@ -30,6 +31,7 @@ export type PerfilClassProps = {
   title?: string;
   loading?: boolean;
   actions: PerfilClassAction[];
+  children?: React.ReactNode;
 };
 
 /** Visualização pura de Perfil & Identidade — extraída de dashboard.card.grouped_manage. */
@@ -37,6 +39,7 @@ export function PerfilClass({
   title = 'Perfil & Identidade',
   loading = false,
   actions,
+  children,
 }: PerfilClassProps) {
   if (loading) {
     return (
@@ -54,7 +57,12 @@ export function PerfilClass({
         titleStyle={styles.title}
       />
 
-      <View style={styles.body}>
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={styles.body}
+        showsVerticalScrollIndicator={false}
+      >
+        {children}
         {actions.length ? (
           actions.map((action) => (
             <Pressable
@@ -71,18 +79,24 @@ export function PerfilClass({
         ) : (
           <Text style={styles.emptyText}>Nenhuma opção de perfil disponível para sua conta.</Text>
         )}
-      </View>
+      </ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   root: {
+    flex: 1,
+    minHeight: 0,
     width: '100%',
     maxWidth: '100%',
     alignSelf: 'stretch',
     backgroundColor: PERFIL_CLASS_SURFACE,
     gap: 12,
+  },
+  scroll: {
+    flex: 1,
+    minHeight: 0,
   },
   loadingState: {
     alignItems: 'center',

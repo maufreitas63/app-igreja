@@ -235,6 +235,57 @@ export const discardWeeklyQuizDraft = async (quizId: string) => {
   return parseWeeklyQuizAdminSnapshot(data);
 };
 
+export type WeeklyQuizRankRow = {
+  position: number;
+  name: string;
+  points: number;
+  isMe?: boolean;
+};
+
+export type WeeklyQuizProfileRanking = {
+  totalPoints: number;
+  position: number;
+  inTopFive: boolean;
+  top: WeeklyQuizRankRow[];
+  me: WeeklyQuizRankRow | null;
+};
+
+export const fetchWeeklyQuizProfileRanking = async () => {
+  const { data, error } = await supabase.rpc('weekly_quiz_profile_ranking');
+
+  if (error) {
+    throw new Error(rpcErrorMessage(error, 'Não foi possível carregar o ranking.'));
+  }
+
+  const row = data && typeof data === 'object' ? (data as Record<string, unknown>) : {};
+  const me = row.me && typeof row.me === 'object' ? (row.me as Record<string, unknown>) : null;
+
+  return {
+    totalPoints: asNumber(row.totalPoints),
+    position: asNumber(row.position),
+    inTopFive: row.inTopFive === true,
+    top: Array.isArray(row.top)
+      ? row.top.map((item) => {
+          const rank = item as Record<string, unknown>;
+          return {
+            position: asNumber(rank.position),
+            name: asText(rank.name) || 'Sem nome',
+            points: asNumber(rank.points),
+            isMe: rank.isMe === true,
+          };
+        })
+      : [],
+    me: me
+      ? {
+          position: asNumber(me.position),
+          name: asText(me.name) || 'Sem nome',
+          points: asNumber(me.points),
+          isMe: true,
+        }
+      : null,
+  } satisfies WeeklyQuizProfileRanking;
+};
+
 export const fetchMemberWeeklyQuiz = async () => {
   const { data, error } = await supabase.rpc('weekly_quiz_for_member');
 

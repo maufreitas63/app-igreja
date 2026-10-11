@@ -2,6 +2,7 @@ import { DigitalIDCard } from '@/components/DigitalIDCard';
 import { MeusLivrosRetiradosPanel } from '@/components/MeusLivrosRetiradosPanel';
 import { MembersClassPanel } from '@/components/MembersClassPanel';
 import { PerfilClass, type PerfilClassAction } from '@/components/PerfilClass';
+import { ProfileQuizRanking } from '@/components/ProfileQuizRanking';
 import { ProfileClassPanel } from '@/components/ProfileClassPanel';
 import { ProfileServiceForm } from '@/components/ProfileServiceForm';
 import { DiscipleshipTrailPanel } from '@/components/DiscipleshipTrailPanel';
@@ -393,7 +394,9 @@ export function PerfilClassPanel() {
 
   return (
     <View style={styles.hub}>
-      <PerfilClass loading={loading} actions={actions} />
+      <PerfilClass loading={loading} actions={actions}>
+        <ProfileQuizRanking />
+      </PerfilClass>
       <CloseFooterBar onPress={returnToCaller} />
     </View>
   );
