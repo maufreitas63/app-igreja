@@ -608,6 +608,9 @@ const styles = StyleSheet.create({
     flexDirection: 'column',
     backgroundColor: MINIMAL_UI.background,
     overflow: 'hidden',
+    ...(Platform.OS === 'web'
+      ? ({ touchAction: 'pan-y', overscrollBehaviorY: 'contain' } as object)
+      : null),
   },
   inboxSection: {
     flex: 1,

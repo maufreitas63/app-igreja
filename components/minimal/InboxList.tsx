@@ -95,15 +95,16 @@ const styles = StyleSheet.create({
     alignSelf: 'stretch',
     backgroundColor: MINIMAL_UI.background,
     flexGrow: 0,
-    overflow: 'hidden',
     ...(Platform.OS === 'web'
       ? ({
           boxSizing: 'border-box',
+          overflowX: 'hidden',
           overflowY: 'auto',
+          overscrollBehaviorY: 'contain',
           touchAction: 'pan-y',
           WebkitOverflowScrolling: 'touch',
         } as object)
-      : null),
+      : { overflow: 'hidden' }),
   },
   listFill: {
     flex: 1,

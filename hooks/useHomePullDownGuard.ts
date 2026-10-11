@@ -22,21 +22,22 @@ const markHomePullDown = () => {
   }, 700);
 };
 
-const canScrollTowardStart = (target: EventTarget | null) => {
+const verticalScroller = (target: EventTarget | null) => {
   let node = target instanceof Element ? target : null;
 
-  while (node) {
+  while (node && node !== document.body) {
     const style = window.getComputedStyle(node);
-    const scrolls = style.overflowY === 'auto' || style.overflowY === 'scroll';
+    const overflowY = style.overflowY;
+    const scrolls = overflowY === 'auto' || overflowY === 'scroll' || overflowY === 'overlay';
 
-    if (scrolls && node.scrollHeight > node.clientHeight + 1 && node.scrollTop > 0) {
-      return true;
+    if (scrolls && node.scrollHeight > node.clientHeight + 1) {
+      return node;
     }
 
     node = node.parentElement;
   }
 
-  return false;
+  return null;
 };
 
 /**
@@ -70,11 +71,20 @@ export function useHomePullDownGuard() {
       const deltaX = touch.clientX - startX;
       const deltaY = touch.clientY - startY;
 
-      if (deltaY <= 8 || Math.abs(deltaY) <= Math.abs(deltaX)) {
+      if (Math.abs(deltaY) <= 8 || Math.abs(deltaY) <= Math.abs(deltaX)) {
         return;
       }
 
-      if (canScrollTowardStart(event.target)) {
+      const scroller = verticalScroller(event.target);
+
+      if (scroller) {
+        const atStart = scroller.scrollTop <= 0;
+        const pullingPastStart = deltaY > 0 && atStart;
+
+        if (!pullingPastStart) {
+          return;
+        }
+      } else if (deltaY <= 0) {
         return;
       }
 
