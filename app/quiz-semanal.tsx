@@ -245,6 +245,7 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
   contextButton: {
+    backgroundColor: '#EEF3F8',
     borderColor: MINIMAL_UI.border,
     borderRadius: 8,
     borderWidth: 1,
