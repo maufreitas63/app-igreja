@@ -1,12 +1,10 @@
 ---
-description: Sempre informar o link do commit no GitHub
+description: Sempre informar o hash curto do commit
 alwaysApply: true
 ---
 
-# Referência do commit no GitHub
+# Referência do commit
 
-Sempre que a resposta citar um commit publicado neste repositório, inclua o link completo do GitHub, com o hash inteiro:
+Sempre que a resposta citar um commit publicado neste repositório, mostre só o hash curto de 7 caracteres, como `84f7efb`.
 
-`https://github.com/maufreitas63/app-igreja/commit/<hash>`
-
-O hash curto sozinho não substitui o link.
+Não mostre a URL do GitHub nem o hash completo de 40 caracteres.
