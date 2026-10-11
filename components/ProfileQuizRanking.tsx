@@ -58,7 +58,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     paddingHorizontal: 14,
     paddingVertical: 12,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#EEF3F8',
   },
   title: {
     color: MINIMAL_UI.text,
