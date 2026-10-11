@@ -285,7 +285,7 @@ const resolveWeeklyQuizEndpoint = () => {
 export const generateWeeklyQuizDraft = async () => {
   const response = await supabaseSessionFetch(resolveWeeklyQuizEndpoint(), {
     method: 'POST',
-    timeoutMs: 70_000,
+    timeoutMs: 180_000,
     headers: {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${getSupabaseAnonKey()}`,

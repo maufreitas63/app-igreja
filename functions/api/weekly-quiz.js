@@ -332,7 +332,7 @@ const fetchInnertubeCaptions = async (videoId, clientName, clientVersion) => {
   return captionTracksFromPlayer(payload);
 };
 
-const fetchTranscript = async (videoId) => {
+const fetchCaptionTranscript = async (videoId) => {
   const trackSets = await Promise.all([
     fetchInnertubeCaptions(videoId, 'ANDROID', '19.17.34'),
     fetchInnertubeCaptions(videoId, 'WEB', '2.20240101.00.00'),
@@ -350,13 +350,61 @@ const fetchTranscript = async (videoId) => {
     `https://www.youtube.com/api/timedtext?v=${encodeURIComponent(videoId)}&lang=pt&fmt=json3`
   );
 
-  if (timed.length >= 400) {
-    return timed;
+  return timed.length >= 400 ? timed : '';
+};
+
+const geminiResponseText = (payload) =>
+  payload?.candidates?.[0]?.content?.parts?.map((part) => part?.text || '').join('\n') ?? '';
+
+const transcribeYoutubeVideo = async (apiKey, videoId, title) => {
+  const watchUrl = `https://www.youtube.com/watch?v=${encodeURIComponent(videoId)}`;
+  const instruction = [
+    'Transcreva em português do Brasil somente o que é falado neste vídeo.',
+    'Não resuma e não invente falas, histórias ou versículos.',
+    'Quando a pessoa citar a Bíblia, registre livro, capítulo e versículo como foram ditos.',
+    'Devolva só o texto corrido da fala.',
+    `Título: ${title}`,
+  ].join('\n');
+  let lastError = 'Não foi possível transcrever o áudio desta pregação.';
+
+  for (const model of GEMINI_MODELS) {
+    try {
+      const response = await fetch(`${GEMINI_API_BASE}/${model}:generateContent?key=${apiKey}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [
+            {
+              role: 'user',
+              parts: [
+                { file_data: { file_uri: watchUrl } },
+                { text: instruction },
+              ],
+            },
+          ],
+          generationConfig: { temperature: 0.2, maxOutputTokens: 8192 },
+        }),
+      });
+      const payload = await response.json();
+
+      if (!response.ok) {
+        lastError = payload?.error?.message || `Gemini recusou a transcrição (${response.status}).`;
+        continue;
+      }
+
+      const transcript = geminiResponseText(payload).replace(/\s+/g, ' ').trim();
+
+      if (transcript.length >= 400) {
+        return transcript;
+      }
+
+      lastError = 'A transcrição do áudio ficou curta demais para gerar o quiz.';
+    } catch (error) {
+      lastError = error?.message || lastError;
+    }
   }
 
-  throw new Error(
-    'Esta pregação não tem legenda utilizável. Sem a transcrição o quiz não é gerado.'
-  );
+  throw new Error(lastError);
 };
 
 const extractJson = (text) => {
@@ -451,8 +499,7 @@ const generateQuestions = async (apiKey, transcript, title) => {
         continue;
       }
 
-      const text = payload?.candidates?.[0]?.content?.parts?.map((part) => part?.text || '').join('\n') ?? '';
-      return normalizeQuestions(extractJson(text));
+      return normalizeQuestions(extractJson(geminiResponseText(payload)));
     } catch (error) {
       lastError = error?.message || lastError;
     }
@@ -507,14 +554,6 @@ const handlePost = async (request, env) => {
     return jsonResponse({ error: 'A data de publicação desta pregação não pôde ser lida.' }, 502);
   }
 
-  let transcript;
-
-  try {
-    transcript = await fetchTranscript(video.videoId);
-  } catch (error) {
-    return jsonResponse({ error: error?.message || 'Não foi possível ler a transcrição.' }, 422);
-  }
-
   const geminiApiKey = await resolveGeminiApiKey(env);
 
   if (!geminiApiKey) {
@@ -522,6 +561,19 @@ const handlePost = async (request, env) => {
       { error: 'Chave Gemini não configurada. Cadastre em Engrenagem → Chave Gemini.' },
       503
     );
+  }
+
+  let transcript = await fetchCaptionTranscript(video.videoId);
+
+  if (transcript.length < 400) {
+    try {
+      transcript = await transcribeYoutubeVideo(geminiApiKey, video.videoId, video.title);
+    } catch (error) {
+      return jsonResponse(
+        { error: error?.message || 'Não foi possível transcrever o áudio desta pregação.' },
+        422
+      );
+    }
   }
 
   let questions;
