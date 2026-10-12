@@ -15,6 +15,7 @@ import {
   MAINTENANCE_SCROLL_PROPS,
   maintenancePanelStyles,
 } from '@/lib/maintenanceCardStyles';
+import { MaintenanceHelpInfoTitle } from '@/components/ui/MaintenanceHelpInfoTitle';
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
@@ -46,6 +47,14 @@ type PendingReset = {
   quizId: string;
   mode: 'scores' | 'quiz';
 };
+
+const QUIZ_HELP_TEXT = [
+  'Buscar pregação mais recente transcreve a mensagem do início ao fim e gera 15 perguntas.',
+  'Marque exatamente 10 e toque em Publicar as 10 escolhidas. O membro só vê o quiz depois dessa publicação e responde essas 10.',
+  'Refazer as 15 perguntas troca o conjunto usando a transcrição já gravada.',
+  'Em Pregações arquivadas sem quiz, o mesmo botão gera uma prévia nova daquela data. Com uma prévia aberta, publique ou descarte antes de gerar outra.',
+  'Para refazer um quiz já publicado, exclua o quiz dessa data. A transcrição permanece e a pregação volta para a lista de arquivadas.',
+].join('\n\n');
 
 export function MaintenanceWeeklyQuizCard({ isActive = true, panelHeight }: Props) {
   const [snapshot, setSnapshot] = useState<WeeklyQuizAdminSnapshot>(EMPTY_SNAPSHOT);
@@ -154,10 +163,11 @@ export function MaintenanceWeeklyQuizCard({ isActive = true, panelHeight }: Prop
       contentContainerStyle={styles.content}
       {...MAINTENANCE_SCROLL_PROPS}
     >
-      <Text style={maintenancePanelStyles.panelTitle}>Quiz semanal</Text>
-      <Text style={styles.lead}>
-        Busca a pregação mais recente, transcreve a mensagem do início ao fim e gera 15 perguntas sobre essa transcrição. Escolha 10 para publicar. O membro só vê o quiz depois dessa escolha.
-      </Text>
+      <MaintenanceHelpInfoTitle
+        title="Quiz semanal"
+        helpText={QUIZ_HELP_TEXT}
+        titleStyle={maintenancePanelStyles.panelTitle}
+      />
 
       {loading ? <ActivityIndicator color={MINIMAL_UI.accent} /> : null}
       {error ? <Text style={styles.error}>{error}</Text> : null}
@@ -441,11 +451,6 @@ const styles = StyleSheet.create({
   content: {
     gap: 12,
     paddingBottom: 24,
-  },
-  lead: {
-    color: MINIMAL_UI.text,
-    fontSize: 14,
-    lineHeight: 20,
   },
   hint: {
     color: MINIMAL_UI.textMuted,
