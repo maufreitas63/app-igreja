@@ -477,6 +477,9 @@ const transcribeNextPart = async (apiKey, videoId, title, previous) => {
 
       if (!response.ok) {
         lastError = payload?.error?.message || `Gemini recusou a transcrição (${response.status}).`;
+        if (youtubeReadDenied({ message: lastError })) {
+          throw new Error(lastError);
+        }
         continue;
       }
 
@@ -698,6 +701,12 @@ const saveTranscript = (env, request, sermon, transcript, complete) =>
     request
   );
 
+const youtubeReadDenied = (error) =>
+  /does not have permission|permission denied/i.test(String(error?.message || ''));
+
+const youtubeReadDeniedMessage =
+  'O YouTube não liberou esta pregação para transcrição. O vídeo está público, mas a leitura automática dele foi recusada.';
+
 const readSermonArchive = async (env, request, videoId) => {
   try {
     return await supabaseRpc(env, 'weekly_quiz_sermon_archive', { p_video_id: videoId }, request);
@@ -752,7 +761,7 @@ const handlePost = async (request, env) => {
     );
   }
 
-  let sermon = null;
+  let queue = [];
 
   if (requestedVideoId) {
     let archive;
@@ -772,13 +781,13 @@ const handlePost = async (request, env) => {
       );
     }
 
-    sermon = {
+    queue = [{
       videoId: requestedVideoId,
       title: String(archive?.title ?? '').trim() || 'Pregação',
       publishedAt: publishedAt.toISOString(),
       transcript: String(archive?.transcript ?? '').trim(),
       transcriptComplete: archive?.transcriptComplete === true,
-    };
+    }];
   } else {
     const youtubeUrl = String(prepared?.youtubeUrl ?? '').trim();
     let videos;
@@ -790,37 +799,47 @@ const handlePost = async (request, env) => {
       return jsonResponse({ error: error?.message || 'Não foi possível ler o canal do YouTube.' }, 502);
     }
 
-    const video = videos.find((item) => !used.has(item.videoId));
+    const pending = videos.filter((item) => !used.has(item.videoId)).slice(0, 5);
 
-    if (!video) {
+    if (!pending.length) {
       return jsonResponse(
         { error: 'As pregações recentes deste canal já viraram quiz. Busque de novo quando sair um vídeo novo.' },
         409
       );
     }
 
-    const publishedAt = new Date(video.published);
+    for (const video of pending) {
+      const publishedAt = new Date(video.published);
 
-    if (Number.isNaN(publishedAt.getTime())) {
+      if (Number.isNaN(publishedAt.getTime())) {
+        continue;
+      }
+
+      const sermon = {
+        videoId: video.videoId,
+        title: video.title,
+        publishedAt: publishedAt.toISOString(),
+        transcript: '',
+        transcriptComplete: false,
+      };
+
+      try {
+        const archive = await readSermonArchive(env, request, sermon.videoId);
+        sermon.transcript = String(archive?.transcript ?? '').trim();
+        sermon.transcriptComplete = archive?.transcriptComplete === true;
+      } catch {
+        sermon.transcript = '';
+      }
+
+      queue.push(sermon);
+    }
+
+    if (!queue.length) {
       return jsonResponse({ error: 'A data de publicação desta pregação não pôde ser lida.' }, 502);
     }
-
-    sermon = {
-      videoId: video.videoId,
-      title: video.title,
-      publishedAt: publishedAt.toISOString(),
-      transcript: '',
-      transcriptComplete: false,
-    };
-
-    try {
-      const archive = await readSermonArchive(env, request, sermon.videoId);
-      sermon.transcript = String(archive?.transcript ?? '').trim();
-      sermon.transcriptComplete = archive?.transcriptComplete === true;
-    } catch {
-      sermon.transcript = '';
-    }
   }
+
+  const sermon = queue[0];
 
   if (action === 'compose') {
     if (!sermon.transcriptComplete || sermon.transcript.length < 400) {
@@ -842,32 +861,49 @@ const handlePost = async (request, env) => {
     }
   }
 
-  if (sermon.transcriptComplete && sermon.transcript.length >= 400) {
-    return jsonResponse({ videoId: sermon.videoId, done: true, chars: sermon.transcript.length });
-  }
+  let deniedCount = 0;
 
-  let previous = sermon.transcript.length >= 8000 ? sermon.transcript : '';
-
-  try {
-    if (!previous) {
-      const captions = await fetchCaptionTranscript(sermon.videoId);
-
-      if (captions.length >= 20000) {
-        await saveTranscript(env, request, sermon, captions, true);
-        return jsonResponse({ videoId: sermon.videoId, done: true, chars: captions.length });
-      }
+  for (const item of queue) {
+    if (item.transcriptComplete && item.transcript.length >= 400) {
+      return jsonResponse({ videoId: item.videoId, done: true, chars: item.transcript.length });
     }
 
-    const part = await transcribeNextPart(geminiApiKey, sermon.videoId, sermon.title, previous);
-    const transcript = cleanupTranscript(previous ? `${previous}\n\n${part.text}` : part.text);
-    const done = part.done || transcript.length >= 140000;
-    await saveTranscript(env, request, sermon, transcript, done);
-    return jsonResponse({ videoId: sermon.videoId, done, chars: transcript.length });
-  } catch (error) {
-    const message = error?.message || 'Não foi possível transcrever esta pregação do início ao fim.';
-    const status = Number(error?.status) >= 400 ? Number(error.status) : 422;
-    return jsonResponse({ error: message }, status);
+    const previous = item.transcript.length >= 8000 ? item.transcript : '';
+
+    try {
+      if (!previous) {
+        const captions = await fetchCaptionTranscript(item.videoId);
+
+        if (captions.length >= 20000) {
+          await saveTranscript(env, request, item, captions, true);
+          return jsonResponse({ videoId: item.videoId, done: true, chars: captions.length });
+        }
+      }
+
+      const part = await transcribeNextPart(geminiApiKey, item.videoId, item.title, previous);
+      const transcript = cleanupTranscript(previous ? `${previous}\n\n${part.text}` : part.text);
+      const done = part.done || transcript.length >= 140000;
+      await saveTranscript(env, request, item, transcript, done);
+      return jsonResponse({ videoId: item.videoId, done, chars: transcript.length });
+    } catch (error) {
+      if (!requestedVideoId && youtubeReadDenied(error)) {
+        deniedCount += 1;
+        continue;
+      }
+
+      const message = youtubeReadDenied(error)
+        ? youtubeReadDeniedMessage
+        : error?.message || 'Não foi possível transcrever esta pregação do início ao fim.';
+      const status = Number(error?.status) >= 400 ? Number(error.status) : 422;
+      return jsonResponse({ error: message }, status);
+    }
   }
+
+  if (deniedCount > 0) {
+    return jsonResponse({ error: youtubeReadDeniedMessage }, 403);
+  }
+
+  return jsonResponse({ error: 'Não foi possível transcrever esta pregação do início ao fim.' }, 422);
 };
 
 export const onRequestOptions = async () => new Response('ok', { headers: CORS_HEADERS });
