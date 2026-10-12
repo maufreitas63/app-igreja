@@ -15,8 +15,9 @@ import {
   MAINTENANCE_SCROLL_PROPS,
   maintenancePanelStyles,
 } from '@/lib/maintenanceCardStyles';
-import { MaintenanceHelpInfoTitle } from '@/components/ui/MaintenanceHelpInfoTitle';
-import { MINIMAL_UI } from '@/lib/minimalUiTheme';
+import { CenteredCloseDialog } from '@/components/minimal/CenteredCloseDialog';
+import { MINIMAL_SECTION_TITLE, MINIMAL_UI } from '@/lib/minimalUiTheme';
+import { FontAwesome } from '@expo/vector-icons';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
@@ -68,6 +69,7 @@ export function MaintenanceWeeklyQuizCard({ isActive = true, panelHeight }: Prop
   const [transcriptTitle, setTranscriptTitle] = useState<string | null>(null);
   const [transcriptText, setTranscriptText] = useState('');
   const [transcriptLoading, setTranscriptLoading] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(false);
   const contentHeight = computeMaintenanceContentHeight(panelHeight);
 
   const load = useCallback(async () => {
@@ -163,11 +165,21 @@ export function MaintenanceWeeklyQuizCard({ isActive = true, panelHeight }: Prop
       contentContainerStyle={styles.content}
       {...MAINTENANCE_SCROLL_PROPS}
     >
-      <MaintenanceHelpInfoTitle
-        title="Quiz semanal"
-        helpText={QUIZ_HELP_TEXT}
-        titleStyle={maintenancePanelStyles.panelTitle}
-      />
+      <View style={styles.sectionHeader}>
+        <View style={styles.sectionTitleCluster}>
+          <Text style={styles.sectionTitle}>Quiz semanal</Text>
+        </View>
+        <View style={styles.sectionInfoSlot}>
+          <TouchableOpacity
+            accessibilityRole="button"
+            accessibilityLabel="Como usar: Quiz semanal"
+            onPress={() => setHelpOpen(true)}
+            style={styles.sectionInfoButton}
+          >
+            <FontAwesome name="info-circle" size={20} color={MINIMAL_UI.icon} />
+          </TouchableOpacity>
+        </View>
+      </View>
 
       {loading ? <ActivityIndicator color={MINIMAL_UI.accent} /> : null}
       {error ? <Text style={styles.error}>{error}</Text> : null}
@@ -409,6 +421,14 @@ export function MaintenanceWeeklyQuizCard({ isActive = true, panelHeight }: Prop
         ))
       )}
     </ScrollView>
+    <CenteredCloseDialog
+      visible={helpOpen}
+      onClose={() => setHelpOpen(false)}
+      title="Como usar"
+      accessibilityCloseLabel="Fechar como usar"
+    >
+      <Text style={styles.helpText}>{QUIZ_HELP_TEXT}</Text>
+    </CenteredCloseDialog>
     <Modal
       visible={transcriptTitle !== null}
       animationType="fade"
@@ -451,6 +471,43 @@ const styles = StyleSheet.create({
   content: {
     gap: 12,
     paddingBottom: 24,
+  },
+  sectionHeader: {
+    width: '100%',
+    position: 'relative',
+    justifyContent: 'center',
+    overflow: 'visible',
+    zIndex: 4,
+  },
+  sectionTitleCluster: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'visible',
+    zIndex: 1,
+  },
+  sectionTitle: {
+    ...MINIMAL_SECTION_TITLE,
+    paddingRight: 36,
+  },
+  sectionInfoSlot: {
+    position: 'absolute',
+    right: 4,
+    top: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    zIndex: 6,
+  },
+  sectionInfoButton: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  helpText: {
+    color: MINIMAL_UI.text,
+    fontSize: 14,
+    lineHeight: 22,
   },
   hint: {
     color: MINIMAL_UI.textMuted,
