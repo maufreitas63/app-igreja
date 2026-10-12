@@ -8,6 +8,7 @@ export const WEEKLY_QUIZ_SQL_HINT =
   'O quiz semanal ainda não está disponível neste ambiente.';
 
 export type WeeklyQuizDraftQuestion = {
+  id: string;
   position: number;
   prompt: string;
   options: string[];
@@ -139,6 +140,7 @@ const parseDraft = (value: unknown): WeeklyQuizDraft | null => {
     ? row.questions.map((item) => {
         const question = item as Record<string, unknown>;
         return {
+          id: asText(question.id),
           position: asNumber(question.position),
           prompt: asText(question.prompt),
           options: asOptions(question.options),
@@ -287,8 +289,11 @@ export const fetchWeeklyQuizAdminSnapshot = async () => {
   return parseWeeklyQuizAdminSnapshot(data);
 };
 
-export const publishWeeklyQuiz = async (quizId: string) => {
-  const { data, error } = await supabase.rpc('weekly_quiz_publish', { p_quiz_id: quizId });
+export const publishWeeklyQuiz = async (quizId: string, questionIds: string[]) => {
+  const { data, error } = await supabase.rpc('weekly_quiz_publish', {
+    p_quiz_id: quizId,
+    p_question_ids: questionIds,
+  });
 
   if (error) {
     throw new Error(rpcErrorMessage(error, 'Não foi possível publicar o quiz.'));
@@ -436,7 +441,7 @@ const resolveWeeklyQuizEndpoint = () => {
   return aiEndpoint.replace(/\/functions\/v1\/ai-chat$/, '/functions/v1/weekly-quiz');
 };
 
-const postWeeklyQuiz = async (body: { action: 'transcribe' | 'compose'; videoId?: string }) => {
+const postWeeklyQuiz = async (body: { action: 'transcribe' | 'compose' | 'recompose'; videoId?: string }) => {
   let response: Response;
 
   try {
@@ -500,5 +505,10 @@ export const generateWeeklyQuizDraft = async (videoId?: string) => {
   }
 
   const payload = await postWeeklyQuiz({ action: 'compose', videoId: currentVideoId });
+  return parseWeeklyQuizAdminSnapshot(payload?.snapshot);
+};
+
+export const regenerateWeeklyQuizQuestions = async (videoId: string) => {
+  const payload = await postWeeklyQuiz({ action: 'recompose', videoId });
   return parseWeeklyQuizAdminSnapshot(payload?.snapshot);
 };

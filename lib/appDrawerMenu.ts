@@ -309,7 +309,7 @@ export const APP_DRAWER_SETTINGS_ITEMS: AppDrawerSettingsItem[] = [
     label: 'Quiz semanal',
     moduleKey: 'weekly_quiz',
     group: 'culto',
-    hint: 'Pregação do YouTube, 10 perguntas e ranking',
+    hint: 'Pregação do YouTube, 10 perguntas escolhidas e ranking',
   },
   {
     letter: 'c4',

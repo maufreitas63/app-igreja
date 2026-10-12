@@ -512,7 +512,7 @@ const extractJson = (text) => {
   const end = source.lastIndexOf('}');
 
   if (start < 0 || end <= start) {
-    throw new Error('A geração não devolveu as 10 perguntas.');
+    throw new Error('A geração não devolveu as 15 perguntas.');
   }
 
   return JSON.parse(source.slice(start, end + 1));
@@ -521,8 +521,8 @@ const extractJson = (text) => {
 const normalizeQuestions = (payload) => {
   const rows = Array.isArray(payload?.questions) ? payload.questions : [];
 
-  if (rows.length !== 10) {
-    throw new Error('A geração não devolveu exatamente 10 perguntas.');
+  if (rows.length !== 15) {
+    throw new Error('A geração não devolveu exatamente 15 perguntas.');
   }
 
   return rows.map((row) => {
@@ -571,7 +571,7 @@ const generateQuestions = async (apiKey, transcript, title) => {
     'Não pergunte o que foi orado, a vida particular de quem pregou, nem opinião pessoal fora do texto.',
     'Devolva JSON puro, sem markdown, neste formato:',
     '{"questions":[{"prompt":"","options":["","","",""],"correctIndex":0,"bibleBook":"","bibleChapter":1,"bibleVerse":1,"bibleReference":""}]}',
-    'Regras: exatamente 10 perguntas; 4 alternativas; uma correta; correctIndex de 0 a 3.',
+    'Regras: exatamente 15 perguntas; 4 alternativas; uma correta; correctIndex de 0 a 3.',
     'As perguntas devem percorrer a pregação do início, do meio e da conclusão, não só a abertura.',
     'A referência bíblica precisa ser um texto citado na exposição da pregação, com livro, capítulo e versículo.',
     'Não invente versículo, história ou aplicação que não estejam na mensagem pregada.',
@@ -591,7 +591,7 @@ const generateQuestions = async (apiKey, transcript, title) => {
           contents: [{ role: 'user', parts: [{ text: userText }] }],
           generationConfig: {
             temperature: 0.3,
-            maxOutputTokens: 8192,
+            maxOutputTokens: 12000,
             responseMimeType: 'application/json',
             thinkingConfig: { thinkingBudget: 0 },
           },
@@ -730,6 +730,60 @@ const handlePost = async (request, env) => {
 
   if (action === 'generate') {
     return jsonResponse({ error: 'Atualize a página e busque a pregação de novo.' }, 409);
+  }
+
+  if (action === 'recompose') {
+    if (!requestedVideoId) {
+      return jsonResponse({ error: 'Informe a pregação para refazer as perguntas.' }, 400);
+    }
+
+    const geminiApiKey = await resolveGeminiApiKey(env, request);
+
+    if (!geminiApiKey) {
+      return jsonResponse(
+        { error: 'Chave Gemini não configurada. Cadastre em Engrenagem → Chave Gemini.' },
+        503
+      );
+    }
+
+    let archive;
+
+    try {
+      archive = await readSermonArchive(env, request, requestedVideoId);
+    } catch (error) {
+      return jsonResponse({ error: error.message }, Number(error.status) || 400);
+    }
+
+    const transcript = String(archive?.transcript ?? '').trim();
+
+    if (transcript.length < 400) {
+      return jsonResponse(
+        { error: 'Não há transcrição gravada desta pregação para refazer as perguntas.' },
+        409
+      );
+    }
+
+    try {
+      const questions = await generateQuestions(
+        geminiApiKey,
+        transcript,
+        String(archive?.title ?? '').trim() || 'Pregação'
+      );
+      const snapshot = await supabaseRpc(
+        env,
+        'weekly_quiz_refresh_questions',
+        {
+          p_video_id: requestedVideoId,
+          p_questions: questions,
+        },
+        request
+      );
+      return jsonResponse({ snapshot });
+    } catch (error) {
+      const message = error?.message || 'Não foi possível refazer as perguntas.';
+      const status = Number(error?.status) >= 400 ? Number(error.status) : 422;
+      return jsonResponse({ error: message }, status);
+    }
   }
 
   let prepared;

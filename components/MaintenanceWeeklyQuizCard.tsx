@@ -7,6 +7,7 @@ import {
   formatSermonDateLabel,
   generateWeeklyQuizDraft,
   publishWeeklyQuiz,
+  regenerateWeeklyQuizQuestions,
   type WeeklyQuizAdminSnapshot,
 } from '@/lib/weeklyQuizApi';
 import {
@@ -50,8 +51,11 @@ export function MaintenanceWeeklyQuizCard({ isActive = true, panelHeight }: Prop
   const [snapshot, setSnapshot] = useState<WeeklyQuizAdminSnapshot>(EMPTY_SNAPSHOT);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
+  const [busyLabel, setBusyLabel] = useState('Aguarde…');
+  const [busyKey, setBusyKey] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pendingReset, setPendingReset] = useState<PendingReset | null>(null);
+  const [selectedQuestionIds, setSelectedQuestionIds] = useState<string[]>([]);
   const [transcriptTitle, setTranscriptTitle] = useState<string | null>(null);
   const [transcriptText, setTranscriptText] = useState('');
   const [transcriptLoading, setTranscriptLoading] = useState(false);
@@ -78,8 +82,10 @@ export function MaintenanceWeeklyQuizCard({ isActive = true, panelHeight }: Prop
     void load();
   }, [isActive, load]);
 
-  const run = async (action: () => Promise<WeeklyQuizAdminSnapshot>) => {
+  const run = async (action: () => Promise<WeeklyQuizAdminSnapshot>, label: string, key: string) => {
     setBusy(true);
+    setBusyLabel(label);
+    setBusyKey(key);
     setError(null);
 
     try {
@@ -88,11 +94,38 @@ export function MaintenanceWeeklyQuizCard({ isActive = true, panelHeight }: Prop
       setError(err instanceof Error ? err.message : 'Não foi possível concluir a ação.');
     } finally {
       setBusy(false);
+      setBusyKey(null);
     }
   };
 
+  const actionLabel = (key: string, idle: string) => (busy && busyKey === key ? busyLabel : idle);
+
   const draft = snapshot.draft;
   const sermonDate = formatSermonDateLabel(draft?.sermonPublishedAt);
+  const draftQuestionKey = draft?.questions.map((question) => question.id).join('|') ?? '';
+  const selectedCount = selectedQuestionIds.length;
+
+  useEffect(() => {
+    setSelectedQuestionIds([]);
+  }, [draftQuestionKey]);
+
+  const toggleQuestion = (questionId: string) => {
+    if (!questionId) {
+      return;
+    }
+
+    setSelectedQuestionIds((current) => {
+      if (current.includes(questionId)) {
+        return current.filter((id) => id !== questionId);
+      }
+
+      if (current.length >= 10) {
+        return current;
+      }
+
+      return [...current, questionId];
+    });
+  };
 
   const openTranscript = async (videoId: string, title: string) => {
     setTranscriptTitle(title);
@@ -123,7 +156,7 @@ export function MaintenanceWeeklyQuizCard({ isActive = true, panelHeight }: Prop
     >
       <Text style={maintenancePanelStyles.panelTitle}>Quiz semanal</Text>
       <Text style={styles.lead}>
-        Busca a pregação mais recente, transcreve a mensagem do início ao fim e gera 10 perguntas sobre essa transcrição completa. A prévia precisa ser publicada para o membro ver o quiz.
+        Busca a pregação mais recente, transcreve a mensagem do início ao fim e gera 15 perguntas sobre essa transcrição. Escolha 10 para publicar. O membro só vê o quiz depois dessa escolha.
       </Text>
 
       {loading ? <ActivityIndicator color={MINIMAL_UI.accent} /> : null}
@@ -136,11 +169,11 @@ export function MaintenanceWeeklyQuizCard({ isActive = true, panelHeight }: Prop
       <TouchableOpacity
         accessibilityRole="button"
         disabled={busy || loading || !snapshot.youtubeUrl || Boolean(draft)}
-        onPress={() => void run(generateWeeklyQuizDraft)}
+        onPress={() => void run(generateWeeklyQuizDraft, 'Transcrevendo a pregação…', 'search')}
         style={[styles.primaryButton, (busy || !snapshot.youtubeUrl || Boolean(draft)) && styles.buttonDisabled]}
       >
         <Text style={styles.primaryButtonText}>
-          {busy ? 'Transcrevendo a pregação…' : 'Buscar pregação mais recente'}
+          {actionLabel('search', 'Buscar pregação mais recente')}
         </Text>
       </TouchableOpacity>
 
@@ -148,13 +181,30 @@ export function MaintenanceWeeklyQuizCard({ isActive = true, panelHeight }: Prop
         <View style={styles.preview}>
           <Text style={styles.previewTitle}>{draft.title}</Text>
           <Text style={styles.hint}>
-            Publicada em {sermonDate || 'data indisponível'} · vídeo {draft.videoId}
+            Publicada em {sermonDate || 'data indisponível'} · {draft.questions.length} perguntas geradas
           </Text>
-          {draft.questions.map((question) => (
-            <View key={`${draft.id}-${question.position}`} style={styles.question}>
-              <Text style={styles.questionTitle}>
-                {question.position}. {question.prompt}
-              </Text>
+          <Text style={styles.hint}>
+            Selecione 10 para publicar. {selectedCount} de 10 escolhidas.
+          </Text>
+          {draft.questions.map((question) => {
+            const selected = selectedQuestionIds.includes(question.id);
+
+            return (
+            <View key={`${draft.id}-${question.id || question.position}`} style={styles.question}>
+              <TouchableOpacity
+                accessibilityRole="checkbox"
+                accessibilityState={{ checked: selected }}
+                disabled={busy || !question.id}
+                onPress={() => toggleQuestion(question.id)}
+                style={styles.choiceRow}
+              >
+                <Text style={selected ? styles.choiceMarkOn : styles.choiceMark}>
+                  {selected ? '✓' : ''}
+                </Text>
+                <Text style={styles.questionTitle}>
+                  {question.position}. {question.prompt}
+                </Text>
+              </TouchableOpacity>
               {question.options.map((option, index) => (
                 <Text
                   key={`${question.position}-${index}`}
@@ -166,23 +216,46 @@ export function MaintenanceWeeklyQuizCard({ isActive = true, panelHeight }: Prop
               ))}
               <Text style={styles.reference}>Referência: {question.bibleReference}</Text>
             </View>
-          ))}
+            );
+          })}
           <View style={styles.actions}>
             <TouchableOpacity
               accessibilityRole="button"
-              disabled={busy}
-              onPress={() => void run(() => publishWeeklyQuiz(draft.id))}
-              style={styles.primaryButton}
+              disabled={busy || selectedCount !== 10}
+              onPress={() => void run(
+                () => publishWeeklyQuiz(draft.id, selectedQuestionIds),
+                'Publicando…',
+                'publish'
+              )}
+              style={[styles.primaryButton, (busy || selectedCount !== 10) && styles.buttonDisabled]}
             >
-              <Text style={styles.primaryButtonText}>Publicar desafio</Text>
+              <Text style={styles.primaryButtonText}>
+                {actionLabel('publish', 'Publicar as 10 escolhidas')}
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              accessibilityRole="button"
+              disabled={busy || !draft.videoId}
+              onPress={() => void run(
+                () => regenerateWeeklyQuizQuestions(draft.videoId),
+                'Gerando as 15 perguntas…',
+                'redo-draft'
+              )}
+              style={styles.secondaryButton}
+            >
+              <Text style={styles.secondaryButtonText}>
+                {actionLabel('redo-draft', 'Refazer as 15 perguntas')}
+              </Text>
             </TouchableOpacity>
             <TouchableOpacity
               accessibilityRole="button"
               disabled={busy}
-              onPress={() => void run(() => discardWeeklyQuizDraft(draft.id))}
+              onPress={() => void run(() => discardWeeklyQuizDraft(draft.id), 'Descartando a prévia…', 'discard')}
               style={styles.secondaryButton}
             >
-              <Text style={styles.secondaryButtonText}>Descartar prévia</Text>
+              <Text style={styles.secondaryButtonText}>
+                {actionLabel('discard', 'Descartar prévia')}
+              </Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -230,8 +303,10 @@ export function MaintenanceWeeklyQuizCard({ isActive = true, panelHeight }: Prop
                   onPress={() => {
                     const mode = pendingReset.mode;
                     setPendingReset(null);
-                    void run(() =>
-                      mode === 'scores' ? clearWeeklyQuizScores(quiz.id) : deletePublishedWeeklyQuiz(quiz.id)
+                    void run(
+                      () => mode === 'scores' ? clearWeeklyQuizScores(quiz.id) : deletePublishedWeeklyQuiz(quiz.id),
+                      mode === 'scores' ? 'Excluindo a pontuação…' : 'Excluindo o quiz…',
+                      `reset-${quiz.id}`
                     );
                   }}
                   style={styles.dangerButton}
@@ -295,11 +370,15 @@ export function MaintenanceWeeklyQuizCard({ isActive = true, panelHeight }: Prop
               <TouchableOpacity
                 accessibilityRole="button"
                 disabled={busy || Boolean(draft)}
-                onPress={() => void run(() => generateWeeklyQuizDraft(sermon.videoId))}
+                onPress={() => void run(
+                  () => regenerateWeeklyQuizQuestions(sermon.videoId),
+                  'Gerando as 15 perguntas…',
+                  `redo-${sermon.videoId}`
+                )}
                 style={[styles.primaryButton, (busy || Boolean(draft)) && styles.buttonDisabled]}
               >
                 <Text style={styles.primaryButtonText}>
-                  {busy ? 'Transcrevendo a pregação…' : 'Refazer perguntas desta data'}
+                  {actionLabel(`redo-${sermon.videoId}`, 'Refazer as 15 perguntas')}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -422,8 +501,39 @@ const styles = StyleSheet.create({
   },
   questionTitle: {
     color: MINIMAL_UI.text,
+    flex: 1,
     fontSize: 14,
     fontWeight: '700',
+  },
+  choiceRow: {
+    alignItems: 'flex-start',
+    flexDirection: 'row',
+    gap: 8,
+  },
+  choiceMark: {
+    borderColor: MINIMAL_UI.border,
+    borderRadius: 4,
+    borderWidth: 1,
+    color: MINIMAL_UI.text,
+    fontSize: 14,
+    fontWeight: '800',
+    height: 22,
+    lineHeight: 20,
+    textAlign: 'center',
+    width: 22,
+  },
+  choiceMarkOn: {
+    backgroundColor: MINIMAL_UI.blueDark,
+    borderColor: MINIMAL_UI.blueDark,
+    borderRadius: 4,
+    borderWidth: 1,
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '800',
+    height: 22,
+    lineHeight: 20,
+    textAlign: 'center',
+    width: 22,
   },
   option: {
     color: MINIMAL_UI.text,
