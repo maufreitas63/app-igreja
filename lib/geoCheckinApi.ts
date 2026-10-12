@@ -29,6 +29,42 @@ const parseRpcResult = (data: unknown): GeoCheckinRpcResult => {
 const missingGeoCheckinRpcMessage =
   'Funções de check-in geo não encontradas. Execute scripts/geo-checkin-automatic.sql no Supabase.';
 
+/** PostgREST devolve o erro como objeto simples, não como Error. */
+export function messageFromUnknown(err: unknown, fallback: string): string {
+  if (typeof err === 'string' && err.trim()) {
+    return err.trim();
+  }
+
+  if (err instanceof Error && err.message.trim()) {
+    return err.message.trim();
+  }
+
+  if (err && typeof err === 'object') {
+    const record = err as { message?: unknown; details?: unknown; hint?: unknown };
+    const parts = [record.message, record.details, record.hint]
+      .filter((part): part is string => typeof part === 'string')
+      .map((part) => part.trim())
+      .filter((part) => part.length > 0 && !part.includes('\n    at '));
+    const unique = [...new Set(parts)];
+
+    if (unique.length) {
+      return unique.join(' — ');
+    }
+  }
+
+  return fallback;
+}
+
+function throwRpcFailure(error: unknown, fallback: string): never {
+  const message = messageFromUnknown(error, fallback);
+
+  if (message.startsWith('AbortError')) {
+    throw new Error('A gravação da audiência demorou demais. Tente de novo.');
+  }
+
+  throw new Error(message);
+}
+
 export async function syncFamilyEventRegistrationsAtomic(input: {
   eventId: string;
   familyId: string;
@@ -51,7 +87,7 @@ export async function syncFamilyEventRegistrationsAtomic(input: {
       throw new Error(missingGeoCheckinRpcMessage);
     }
 
-    throw error;
+    throwRpcFailure(error, 'Não foi possível atualizar a audiência da família.');
   }
 
   const result = parseRpcResult(data);
@@ -83,7 +119,7 @@ export async function confirmGeoFamilyCheckinAtomic(input: {
       throw new Error(missingGeoCheckinRpcMessage);
     }
 
-    throw error;
+    throwRpcFailure(error, 'Não foi possível confirmar o check-in.');
   }
 
   const result = parseRpcResult(data);

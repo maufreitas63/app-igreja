@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react';
 import type { GeoCoordinates } from '@/lib/checkinGeofence';
 import {
   confirmGeoFamilyCheckinAtomic,
+  messageFromUnknown,
   syncFamilyEventRegistrationsAtomic,
 } from '@/lib/geoCheckinApi';
 
@@ -31,8 +32,9 @@ export const useSyncFamilyEventRegistrations = () => {
         skipGeofence: input.skipGeofence,
       });
     } catch (err) {
-      const normalized =
-        err instanceof Error ? err : new Error('Falha ao sincronizar audiência da família.');
+      const normalized = new Error(
+        messageFromUnknown(err, 'Falha ao sincronizar audiência da família.')
+      );
       setError(normalized);
       throw normalized;
     } finally {
@@ -59,8 +61,9 @@ export const useSyncFamilyEventRegistrations = () => {
           skipGeofence: input.skipGeofence,
         });
       } catch (err) {
-        const normalized =
-          err instanceof Error ? err : new Error('Falha ao confirmar check-in por geolocalização.');
+        const normalized = new Error(
+          messageFromUnknown(err, 'Falha ao confirmar check-in por geolocalização.')
+        );
         setError(normalized);
         throw normalized;
       } finally {

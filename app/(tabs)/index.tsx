@@ -1,4 +1,5 @@
 import { HomeAdmissionSticker } from '@/components/minimal/HomeAdmissionSticker';
+import { WeeklyQuizHomeSticker } from '@/components/minimal/WeeklyQuizHomeSticker';
 import { MinimalMainPanel } from '@/components/minimal/MinimalMainPanel';
 import { MinimalEuQueroFooter } from '@/components/minimal/MinimalEuQueroFooter';
 import { MinimalScreenLayout } from '@/components/minimal/MinimalScreenLayout';
@@ -20,7 +21,12 @@ export default function DashboardIndexScreen() {
     <MinimalScreenLayout
       scroll={false}
       showGreeting
-      overlay={<HomeAdmissionSticker />}
+      overlay={
+        <>
+          <WeeklyQuizHomeSticker />
+          <HomeAdmissionSticker />
+        </>
+      }
       footerBleed
       footer={
         <View style={styles.homeFooterBleed}>

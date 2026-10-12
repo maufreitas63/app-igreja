@@ -15,7 +15,12 @@ export async function supabaseSessionFetch(
 ): Promise<Response> {
   const identity = await getSessionRequestIdentity();
   const headers = new Headers(init?.headers);
-  const timeoutMs = init?.timeoutMs ?? FETCH_TIMEOUT_MS;
+  const requestUrl =
+    typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
+  const audienceSync =
+    requestUrl.includes('sync_family_event_registrations_atomic')
+    || requestUrl.includes('confirm_geo_family_checkin_atomic');
+  const timeoutMs = init?.timeoutMs ?? (audienceSync ? 60_000 : FETCH_TIMEOUT_MS);
   const { timeoutMs: _timeoutMs, ...fetchInit } = init ?? {};
 
   if (identity.sessionToken) {
