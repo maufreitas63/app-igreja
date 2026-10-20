@@ -412,7 +412,7 @@ begin
   end if;
 
   v_msg1 := format(
-    'Olá, %s! Somos da equipe de boas-vindas da %s. Que alegria receber você na nossa igreja! Estamos à disposição para o que precisar. Deus abençoe!',
+    'Olá, %s! Somos da equipe de boas-vindas da %s. Você está recebendo esta mensagem porque você efetuou seu primeiro acesso no aplicativo da igreja. Estamos à disposição para o que precisar. Deus abençoe!',
     v_first,
     v_church_label
   );
@@ -998,20 +998,14 @@ on conflict (role_id, resource_id) where (role_id is not null) do update
       can_update = excluded.can_update,
       updated_at = now();
 
--- Mensagens já geradas passam a citar o nome da igreja da instância.
+-- Mensagens já geradas passam a explicar o primeiro acesso no aplicativo.
 update public.task_alerts t
-   set descricao = regexp_replace(
+   set descricao = replace(
      t.descricao,
-     'Somos da equipe de boas-vindas(\.| da igreja [^.]*\.)',
-     'Somos da equipe de boas-vindas da ' ||
-       case
-         when trim(i.name) ~* '^igreja\M' then trim(i.name)
-         else 'igreja ' || trim(i.name)
-       end || '.'
+     'Que alegria receber você na nossa igreja!',
+     'Você está recebendo esta mensagem porque você efetuou seu primeiro acesso no aplicativo da igreja.'
    )
-  from public.igrejas i
- where t.tenant_id = i.id
-   and t.tipo_tarefa = 'whatsapp_dia_1'
-   and t.descricao ~ 'Somos da equipe de boas-vindas(\.| da igreja )';
+ where t.tipo_tarefa = 'whatsapp_dia_1'
+   and t.descricao like '%Que alegria receber você na nossa igreja!%';
 
 notify pgrst, 'reload schema';
