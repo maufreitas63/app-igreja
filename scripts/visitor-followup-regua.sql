@@ -285,6 +285,8 @@ declare
   v_msg1 text;
   v_msg4 text;
   v_msg8 text;
+  v_church_name text;
+  v_church_label text;
   v_informant boolean := false;
   v_informant_phone text;
 begin
@@ -380,6 +382,20 @@ begin
   end if;
 
   v_first := split_part(v_full_name, ' ', 1);
+
+  select coalesce(nullif(trim(i.name), ''), '')
+    into v_church_name
+    from public.igrejas i
+   where i.id = p_tenant_id;
+
+  v_church_name := coalesce(v_church_name, '');
+  if v_church_name ~* '^igreja\M' then
+    v_church_label := v_church_name;
+  elsif v_church_name = '' then
+    v_church_label := 'igreja';
+  else
+    v_church_label := 'igreja ' || v_church_name;
+  end if;
   v_day4 := v_aprovacao + 4;
   v_day8 := public.visitor_followup_next_sunday(v_aprovacao + 8);
 
@@ -396,8 +412,9 @@ begin
   end if;
 
   v_msg1 := format(
-    'Olá, %s! Somos da equipe de boas-vindas. Que alegria receber você na nossa igreja! Estamos à disposição para o que precisar. Deus abençoe!',
-    v_first
+    'Olá, %s! Somos da equipe de boas-vindas da %s. Que alegria receber você na nossa igreja! Estamos à disposição para o que precisar. Deus abençoe!',
+    v_first,
+    v_church_label
   );
 
   if v_group_name is not null then
@@ -980,5 +997,21 @@ on conflict (role_id, resource_id) where (role_id is not null) do update
   set can_view = excluded.can_view,
       can_update = excluded.can_update,
       updated_at = now();
+
+-- Mensagens já geradas passam a citar o nome da igreja da instância.
+update public.task_alerts t
+   set descricao = regexp_replace(
+     t.descricao,
+     'Somos da equipe de boas-vindas(\.| da igreja [^.]*\.)',
+     'Somos da equipe de boas-vindas da ' ||
+       case
+         when trim(i.name) ~* '^igreja\M' then trim(i.name)
+         else 'igreja ' || trim(i.name)
+       end || '.'
+   )
+  from public.igrejas i
+ where t.tenant_id = i.id
+   and t.tipo_tarefa = 'whatsapp_dia_1'
+   and t.descricao ~ 'Somos da equipe de boas-vindas(\.| da igreja )';
 
 notify pgrst, 'reload schema';
