@@ -74,7 +74,8 @@ begin
       );
   end;
 
-  -- Alinha com Mudança de Papéis: só visitante efetivo conta como pendência de admissão.
+  -- Visitante ainda sem régua e sem cadastro familiar aprovado.
+  -- Quem já entrou na régua de acolhimento, ou cuja recepção familiar já foi processada, não aguarda admissão.
   select exists (
     select 1
       from public.new_registration_inbox i
@@ -84,6 +85,20 @@ begin
        and i.registered_at >= (timezone('America/Sao_Paulo', now()) - interval '30 days')
        and not public.profile_is_tstmax_test_profile(p.id)
        and public.profile_is_effectively_visitor(p.id)
+       and not exists (
+         select 1
+           from public.visitor_followup f
+          where f.visitor_id = p.id
+            and f.tenant_id = v_tenant
+       )
+       and not exists (
+         select 1
+           from public.recepcao_cadastro_familiar c
+           join public.recepcao_cadastro_familiar_lote l on l.id = c.submission_id
+          where c.applied_profile_id = p.id
+            and c.status = 'processed'
+            and l.status = 'processed'
+       )
   )
     into v_has_new;
 
