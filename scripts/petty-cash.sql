@@ -295,7 +295,7 @@ as $$
 declare
   v_parts text[];
 begin
-  v_parts := storage.foldername(p_name);
+  v_parts := string_to_array(regexp_replace(p_name, '/[^/]*$', ''), '/');
 
   if v_parts is null or cardinality(v_parts) < 2 then
     return;
@@ -1089,7 +1089,13 @@ create policy petty_cash_docs_insert
   to anon, authenticated
   with check (
     bucket_id = 'petty-cash-docs'
-    and public.petty_cash_storage_can_write(name)
+    and public.storage_object_matches_session_tenant('petty-cash-docs', name)
+    and (
+      public.session_has_screen_access('financial.petty_cash', 'view')
+      or public.session_has_resource_access('table', 'financials', 'update')
+      or public.profile_has_role_code(public.current_session_profile_id(), 'tesoureiro')
+      or public.is_super_admin_profile(public.current_session_profile_id())
+    )
   );
 
 create policy petty_cash_docs_delete
@@ -1299,22 +1305,41 @@ begin
   return coalesce((
     select jsonb_agg(
       jsonb_build_object(
-        'id', m.id,
-        'caixaNome', c.nome_caixa,
-        'descricao', m.descricao,
-        'valor', m.valor,
-        'dataMovimento', m.data_movimento,
-        'comprovanteUrl', m.comprovante_url,
-        'arquivo', regexp_replace(m.comprovante_url, '^.*/', '')
+        'id', src.id,
+        'caixaNome', src.nome_caixa,
+        'descricao', src.descricao,
+        'valor', src.valor,
+        'dataMovimento', src.data_movimento,
+        'comprovanteUrl', src.comprovante_url,
+        'arquivo',
+          to_char(src.data_movimento, 'YYYYMMDD')
+          || ' '
+          || replace(to_char(src.valor, 'FM999999990.00'), '.', ',')
+          || case when src.seq > 1 then ' ' || src.seq::text else '' end
+          || '.jpg'
       )
-      order by m.data_movimento desc, m.created_at desc
+      order by src.data_movimento desc, src.created_at desc
     )
-      from public.pequenos_caixas_movimentacoes m
-      join public.pequenos_caixas c
-        on c.id = m.caixa_id
-       and c.tenant_id = m.tenant_id
-     where m.tenant_id = v_tenant
-       and nullif(btrim(coalesce(m.comprovante_url, '')), '') is not null
+      from (
+        select
+          m.id,
+          c.nome_caixa,
+          m.descricao,
+          m.valor,
+          m.data_movimento,
+          m.comprovante_url,
+          m.created_at,
+          row_number() over (
+            partition by m.tenant_id, m.data_movimento, m.valor
+            order by m.created_at
+          ) as seq
+          from public.pequenos_caixas_movimentacoes m
+          join public.pequenos_caixas c
+            on c.id = m.caixa_id
+           and c.tenant_id = m.tenant_id
+         where m.tenant_id = v_tenant
+           and nullif(btrim(coalesce(m.comprovante_url, '')), '') is not null
+      ) src
   ), '[]'::jsonb);
 end;
 $$;

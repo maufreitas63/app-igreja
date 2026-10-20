@@ -1,8 +1,6 @@
 import { decode } from 'base64-arraybuffer';
 import * as FileSystem from 'expo-file-system/legacy';
 import { supabase } from '@/lib/supabase';
-import { supabaseSessionFetch } from '@/lib/supabaseSessionFetch';
-import { getSupabaseAnonKey, getSupabaseUrl } from '@/lib/supabaseConfig';
 import { withActiveTenantStoragePrefix } from '@/lib/tenantStoragePath';
 import { buildFinancialReferencia } from '@/lib/treasuryReceiptBatchPath';
 
@@ -402,11 +400,11 @@ const imageInputToJpegBase64 = async (imageInput: string) => {
   throw new Error('Abra o pequeno caixa no navegador para salvar o comprovante em JPEG.');
 };
 
-const pettyCashReceiptFileName = (isoDate: string, amount: number, position?: number) => {
+export function formatPettyCashReceiptFileName(isoDate: string, amount: number, position?: number) {
   const canonical = buildFinancialReferencia(isoDate, amount);
 
   if (!canonical) {
-    throw new Error('Informe a data da despesa para nomear o comprovante.');
+    return '';
   }
 
   if (!position || position <= 1) {
@@ -414,6 +412,16 @@ const pettyCashReceiptFileName = (isoDate: string, amount: number, position?: nu
   }
 
   return canonical.replace(/\.jpg$/i, ` ${position}.jpg`);
+}
+
+const pettyCashReceiptFileName = (isoDate: string, amount: number, position?: number) => {
+  const canonical = formatPettyCashReceiptFileName(isoDate, amount, position);
+
+  if (!canonical) {
+    throw new Error('Informe a data da despesa para nomear o comprovante.');
+  }
+
+  return canonical.replace(/ /g, '_').replace(/,/g, '-');
 };
 
 export async function uploadPettyCashReceipt(
@@ -435,35 +443,17 @@ export async function uploadPettyCashReceipt(
   }
 
   const storagePath = `${folder}/${fileName}`;
-  const anonKey = getSupabaseAnonKey();
-  const response = await supabaseSessionFetch(pettyCashObjectUrl(storagePath), {
-    method: 'POST',
-    headers: {
-      authorization: `Bearer ${anonKey}`,
-      apikey: anonKey,
-      'content-type': 'image/jpeg',
-      'cache-control': '3600',
-      'x-upsert': 'false',
-    },
-    body: decode(base64),
+  const { error } = await supabase.storage.from(PETTY_CASH_BUCKET).upload(storagePath, decode(base64), {
+    contentType: 'image/jpeg',
+    upsert: false,
   });
 
-  if (!response.ok) {
-    const payload = (await response.json().catch(() => null)) as { message?: string; error?: string } | null;
-    throw new Error(payload?.message || payload?.error || 'Não foi possível enviar o comprovante.');
+  if (error) {
+    throw new Error(error.message || 'Não foi possível enviar o comprovante.');
   }
 
   return storagePath;
 }
-
-const pettyCashObjectUrl = (storagePath: string) => {
-  const encoded = storagePath
-    .split('/')
-    .map((part) => encodeURIComponent(part))
-    .join('/');
-
-  return `${getSupabaseUrl()}/storage/v1/object/${PETTY_CASH_BUCKET}/${encoded}`;
-};
 
 export async function removePettyCashReceipt(storagePath: string) {
   await supabase.storage.from(PETTY_CASH_BUCKET).remove([storagePath]);
@@ -488,20 +478,11 @@ export async function listPettyCashReceiptsForEntry() {
 }
 
 export async function downloadPettyCashReceiptDataUrl(storagePath: string) {
-  const anonKey = getSupabaseAnonKey();
-  const response = await supabaseSessionFetch(pettyCashObjectUrl(storagePath), {
-    headers: {
-      authorization: `Bearer ${anonKey}`,
-      apikey: anonKey,
-    },
-  });
+  const { data, error } = await supabase.storage.from(PETTY_CASH_BUCKET).download(storagePath);
 
-  if (!response.ok) {
-    const payload = (await response.json().catch(() => null)) as { message?: string } | null;
-    throw new Error(payload?.message || 'Não foi possível abrir o comprovante do pequeno caixa.');
+  if (error || !data) {
+    throw new Error(error?.message || 'Não foi possível abrir o comprovante do pequeno caixa.');
   }
-
-  const data = await response.blob();
 
   if (typeof FileReader === 'undefined') {
     throw new Error('A leitura do comprovante não está disponível neste aparelho.');
@@ -528,37 +509,13 @@ export async function downloadPettyCashReceiptDataUrl(storagePath: string) {
 }
 
 export async function openPettyCashReceipt(storagePath: string) {
-  const anonKey = getSupabaseAnonKey();
-  const encoded = storagePath
-    .split('/')
-    .map((part) => encodeURIComponent(part))
-    .join('/');
-  const response = await supabaseSessionFetch(
-    `${getSupabaseUrl()}/storage/v1/object/sign/${PETTY_CASH_BUCKET}/${encoded}`,
-    {
-      method: 'POST',
-      headers: {
-        authorization: `Bearer ${anonKey}`,
-        apikey: anonKey,
-        'content-type': 'application/json',
-      },
-      body: JSON.stringify({ expiresIn: SIGNED_URL_TTL_SECONDS }),
-    }
-  );
-  const payload = (await response.json().catch(() => null)) as {
-    signedURL?: string;
-    signedUrl?: string;
-    message?: string;
-  } | null;
-  const signed = payload?.signedURL || payload?.signedUrl;
+  const { data, error } = await supabase.storage
+    .from(PETTY_CASH_BUCKET)
+    .createSignedUrl(storagePath, SIGNED_URL_TTL_SECONDS);
 
-  if (!response.ok || !signed) {
-    throw new Error(payload?.message || 'Não foi possível abrir o comprovante.');
+  if (error || !data?.signedUrl) {
+    throw new Error(error?.message || 'Não foi possível abrir o comprovante.');
   }
 
-  if (signed.startsWith('http')) {
-    return signed;
-  }
-
-  return `${getSupabaseUrl()}/storage/v1${signed.startsWith('/') ? signed : `/${signed}`}`;
+  return data.signedUrl;
 }
