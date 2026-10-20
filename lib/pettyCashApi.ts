@@ -2,6 +2,7 @@ import { decode } from 'base64-arraybuffer';
 import * as FileSystem from 'expo-file-system/legacy';
 import { supabase } from '@/lib/supabase';
 import { withActiveTenantStoragePrefix } from '@/lib/tenantStoragePath';
+import { buildFinancialReferencia } from '@/lib/treasuryReceiptBatchPath';
 
 export const PETTY_CASH_MAINTENANCE_SCREEN = 'maintenance.finance.petty_cash';
 export const PETTY_CASH_CONTROL_SCREEN = 'financial.petty_cash';
@@ -52,6 +53,16 @@ export type PettyCashMovement = {
 export type PettyCashResponsible = {
   id: string;
   nome: string;
+};
+
+export type PettyCashReceiptOption = {
+  id: string;
+  caixaNome: string;
+  descricao: string;
+  valor: number;
+  dataMovimento: string;
+  comprovanteUrl: string;
+  arquivo: string;
 };
 
 export type PettyCashList = {
@@ -339,13 +350,92 @@ const parseImageInput = async (imageInput: string) => {
   return { base64, contentType, fileExtension };
 };
 
-export async function uploadPettyCashReceipt(caixaId: string, imageInput: string) {
-  const { base64, contentType, fileExtension } = await parseImageInput(imageInput);
-  const relative = `${caixaId}/${Date.now()}-${Math.random().toString(16).slice(2)}.${fileExtension}`;
-  const storagePath = await withActiveTenantStoragePrefix(relative);
+const imageInputToJpegBase64 = async (imageInput: string) => {
+  if (typeof document !== 'undefined') {
+    const base64 = await new Promise<string>((resolve, reject) => {
+      const image = new window.Image();
+
+      image.onload = () => {
+        const width = image.naturalWidth || image.width;
+        const height = image.naturalHeight || image.height;
+
+        if (!width || !height) {
+          reject(new Error('Não foi possível ler a imagem do comprovante.'));
+          return;
+        }
+
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const context = canvas.getContext('2d');
+
+        if (!context) {
+          reject(new Error('Não foi possível gerar o JPEG do comprovante.'));
+          return;
+        }
+
+        context.fillStyle = '#FFFFFF';
+        context.fillRect(0, 0, width, height);
+        context.drawImage(image, 0, 0);
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
+        resolve(dataUrl.slice(dataUrl.indexOf(',') + 1));
+      };
+
+      image.onerror = () => {
+        reject(new Error('Não foi possível converter o comprovante para JPEG.'));
+      };
+
+      image.src = imageInput;
+    });
+
+    return base64;
+  }
+
+  const parsed = await parseImageInput(imageInput);
+
+  if (parsed.contentType === 'image/jpeg' || parsed.fileExtension === 'jpg') {
+    return parsed.base64;
+  }
+
+  throw new Error('Abra o pequeno caixa no navegador para salvar o comprovante em JPEG.');
+};
+
+const pettyCashReceiptFileName = (isoDate: string, amount: number, position?: number) => {
+  const canonical = buildFinancialReferencia(isoDate, amount);
+
+  if (!canonical) {
+    throw new Error('Informe a data da despesa para nomear o comprovante.');
+  }
+
+  if (!position || position <= 1) {
+    return canonical;
+  }
+
+  return canonical.replace(/\.jpg$/i, ` ${position}.jpg`);
+};
+
+export async function uploadPettyCashReceipt(
+  caixaId: string,
+  imageInput: string,
+  isoDate: string,
+  amount: number
+) {
+  const base64 = await imageInputToJpegBase64(imageInput);
+  const folder = await withActiveTenantStoragePrefix(caixaId);
+  const { data: existing } = await supabase.storage.from(PETTY_CASH_BUCKET).list(folder, { limit: 1000 });
+  const names = new Set((existing ?? []).map((file) => file.name));
+  let fileName = pettyCashReceiptFileName(isoDate, amount);
+  let position = 2;
+
+  while (names.has(fileName)) {
+    fileName = pettyCashReceiptFileName(isoDate, amount, position);
+    position += 1;
+  }
+
+  const storagePath = `${folder}/${fileName}`;
 
   const { error } = await supabase.storage.from(PETTY_CASH_BUCKET).upload(storagePath, decode(base64), {
-    contentType,
+    contentType: 'image/jpeg',
     upsert: false,
   });
 
@@ -358,6 +448,55 @@ export async function uploadPettyCashReceipt(caixaId: string, imageInput: string
 
 export async function removePettyCashReceipt(storagePath: string) {
   await supabase.storage.from(PETTY_CASH_BUCKET).remove([storagePath]);
+}
+
+export async function listPettyCashReceiptsForEntry() {
+  const data = await callRpc<unknown[]>('petty_cash_listar_comprovantes');
+
+  return (Array.isArray(data) ? data : []).map((item) => {
+    const row = item as Record<string, unknown>;
+
+    return {
+      id: asText(row.id),
+      caixaNome: asText(row.caixaNome),
+      descricao: asText(row.descricao),
+      valor: asNumber(row.valor),
+      dataMovimento: asText(row.dataMovimento),
+      comprovanteUrl: asText(row.comprovanteUrl),
+      arquivo: asText(row.arquivo),
+    } satisfies PettyCashReceiptOption;
+  });
+}
+
+export async function downloadPettyCashReceiptDataUrl(storagePath: string) {
+  const { data, error } = await supabase.storage.from(PETTY_CASH_BUCKET).download(storagePath);
+
+  if (error || !data) {
+    throw new Error(error?.message || 'Não foi possível abrir o comprovante do pequeno caixa.');
+  }
+
+  if (typeof FileReader === 'undefined') {
+    throw new Error('A leitura do comprovante não está disponível neste aparelho.');
+  }
+
+  return await new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      if (typeof reader.result !== 'string') {
+        reject(new Error('Não foi possível ler o comprovante do pequeno caixa.'));
+        return;
+      }
+
+      resolve(reader.result);
+    };
+
+    reader.onerror = () => {
+      reject(new Error('Não foi possível ler o comprovante do pequeno caixa.'));
+    };
+
+    reader.readAsDataURL(data);
+  });
 }
 
 export async function openPettyCashReceipt(storagePath: string) {

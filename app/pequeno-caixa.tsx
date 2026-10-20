@@ -24,6 +24,7 @@ import {
   type PettyCashMovement,
 } from '@/lib/pettyCashApi';
 import { brlCentsDigitsToAmount, formatBrlCentsDigits, parseBrlCentsDigits } from '@/lib/pixEmvPayload';
+import { resolveEffectiveProfileId } from '@/lib/sessionProfile';
 import { useReturnToCallerOnLeave } from '@/hooks/useReturnToCallerOnLeave';
 import { FontAwesome } from '@expo/vector-icons';
 import React, { useCallback, useEffect, useState } from 'react';
@@ -62,8 +63,12 @@ export default function PequenoCaixaScreen() {
   const [movementDate, setMovementDate] = useState(todayPettyCashBrDate);
   const [receipt, setReceipt] = useState<string | null>(null);
   const [replenishReceipt, setReplenishReceipt] = useState<string | null>(null);
+  const [viewerId, setViewerId] = useState<string | null>(null);
 
   const selected = boxes.find((box) => box.id === selectedId) ?? null;
+  const canOperateSelected = Boolean(
+    selected && viewerId && selected.responsavel_id === viewerId && selected.status === 'ativo'
+  );
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -95,6 +100,7 @@ export default function PequenoCaixaScreen() {
   useEffect(() => {
     if (accessStatus === 'allowed' || accessStatus === 'skipped') {
       void load();
+      void resolveEffectiveProfileId().then(setViewerId).catch(() => setViewerId(null));
     }
   }, [accessStatus, load]);
 
@@ -142,7 +148,7 @@ export default function PequenoCaixaScreen() {
     let storagePath: string | null = null;
 
     try {
-      storagePath = await uploadPettyCashReceipt(selected.id, image);
+      storagePath = await uploadPettyCashReceipt(selected.id, image, dataIso, valor ?? 0);
       await registerPettyCashMovement({
         caixaId: selected.id,
         tipo,
@@ -317,6 +323,10 @@ export default function PequenoCaixaScreen() {
         {selected ? (
           <View style={styles.card}>
             <Text style={styles.cardTitle}>{selected.nome_caixa}</Text>
+            <Text style={styles.line}>
+              Responsável {selected.responsavel_nome || 'não informado'}
+              {selected.status === 'inativo' ? ' · caixa inativo' : ''}
+            </Text>
             {pettyCashAlertLines(selected).map((alert) => (
               <Text
                 key={alert.tone}
@@ -342,6 +352,8 @@ export default function PequenoCaixaScreen() {
               {selected.prestacao_atrasada ? ' · em atraso' : ''}
             </Text>
 
+            {!viewerId ? null : canOperateSelected ? (
+              <>
             <Text style={styles.section}>Nova despesa</Text>
             <TextInput
               value={amountDigits ? `R$ ${formatBrlCentsDigits(amountDigits)}` : ''}
@@ -428,6 +440,12 @@ export default function PequenoCaixaScreen() {
             >
               <Text style={styles.primaryText}>Pedir reposição</Text>
             </TouchableOpacity>
+              </>
+            ) : (
+              <Text style={styles.note}>
+                Consulta de todos os caixas. O lançamento de despesa e reposição continua com o responsável de cada caixa.
+              </Text>
+            )}
 
             <Text style={styles.section}>Histórico</Text>
             {movements.map((movement) => (
@@ -459,7 +477,7 @@ export default function PequenoCaixaScreen() {
                 >
                   <Text style={styles.link}>Ver comprovante</Text>
                 </TouchableOpacity>
-                {movement.tipo === 'despesa' ? (
+                {canOperateSelected && movement.tipo === 'despesa' ? (
                   <TouchableOpacity
                     style={styles.deleteButton}
                     disabled={deletingId === movement.id}

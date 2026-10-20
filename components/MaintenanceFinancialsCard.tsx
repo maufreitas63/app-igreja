@@ -31,6 +31,12 @@ import {
   pasteFinancialReceiptFromClipboard,
   pickFinancialReceiptFromGallery,
 } from '@/lib/financialReceipt';
+import {
+  downloadPettyCashReceiptDataUrl,
+  formatPettyCashDate,
+  listPettyCashReceiptsForEntry,
+  type PettyCashReceiptOption,
+} from '@/lib/pettyCashApi';
 import { useMaintenanceFinancials , MAINTENANCE_FINANCIALS_SQL_HINT } from '@/hooks/useMaintenanceFinancials';
 import {
   EXPENSE_REPORT_SQL_HINT,
@@ -232,6 +238,10 @@ export function MaintenanceFinancialsCard({
   const [pendingReceiptImage, setPendingReceiptImage] = useState<string | null>(null);
   const [loadingReceiptPreview, setLoadingReceiptPreview] = useState(false);
   const [showReceiptAttachOptions, setShowReceiptAttachOptions] = useState(false);
+  const [pettyCashPickerOpen, setPettyCashPickerOpen] = useState(false);
+  const [pettyCashReceipts, setPettyCashReceipts] = useState<PettyCashReceiptOption[]>([]);
+  const [pettyCashQuery, setPettyCashQuery] = useState('');
+  const [pettyCashLoading, setPettyCashLoading] = useState(false);
   const [receiptPreviewIndex, setReceiptPreviewIndex] = useState(0);
   const [rdConciliationOpen, setRdConciliationOpen] = useState(false);
   const [expandedSection, setExpandedSection] = useState<MaintenanceSectionKey | null>(null);
@@ -697,6 +707,71 @@ export function MaintenanceFinancialsCard({
       });
     }
   };
+
+  const openPettyCashReceiptPicker = async () => {
+    setPettyCashPickerOpen(true);
+    setPettyCashQuery('');
+    setPettyCashLoading(true);
+
+    try {
+      setPettyCashReceipts(await listPettyCashReceiptsForEntry());
+    } catch (err) {
+      setPettyCashReceipts([]);
+      Toast.show({
+        type: 'error',
+        text1: 'Pequeno caixa',
+        text2: err instanceof Error ? err.message : 'Não foi possível listar os comprovantes.',
+        visibilityTime: 4500,
+      });
+    } finally {
+      setPettyCashLoading(false);
+    }
+  };
+
+  const handleAttachReceiptFromPettyCash = async (receipt: PettyCashReceiptOption) => {
+    if (!canAttachMoreReceipts) {
+      Toast.show({
+        type: 'info',
+        text1: 'Comprovante',
+        text2: `Cada lançamento aceita no máximo ${FINANCIAL_MAX_RECEIPTS_PER_ENTRY} comprovantes.`,
+        visibilityTime: 3500,
+      });
+      return;
+    }
+
+    try {
+      const imageInput = await downloadPettyCashReceiptDataUrl(receipt.comprovanteUrl);
+      setPendingReceiptImage(imageInput);
+      setPettyCashPickerOpen(false);
+      setShowReceiptAttachOptions(false);
+      Toast.show({
+        type: 'info',
+        text1: 'Comprovante',
+        text2: 'Comprovante do pequeno caixa selecionado. Toque em Salvar para gravar.',
+        visibilityTime: 3000,
+      });
+    } catch (err) {
+      Toast.show({
+        type: 'error',
+        text1: 'Comprovante',
+        text2: err instanceof Error ? err.message : 'Não foi possível anexar o comprovante do pequeno caixa.',
+        visibilityTime: 4500,
+      });
+    }
+  };
+
+  const filteredPettyCashReceipts = pettyCashReceipts.filter((receipt) => {
+    const query = pettyCashQuery.trim().toLocaleLowerCase('pt-BR');
+
+    if (!query) {
+      return true;
+    }
+
+    return [receipt.arquivo, receipt.descricao, receipt.caixaNome, formatPettyCashDate(receipt.dataMovimento)]
+      .join(' ')
+      .toLocaleLowerCase('pt-BR')
+      .includes(query);
+  });
 
   const handleViewReceipt = async () => {
     if (pendingReceiptImage) {
@@ -2486,9 +2561,71 @@ export function MaintenanceFinancialsCard({
                         )}
                       </TouchableOpacity>
                     </View>
-                    <TouchableOpacity
-                      style={styles.receiptAttachCancelButton}
-                      onPress={() => setShowReceiptAttachOptions(false)}
+                      <TouchableOpacity
+                        style={[styles.receiptAttachButton, minimal && styles.receiptAttachButtonMinimal, styles.receiptAttachButtonWide]}
+                        onPress={() => void openPettyCashReceiptPicker()}
+                        disabled={receiptBusy || formBusy || rpcMissing}
+                        activeOpacity={0.85}
+                      >
+                        <FontAwesome
+                          name="money"
+                          size={14}
+                          color={minimal ? MINIMAL_UI.icon : '#D1FAE5'}
+                        />
+                        <Text
+                          style={[
+                            styles.receiptAttachButtonText,
+                            minimal && styles.receiptAttachButtonTextMinimal,
+                          ]}
+                        >
+                          Pequeno caixa
+                        </Text>
+                      </TouchableOpacity>
+                      {pettyCashPickerOpen ? (
+                        <View style={styles.pettyCashPicker}>
+                          <TextInput
+                            value={pettyCashQuery}
+                            onChangeText={setPettyCashQuery}
+                            placeholder="Buscar comprovante do pequeno caixa"
+                            placeholderTextColor={minimal ? MINIMAL_UI.textMuted : '#94A3B8'}
+                            style={[styles.pettyCashSearch, minimal && styles.pettyCashSearchMinimal]}
+                          />
+                          {pettyCashLoading ? (
+                            <ActivityIndicator color={minimal ? MINIMAL_UI.icon : '#6EE7B7'} size="small" />
+                          ) : filteredPettyCashReceipts.length === 0 ? (
+                            <Text style={[styles.receiptAttachHint, minimal && styles.receiptAttachHintMinimal]}>
+                              Nenhum comprovante do pequeno caixa encontrado.
+                            </Text>
+                          ) : (
+                            <ScrollView style={styles.pettyCashList} nestedScrollEnabled>
+                              {filteredPettyCashReceipts.map((receipt) => (
+                                <TouchableOpacity
+                                  key={receipt.id}
+                                  style={[styles.receiptAttachButton, minimal && styles.receiptAttachButtonMinimal, styles.receiptAttachButtonWide]}
+                                  onPress={() => void handleAttachReceiptFromPettyCash(receipt)}
+                                  disabled={receiptBusy}
+                                  activeOpacity={0.85}
+                                >
+                                  <Text
+                                    style={[
+                                      styles.receiptAttachButtonText,
+                                      minimal && styles.receiptAttachButtonTextMinimal,
+                                    ]}
+                                  >
+                                    {receipt.arquivo} · {receipt.descricao}
+                                  </Text>
+                                </TouchableOpacity>
+                              ))}
+                            </ScrollView>
+                          )}
+                        </View>
+                      ) : null}
+                      <TouchableOpacity
+                        style={styles.receiptAttachCancelButton}
+                        onPress={() => {
+                          setPettyCashPickerOpen(false);
+                          setShowReceiptAttachOptions(false);
+                        }}
                       disabled={receiptBusy}
                       activeOpacity={0.85}
                     >
@@ -3315,6 +3452,29 @@ const styles = StyleSheet.create({
   receiptAttachRow: {
     flexDirection: 'row',
     gap: 8,
+  },
+  receiptAttachButtonWide: {
+    flex: 0,
+    width: '100%',
+  },
+  pettyCashPicker: {
+    gap: 8,
+  },
+  pettyCashSearch: {
+    borderWidth: 1,
+    borderColor: 'rgba(52, 211, 153, 0.35)',
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    color: '#D1FAE5',
+    backgroundColor: '#FFFFFF',
+  },
+  pettyCashSearchMinimal: {
+    color: MINIMAL_UI.blueDark,
+    borderColor: MINIMAL_UI.border,
+  },
+  pettyCashList: {
+    maxHeight: 180,
   },
   receiptAttachButton: {
     flex: 1,

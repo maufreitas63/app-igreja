@@ -372,7 +372,11 @@ begin
     return false;
   end if;
 
-  return public.session_has_screen_access('maintenance.finance.petty_cash', 'view')
+  return (
+      public.session_has_screen_access('maintenance.finance.petty_cash', 'view')
+      or public.profile_has_role_code(public.current_session_profile_id(), 'tesoureiro')
+      or public.session_has_resource_access('table', 'financials', 'update')
+    )
     and exists (
       select 1
         from public.pequenos_caixas c
@@ -600,8 +604,10 @@ begin
     into v_rows
     from public.pequenos_caixas c
    where c.tenant_id = v_tenant
-     and c.responsavel_id = v_actor
-     and c.status = 'ativo';
+     and (
+       public.profile_has_role_code(v_actor, 'tesoureiro')
+       or (c.responsavel_id = v_actor and c.status = 'ativo')
+     );
 
   return jsonb_build_object(
     'prazo', public.petty_cash_deadline_for_today(),
@@ -635,7 +641,8 @@ begin
     raise exception 'Pequeno caixa não encontrado.';
   end if;
 
-  if public.session_has_screen_access('maintenance.finance.petty_cash', 'view') then
+  if public.profile_has_role_code(v_actor, 'tesoureiro')
+     or public.session_has_screen_access('maintenance.finance.petty_cash', 'view') then
     return v_caixa;
   end if;
 
@@ -907,6 +914,10 @@ begin
     if v_valor > round(v_caixa.saldo_atual - v_reservado, 2) then
       raise exception 'O valor passa do saldo disponível deste caixa.';
     end if;
+  end if;
+
+  if v_tipo = 'despesa' and v_descricao !~* '^pc[[:space:]]*-' then
+    v_descricao := 'PC - ' || v_descricao;
   end if;
 
   insert into public.pequenos_caixas_movimentacoes (
@@ -1256,6 +1267,55 @@ $$;
 revoke all on function public.petty_cash_excluir_despesa(uuid) from public;
 grant execute on function public.petty_cash_excluir_despesa(uuid) to anon, authenticated;
 alter function public.petty_cash_excluir_despesa(uuid) set row_security = off;
+
+create or replace function public.petty_cash_listar_comprovantes()
+returns jsonb
+language plpgsql
+stable
+security definer
+set search_path = public
+as $$
+declare
+  v_tenant uuid;
+  v_actor uuid;
+begin
+  v_tenant := public.require_session_tenant_id();
+  v_actor := public.petty_cash_require_actor();
+
+  if not (
+    public.profile_has_role_code(v_actor, 'tesoureiro')
+    or public.session_has_screen_access('maintenance.finance.petty_cash', 'view')
+    or public.session_has_resource_access('table', 'financials', 'update')
+  ) then
+    raise exception 'Você não tem permissão para consultar os comprovantes do pequeno caixa.';
+  end if;
+
+  return coalesce((
+    select jsonb_agg(
+      jsonb_build_object(
+        'id', m.id,
+        'caixaNome', c.nome_caixa,
+        'descricao', m.descricao,
+        'valor', m.valor,
+        'dataMovimento', m.data_movimento,
+        'comprovanteUrl', m.comprovante_url,
+        'arquivo', regexp_replace(m.comprovante_url, '^.*/', '')
+      )
+      order by m.data_movimento desc, m.created_at desc
+    )
+      from public.pequenos_caixas_movimentacoes m
+      join public.pequenos_caixas c
+        on c.id = m.caixa_id
+       and c.tenant_id = m.tenant_id
+     where m.tenant_id = v_tenant
+       and nullif(btrim(coalesce(m.comprovante_url, '')), '') is not null
+  ), '[]'::jsonb);
+end;
+$$;
+
+revoke all on function public.petty_cash_listar_comprovantes() from public;
+grant execute on function public.petty_cash_listar_comprovantes() to anon, authenticated;
+alter function public.petty_cash_listar_comprovantes() set row_security = off;
 
 notify pgrst, 'reload schema';
 
