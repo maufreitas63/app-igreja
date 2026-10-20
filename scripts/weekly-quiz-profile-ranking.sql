@@ -56,9 +56,29 @@ declare
   v_position int;
   v_points int;
   v_in_top boolean;
+  v_completed boolean;
 begin
   if v_tenant is null or v_profile is null then
     raise exception 'Sessão inválida. Saia e entre novamente no aplicativo.';
+  end if;
+
+  v_completed := exists (
+    select 1
+      from public.weekly_quiz_attempts att
+     where att.tenant_id = v_tenant
+       and att.profile_id = v_profile
+       and att.completed_at is not null
+  );
+
+  if not v_completed then
+    return jsonb_build_object(
+      'hasCompleted', false,
+      'totalPoints', 0,
+      'position', 0,
+      'inTopFive', false,
+      'top', '[]'::jsonb,
+      'me', null
+    );
   end if;
 
   with people as (
@@ -82,20 +102,12 @@ begin
     where s.tenant_id = v_tenant
       -- Proteção aplicada: Gestor não tem visibilidade do Super Administrador
       and public.profile_visible_to_access_actor(v_profile, s.profile_id)
-    union all
-    select
-      p.id,
-      coalesce(nullif(trim(p.full_name), ''), 'Sem nome'),
-      0,
-      null,
-      null
-    from public.profiles p
-    where p.id = v_profile
-      and not exists (
+      and exists (
         select 1
-          from public.weekly_quiz_scores s
-         where s.tenant_id = v_tenant
-           and s.profile_id = v_profile
+          from public.weekly_quiz_attempts att
+         where att.tenant_id = v_tenant
+           and att.profile_id = s.profile_id
+           and att.completed_at is not null
       )
   ),
   ranked as (
@@ -140,6 +152,7 @@ begin
   v_in_top := v_position between 1 and 5;
 
   return jsonb_build_object(
+    'hasCompleted', true,
     'totalPoints', v_points,
     'position', v_position,
     'inTopFive', v_in_top,
@@ -151,97 +164,6 @@ $$;
 
 revoke all on function public.weekly_quiz_profile_ranking() from public;
 grant execute on function public.weekly_quiz_profile_ranking() to anon, authenticated, service_role;
-
-create or replace function public.weekly_quiz_admin_snapshot()
-returns jsonb
-language plpgsql
-stable
-security definer
-set search_path = public
-as $$
-declare
-  v_tenant uuid := public.weekly_quiz_assert_editor();
-  v_profile uuid := public.current_session_profile_id();
-  v_youtube text;
-  v_draft jsonb;
-  v_ranking jsonb;
-begin
-  select nullif(trim(i.youtube_url), '')
-    into v_youtube
-  from public.igrejas i
-  where i.id = v_tenant;
-
-  select jsonb_build_object(
-    'id', q.id,
-    'title', q.title,
-    'videoId', q.video_id,
-    'sermonPublishedAt', q.sermon_published_at,
-    'questions', coalesce((
-      select jsonb_agg(
-        jsonb_build_object(
-          'position', qq.position,
-          'prompt', qq.prompt,
-          'options', qq.options,
-          'correctIndex', qq.correct_index,
-          'bibleReference', qq.bible_reference
-        )
-        order by qq.position
-      )
-      from public.weekly_quiz_questions qq
-      where qq.quiz_id = q.id
-        and qq.tenant_id = v_tenant
-    ), '[]'::jsonb)
-  )
-    into v_draft
-  from public.weekly_quizzes q
-  where q.tenant_id = v_tenant
-    and q.status = 'draft'
-  order by q.created_at desc
-  limit 1;
-
-  -- Proteção aplicada: Gestor não tem visibilidade do Super Administrador
-  select coalesce(
-    jsonb_agg(
-      jsonb_build_object('name', r.name, 'points', r.points)
-      order by r.position
-    ),
-    '[]'::jsonb
-  )
-    into v_ranking
-  from (
-    select
-      coalesce(nullif(trim(p.full_name), ''), 'Sem nome') as name,
-      s.total_points as points,
-      row_number() over (
-        order by
-          s.total_points desc,
-          (
-            select min(ans.created_at)
-              from public.weekly_quiz_attempts att
-              join public.weekly_quiz_answers ans
-                on ans.attempt_id = att.id
-               and ans.tenant_id = att.tenant_id
-             where att.tenant_id = v_tenant
-               and att.profile_id = s.profile_id
-          ) asc nulls last,
-          s.score_reached_at asc nulls last,
-          coalesce(nullif(trim(p.full_name), ''), 'Sem nome') asc
-      )::int as position
-    from public.weekly_quiz_scores s
-    join public.profiles p
-      on p.id = s.profile_id
-    where s.tenant_id = v_tenant
-      and public.profile_visible_to_access_actor(v_profile, s.profile_id)
-  ) r
-  where r.position <= 30;
-
-  return jsonb_build_object(
-    'youtubeUrl', v_youtube,
-    'draft', v_draft,
-    'ranking', v_ranking
-  );
-end;
-$$;
 
 notify pgrst, 'reload schema';
 

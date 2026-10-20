@@ -5,7 +5,7 @@ import {
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { subscribeActiveTenantChange } from '@/lib/tenantSession';
 import React, { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 
 export function ProfileQuizRanking() {
   const [ranking, setRanking] = useState<WeeklyQuizProfileRanking | null>(null);
@@ -30,22 +30,18 @@ export function ProfileQuizRanking() {
     });
   }, [load]);
 
+  if (loading || !ranking?.hasCompleted) {
+    return null;
+  }
+
   return (
     <View style={styles.card}>
       <Text style={styles.title}>Ranking do quiz</Text>
-      {loading ? <ActivityIndicator color={MINIMAL_UI.accent} /> : null}
-      {!loading && ranking ? (
-        <>
-          <Text style={ranking.inTopFive ? styles.inTop : styles.outTop}>
-            {ranking.inTopFive
-              ? 'Você está entre os 5 melhores.'
-              : 'Você não está entre os 5 melhores.'}
-          </Text>
-        </>
-      ) : null}
-      {!loading && !ranking ? (
-        <Text style={styles.note}>O ranking desta igreja não pôde ser carregado.</Text>
-      ) : null}
+      <Text style={ranking.inTopFive ? styles.inTop : styles.outTop}>
+        {ranking.inTopFive
+          ? 'Você está entre os 5 melhores.'
+          : 'Você não está entre os 5 melhores.'}
+      </Text>
     </View>
   );
 }
@@ -74,10 +70,5 @@ const styles = StyleSheet.create({
     color: MINIMAL_UI.text,
     fontSize: 14,
     fontWeight: '800',
-  },
-  note: {
-    color: MINIMAL_UI.textMuted,
-    fontSize: 12,
-    lineHeight: 16,
   },
 });

@@ -351,6 +351,7 @@ export type WeeklyQuizRankRow = {
 };
 
 export type WeeklyQuizProfileRanking = {
+  hasCompleted: boolean;
   totalPoints: number;
   position: number;
   inTopFive: boolean;
@@ -369,6 +370,7 @@ export const fetchWeeklyQuizProfileRanking = async () => {
   const me = row.me && typeof row.me === 'object' ? (row.me as Record<string, unknown>) : null;
 
   return {
+    hasCompleted: row.hasCompleted === true,
     totalPoints: asNumber(row.totalPoints),
     position: asNumber(row.position),
     inTopFive: row.inTopFive === true,
