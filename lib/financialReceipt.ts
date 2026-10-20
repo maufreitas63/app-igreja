@@ -144,6 +144,67 @@ export async function pickFinancialReceiptFromGallery(): Promise<string | null> 
   return result.assets[0].uri;
 }
 
+export async function pickFinancialReceiptFromCamera(): Promise<string | null> {
+  if (Platform.OS === 'web') {
+    if (typeof document === 'undefined' || typeof FileReader === 'undefined') {
+      throw new Error('A câmera não está disponível neste navegador.');
+    }
+
+    return new Promise<string | null>((resolve, reject) => {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = 'image/*';
+      input.setAttribute('capture', 'environment');
+
+      input.onchange = () => {
+        const file = input.files?.[0];
+
+        if (!file) {
+          resolve(null);
+          return;
+        }
+
+        const reader = new FileReader();
+
+        reader.onload = () => {
+          if (typeof reader.result !== 'string') {
+            reject(new Error('Não foi possível processar a foto do comprovante.'));
+            return;
+          }
+
+          resolve(reader.result);
+        };
+
+        reader.onerror = () => {
+          reject(new Error('Não foi possível carregar a foto do comprovante.'));
+        };
+
+        reader.readAsDataURL(file);
+      };
+
+      input.click();
+    });
+  }
+
+  const permission = await ImagePicker.requestCameraPermissionsAsync();
+
+  if (!permission.granted) {
+    throw new Error('Permita o uso da câmera para fotografar o comprovante.');
+  }
+
+  const result = await ImagePicker.launchCameraAsync({
+    mediaTypes: ['images'],
+    quality: 0.9,
+    allowsEditing: false,
+  });
+
+  if (result.canceled || !result.assets?.[0]?.uri) {
+    return null;
+  }
+
+  return result.assets[0].uri;
+}
+
 const readClipboardImageOnWeb = async (): Promise<string | null> => {
   if (Platform.OS !== 'web' || typeof navigator === 'undefined' || !navigator.clipboard?.read) {
     return null;

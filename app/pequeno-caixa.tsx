@@ -2,16 +2,17 @@ import { CloseFooterBar } from '@/components/minimal/CloseFooterBar';
 import { MinimalScreenLayout } from '@/components/minimal/MinimalScreenLayout';
 import { ScreenAccessGate } from '@/components/ScreenAccessGate';
 import { useScreenAccessGuard } from '@/hooks/useScreenAccessGuard';
-import { pickFinancialReceiptFromGallery } from '@/lib/financialReceipt';
+import { confirmDialog } from '@/lib/confirmDialog';
+import { pickFinancialReceiptFromCamera, pickFinancialReceiptFromGallery } from '@/lib/financialReceipt';
 import { formatBrazilDateInput } from '@/lib/inputMasks';
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
 import {
+  deletePettyCashExpense,
   fetchMyPettyCashBoxes,
   fetchPettyCashMovements,
   formatPettyCashBrl,
   formatPettyCashDate,
   openPettyCashReceipt,
-  parsePettyCashAmount,
   parsePettyCashBrDate,
   PETTY_CASH_CONTROL_SCREEN,
   pettyCashAlertLines,
@@ -22,6 +23,7 @@ import {
   type PettyCashBox,
   type PettyCashMovement,
 } from '@/lib/pettyCashApi';
+import { brlCentsDigitsToAmount, formatBrlCentsDigits, parseBrlCentsDigits } from '@/lib/pixEmvPayload';
 import { useReturnToCallerOnLeave } from '@/hooks/useReturnToCallerOnLeave';
 import { FontAwesome } from '@expo/vector-icons';
 import React, { useCallback, useEffect, useState } from 'react';
@@ -50,11 +52,12 @@ export default function PequenoCaixaScreen() {
   const returnToCaller = useReturnToCallerOnLeave();
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [boxes, setBoxes] = useState<PettyCashBox[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [movements, setMovements] = useState<PettyCashMovement[]>([]);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [amount, setAmount] = useState('');
+  const [amountDigits, setAmountDigits] = useState('');
   const [description, setDescription] = useState('');
   const [movementDate, setMovementDate] = useState(todayPettyCashBrDate);
   const [receipt, setReceipt] = useState<string | null>(null);
@@ -118,7 +121,7 @@ export default function PequenoCaixaScreen() {
     }
 
     const dataIso = parsePettyCashBrDate(movementDate);
-    const valor = tipo === 'despesa' ? parsePettyCashAmount(amount) : selected.valor_recomposicao;
+    const valor = tipo === 'despesa' ? brlCentsDigitsToAmount(amountDigits) : selected.valor_recomposicao;
 
     if (!dataIso) {
       Toast.show({ type: 'error', text1: 'Informe a data no formato DD/MM/AAAA.' });
@@ -148,7 +151,7 @@ export default function PequenoCaixaScreen() {
         dataIso,
         comprovantePath: storagePath,
       });
-      setAmount('');
+      setAmountDigits('');
       setDescription('');
       setReceipt(null);
       setReplenishReceipt(null);
@@ -174,6 +177,72 @@ export default function PequenoCaixaScreen() {
     }
   };
 
+  const expenseDraftFilled = amountDigits.length > 0 || description.trim().length > 0 || receipt != null;
+
+  const clearExpenseDraft = async () => {
+    if (!expenseDraftFilled) {
+      Toast.show({ type: 'info', text1: 'Não há despesa preenchida para excluir.' });
+      return;
+    }
+
+    const confirmed = await confirmDialog(
+      'Excluir despesa',
+      'A despesa preenchida e o comprovante anexado serão descartados.',
+      'Excluir',
+      'Cancelar',
+      { destructive: true }
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    setAmountDigits('');
+    setDescription('');
+    setReceipt(null);
+    setMovementDate(todayPettyCashBrDate());
+  };
+
+  const deleteSavedExpense = async (movement: PettyCashMovement) => {
+    if (!selected || deletingId || movement.tipo !== 'despesa') {
+      return;
+    }
+
+    const confirmed = await confirmDialog(
+      'Excluir despesa',
+      'O registro e o comprovante associado serão excluídos.',
+      'Excluir',
+      'Cancelar',
+      { destructive: true }
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    setDeletingId(movement.id);
+
+    try {
+      const storagePath = await deletePettyCashExpense(movement.id);
+
+      if (storagePath) {
+        await removePettyCashReceipt(storagePath);
+      }
+
+      await load();
+      await loadMovements(selected.id);
+      Toast.show({ type: 'success', text1: 'Despesa excluída' });
+    } catch (error) {
+      Toast.show({
+        type: 'error',
+        text1: 'Pequeno caixa',
+        text2: error instanceof Error ? error.message : 'Não foi possível excluir a despesa.',
+      });
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
   const pickReceipt = async (target: 'despesa' | 'reposicao') => {
     try {
       const image = await pickFinancialReceiptFromGallery();
@@ -192,6 +261,22 @@ export default function PequenoCaixaScreen() {
         type: 'error',
         text1: 'Comprovante',
         text2: error instanceof Error ? error.message : 'Não foi possível anexar a imagem.',
+      });
+    }
+  };
+
+  const pickExpensePhoto = async () => {
+    try {
+      const image = await pickFinancialReceiptFromCamera();
+
+      if (image) {
+        setReceipt(image);
+      }
+    } catch (error) {
+      Toast.show({
+        type: 'error',
+        text1: 'Comprovante',
+        text2: error instanceof Error ? error.message : 'Não foi possível fotografar o comprovante.',
       });
     }
   };
@@ -259,10 +344,12 @@ export default function PequenoCaixaScreen() {
 
             <Text style={styles.section}>Nova despesa</Text>
             <TextInput
-              value={amount}
-              onChangeText={setAmount}
-              placeholder="Valor"
-              keyboardType="decimal-pad"
+              value={amountDigits ? `R$ ${formatBrlCentsDigits(amountDigits)}` : ''}
+              onChangeText={(value) => setAmountDigits(parseBrlCentsDigits(value))}
+              placeholder="R$ 0,00"
+              keyboardType="number-pad"
+              inputMode="numeric"
+              accessibilityLabel="Valor em reais, com centavos"
               placeholderTextColor="#94A3B8"
               style={styles.input}
             />
@@ -281,16 +368,39 @@ export default function PequenoCaixaScreen() {
               placeholderTextColor="#94A3B8"
               style={styles.input}
             />
-            <TouchableOpacity style={styles.secondary} onPress={() => void pickReceipt('despesa')}>
-              <Text style={styles.secondaryText}>{receipt ? 'Comprovante anexado' : 'Anexar comprovante'}</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.primary}
-              disabled={submitting}
-              onPress={() => void submitMovement('despesa')}
-            >
-              <Text style={styles.primaryText}>{submitting ? 'Enviando…' : 'Registrar despesa'}</Text>
-            </TouchableOpacity>
+            <View style={styles.actionRow}>
+              <TouchableOpacity
+                style={[styles.secondary, styles.actionFlex]}
+                onPress={() => void pickReceipt('despesa')}
+              >
+                <Text style={styles.secondaryText}>{receipt ? 'Comprovante anexado' : 'Anexar comprovante'}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.cameraButton}
+                onPress={() => void pickExpensePhoto()}
+                accessibilityRole="button"
+                accessibilityLabel="Fotografar comprovante"
+              >
+                <FontAwesome name="camera" size={18} color={MINIMAL_UI.blue} />
+              </TouchableOpacity>
+            </View>
+            <View style={styles.actionRow}>
+              <TouchableOpacity
+                style={[styles.primary, styles.actionFlex]}
+                disabled={submitting}
+                onPress={() => void submitMovement('despesa')}
+              >
+                <Text style={styles.primaryText}>{submitting ? 'Enviando…' : 'Registrar despesa'}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.deleteButton}
+                onPress={() => void clearExpenseDraft()}
+                accessibilityRole="button"
+                accessibilityLabel="Excluir despesa"
+              >
+                <Text style={styles.deleteText}>Excluir despesa</Text>
+              </TouchableOpacity>
+            </View>
 
             <Text style={styles.section}>Reposição até {formatPettyCashBrl(selected.valor_base)}</Text>
             <Text style={styles.note}>
@@ -349,6 +459,19 @@ export default function PequenoCaixaScreen() {
                 >
                   <Text style={styles.link}>Ver comprovante</Text>
                 </TouchableOpacity>
+                {movement.tipo === 'despesa' ? (
+                  <TouchableOpacity
+                    style={styles.deleteButton}
+                    disabled={deletingId === movement.id}
+                    onPress={() => void deleteSavedExpense(movement)}
+                    accessibilityRole="button"
+                    accessibilityLabel="Excluir despesa do histórico"
+                  >
+                    <Text style={styles.deleteText}>
+                      {deletingId === movement.id ? 'Excluindo…' : 'Excluir despesa'}
+                    </Text>
+                  </TouchableOpacity>
+                ) : null}
               </View>
             ))}
           </View>
@@ -467,6 +590,37 @@ const styles = StyleSheet.create({
   secondaryText: {
     color: MINIMAL_UI.blue,
     fontWeight: '700',
+  },
+  actionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  actionFlex: {
+    flex: 1,
+  },
+  cameraButton: {
+    width: 48,
+    height: 45,
+    borderWidth: 1,
+    borderColor: MINIMAL_UI.border,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FFFFFF',
+  },
+  deleteButton: {
+    borderWidth: 1,
+    borderColor: '#FECACA',
+    backgroundColor: '#FEF2F2',
+    borderRadius: 10,
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    alignItems: 'center',
+  },
+  deleteText: {
+    color: '#B91C1C',
+    fontWeight: '800',
   },
   link: {
     color: MINIMAL_UI.icon,

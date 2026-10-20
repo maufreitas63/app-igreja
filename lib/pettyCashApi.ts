@@ -284,6 +284,14 @@ export async function registerPettyCashMovement(input: {
   });
 }
 
+export async function deletePettyCashExpense(movimentoId: string) {
+  const data = await callRpc<Record<string, unknown>>('petty_cash_excluir_despesa', {
+    p_movimento_id: movimentoId,
+  });
+
+  return asText(data?.comprovante);
+}
+
 export async function decidePettyCashMovement(
   movimentoId: string,
   decisao: 'aprovado' | 'rejeitado',

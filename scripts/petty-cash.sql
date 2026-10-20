@@ -1159,6 +1159,104 @@ alter function public.petty_cash_salvar_caixa(uuid, text, uuid, text, numeric, i
 alter function public.petty_cash_registrar_movimento(uuid, text, numeric, text, date, text) set row_security = off;
 alter function public.petty_cash_decidir(uuid, text, text) set row_security = off;
 
+create or replace function public.petty_cash_excluir_despesa(p_movimento_id uuid)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_tenant uuid;
+  v_actor uuid;
+  v_mov public.pequenos_caixas_movimentacoes;
+  v_caixa public.pequenos_caixas;
+  v_path text;
+begin
+  v_tenant := public.require_session_tenant_id();
+  v_actor := public.petty_cash_require_actor();
+
+  if not public.session_has_screen_access('financial.petty_cash', 'view') then
+    raise exception 'Você não tem permissão para controlar um pequeno caixa.';
+  end if;
+
+  select *
+    into v_mov
+    from public.pequenos_caixas_movimentacoes m
+   where m.id = p_movimento_id
+     and m.tenant_id = v_tenant
+   for update;
+
+  if v_mov.id is null then
+    raise exception 'Despesa não encontrada.';
+  end if;
+
+  if v_mov.tipo <> 'despesa' then
+    raise exception 'Somente uma despesa pode ser excluída por aqui.';
+  end if;
+
+  select *
+    into v_caixa
+    from public.pequenos_caixas c
+   where c.id = v_mov.caixa_id
+     and c.tenant_id = v_tenant
+   for update;
+
+  if v_caixa.id is null then
+    raise exception 'Pequeno caixa não encontrado.';
+  end if;
+
+  if v_caixa.responsavel_id is distinct from v_actor then
+    raise exception 'Somente o responsável deste caixa pode excluir a despesa.';
+  end if;
+
+  if exists (
+    select 1
+      from public.pequenos_caixas_movimentacoes m
+     where m.caixa_id = v_caixa.id
+       and m.tipo = 'reposicao'
+       and m.status_aprovacao = 'pendente'
+  ) then
+    raise exception 'Há uma reposição aguardando conferência. Aguarde a decisão antes de excluir a despesa.';
+  end if;
+
+  if v_mov.status_aprovacao = 'aprovado' then
+    if exists (
+      select 1
+        from public.pequenos_caixas_movimentacoes m
+       where m.caixa_id = v_caixa.id
+         and m.tipo = 'reposicao'
+         and m.status_aprovacao = 'aprovado'
+         and m.decided_at is not null
+         and v_mov.decided_at is not null
+         and m.decided_at >= v_mov.decided_at
+    ) then
+      raise exception 'Esta despesa já entrou numa reposição conferida e permanece no histórico.';
+    end if;
+
+    update public.pequenos_caixas c
+       set saldo_atual = least(c.valor_base, round(c.saldo_atual + v_mov.valor, 2))
+     where c.id = v_caixa.id;
+  end if;
+
+  v_path := nullif(btrim(coalesce(v_mov.comprovante_url, '')), '');
+
+  if v_path is not null then
+    delete from storage.objects o
+     where o.bucket_id = 'petty-cash-docs'
+       and o.name = v_path;
+  end if;
+
+  delete from public.pequenos_caixas_movimentacoes m
+   where m.id = v_mov.id;
+
+  return jsonb_build_object('id', v_mov.id, 'comprovante', v_path);
+end;
+$$;
+
+revoke all on function public.petty_cash_excluir_despesa(uuid) from public;
+grant execute on function public.petty_cash_excluir_despesa(uuid) to anon, authenticated;
+alter function public.petty_cash_excluir_despesa(uuid) set row_security = off;
+
 notify pgrst, 'reload schema';
 
 commit;
