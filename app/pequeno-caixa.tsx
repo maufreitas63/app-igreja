@@ -7,7 +7,7 @@ import { pickFinancialReceiptFromCamera, pickFinancialReceiptFromGallery } from 
 import { formatBrazilDateInput } from '@/lib/inputMasks';
 import { MINIMAL_UI } from '@/lib/minimalUiTheme';
 import {
-  deletePettyCashExpense,
+  requestPettyCashExpenseDeletion,
   fetchMyPettyCashBoxes,
   fetchPettyCashMovements,
   formatPettyCashBrl,
@@ -170,7 +170,11 @@ export default function PequenoCaixaScreen() {
       });
     } catch (error) {
       if (storagePath) {
-        await removePettyCashReceipt(storagePath);
+        try {
+          await removePettyCashReceipt(storagePath);
+        } catch {
+          // O lançamento não foi gravado. O aviso abaixo permanece o da falha original.
+        }
       }
 
       Toast.show({
@@ -209,17 +213,16 @@ export default function PequenoCaixaScreen() {
     setMovementDate(todayPettyCashBrDate());
   };
 
-  const deleteSavedExpense = async (movement: PettyCashMovement) => {
-    if (!selected || deletingId || movement.tipo !== 'despesa') {
+  const requestExpenseDeletion = async (movement: PettyCashMovement) => {
+    if (!selected || deletingId || movement.tipo !== 'despesa' || movement.exclusaoSolicitada) {
       return;
     }
 
     const confirmed = await confirmDialog(
-      'Excluir despesa',
-      'O registro e o comprovante associado serão excluídos.',
-      'Excluir',
-      'Cancelar',
-      { destructive: true }
+      'Solicitar exclusão',
+      'A despesa e o comprovante permanecem até a conferência aceitar a exclusão.',
+      'Solicitar',
+      'Cancelar'
     );
 
     if (!confirmed) {
@@ -229,20 +232,15 @@ export default function PequenoCaixaScreen() {
     setDeletingId(movement.id);
 
     try {
-      const storagePath = await deletePettyCashExpense(movement.id);
-
-      if (storagePath) {
-        await removePettyCashReceipt(storagePath);
-      }
-
+      await requestPettyCashExpenseDeletion(movement.id);
       await load();
       await loadMovements(selected.id);
-      Toast.show({ type: 'success', text1: 'Despesa excluída' });
+      Toast.show({ type: 'success', text1: 'Exclusão solicitada' });
     } catch (error) {
       Toast.show({
         type: 'error',
         text1: 'Pequeno caixa',
-        text2: error instanceof Error ? error.message : 'Não foi possível excluir a despesa.',
+        text2: error instanceof Error ? error.message : 'Não foi possível solicitar a exclusão.',
       });
     } finally {
       setDeletingId(null);
@@ -477,16 +475,19 @@ export default function PequenoCaixaScreen() {
                 >
                   <Text style={styles.link}>Ver comprovante</Text>
                 </TouchableOpacity>
-                {canOperateSelected && movement.tipo === 'despesa' ? (
+                {movement.exclusaoSolicitada ? (
+                  <Text style={styles.line}>Exclusão solicitada. Aguarde a conferência.</Text>
+                ) : null}
+                {canOperateSelected && movement.tipo === 'despesa' && !movement.exclusaoSolicitada ? (
                   <TouchableOpacity
                     style={styles.deleteButton}
                     disabled={deletingId === movement.id}
-                    onPress={() => void deleteSavedExpense(movement)}
+                    onPress={() => void requestExpenseDeletion(movement)}
                     accessibilityRole="button"
-                    accessibilityLabel="Excluir despesa do histórico"
+                    accessibilityLabel="Solicitar exclusão da despesa"
                   >
                     <Text style={styles.deleteText}>
-                      {deletingId === movement.id ? 'Excluindo…' : 'Excluir despesa'}
+                      {deletingId === movement.id ? 'Enviando…' : 'Solicitar exclusão'}
                     </Text>
                   </TouchableOpacity>
                 ) : null}

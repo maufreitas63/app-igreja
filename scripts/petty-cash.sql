@@ -88,6 +88,15 @@ alter table public.pequenos_caixas_movimentacoes
 comment on column public.pequenos_caixas_movimentacoes.motivo_decisao is
   'Motivo informado na rejeição, para o responsável corrigir e reenviar.';
 
+alter table public.pequenos_caixas_movimentacoes
+  add column if not exists exclusao_solicitada_em timestamptz;
+
+alter table public.pequenos_caixas_movimentacoes
+  add column if not exists exclusao_solicitada_por uuid references public.profiles (id) on delete restrict;
+
+comment on column public.pequenos_caixas_movimentacoes.exclusao_solicitada_em is
+  'Quando o responsável pediu a exclusão. A despesa e o comprovante só saem depois da conferência.';
+
 alter table public.pequenos_caixas enable row level security;
 alter table public.pequenos_caixas_movimentacoes enable row level security;
 
@@ -682,6 +691,7 @@ begin
         'comprovante_url', m.comprovante_url,
         'status_aprovacao', m.status_aprovacao,
         'motivo_decisao', m.motivo_decisao,
+        'exclusao_solicitada', m.exclusao_solicitada_em is not null,
         'criado_por', m.criado_por,
         'created_at', m.created_at
       )
@@ -1182,7 +1192,7 @@ alter function public.petty_cash_salvar_caixa(uuid, text, uuid, text, numeric, i
 alter function public.petty_cash_registrar_movimento(uuid, text, numeric, text, date, text) set row_security = off;
 alter function public.petty_cash_decidir(uuid, text, text) set row_security = off;
 
-create or replace function public.petty_cash_excluir_despesa(p_movimento_id uuid)
+create or replace function public.petty_cash_solicitar_exclusao(p_movimento_id uuid)
 returns jsonb
 language plpgsql
 security definer
@@ -1193,7 +1203,6 @@ declare
   v_actor uuid;
   v_mov public.pequenos_caixas_movimentacoes;
   v_caixa public.pequenos_caixas;
-  v_path text;
 begin
   v_tenant := public.require_session_tenant_id();
   v_actor := public.petty_cash_require_actor();
@@ -1214,7 +1223,11 @@ begin
   end if;
 
   if v_mov.tipo <> 'despesa' then
-    raise exception 'Somente uma despesa pode ser excluída por aqui.';
+    raise exception 'Somente uma despesa pode ter exclusão solicitada.';
+  end if;
+
+  if v_mov.exclusao_solicitada_em is not null then
+    raise exception 'A exclusão desta despesa já foi solicitada.';
   end if;
 
   select *
@@ -1229,7 +1242,7 @@ begin
   end if;
 
   if v_caixa.responsavel_id is distinct from v_actor then
-    raise exception 'Somente o responsável deste caixa pode excluir a despesa.';
+    raise exception 'Somente o responsável deste caixa pode solicitar a exclusão.';
   end if;
 
   if exists (
@@ -1239,7 +1252,107 @@ begin
        and m.tipo = 'reposicao'
        and m.status_aprovacao = 'pendente'
   ) then
-    raise exception 'Há uma reposição aguardando conferência. Aguarde a decisão antes de excluir a despesa.';
+    raise exception 'Há uma reposição aguardando conferência. Aguarde a decisão antes de solicitar a exclusão.';
+  end if;
+
+  if v_mov.status_aprovacao = 'aprovado'
+     and exists (
+       select 1
+         from public.pequenos_caixas_movimentacoes m
+        where m.caixa_id = v_caixa.id
+          and m.tipo = 'reposicao'
+          and m.status_aprovacao = 'aprovado'
+          and m.decided_at is not null
+          and v_mov.decided_at is not null
+          and m.decided_at >= v_mov.decided_at
+     ) then
+    raise exception 'Esta despesa já entrou numa reposição conferida e permanece no histórico.';
+  end if;
+
+  update public.pequenos_caixas_movimentacoes m
+     set exclusao_solicitada_em = now(),
+         exclusao_solicitada_por = v_actor
+   where m.id = v_mov.id;
+
+  return jsonb_build_object('id', v_mov.id, 'solicitado', true);
+end;
+$$;
+
+create or replace function public.petty_cash_excluir_despesa(p_movimento_id uuid)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  return public.petty_cash_solicitar_exclusao(p_movimento_id);
+end;
+$$;
+
+create or replace function public.petty_cash_decidir_exclusao(
+  p_movimento_id uuid,
+  p_decisao text
+)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_tenant uuid;
+  v_actor uuid;
+  v_decisao text;
+  v_mov public.pequenos_caixas_movimentacoes;
+  v_caixa public.pequenos_caixas;
+  v_path text;
+begin
+  v_tenant := public.require_session_tenant_id();
+  v_actor := public.petty_cash_require_actor();
+  v_decisao := lower(btrim(coalesce(p_decisao, '')));
+
+  if not public.session_has_screen_access('maintenance.finance.petty_cash', 'update') then
+    raise exception 'Você não tem permissão para conferir a exclusão.';
+  end if;
+
+  if v_decisao not in ('confirmada', 'mantida') then
+    raise exception 'Decisão inválida.';
+  end if;
+
+  select *
+    into v_mov
+    from public.pequenos_caixas_movimentacoes m
+   where m.id = p_movimento_id
+     and m.tenant_id = v_tenant
+   for update;
+
+  if v_mov.id is null or v_mov.tipo <> 'despesa' or v_mov.exclusao_solicitada_em is null then
+    raise exception 'Não há solicitação de exclusão para esta despesa.';
+  end if;
+
+  if v_decisao = 'mantida' then
+    update public.pequenos_caixas_movimentacoes m
+       set exclusao_solicitada_em = null,
+           exclusao_solicitada_por = null
+     where m.id = v_mov.id;
+
+    return jsonb_build_object('id', v_mov.id, 'mantida', true);
+  end if;
+
+  select *
+    into v_caixa
+    from public.pequenos_caixas c
+   where c.id = v_mov.caixa_id
+     and c.tenant_id = v_tenant
+   for update;
+
+  if exists (
+    select 1
+      from public.pequenos_caixas_movimentacoes m
+     where m.caixa_id = v_caixa.id
+       and m.tipo = 'reposicao'
+       and m.status_aprovacao = 'pendente'
+  ) then
+    raise exception 'Há uma reposição aguardando conferência. Decida-a antes de excluir a despesa.';
   end if;
 
   if v_mov.status_aprovacao = 'aprovado' then
@@ -1263,12 +1376,6 @@ begin
 
   v_path := nullif(btrim(coalesce(v_mov.comprovante_url, '')), '');
 
-  if v_path is not null then
-    delete from storage.objects o
-     where o.bucket_id = 'petty-cash-docs'
-       and o.name = v_path;
-  end if;
-
   delete from public.pequenos_caixas_movimentacoes m
    where m.id = v_mov.id;
 
@@ -1276,9 +1383,17 @@ begin
 end;
 $$;
 
+revoke all on function public.petty_cash_solicitar_exclusao(uuid) from public;
+grant execute on function public.petty_cash_solicitar_exclusao(uuid) to anon, authenticated;
+alter function public.petty_cash_solicitar_exclusao(uuid) set row_security = off;
+
 revoke all on function public.petty_cash_excluir_despesa(uuid) from public;
 grant execute on function public.petty_cash_excluir_despesa(uuid) to anon, authenticated;
 alter function public.petty_cash_excluir_despesa(uuid) set row_security = off;
+
+revoke all on function public.petty_cash_decidir_exclusao(uuid, text) from public;
+grant execute on function public.petty_cash_decidir_exclusao(uuid, text) to anon, authenticated;
+alter function public.petty_cash_decidir_exclusao(uuid, text) set row_security = off;
 
 create or replace function public.petty_cash_listar_comprovantes()
 returns jsonb

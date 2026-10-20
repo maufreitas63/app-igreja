@@ -4,6 +4,7 @@ import { confirmDialog } from '@/lib/confirmDialog';
 import { sessionHasAccess } from '@/lib/accessControl';
 import { MAINTENANCE_VIGILANCE_UI } from '@/lib/maintenanceVigilanceTheme';
 import {
+  decidePettyCashExpenseDeletion,
   decidePettyCashMovement,
   fetchPettyCashMaintenanceList,
   fetchPettyCashMovements,
@@ -11,6 +12,7 @@ import {
   formatPettyCashBrl,
   formatPettyCashDate,
   openPettyCashReceipt,
+  removePettyCashReceipt,
   parsePettyCashAmount,
   PETTY_CASH_MAINTENANCE_SCREEN,
   pettyCashAlertLines,
@@ -25,7 +27,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import Toast from 'react-native-toast-message';
 
 const HELP_TEXT =
-  'Cada caixa tem o próprio valor-base e o dia de fechamento. Se esse dia cair em fim de semana ou feriado, a prestação vale no dia útil seguinte. Esta tela cria os caixas, escolhe o responsável e confere despesas e reposições. A reposição só é aprovada se a imagem do comprovante estiver salva. Se houver inconsistência, rejeite com o motivo: o responsável corrige e envia de novo. O painel avisa quando a prestação está perto do vencimento ou em atraso.';
+  'Cada caixa tem o próprio valor-base e o dia de fechamento. Se esse dia cair em fim de semana ou feriado, a prestação vale no dia útil seguinte. Esta tela cria os caixas, escolhe o responsável e confere despesas e reposições. A reposição só é aprovada se a imagem do comprovante estiver salva. Se houver inconsistência, rejeite com o motivo: o responsável corrige e envia de novo. O responsável solicita a exclusão; a despesa e o comprovante só saem quando a conferência confirma. O painel avisa quando a prestação está perto do vencimento ou em atraso.';
 
 type Props = {
   isActive?: boolean;
@@ -187,6 +189,52 @@ export function MaintenancePettyCashCard({ isActive = true, panelHeight, minimal
         type: 'error',
         text1: 'Pequenos caixas',
         text2: error instanceof Error ? error.message : 'Não foi possível conferir.',
+      });
+    }
+  };
+
+  const handleDeletion = async (movement: PettyCashMovement, decisao: 'confirmada' | 'mantida') => {
+    const confirmed = await confirmDialog(
+      decisao === 'confirmada' ? 'Confirmar exclusão' : 'Manter despesa',
+      decisao === 'confirmada'
+        ? 'A despesa sai do histórico e o comprovante é apagado.'
+        : 'A despesa permanece no caixa.',
+      decisao === 'confirmada' ? 'Excluir' : 'Manter',
+      'Cancelar',
+      { destructive: decisao === 'confirmada' }
+    );
+
+    if (!confirmed || !selectedId) {
+      return;
+    }
+
+    try {
+      const storagePath = await decidePettyCashExpenseDeletion(movement.id, decisao);
+
+      if (decisao === 'confirmada' && storagePath) {
+        try {
+          await removePettyCashReceipt(storagePath);
+        } catch {
+          await Promise.all([load(), loadMovements(selectedId)]);
+          Toast.show({
+            type: 'error',
+            text1: 'Pequenos caixas',
+            text2: 'A despesa saiu do caixa, mas o comprovante não pôde ser apagado.',
+          });
+          return;
+        }
+      }
+
+      await Promise.all([load(), loadMovements(selectedId)]);
+      Toast.show({
+        type: 'success',
+        text1: decisao === 'confirmada' ? 'Despesa excluída' : 'Despesa mantida',
+      });
+    } catch (error) {
+      Toast.show({
+        type: 'error',
+        text1: 'Pequenos caixas',
+        text2: error instanceof Error ? error.message : 'Não foi possível decidir a exclusão.',
       });
     }
   };
@@ -372,10 +420,23 @@ export function MaintenancePettyCashCard({ isActive = true, panelHeight, minimal
                     {movement.motivo_decisao ? (
                       <Text style={styles.cardLine}>Motivo: {movement.motivo_decisao}</Text>
                     ) : null}
+                    {movement.exclusaoSolicitada ? (
+                      <Text style={styles.cardLine}>Exclusão solicitada pelo responsável.</Text>
+                    ) : null}
                     <TouchableOpacity onPress={() => void handleOpenReceipt(movement.comprovante_url)}>
                       <Text style={styles.link}>Ver comprovante</Text>
                     </TouchableOpacity>
-                    {canUpdate && movement.status_aprovacao === 'pendente' ? (
+                    {canUpdate && movement.exclusaoSolicitada ? (
+                      <View style={styles.formActions}>
+                        <TouchableOpacity onPress={() => void handleDeletion(movement, 'confirmada')}>
+                          <Text style={styles.danger}>Confirmar exclusão</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity onPress={() => void handleDeletion(movement, 'mantida')}>
+                          <Text style={styles.link}>Manter despesa</Text>
+                        </TouchableOpacity>
+                      </View>
+                    ) : null}
+                    {canUpdate && movement.status_aprovacao === 'pendente' && !movement.exclusaoSolicitada ? (
                       <View style={styles.movement}>
                         <TextInput
                           value={rejectReason[movement.id] ?? ''}

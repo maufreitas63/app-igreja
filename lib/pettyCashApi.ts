@@ -46,6 +46,7 @@ export type PettyCashMovement = {
   comprovante_url: string;
   status_aprovacao: PettyCashApproval;
   motivo_decisao: string;
+  exclusaoSolicitada: boolean;
   criado_por: string;
   created_at: string;
 };
@@ -144,6 +145,7 @@ const mapMovement = (value: unknown): PettyCashMovement => {
         ? row.status_aprovacao
         : 'pendente',
     motivo_decisao: asText(row.motivo_decisao),
+    exclusaoSolicitada: row.exclusao_solicitada === true,
     criado_por: asText(row.criado_por),
     created_at: asText(row.created_at),
   };
@@ -295,9 +297,17 @@ export async function registerPettyCashMovement(input: {
   });
 }
 
-export async function deletePettyCashExpense(movimentoId: string) {
-  const data = await callRpc<Record<string, unknown>>('petty_cash_excluir_despesa', {
+export async function requestPettyCashExpenseDeletion(movimentoId: string) {
+  await callRpc('petty_cash_solicitar_exclusao', { p_movimento_id: movimentoId });
+}
+
+export async function decidePettyCashExpenseDeletion(
+  movimentoId: string,
+  decisao: 'confirmada' | 'mantida'
+) {
+  const data = await callRpc<Record<string, unknown>>('petty_cash_decidir_exclusao', {
     p_movimento_id: movimentoId,
+    p_decisao: decisao,
   });
 
   return asText(data?.comprovante);
@@ -463,7 +473,11 @@ export async function uploadPettyCashReceipt(
 }
 
 export async function removePettyCashReceipt(storagePath: string) {
-  await supabase.storage.from(PETTY_CASH_BUCKET).remove([storagePath]);
+  const { error } = await supabase.storage.from(PETTY_CASH_BUCKET).remove([storagePath]);
+
+  if (error) {
+    throw new Error(error.message || 'Não foi possível apagar o comprovante.');
+  }
 }
 
 export async function listPettyCashReceiptsForEntry() {
