@@ -20,6 +20,7 @@ import { MaintenanceScaleTypesCard } from '@/components/MaintenanceScaleTypesCar
 import { MaintenanceScaleVolunteersCard } from '@/components/MaintenanceScaleVolunteersCard';
 import { MaintenanceAccessControlCard } from '@/components/MaintenanceAccessControlCard';
 import { MaintenanceFinancialsCard } from '@/components/MaintenanceFinancialsCard';
+import { MaintenancePettyCashCard } from '@/components/MaintenancePettyCashCard';
 import { MaintenancePredictiveInsightsCard } from '@/components/MaintenancePredictiveInsightsCard';
 import { MaintenanceAiAssistantCard } from '@/components/MaintenanceAiAssistantCard';
 import { MaintenanceReportsCard } from '@/components/MaintenanceReportsCard';
@@ -174,6 +175,7 @@ type MaintenanceCarouselCard = {
     | 'family_reception'
     | 'visitor_followup'
     | 'financials'
+    | 'petty_cash'
     | 'predictive_insights'
     | 'ai_assistant'
     | 'relatorios'
@@ -208,6 +210,7 @@ const MAINTENANCE_PANEL_CARDS: MaintenanceCarouselCard[] = [
   { id: '22', title: 'Resetar Trilha', content: 'discipleship_reset' },
   { id: '9', title: 'Informações Financeiras', content: 'financials' },
   { id: '16', title: 'Modelo Preditivo', content: 'predictive_insights' },
+  { id: '32', title: 'Pequenos Caixas', content: 'petty_cash' },
   { id: '30', title: 'Abigail', content: 'ai_assistant' },
   { id: '17', title: 'Relatórios', content: 'relatorios' },
   { id: '18', title: 'Sugestões e Melhorias', content: 'suggestions_improvements' },
@@ -1441,6 +1444,19 @@ export default function MaintenanceDashboard() {
               ]}
             >
               <MaintenanceVisitorFollowupCard
+                isActive
+                panelHeight={cardHeight}
+                minimal={isMinimalPresentation}
+              />
+            </View>
+          ) : item.content === 'petty_cash' ? (
+            <View
+              style={[
+                styles.financialsPanel,
+                isMinimalPresentation && styles.financialsPanelMinimal,
+              ]}
+            >
+              <MaintenancePettyCashCard
                 isActive
                 panelHeight={cardHeight}
                 minimal={isMinimalPresentation}

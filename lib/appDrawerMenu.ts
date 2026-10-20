@@ -1,4 +1,4 @@
-import { ACCESS_DASHBOARD_CARD, ACCESS_SCREEN } from '@/lib/accessControl';
+import { ACCESS_DASHBOARD_CARD, ACCESS_SCREEN, sessionHasAccess } from '@/lib/accessControl';
 import { DASHBOARD_FINANCIAL_CARD_ID } from '@/lib/financialModule';
 import { navigateWithScreenAccess } from '@/lib/dashboardScreenNavigation';
 import {
@@ -75,6 +75,7 @@ export type AppDrawerModuleKey =
   | 'discipleship_alerts'
   | 'discipleship_reset'
   | 'financials'
+  | 'petty_cash_management'
   | 'predictive_insights'
   | 'ai_assistant'
   | 'relatorios'
@@ -350,6 +351,13 @@ export const APP_DRAWER_SETTINGS_ITEMS: AppDrawerSettingsItem[] = [
     group: 'financas',
   },
   {
+    letter: 'f4',
+    label: 'Pequenos Caixas',
+    moduleKey: 'petty_cash_management',
+    group: 'financas',
+    hint: 'Cadastro, responsável e prestação',
+  },
+  {
     letter: 'g0',
     label: 'Como faço…?',
     moduleKey: 'menu_como_faco_manutencao',
@@ -473,6 +481,7 @@ const MAINTENANCE_PANEL_BY_MODULE: Partial<Record<AppDrawerModuleKey, string>> =
   discipleship_alerts: 'discipleship_alerts',
   discipleship_reset: 'discipleship_reset',
   financials: 'financials',
+  petty_cash_management: 'petty_cash',
   predictive_insights: 'predictive_insights',
   ai_assistant: 'ai_assistant',
   relatorios: 'relatorios',
@@ -703,6 +712,32 @@ async function navigateDrawerMenuItemBody(
   }
 
   if (moduleKey === 'gestao_financeira') {
+    const canOpenFinancial = await sessionHasAccess('screen', ACCESS_SCREEN.financial, 'view');
+
+    if (canOpenFinancial) {
+      await navigateWithScreenAccess(
+        router,
+        '/financial',
+        ACCESS_SCREEN.financial,
+        withReturnDashboardCard(DASHBOARD_FINANCIAL_CARD_ID),
+        DRAWER_NAVIGATE
+      );
+      return;
+    }
+
+    const canOpenPettyCash = await sessionHasAccess('screen', ACCESS_SCREEN.pettyCash, 'view');
+
+    if (canOpenPettyCash) {
+      await navigateWithScreenAccess(
+        router,
+        '/pequeno-caixa',
+        ACCESS_SCREEN.pettyCash,
+        withFailClosedReturn(),
+        DRAWER_NAVIGATE
+      );
+      return;
+    }
+
     await navigateWithScreenAccess(
       router,
       '/financial',

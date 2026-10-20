@@ -62,6 +62,7 @@ export const FINANCIAL_ACCESS_SCREEN_RESOURCE_KEYS = [
   ACCESS_DASHBOARD_CARD.financial,
   ACCESS_SCREEN.financial,
   ACCESS_SCREEN.expenseReport,
+  ACCESS_SCREEN.pettyCash,
 ] as const;
 
 export const DASHBOARD_CARD_CONTENT_TO_ACCESS_KEY: Record<string, string> = {

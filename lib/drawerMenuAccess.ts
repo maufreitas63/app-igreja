@@ -85,6 +85,13 @@ export function isDrawerMemberModuleAllowed(
     )
   );
 
+  if (
+    moduleKey === 'gestao_financeira'
+    && context.dashboardScreenAccess[ACCESS_SCREEN.pettyCash] === true
+  ) {
+    return true;
+  }
+
   if (!screenOk && !cardOk) {
     return false;
   }

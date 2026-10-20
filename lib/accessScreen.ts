@@ -11,6 +11,7 @@ export const ACCESS_SCREEN = {
   pastoral: '/pastoral',
   pastoralHistory: '/pastoral-history',
   financial: '/financial',
+  pettyCash: 'financial.petty_cash',
   documentosOficiais: '/documentos-oficiais',
   atribuicoes: '/atribuicoes',
   aliancaConectaReino: '/alianca-conecta-reino',

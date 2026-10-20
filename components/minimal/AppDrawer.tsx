@@ -64,6 +64,7 @@ const SETTINGS_ICONS: Partial<Record<AppDrawerModuleKey, React.ComponentProps<ty
   campaigns_management: 'flag',
   primicias_management: 'shopping-basket',
   predictive_insights: 'lightbulb-o',
+  petty_cash_management: 'money',
   ai_assistant: 'key',
   discipleship_themes: 'book',
   discipleship_alerts: 'graduation-cap',

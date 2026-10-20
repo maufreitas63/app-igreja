@@ -26,7 +26,8 @@ export type MaintenancePanelContent =
   | 'auditor'
   | 'event_orchestration'
   | 'weekly_quiz'
-  | 'suggestions_improvements';
+  | 'suggestions_improvements'
+  | 'petty_cash';
 
 export type MaintenanceShortcutIconName =
   | 'calendar'
@@ -53,7 +54,8 @@ export type MaintenanceShortcutIconName =
   | 'flag'
   | 'gift'
   | 'shopping-basket'
-  | 'user-secret';
+  | 'user-secret'
+  | 'money';
 
 /** Ícone FontAwesome por módulo de manutenção. */
 export const MAINTENANCE_SHORTCUT_ICONS: Record<
@@ -76,6 +78,7 @@ export const MAINTENANCE_SHORTCUT_ICONS: Record<
   mudanca_papeis: 'exchange',
   transferencia_igreja: 'share',
   financials: 'line-chart',
+  petty_cash: 'money',
   predictive_insights: 'area-chart',
   ai_assistant: 'comments',
   relatorios: 'file-text-o',
@@ -108,6 +111,7 @@ export const MAINTENANCE_SHORTCUT_ICON_COLORS: Record<MaintenancePanelContent, s
   mudanca_papeis: '#FB7185',
   transferencia_igreja: '#818CF8',
   financials: '#34D399',
+  petty_cash: '#FBBF24',
   predictive_insights: '#22D3EE',
   ai_assistant: '#A78BFA',
   relatorios: '#C084FC',

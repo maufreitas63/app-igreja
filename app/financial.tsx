@@ -10,7 +10,7 @@ import { getAliancaMaePanel } from '@/lib/alianca/aliancaApi';
 import type { AliancaMaePanel } from '@/lib/alianca/types';
 import { KnowledgeSectionTitle } from '@/components/knowledge/KnowledgeSectionTitle';
 import { KNOWLEDGE_ROUTE } from '@/lib/knowledge/routeKeys';
-import { ACCESS_SCREEN } from '@/lib/accessControl';
+import { ACCESS_SCREEN, sessionHasAccess } from '@/lib/accessControl';
 import { CloseFooterBar } from '@/components/minimal/CloseFooterBar';
 import {
   resolveReturnDashboardCardParam,
@@ -30,7 +30,7 @@ import { useFinancialsByMonth } from '@/hooks/useFinancialsByMonth';
 import { DropdownSelect } from '@/components/ui/DropdownSelect';
 import { FontAwesome } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -84,6 +84,23 @@ export default function FinancialScreen() {
     resourceKey: ACCESS_SCREEN.financial,
     deniedMessage: 'Você não tem permissão para abrir o módulo financeiro.',
   });
+  const [canOpenPettyCash, setCanOpenPettyCash] = useState(false);
+
+  useFocusEffect(
+    useCallback(() => {
+      let active = true;
+
+      void sessionHasAccess('screen', ACCESS_SCREEN.pettyCash, 'view').then((allowed) => {
+        if (active) {
+          setCanOpenPettyCash(allowed);
+        }
+      });
+
+      return () => {
+        active = false;
+      };
+    }, [])
+  );
   const [expandedSection, setExpandedSection] = useState<FinancialSectionId | null>(null);
   const [aliancaPanel, setAliancaPanel] = useState<AliancaMaePanel | null>(null);
   const [loadingAlianca, setLoadingAlianca] = useState(true);
@@ -658,6 +675,24 @@ export default function FinancialScreen() {
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.rdShortcutSection}>
+            {canOpenPettyCash ? (
+              <TouchableOpacity
+                style={styles.rdShortcutButton}
+                onPress={() => router.push('/pequeno-caixa')}
+                activeOpacity={0.85}
+              >
+                <FontAwesome name="money" size={14} color="#D1FAE5" />
+                <View style={styles.rdShortcutTextWrap}>
+                  <View style={styles.rdShortcutTitleWrap}>
+                    <Text style={styles.rdShortcutTitle}>Pequeno caixa</Text>
+                  </View>
+                  <Text style={styles.rdShortcutSubtitle}>
+                    Despesas e reposição do caixa sob sua responsabilidade
+                  </Text>
+                </View>
+                <FontAwesome name="chevron-right" size={12} color="#94A3B8" />
+              </TouchableOpacity>
+            ) : null}
             {FINANCIAL_HUB_ITEMS.filter((item) => item.action.type === 'route').map((item) => (
               <TouchableOpacity
                 key={item.id}

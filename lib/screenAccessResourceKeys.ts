@@ -38,6 +38,7 @@ export const MAINTENANCE_PANEL_CONTENT_TO_ACCESS_KEY: Record<string, string> = {
   discipleship_reset: 'maintenance.card.discipleship_reset',
   small_groups_management: 'maintenance.card.small_groups_management',
   campaigns_management: 'maintenance.finance.campaigns',
+  petty_cash: 'maintenance.finance.petty_cash',
   primicias_management: 'maintenance.card.primicias_management',
   volunteer_mural: 'maintenance.volunteer.mural',
   generosity_moderation: 'maintenance.card.generosity_moderation',
