@@ -1,7 +1,7 @@
 import { decode } from 'base64-arraybuffer';
 import * as FileSystem from 'expo-file-system/legacy';
 import { supabase } from '@/lib/supabase';
-import { withActiveTenantStoragePrefix } from '@/lib/tenantStoragePath';
+import { getStoredTenantId } from '@/lib/tenantSession';
 import { buildFinancialReferencia } from '@/lib/treasuryReceiptBatchPath';
 
 export const PETTY_CASH_MAINTENANCE_SCREEN = 'maintenance.finance.petty_cash';
@@ -431,7 +431,14 @@ export async function uploadPettyCashReceipt(
   amount: number
 ) {
   const base64 = await imageInputToJpegBase64(imageInput);
-  const folder = await withActiveTenantStoragePrefix(caixaId);
+  const tenantId = (await getStoredTenantId())?.trim();
+
+  if (!tenantId) {
+    throw new Error('Selecione a igreja novamente para anexar o comprovante.');
+  }
+
+  // O id do caixa também é UUID. O prefixo genérico o trataria como igreja e omitiria o tenant.
+  const folder = `${tenantId}/${caixaId}`;
   const { data: existing } = await supabase.storage.from(PETTY_CASH_BUCKET).list(folder, { limit: 1000 });
   const names = new Set((existing ?? []).map((file) => file.name));
   let fileName = pettyCashReceiptFileName(isoDate, amount);
