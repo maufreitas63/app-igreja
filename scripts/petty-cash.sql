@@ -571,12 +571,13 @@ begin
   end if;
 
   -- Proteção aplicada: Gestor não tem visibilidade do Super Administrador
-  -- Busca só membros ativos: membresia sem desligamento, sem visitante e sem congregado isolado.
+  -- Busca só membros ativos: sem data de desligamento, sem visitante e sem congregado isolado.
   return coalesce((
     select jsonb_agg(jsonb_build_object('id', p.id, 'nome', p.full_name) order by p.full_name)
       from public.profiles p
      where public.profile_belongs_to_tenant(p.id, v_tenant)
        and public.profile_visible_to_access_actor(v_actor, p.id)
+       and p.membership_out is null
        and public.profile_is_members_list_member(p.id)
        and length(btrim(coalesce(p.full_name, ''))) > 0
   ), '[]'::jsonb);
