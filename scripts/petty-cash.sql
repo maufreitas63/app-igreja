@@ -571,11 +571,13 @@ begin
   end if;
 
   -- Proteção aplicada: Gestor não tem visibilidade do Super Administrador
+  -- Busca só membros ativos: membresia sem desligamento, sem visitante e sem congregado isolado.
   return coalesce((
     select jsonb_agg(jsonb_build_object('id', p.id, 'nome', p.full_name) order by p.full_name)
       from public.profiles p
      where public.profile_belongs_to_tenant(p.id, v_tenant)
        and public.profile_visible_to_access_actor(v_actor, p.id)
+       and public.profile_is_members_list_member(p.id)
        and length(btrim(coalesce(p.full_name, ''))) > 0
   ), '[]'::jsonb);
 end;
@@ -1530,6 +1532,55 @@ alter function public.petty_cash_excluir_despesa(uuid) set row_security = off;
 revoke all on function public.petty_cash_decidir_exclusao(uuid, text) from public;
 grant execute on function public.petty_cash_decidir_exclusao(uuid, text) to anon, authenticated;
 alter function public.petty_cash_decidir_exclusao(uuid, text) set row_security = off;
+
+create or replace function public.petty_cash_excluir_caixa(p_caixa_id uuid)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_tenant uuid;
+  v_caixa public.pequenos_caixas;
+  v_paths jsonb;
+begin
+  v_tenant := public.require_session_tenant_id();
+  perform public.petty_cash_require_actor();
+
+  if not public.session_has_screen_access('maintenance.finance.petty_cash', 'update') then
+    raise exception 'Você não tem permissão para excluir um pequeno caixa.';
+  end if;
+
+  select *
+    into v_caixa
+    from public.pequenos_caixas c
+   where c.id = p_caixa_id
+     and c.tenant_id = v_tenant
+   for update;
+
+  if v_caixa.id is null then
+    raise exception 'Pequeno caixa não encontrado.';
+  end if;
+
+  select coalesce(jsonb_agg(m.comprovante_url), '[]'::jsonb)
+    into v_paths
+    from public.pequenos_caixas_movimentacoes m
+   where m.caixa_id = v_caixa.id
+     and nullif(btrim(coalesce(m.comprovante_url, '')), '') is not null;
+
+  delete from public.pequenos_caixas_movimentacoes m
+   where m.caixa_id = v_caixa.id;
+
+  delete from public.pequenos_caixas c
+   where c.id = v_caixa.id;
+
+  return jsonb_build_object('id', v_caixa.id, 'comprovantes', v_paths);
+end;
+$$;
+
+revoke all on function public.petty_cash_excluir_caixa(uuid) from public;
+grant execute on function public.petty_cash_excluir_caixa(uuid) to anon, authenticated;
+alter function public.petty_cash_excluir_caixa(uuid) set row_security = off;
 
 create or replace function public.petty_cash_listar_comprovantes()
 returns jsonb

@@ -5,6 +5,7 @@ import { confirmDialog } from '@/lib/confirmDialog';
 import { sessionHasAccess } from '@/lib/accessControl';
 import { MAINTENANCE_VIGILANCE_UI } from '@/lib/maintenanceVigilanceTheme';
 import {
+  deletePettyCashBox,
   decidePettyCashMovement,
   fetchPettyCashMaintenanceList,
   fetchPettyCashMovements,
@@ -12,6 +13,7 @@ import {
   formatPettyCashBrl,
   formatPettyCashDate,
   openPettyCashReceipt,
+  removePettyCashReceipt,
   parsePettyCashAmount,
   PETTY_CASH_MAINTENANCE_SCREEN,
   pettyCashAlertLines,
@@ -43,6 +45,7 @@ const STATUS_LABEL: Record<PettyCashMovement['status_aprovacao'], string> = {
 export function MaintenancePettyCashCard({ isActive = true, panelHeight, minimal = false }: Props) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [deletingBoxId, setDeletingBoxId] = useState<string | null>(null);
   const [canUpdate, setCanUpdate] = useState(false);
   const [boxes, setBoxes] = useState<PettyCashBox[]>([]);
   const [people, setPeople] = useState<PettyCashResponsible[]>([]);
@@ -152,6 +155,62 @@ export function MaintenancePettyCashCard({ isActive = true, panelHeight, minimal
       });
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleDeleteBox = async (box: PettyCashBox) => {
+    if (!canUpdate || deletingBoxId) {
+      return;
+    }
+
+    const confirmed = await confirmDialog(
+      'Excluir caixa',
+      `Excluir o controle ${box.nome_caixa}? Os lançamentos e os comprovantes deste caixa também saem.`,
+      'Excluir',
+      'Cancelar',
+      { destructive: true }
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    setDeletingBoxId(box.id);
+
+    try {
+      const paths = await deletePettyCashBox(box.id);
+
+      for (const path of paths) {
+        try {
+          await removePettyCashReceipt(path);
+        } catch {
+          Toast.show({
+            type: 'error',
+            text1: 'Pequenos caixas',
+            text2: 'O caixa saiu, mas um comprovante não pôde ser apagado.',
+          });
+        }
+      }
+
+      if (editingId === box.id) {
+        resetForm();
+      }
+
+      if (selectedId === box.id) {
+        setSelectedId(null);
+        setMovements([]);
+      }
+
+      await load();
+      Toast.show({ type: 'success', text1: 'Caixa excluído' });
+    } catch (error) {
+      Toast.show({
+        type: 'error',
+        text1: 'Pequenos caixas',
+        text2: error instanceof Error ? error.message : 'Não foi possível excluir o caixa.',
+      });
+    } finally {
+      setDeletingBoxId(null);
     }
   };
 
@@ -347,18 +406,30 @@ export function MaintenancePettyCashCard({ isActive = true, panelHeight, minimal
             ))}
 
             {canUpdate ? (
-              <TouchableOpacity
-                onPress={() => {
-                  setEditingId(box.id);
-                  setNome(box.nome_caixa);
-                  setResponsavelId(box.responsavel_id);
-                  setStatus(box.status);
-                  setValorBase(String(box.valor_base).replace('.', ','));
-                  setDiaFechamento(String(box.dia_fechamento));
-                }}
-              >
-                <Text style={styles.link}>Editar</Text>
-              </TouchableOpacity>
+              <View style={styles.formActions}>
+                <TouchableOpacity
+                  onPress={() => {
+                    setEditingId(box.id);
+                    setNome(box.nome_caixa);
+                    setResponsavelId(box.responsavel_id);
+                    setStatus(box.status);
+                    setValorBase(String(box.valor_base).replace('.', ','));
+                    setDiaFechamento(String(box.dia_fechamento));
+                  }}
+                >
+                  <Text style={styles.link}>Editar</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  disabled={deletingBoxId === box.id}
+                  onPress={() => void handleDeleteBox(box)}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Excluir o caixa ${box.nome_caixa}`}
+                >
+                  <Text style={styles.danger}>
+                    {deletingBoxId === box.id ? 'Excluindo…' : 'Excluir caixa'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
             ) : null}
 
             {open ? (

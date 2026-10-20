@@ -188,7 +188,11 @@ export default function PequenoCaixaScreen() {
     }
   };
 
-  const expenseDraftFilled = amountDigits.length > 0 || description.trim().length > 0 || receipt != null;
+  const expenseDraftFilled =
+    amountDigits.length > 0
+    || description.trim().length > 0
+    || receipt != null
+    || movementDate !== todayPettyCashBrDate();
 
   const clearExpenseDraft = async () => {
     if (!expenseDraftFilled) {
@@ -404,12 +408,16 @@ export default function PequenoCaixaScreen() {
                 <Text style={styles.primaryText}>{submitting ? 'Enviando…' : 'Registrar despesa'}</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={styles.deleteButton}
+                style={[styles.deleteButton, !expenseDraftFilled && styles.deleteButtonDisabled]}
+                disabled={!expenseDraftFilled}
                 onPress={() => void clearExpenseDraft()}
                 accessibilityRole="button"
                 accessibilityLabel="Excluir despesa"
+                accessibilityState={{ disabled: !expenseDraftFilled }}
               >
-                <Text style={styles.deleteText}>Excluir despesa</Text>
+                <Text style={[styles.deleteText, !expenseDraftFilled && styles.deleteTextDisabled]}>
+                  Excluir despesa
+                </Text>
               </TouchableOpacity>
             </View>
 
@@ -656,9 +664,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     alignItems: 'center',
   },
+  deleteButtonDisabled: {
+    borderColor: '#E2E8F0',
+    backgroundColor: '#F8FAFC',
+  },
   deleteText: {
     color: '#B91C1C',
     fontWeight: '800',
+  },
+  deleteTextDisabled: {
+    color: '#94A3B8',
   },
   link: {
     color: MINIMAL_UI.icon,

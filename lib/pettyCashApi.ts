@@ -281,6 +281,15 @@ export async function fetchPettyCashMovements(caixaId: string) {
   return rows.map(mapMovement);
 }
 
+export async function deletePettyCashBox(caixaId: string) {
+  const data = await callRpc<Record<string, unknown>>('petty_cash_excluir_caixa', {
+    p_caixa_id: caixaId,
+  });
+  const paths = data?.comprovantes;
+
+  return Array.isArray(paths) ? paths.map(asText).filter((path) => path.length > 0) : [];
+}
+
 export async function savePettyCashBox(input: {
   id?: string | null;
   nome: string;
