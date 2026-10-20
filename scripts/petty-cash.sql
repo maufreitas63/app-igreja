@@ -340,8 +340,14 @@ begin
      where c.id = v_caixa
        and c.tenant_id = v_tenant
        and c.status = 'ativo'
-       and c.responsavel_id = public.current_session_profile_id()
-       and public.session_has_screen_access('financial.petty_cash', 'view')
+       and (
+         (
+           c.responsavel_id = public.current_session_profile_id()
+           and public.session_has_screen_access('financial.petty_cash', 'view')
+         )
+         or public.profile_has_role_code(public.current_session_profile_id(), 'tesoureiro')
+         or public.is_super_admin_profile(public.current_session_profile_id())
+       )
   );
 end;
 $$;

@@ -1,6 +1,8 @@
 import { decode } from 'base64-arraybuffer';
 import * as FileSystem from 'expo-file-system/legacy';
 import { supabase } from '@/lib/supabase';
+import { supabaseSessionFetch } from '@/lib/supabaseSessionFetch';
+import { getSupabaseAnonKey, getSupabaseUrl } from '@/lib/supabaseConfig';
 import { withActiveTenantStoragePrefix } from '@/lib/tenantStoragePath';
 import { buildFinancialReferencia } from '@/lib/treasuryReceiptBatchPath';
 
@@ -433,18 +435,35 @@ export async function uploadPettyCashReceipt(
   }
 
   const storagePath = `${folder}/${fileName}`;
-
-  const { error } = await supabase.storage.from(PETTY_CASH_BUCKET).upload(storagePath, decode(base64), {
-    contentType: 'image/jpeg',
-    upsert: false,
+  const anonKey = getSupabaseAnonKey();
+  const response = await supabaseSessionFetch(pettyCashObjectUrl(storagePath), {
+    method: 'POST',
+    headers: {
+      authorization: `Bearer ${anonKey}`,
+      apikey: anonKey,
+      'content-type': 'image/jpeg',
+      'cache-control': '3600',
+      'x-upsert': 'false',
+    },
+    body: decode(base64),
   });
 
-  if (error) {
-    throw new Error(error.message || 'Não foi possível enviar o comprovante.');
+  if (!response.ok) {
+    const payload = (await response.json().catch(() => null)) as { message?: string; error?: string } | null;
+    throw new Error(payload?.message || payload?.error || 'Não foi possível enviar o comprovante.');
   }
 
   return storagePath;
 }
+
+const pettyCashObjectUrl = (storagePath: string) => {
+  const encoded = storagePath
+    .split('/')
+    .map((part) => encodeURIComponent(part))
+    .join('/');
+
+  return `${getSupabaseUrl()}/storage/v1/object/${PETTY_CASH_BUCKET}/${encoded}`;
+};
 
 export async function removePettyCashReceipt(storagePath: string) {
   await supabase.storage.from(PETTY_CASH_BUCKET).remove([storagePath]);
@@ -469,11 +488,20 @@ export async function listPettyCashReceiptsForEntry() {
 }
 
 export async function downloadPettyCashReceiptDataUrl(storagePath: string) {
-  const { data, error } = await supabase.storage.from(PETTY_CASH_BUCKET).download(storagePath);
+  const anonKey = getSupabaseAnonKey();
+  const response = await supabaseSessionFetch(pettyCashObjectUrl(storagePath), {
+    headers: {
+      authorization: `Bearer ${anonKey}`,
+      apikey: anonKey,
+    },
+  });
 
-  if (error || !data) {
-    throw new Error(error?.message || 'Não foi possível abrir o comprovante do pequeno caixa.');
+  if (!response.ok) {
+    const payload = (await response.json().catch(() => null)) as { message?: string } | null;
+    throw new Error(payload?.message || 'Não foi possível abrir o comprovante do pequeno caixa.');
   }
+
+  const data = await response.blob();
 
   if (typeof FileReader === 'undefined') {
     throw new Error('A leitura do comprovante não está disponível neste aparelho.');
@@ -500,13 +528,37 @@ export async function downloadPettyCashReceiptDataUrl(storagePath: string) {
 }
 
 export async function openPettyCashReceipt(storagePath: string) {
-  const { data, error } = await supabase.storage
-    .from(PETTY_CASH_BUCKET)
-    .createSignedUrl(storagePath, SIGNED_URL_TTL_SECONDS);
+  const anonKey = getSupabaseAnonKey();
+  const encoded = storagePath
+    .split('/')
+    .map((part) => encodeURIComponent(part))
+    .join('/');
+  const response = await supabaseSessionFetch(
+    `${getSupabaseUrl()}/storage/v1/object/sign/${PETTY_CASH_BUCKET}/${encoded}`,
+    {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${anonKey}`,
+        apikey: anonKey,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({ expiresIn: SIGNED_URL_TTL_SECONDS }),
+    }
+  );
+  const payload = (await response.json().catch(() => null)) as {
+    signedURL?: string;
+    signedUrl?: string;
+    message?: string;
+  } | null;
+  const signed = payload?.signedURL || payload?.signedUrl;
 
-  if (error || !data?.signedUrl) {
-    throw new Error(error?.message || 'Não foi possível abrir o comprovante.');
+  if (!response.ok || !signed) {
+    throw new Error(payload?.message || 'Não foi possível abrir o comprovante.');
   }
 
-  return data.signedUrl;
+  if (signed.startsWith('http')) {
+    return signed;
+  }
+
+  return `${getSupabaseUrl()}/storage/v1${signed.startsWith('/') ? signed : `/${signed}`}`;
 }
