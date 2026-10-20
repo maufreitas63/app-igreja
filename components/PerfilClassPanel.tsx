@@ -39,6 +39,7 @@ export function PerfilClassPanel() {
   const [manageProfile, setManageProfile] = useState(false);
   const [manageMembers, setManageMembers] = useState(false);
   const [canOpenDiscipleshipTrail, setCanOpenDiscipleshipTrail] = useState(false);
+  const [canOpenPettyCash, setCanOpenPettyCash] = useState(false);
   const [canOpenExpenseReport, setCanOpenExpenseReport] = useState(false);
   const [canOpenOfferServices, setCanOpenOfferServices] = useState(false);
   const [canOpenCantinhoLeitura, setCanOpenCantinhoLeitura] = useState(false);
@@ -70,18 +71,20 @@ export function PerfilClassPanel() {
         setManageProfile(false);
         setManageMembers(false);
         setCanOpenDiscipleshipTrail(false);
+        setCanOpenPettyCash(false);
         setCanOpenExpenseReport(false);
         setCanOpenOfferServices(false);
         setCanOpenCantinhoLeitura(false);
         return;
       }
 
-      const [access, trailAllowed, expenseAllowed, offerAllowed, cantinhoAllowed] =
+      const [access, trailAllowed, pettyCashAllowed, expenseAllowed, offerAllowed, cantinhoAllowed] =
         await Promise.all([
           loadGroupedManageScreenAccess(resolvedProfileId, {
             forceRefresh: options?.forceRefresh === true,
           }),
           sessionHasAccess('screen', ACCESS_SCREEN.discipleshipTrail, 'view'),
+          sessionHasAccess('screen', ACCESS_SCREEN.pettyCash, 'view'),
           sessionHasAccess('screen', ACCESS_SCREEN.expenseReport, 'view'),
           sessionHasAccess('screen', ACCESS_SCREEN.offerServices, 'view'),
           sessionHasAccess('screen', ACCESS_SCREEN.cantinhoLeitura, 'view'),
@@ -94,6 +97,7 @@ export function PerfilClassPanel() {
       setManageProfile(access.manageProfile);
       setManageMembers(access.manageMembers);
       setCanOpenDiscipleshipTrail(trailAllowed);
+      setCanOpenPettyCash(pettyCashAllowed);
       setCanOpenExpenseReport(expenseAllowed);
       setCanOpenOfferServices(offerAllowed);
       setCanOpenCantinhoLeitura(cantinhoAllowed);
@@ -111,6 +115,7 @@ export function PerfilClassPanel() {
         setManageProfile(false);
         setManageMembers(false);
         setCanOpenDiscipleshipTrail(false);
+        setCanOpenPettyCash(false);
         setCanOpenExpenseReport(false);
         setCanOpenOfferServices(false);
         setCanOpenCantinhoLeitura(false);
@@ -163,6 +168,25 @@ export function PerfilClassPanel() {
   const openManageMembers = useCallback(() => {
     setMembersClassVisible(true);
   }, []);
+
+  const openPettyCash = useCallback(() => {
+    if (!canOpenPettyCash) {
+      Toast.show({
+        type: 'error',
+        text1: 'Acesso negado',
+        text2: 'Você não tem permissão para abrir o Pequeno caixa.',
+      });
+      return;
+    }
+
+    void navigateWithScreenAccess(
+      router,
+      '/pequeno-caixa',
+      ACCESS_SCREEN.pettyCash,
+      withReturnRoute('/perfil'),
+      { deniedMessage: 'Você não tem permissão para abrir o Pequeno caixa.' }
+    );
+  }, [canOpenPettyCash, router]);
 
   const openExpenseReport = useCallback(() => {
     if (!canOpenExpenseReport) {
@@ -249,6 +273,15 @@ export function PerfilClassPanel() {
       });
     }
 
+    if (canOpenPettyCash) {
+      items.push({
+        key: 'petty-cash',
+        label: 'Pequeno caixa',
+        icon: 'account-balance-wallet',
+        onPress: openPettyCash,
+      });
+    }
+
     if (canOpenExpenseReport) {
       items.push({
         key: 'expense-report',
@@ -271,12 +304,14 @@ export function PerfilClassPanel() {
   }, [
     canOpenCantinhoLeitura,
     canOpenDiscipleshipTrail,
+    canOpenPettyCash,
     canOpenExpenseReport,
     canOpenOfferServices,
     manageMembers,
     manageProfile,
     openDigitalIdCard,
     openDiscipleshipTrail,
+    openPettyCash,
     openExpenseReport,
     openManageMembers,
     openManageProfile,
