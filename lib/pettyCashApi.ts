@@ -20,6 +20,7 @@ export type PettyCashBox = {
   responsavel_id: string;
   responsavel_nome: string;
   valor_base: number;
+  dia_fechamento: number;
   saldo_inicial: number;
   total_despesas: number;
   saldo_atual: number;
@@ -29,7 +30,10 @@ export type PettyCashBox = {
   despesas_pendentes: number;
   reposicao_pendente: boolean;
   prazo: string;
+  dias_para_prazo: number;
   prestacao_atrasada: boolean;
+  prestacao_proxima: boolean;
+  reenvio_pendente: boolean;
 };
 
 export type PettyCashMovement = {
@@ -40,6 +44,7 @@ export type PettyCashMovement = {
   data_movimento: string;
   comprovante_url: string;
   status_aprovacao: PettyCashApproval;
+  motivo_decisao: string;
   criado_por: string;
   created_at: string;
 };
@@ -86,6 +91,7 @@ const mapBox = (value: unknown): PettyCashBox => {
     responsavel_id: asText(row.responsavel_id),
     responsavel_nome: asText(row.responsavel_nome),
     valor_base: asNumber(row.valor_base),
+    dia_fechamento: asNumber(row.dia_fechamento) || 25,
     saldo_inicial: asNumber(row.saldo_inicial),
     total_despesas: asNumber(row.total_despesas),
     saldo_atual: asNumber(row.saldo_atual),
@@ -95,7 +101,10 @@ const mapBox = (value: unknown): PettyCashBox => {
     despesas_pendentes: asNumber(row.despesas_pendentes),
     reposicao_pendente: row.reposicao_pendente === true,
     prazo: asText(row.prazo).slice(0, 10),
+    dias_para_prazo: asNumber(row.dias_para_prazo),
     prestacao_atrasada: row.prestacao_atrasada === true,
+    prestacao_proxima: row.prestacao_proxima === true,
+    reenvio_pendente: row.reenvio_pendente === true,
   };
 };
 
@@ -123,6 +132,7 @@ const mapMovement = (value: unknown): PettyCashMovement => {
       row.status_aprovacao === 'aprovado' || row.status_aprovacao === 'rejeitado'
         ? row.status_aprovacao
         : 'pendente',
+    motivo_decisao: asText(row.motivo_decisao),
     criado_por: asText(row.criado_por),
     created_at: asText(row.created_at),
   };
@@ -172,6 +182,41 @@ export function parsePettyCashBrDate(value: string) {
   return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
 }
 
+export type PettyCashAlert = {
+  tone: 'late' | 'soon' | 'resend';
+  text: string;
+};
+
+export function pettyCashAlertLines(box: PettyCashBox): PettyCashAlert[] {
+  const lines: PettyCashAlert[] = [];
+  const when = box.prazo ? formatPettyCashDate(box.prazo) : '—';
+
+  if (box.prestacao_atrasada) {
+    lines.push({
+      tone: 'late',
+      text: `${box.nome_caixa}: prestação em atraso. O fechamento era ${when}.`,
+    });
+  } else if (box.prestacao_proxima) {
+    const days = box.dias_para_prazo;
+    lines.push({
+      tone: 'soon',
+      text:
+        days <= 0
+          ? `${box.nome_caixa}: a prestação vence hoje (${when}).`
+          : `${box.nome_caixa}: a prestação vence em ${days} dia(s), em ${when}.`,
+    });
+  }
+
+  if (box.reenvio_pendente) {
+    lines.push({
+      tone: 'resend',
+      text: `${box.nome_caixa}: há lançamento rejeitado. Corrija e envie de novo.`,
+    });
+  }
+
+  return lines;
+}
+
 export function todayPettyCashBrDate() {
   const now = new Date();
   return `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()}`;
@@ -206,12 +251,16 @@ export async function savePettyCashBox(input: {
   nome: string;
   responsavelId: string;
   status: PettyCashStatus;
+  valorBase: number;
+  diaFechamento: number;
 }) {
   const data = await callRpc('petty_cash_salvar_caixa', {
     p_id: input.id ?? null,
     p_nome: input.nome,
     p_responsavel_id: input.responsavelId,
     p_status: input.status,
+    p_valor_base: input.valorBase,
+    p_dia_fechamento: input.diaFechamento,
   });
 
   return mapBox(data);
@@ -235,10 +284,15 @@ export async function registerPettyCashMovement(input: {
   });
 }
 
-export async function decidePettyCashMovement(movimentoId: string, decisao: 'aprovado' | 'rejeitado') {
+export async function decidePettyCashMovement(
+  movimentoId: string,
+  decisao: 'aprovado' | 'rejeitado',
+  motivo?: string
+) {
   const data = await callRpc('petty_cash_decidir', {
     p_movimento_id: movimentoId,
     p_decisao: decisao,
+    p_motivo: motivo ?? null,
   });
 
   return mapBox(data);

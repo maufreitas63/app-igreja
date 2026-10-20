@@ -14,6 +14,7 @@ import {
   parsePettyCashAmount,
   parsePettyCashBrDate,
   PETTY_CASH_CONTROL_SCREEN,
+  pettyCashAlertLines,
   registerPettyCashMovement,
   removePettyCashReceipt,
   todayPettyCashBrDate,
@@ -231,6 +232,22 @@ export default function PequenoCaixaScreen() {
         {selected ? (
           <View style={styles.card}>
             <Text style={styles.cardTitle}>{selected.nome_caixa}</Text>
+            {pettyCashAlertLines(selected).map((alert) => (
+              <Text
+                key={alert.tone}
+                style={[
+                  styles.alert,
+                  alert.tone === 'late' && styles.alertLate,
+                  alert.tone === 'soon' && styles.alertSoon,
+                  alert.tone === 'resend' && styles.alertResend,
+                ]}
+              >
+                {alert.text}
+              </Text>
+            ))}
+            <Text style={styles.line}>
+              Valor-base {formatPettyCashBrl(selected.valor_base)} · fecha todo dia {selected.dia_fechamento}
+            </Text>
             <Text style={styles.line}>Saldo inicial {formatPettyCashBrl(selected.saldo_inicial)}</Text>
             <Text style={styles.line}>Despesas comprovadas {formatPettyCashBrl(selected.total_despesas)}</Text>
             <Text style={styles.line}>Saldo remanescente {formatPettyCashBrl(selected.saldo_remanescente)}</Text>
@@ -275,10 +292,11 @@ export default function PequenoCaixaScreen() {
               <Text style={styles.primaryText}>{submitting ? 'Enviando…' : 'Registrar despesa'}</Text>
             </TouchableOpacity>
 
-            <Text style={styles.section}>Reposição ao valor-base</Text>
+            <Text style={styles.section}>Reposição até {formatPettyCashBrl(selected.valor_base)}</Text>
             <Text style={styles.note}>
-              O valor da reposição é {formatPettyCashBrl(selected.valor_recomposicao)}. O registro só conclui com a
-              imagem do comprovante de transferência, Pix ou recibo.
+              O valor da reposição é {formatPettyCashBrl(selected.valor_recomposicao)}. A imagem do comprovante é
+              obrigatória e a aprovação só acontece se ela estiver salva. Se a conferência rejeitar, corrija e envie
+              de novo.
               {selected.despesas_pendentes > 0
                 ? ' Aguarde a conferência das despesas pendentes.'
                 : ''}
@@ -311,6 +329,11 @@ export default function PequenoCaixaScreen() {
                 <Text style={styles.line}>
                   {formatPettyCashDate(movement.data_movimento)} · {movement.descricao}
                 </Text>
+                {movement.status_aprovacao === 'rejeitado' ? (
+                  <Text style={styles.line}>
+                    Motivo: {movement.motivo_decisao || 'Corrija os dados e envie novamente.'}
+                  </Text>
+                ) : null}
                 <TouchableOpacity
                   onPress={() => {
                     void openPettyCashReceipt(movement.comprovante_url)
@@ -350,6 +373,26 @@ const styles = StyleSheet.create({
     color: MINIMAL_UI.text,
     fontSize: 14,
     lineHeight: 20,
+  },
+  alert: {
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    fontSize: 14,
+    lineHeight: 20,
+    fontWeight: '700',
+  },
+  alertLate: {
+    backgroundColor: '#FEE2E2',
+    color: '#991B1B',
+  },
+  alertSoon: {
+    backgroundColor: '#FEF3C7',
+    color: '#92400E',
+  },
+  alertResend: {
+    backgroundColor: '#E0E7FF',
+    color: '#312E81',
   },
   error: {
     color: '#B91C1C',

@@ -11,7 +11,9 @@ import {
   formatPettyCashBrl,
   formatPettyCashDate,
   openPettyCashReceipt,
+  parsePettyCashAmount,
   PETTY_CASH_MAINTENANCE_SCREEN,
+  pettyCashAlertLines,
   savePettyCashBox,
   type PettyCashBox,
   type PettyCashMovement,
@@ -23,7 +25,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import Toast from 'react-native-toast-message';
 
 const HELP_TEXT =
-  'Cada pequeno caixa tem valor-base fixo de R$ 1.000,00 e um responsável. Esta tela cria e mantém os caixas e confere as despesas e as reposições. Quem controla o caixa no Financeiro precisa ser o responsável e ter o papel Controle do pequeno caixa em Controle de Acesso. A prestação vence no dia 25, ou no dia útil seguinte quando essa data cai em fim de semana ou feriado. A reposição exige a imagem do comprovante e devolve o saldo a R$ 1.000,00. O histórico fica arquivado.';
+  'Cada caixa tem o próprio valor-base e o dia de fechamento. Se esse dia cair em fim de semana ou feriado, a prestação vale no dia útil seguinte. Esta tela cria os caixas, escolhe o responsável e confere despesas e reposições. A reposição só é aprovada se a imagem do comprovante estiver salva. Se houver inconsistência, rejeite com o motivo: o responsável corrige e envia de novo. O painel avisa quando a prestação está perto do vencimento ou em atraso.';
 
 type Props = {
   isActive?: boolean;
@@ -41,7 +43,6 @@ export function MaintenancePettyCashCard({ isActive = true, panelHeight, minimal
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [canUpdate, setCanUpdate] = useState(false);
-  const [prazo, setPrazo] = useState('');
   const [boxes, setBoxes] = useState<PettyCashBox[]>([]);
   const [people, setPeople] = useState<PettyCashResponsible[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -51,6 +52,9 @@ export function MaintenancePettyCashCard({ isActive = true, panelHeight, minimal
   const [nome, setNome] = useState('');
   const [responsavelId, setResponsavelId] = useState('');
   const [status, setStatus] = useState<PettyCashStatus>('ativo');
+  const [valorBase, setValorBase] = useState('1000');
+  const [diaFechamento, setDiaFechamento] = useState('25');
+  const [rejectReason, setRejectReason] = useState<Record<string, string>>({});
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const load = useCallback(async () => {
@@ -63,7 +67,6 @@ export function MaintenancePettyCashCard({ isActive = true, panelHeight, minimal
         fetchPettyCashResponsibles(),
         sessionHasAccess('screen', PETTY_CASH_MAINTENANCE_SCREEN, 'update'),
       ]);
-      setPrazo(list.prazo);
       setBoxes(list.caixas);
       setPeople(responsibles);
       setCanUpdate(updateAllowed);
@@ -104,10 +107,25 @@ export function MaintenancePettyCashCard({ isActive = true, panelHeight, minimal
     setNome('');
     setResponsavelId('');
     setStatus('ativo');
+    setValorBase('1000');
+    setDiaFechamento('25');
   };
 
   const handleSave = async () => {
     if (!canUpdate) {
+      return;
+    }
+
+    const base = parsePettyCashAmount(valorBase);
+    const day = Number(diaFechamento);
+
+    if (base == null || base <= 0) {
+      Toast.show({ type: 'error', text1: 'Informe o valor-base do caixa.' });
+      return;
+    }
+
+    if (!Number.isInteger(day) || day < 1 || day > 31) {
+      Toast.show({ type: 'error', text1: 'O dia de fechamento precisa estar entre 1 e 31.' });
       return;
     }
 
@@ -119,6 +137,8 @@ export function MaintenancePettyCashCard({ isActive = true, panelHeight, minimal
         nome,
         responsavelId,
         status,
+        valorBase: base,
+        diaFechamento: day,
       });
       resetForm();
       await load();
@@ -135,11 +155,21 @@ export function MaintenancePettyCashCard({ isActive = true, panelHeight, minimal
   };
 
   const handleDecide = async (movement: PettyCashMovement, decisao: 'aprovado' | 'rejeitado') => {
+    const motivo = rejectReason[movement.id]?.trim() ?? '';
+
+    if (decisao === 'rejeitado' && motivo.length < 3) {
+      Toast.show({
+        type: 'error',
+        text1: 'Informe o motivo da rejeição para o responsável corrigir e reenviar.',
+      });
+      return;
+    }
+
     const confirmed = await confirmDialog(
       decisao === 'aprovado' ? 'Aprovar movimentação' : 'Rejeitar movimentação',
       decisao === 'aprovado'
-        ? 'A despesa aprovada reduz o saldo. A reposição aprovada devolve o caixa a R$ 1.000,00.'
-        : 'A movimentação rejeitada permanece no histórico e não altera o saldo.',
+        ? 'A despesa aprovada reduz o saldo. A reposição aprovada só conclui com a imagem do comprovante e devolve o caixa ao valor-base.'
+        : 'A rejeição fica no histórico, com o motivo, para o responsável corrigir e enviar de novo.',
       decisao === 'aprovado' ? 'Aprovar' : 'Rejeitar',
       'Cancelar',
       { destructive: decisao === 'rejeitado' }
@@ -150,7 +180,7 @@ export function MaintenancePettyCashCard({ isActive = true, panelHeight, minimal
     }
 
     try {
-      await decidePettyCashMovement(movement.id, decisao);
+      await decidePettyCashMovement(movement.id, decisao, motivo);
       await Promise.all([load(), loadMovements(selectedId)]);
     } catch (error) {
       Toast.show({
@@ -182,10 +212,19 @@ export function MaintenancePettyCashCard({ isActive = true, panelHeight, minimal
         minimal={minimal}
         accessibilityLabel="Como usar: Pequenos caixas"
       />
-      <Text style={styles.note}>
-        Valor-base de cada caixa: {formatPettyCashBrl(1000)}. Prestação até{' '}
-        {prazo ? formatPettyCashDate(prazo) : '—'}.
-      </Text>
+      {boxes.flatMap((box) => pettyCashAlertLines(box)).map((alert) => (
+        <Text
+          key={alert.text}
+          style={[
+            styles.alert,
+            alert.tone === 'late' && styles.alertLate,
+            alert.tone === 'soon' && styles.alertSoon,
+            alert.tone === 'resend' && styles.alertResend,
+          ]}
+        >
+          {alert.text}
+        </Text>
+      ))}
 
       {loading ? <ActivityIndicator color={MAINTENANCE_VIGILANCE_UI.accent} /> : null}
       {errorMessage ? <Text style={styles.error}>{errorMessage}</Text> : null}
@@ -197,6 +236,22 @@ export function MaintenancePettyCashCard({ isActive = true, panelHeight, minimal
             value={nome}
             onChangeText={setNome}
             placeholder="Nome do caixa"
+            placeholderTextColor="#94A3B8"
+            style={styles.input}
+          />
+          <TextInput
+            value={valorBase}
+            onChangeText={setValorBase}
+            placeholder="Valor-base"
+            keyboardType="decimal-pad"
+            placeholderTextColor="#94A3B8"
+            style={styles.input}
+          />
+          <TextInput
+            value={diaFechamento}
+            onChangeText={(value) => setDiaFechamento(value.replace(/\D/g, '').slice(0, 2))}
+            placeholder="Dia de fechamento (1 a 31)"
+            keyboardType="number-pad"
             placeholderTextColor="#94A3B8"
             style={styles.input}
           />
@@ -257,8 +312,8 @@ export function MaintenancePettyCashCard({ isActive = true, panelHeight, minimal
               <Text style={styles.cardTitle}>{box.nome_caixa}</Text>
               <Text style={styles.cardLine}>Responsável: {box.responsavel_nome || '—'}</Text>
               <Text style={styles.cardLine}>
-                Saldo {formatPettyCashBrl(box.saldo_atual)} · Recomposição{' '}
-                {formatPettyCashBrl(box.valor_recomposicao)}
+                Base {formatPettyCashBrl(box.valor_base)} · fecha dia {box.dia_fechamento} · saldo{' '}
+                {formatPettyCashBrl(box.saldo_atual)}
               </Text>
               <Text style={styles.cardLine}>
                 {box.status === 'ativo' ? 'Ativo' : 'Inativo'}
@@ -274,6 +329,8 @@ export function MaintenancePettyCashCard({ isActive = true, panelHeight, minimal
                   setNome(box.nome_caixa);
                   setResponsavelId(box.responsavel_id);
                   setStatus(box.status);
+                  setValorBase(String(box.valor_base).replace('.', ','));
+                  setDiaFechamento(String(box.dia_fechamento));
                 }}
               >
                 <Text style={styles.link}>Editar</Text>
@@ -290,7 +347,9 @@ export function MaintenancePettyCashCard({ isActive = true, panelHeight, minimal
                   Saldo remanescente {formatPettyCashBrl(box.saldo_remanescente)}
                 </Text>
                 <Text style={styles.cardLine}>
-                  Prestação até {box.prazo ? formatPettyCashDate(box.prazo) : '—'}
+                  Fechamento dia {box.dia_fechamento} · prestação até{' '}
+                  {box.prazo ? formatPettyCashDate(box.prazo) : '—'} · recomposição{' '}
+                  {formatPettyCashBrl(box.valor_recomposicao)}
                 </Text>
                 {loadingMovements ? <ActivityIndicator color={MAINTENANCE_VIGILANCE_UI.accent} /> : null}
                 {movements.map((movement) => (
@@ -302,17 +361,31 @@ export function MaintenancePettyCashCard({ isActive = true, panelHeight, minimal
                     <Text style={styles.cardLine}>
                       {formatPettyCashDate(movement.data_movimento)} · {movement.descricao}
                     </Text>
+                    {movement.motivo_decisao ? (
+                      <Text style={styles.cardLine}>Motivo: {movement.motivo_decisao}</Text>
+                    ) : null}
                     <TouchableOpacity onPress={() => void handleOpenReceipt(movement.comprovante_url)}>
                       <Text style={styles.link}>Ver comprovante</Text>
                     </TouchableOpacity>
                     {canUpdate && movement.status_aprovacao === 'pendente' ? (
-                      <View style={styles.formActions}>
-                        <TouchableOpacity onPress={() => void handleDecide(movement, 'aprovado')}>
-                          <Text style={styles.link}>Aprovar</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity onPress={() => void handleDecide(movement, 'rejeitado')}>
-                          <Text style={styles.danger}>Rejeitar</Text>
-                        </TouchableOpacity>
+                      <View style={styles.movement}>
+                        <TextInput
+                          value={rejectReason[movement.id] ?? ''}
+                          onChangeText={(value) =>
+                            setRejectReason((current) => ({ ...current, [movement.id]: value }))
+                          }
+                          placeholder="Motivo, se for rejeitar"
+                          placeholderTextColor="#94A3B8"
+                          style={styles.input}
+                        />
+                        <View style={styles.formActions}>
+                          <TouchableOpacity onPress={() => void handleDecide(movement, 'aprovado')}>
+                            <Text style={styles.link}>Aprovar</Text>
+                          </TouchableOpacity>
+                          <TouchableOpacity onPress={() => void handleDecide(movement, 'rejeitado')}>
+                            <Text style={styles.danger}>Rejeitar</Text>
+                          </TouchableOpacity>
+                        </View>
                       </View>
                     ) : null}
                   </View>
@@ -339,6 +412,26 @@ const styles = StyleSheet.create({
     color: MAINTENANCE_VIGILANCE_UI.textMuted,
     fontSize: 13,
     lineHeight: 18,
+  },
+  alert: {
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    fontSize: 13,
+    lineHeight: 18,
+    fontWeight: '700',
+  },
+  alertLate: {
+    backgroundColor: '#FEE2E2',
+    color: '#991B1B',
+  },
+  alertSoon: {
+    backgroundColor: '#FEF3C7',
+    color: '#92400E',
+  },
+  alertResend: {
+    backgroundColor: '#E0E7FF',
+    color: '#312E81',
   },
   error: {
     color: '#B91C1C',

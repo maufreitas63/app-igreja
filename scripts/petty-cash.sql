@@ -1,5 +1,5 @@
 -- =============================================================================
--- Pequenos caixas — várias frentes, valor-base R$ 1.000,00, prestação no dia 25
+-- Pequenos caixas — valor-base e dia de fechamento por caixa, prestação no dia útil seguinte
 -- =============================================================================
 -- Manutenção: tela maintenance.finance.petty_cash (engrenagem / Finanças e Inteligência)
 -- Controle: tela financial.petty_cash (Financeiro, só o responsável do caixa)
@@ -31,8 +31,23 @@ create unique index if not exists pequenos_caixas_tenant_nome_idx
 create index if not exists pequenos_caixas_tenant_status_idx
   on public.pequenos_caixas (tenant_id, status, nome_caixa);
 
+alter table public.pequenos_caixas
+  add column if not exists dia_fechamento integer not null default 25;
+
+alter table public.pequenos_caixas drop constraint if exists pequenos_caixas_valor_base_check;
+alter table public.pequenos_caixas
+  add constraint pequenos_caixas_valor_base_check check (valor_base > 0);
+
+alter table public.pequenos_caixas drop constraint if exists pequenos_caixas_dia_fechamento_check;
+alter table public.pequenos_caixas
+  add constraint pequenos_caixas_dia_fechamento_check check (dia_fechamento between 1 and 31);
+
 comment on table public.pequenos_caixas is
-  'Pequenos caixas da igreja. Cada um tem responsável próprio e valor-base fixo de R$ 1.000,00.';
+  'Pequenos caixas da igreja. Cada um tem responsável, valor-base e dia de fechamento próprios.';
+comment on column public.pequenos_caixas.valor_base is
+  'Limite máximo de recomposição deste caixa.';
+comment on column public.pequenos_caixas.dia_fechamento is
+  'Dia do mês da prestação. Se cair em fim de semana ou feriado, vale o dia útil seguinte.';
 
 create table if not exists public.pequenos_caixas_movimentacoes (
   id uuid primary key default gen_random_uuid(),
@@ -66,6 +81,12 @@ comment on table public.pequenos_caixas_movimentacoes is
   'Despesas e reposições do pequeno caixa. O comprovante fica no bucket petty-cash-docs e o histórico não é apagado.';
 comment on column public.pequenos_caixas_movimentacoes.comprovante_url is
   'Caminho do arquivo no bucket privado petty-cash-docs (não é URL pública).';
+
+alter table public.pequenos_caixas_movimentacoes
+  add column if not exists motivo_decisao text;
+
+comment on column public.pequenos_caixas_movimentacoes.motivo_decisao is
+  'Motivo informado na rejeição, para o responsável corrigir e reenviar.';
 
 alter table public.pequenos_caixas enable row level security;
 alter table public.pequenos_caixas_movimentacoes enable row level security;
@@ -175,6 +196,46 @@ begin
 
   return v_date;
 end;
+$$;
+
+create or replace function public.petty_cash_month_deadline(p_anchor date, p_day integer)
+returns date
+language plpgsql
+immutable
+as $$
+declare
+  v_last integer;
+  v_day integer;
+begin
+  v_last := extract(
+    day from (date_trunc('month', p_anchor::timestamp) + interval '1 month - 1 day')::date
+  )::integer;
+  v_day := least(greatest(coalesce(p_day, 25), 1), v_last);
+  return public.petty_cash_shift_to_business_day(make_date(
+    extract(year from p_anchor)::integer,
+    extract(month from p_anchor)::integer,
+    v_day
+  ));
+end;
+$$;
+
+create or replace function public.petty_cash_receipt_exists(p_path text)
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select exists (
+    select 1
+      from storage.objects o
+     where o.bucket_id = 'petty-cash-docs'
+       and o.name = btrim(coalesce(p_path, ''))
+       and (
+         coalesce(o.metadata->>'mimetype', o.metadata->>'contentType', '') like 'image/%'
+         or lower(o.name) ~ '\.(jpe?g|png|webp)$'
+       )
+  );
 $$;
 
 create or replace function public.petty_cash_deadline_for_today()
@@ -341,6 +402,10 @@ declare
   v_upcoming date;
   v_oldest date;
   v_anchor date;
+  v_atrasada boolean := false;
+  v_proxima boolean := false;
+  v_reenvio boolean := false;
+  v_dias integer := 0;
 begin
   select max(m.decided_at)
     into v_corte
@@ -370,22 +435,16 @@ begin
    where p.id = p_caixa.responsavel_id;
 
   v_today := (timezone('America/Sao_Paulo', now()))::date;
-  v_this := public.petty_cash_shift_to_business_day(
-    make_date(extract(year from v_today)::integer, extract(month from v_today)::integer, 25)
-  );
+  v_this := public.petty_cash_month_deadline(v_today, p_caixa.dia_fechamento);
   v_anchor := (date_trunc('month', v_today::timestamp) - interval '1 month')::date;
 
   if v_today <= v_this then
-    v_due := public.petty_cash_shift_to_business_day(
-      make_date(extract(year from v_anchor)::integer, extract(month from v_anchor)::integer, 25)
-    );
+    v_due := public.petty_cash_month_deadline(v_anchor, p_caixa.dia_fechamento);
     v_upcoming := v_this;
   else
     v_due := v_this;
     v_anchor := (date_trunc('month', v_today::timestamp) + interval '1 month')::date;
-    v_upcoming := public.petty_cash_shift_to_business_day(
-      make_date(extract(year from v_anchor)::integer, extract(month from v_anchor)::integer, 25)
-    );
+    v_upcoming := public.petty_cash_month_deadline(v_anchor, p_caixa.dia_fechamento);
   end if;
 
   select min(m.data_movimento)
@@ -396,15 +455,44 @@ begin
      and m.status_aprovacao = 'aprovado'
      and (v_corte is null or m.decided_at > v_corte);
 
-  if p_caixa.status = 'ativo'
-     and p_caixa.saldo_atual < p_caixa.valor_base
-     and v_oldest is not null
-     and v_oldest <= v_due then
+  v_atrasada := p_caixa.status = 'ativo'
+    and p_caixa.saldo_atual < p_caixa.valor_base
+    and v_oldest is not null
+    and v_oldest <= v_due;
+
+  if v_atrasada then
     v_prazo := v_due;
   else
     v_prazo := v_upcoming;
-    v_oldest := null;
   end if;
+
+  v_dias := v_prazo - v_today;
+
+  select exists (
+    select 1
+      from public.pequenos_caixas_movimentacoes m
+     where m.caixa_id = p_caixa.id
+       and m.status_aprovacao = 'rejeitado'
+       and not exists (
+         select 1
+           from public.pequenos_caixas_movimentacoes n
+          where n.caixa_id = m.caixa_id
+            and n.tipo = m.tipo
+            and n.created_at > m.created_at
+            and n.status_aprovacao in ('pendente', 'aprovado')
+       )
+  )
+    into v_reenvio;
+
+  v_proxima := p_caixa.status = 'ativo'
+    and not v_atrasada
+    and v_dias between 0 and 5
+    and (
+      p_caixa.saldo_atual < p_caixa.valor_base
+      or coalesce(v_pendente_despesa, 0) > 0
+      or coalesce(v_pendente_reposicao, 0) > 0
+      or v_reenvio
+    );
 
   return jsonb_build_object(
     'id', p_caixa.id,
@@ -412,6 +500,7 @@ begin
     'responsavel_id', p_caixa.responsavel_id,
     'responsavel_nome', coalesce(v_nome, ''),
     'valor_base', p_caixa.valor_base,
+    'dia_fechamento', p_caixa.dia_fechamento,
     'saldo_inicial', p_caixa.valor_base,
     'total_despesas', v_despesas,
     'saldo_atual', p_caixa.saldo_atual,
@@ -421,7 +510,10 @@ begin
     'despesas_pendentes', coalesce(v_pendente_despesa, 0),
     'reposicao_pendente', coalesce(v_pendente_reposicao, 0) > 0,
     'prazo', v_prazo,
-    'prestacao_atrasada', v_oldest is not null
+    'dias_para_prazo', v_dias,
+    'prestacao_atrasada', v_atrasada,
+    'prestacao_proxima', v_proxima,
+    'reenvio_pendente', v_reenvio
   );
 end;
 $$;
@@ -576,6 +668,7 @@ begin
         'data_movimento', m.data_movimento,
         'comprovante_url', m.comprovante_url,
         'status_aprovacao', m.status_aprovacao,
+        'motivo_decisao', m.motivo_decisao,
         'criado_por', m.criado_por,
         'created_at', m.created_at
       )
@@ -587,11 +680,15 @@ begin
 end;
 $$;
 
+drop function if exists public.petty_cash_salvar_caixa(uuid, text, uuid, text);
+
 create or replace function public.petty_cash_salvar_caixa(
   p_id uuid,
   p_nome text,
   p_responsavel_id uuid,
-  p_status text
+  p_status text,
+  p_valor_base numeric,
+  p_dia_fechamento integer
 )
 returns jsonb
 language plpgsql
@@ -603,12 +700,16 @@ declare
   v_actor uuid;
   v_nome text;
   v_status text;
+  v_base numeric(12, 2);
+  v_dia integer;
   v_caixa public.pequenos_caixas;
 begin
   v_tenant := public.require_session_tenant_id();
   v_actor := public.petty_cash_require_actor();
   v_nome := btrim(coalesce(p_nome, ''));
   v_status := lower(btrim(coalesce(p_status, 'ativo')));
+  v_base := round(coalesce(p_valor_base, 1000), 2);
+  v_dia := coalesce(p_dia_fechamento, 25);
 
   if not public.session_has_screen_access('maintenance.finance.petty_cash', 'update') then
     raise exception 'Você não tem permissão para criar ou alterar pequenos caixas.';
@@ -620,6 +721,14 @@ begin
 
   if v_status not in ('ativo', 'inativo') then
     raise exception 'Situação inválida.';
+  end if;
+
+  if v_base <= 0 or v_base > 1000000 then
+    raise exception 'Informe um valor-base maior que zero.';
+  end if;
+
+  if v_dia < 1 or v_dia > 31 then
+    raise exception 'O dia de fechamento precisa estar entre 1 e 31.';
   end if;
 
   if p_responsavel_id is null then
@@ -637,15 +746,27 @@ begin
 
   if p_id is null then
     insert into public.pequenos_caixas (
-      tenant_id, nome_caixa, responsavel_id, valor_base, saldo_atual, status
+      tenant_id, nome_caixa, responsavel_id, valor_base, saldo_atual, status, dia_fechamento
     )
-    values (v_tenant, v_nome, p_responsavel_id, 1000.00, 1000.00, v_status)
+    values (v_tenant, v_nome, p_responsavel_id, v_base, v_base, v_status, v_dia)
     returning * into v_caixa;
   else
+    if exists (
+      select 1
+        from public.pequenos_caixas c
+       where c.id = p_id
+         and c.tenant_id = v_tenant
+         and c.saldo_atual > v_base
+    ) then
+      raise exception 'O valor-base não pode ficar abaixo do saldo atual.';
+    end if;
+
     update public.pequenos_caixas c
        set nome_caixa = v_nome,
            responsavel_id = p_responsavel_id,
-           status = v_status
+           status = v_status,
+           valor_base = v_base,
+           dia_fechamento = v_dia
      where c.id = p_id
        and c.tenant_id = v_tenant
     returning * into v_caixa;
@@ -760,8 +881,12 @@ begin
 
     v_valor := round(v_caixa.valor_base - v_caixa.saldo_atual, 2);
 
+    if not public.petty_cash_receipt_exists(v_path) then
+      raise exception 'A reposição só pode ser registrada com a imagem do comprovante salva no armazenamento.';
+    end if;
+
     if v_valor <= 0 then
-      raise exception 'O caixa já está no valor-base de R$ 1.000,00.';
+      raise exception 'O caixa já está no valor-base.';
     end if;
 
     v_descricao := 'Reposição ao valor-base';
@@ -796,9 +921,12 @@ begin
 end;
 $$;
 
+drop function if exists public.petty_cash_decidir(uuid, text);
+
 create or replace function public.petty_cash_decidir(
   p_movimento_id uuid,
-  p_decisao text
+  p_decisao text,
+  p_motivo text default null
 )
 returns jsonb
 language plpgsql
@@ -809,12 +937,14 @@ declare
   v_tenant uuid;
   v_actor uuid;
   v_decisao text;
+  v_motivo text;
   v_mov public.pequenos_caixas_movimentacoes;
   v_caixa public.pequenos_caixas;
 begin
   v_tenant := public.require_session_tenant_id();
   v_actor := public.petty_cash_require_actor();
   v_decisao := lower(btrim(coalesce(p_decisao, '')));
+  v_motivo := nullif(btrim(coalesce(p_motivo, '')), '');
 
   if not public.session_has_screen_access('maintenance.finance.petty_cash', 'update') then
     raise exception 'Você não tem permissão para conferir os pequenos caixas.';
@@ -822,6 +952,10 @@ begin
 
   if v_decisao not in ('aprovado', 'rejeitado') then
     raise exception 'Decisão inválida.';
+  end if;
+
+  if v_decisao = 'rejeitado' and length(coalesce(v_motivo, '')) < 3 then
+    raise exception 'Informe o motivo da rejeição para o responsável corrigir e reenviar.';
   end if;
 
   select *
@@ -866,6 +1000,10 @@ begin
       raise exception 'Saldo insuficiente para aprovar esta despesa.';
     end if;
   elsif v_decisao = 'aprovado' and v_mov.tipo = 'reposicao' then
+    if not public.petty_cash_receipt_exists(v_mov.comprovante_url) then
+      raise exception 'A reposição só pode ser aprovada com a imagem do comprovante salva no armazenamento.';
+    end if;
+
     if exists (
       select 1
         from public.pequenos_caixas_movimentacoes m
@@ -889,7 +1027,8 @@ begin
   update public.pequenos_caixas_movimentacoes m
      set status_aprovacao = v_decisao,
          decided_at = now(),
-         decided_by = v_actor
+         decided_by = v_actor,
+         motivo_decisao = case when v_decisao = 'rejeitado' then v_motivo else null end
    where m.id = v_mov.id;
 
   select *
@@ -987,6 +1126,8 @@ on conflict (role_id, resource_id) where (role_id is not null) do nothing;
 revoke all on function public.petty_cash_easter_sunday(integer) from public, anon, authenticated;
 revoke all on function public.petty_cash_is_holiday(date) from public, anon, authenticated;
 revoke all on function public.petty_cash_shift_to_business_day(date) from public, anon, authenticated;
+revoke all on function public.petty_cash_month_deadline(date, integer) from public, anon, authenticated;
+revoke all on function public.petty_cash_receipt_exists(text) from public, anon, authenticated;
 revoke all on function public.petty_cash_deadline_for_today() from public, anon, authenticated;
 revoke all on function public.petty_cash_require_actor() from public, anon, authenticated;
 revoke all on function public.petty_cash_storage_parts(text) from public, anon, authenticated;
@@ -1000,9 +1141,9 @@ grant execute on function public.petty_cash_listar_responsaveis() to anon, authe
 grant execute on function public.petty_cash_listar_caixas() to anon, authenticated;
 grant execute on function public.petty_cash_meus_caixas() to anon, authenticated;
 grant execute on function public.petty_cash_movimentos(uuid) to anon, authenticated;
-grant execute on function public.petty_cash_salvar_caixa(uuid, text, uuid, text) to anon, authenticated;
+grant execute on function public.petty_cash_salvar_caixa(uuid, text, uuid, text, numeric, integer) to anon, authenticated;
 grant execute on function public.petty_cash_registrar_movimento(uuid, text, numeric, text, date, text) to anon, authenticated;
-grant execute on function public.petty_cash_decidir(uuid, text) to anon, authenticated;
+grant execute on function public.petty_cash_decidir(uuid, text, text) to anon, authenticated;
 
 alter function public.petty_cash_require_actor() set row_security = off;
 alter function public.petty_cash_storage_can_read(text) set row_security = off;
@@ -1013,9 +1154,10 @@ alter function public.petty_cash_listar_caixas() set row_security = off;
 alter function public.petty_cash_meus_caixas() set row_security = off;
 alter function public.petty_cash_assert_reader(uuid) set row_security = off;
 alter function public.petty_cash_movimentos(uuid) set row_security = off;
-alter function public.petty_cash_salvar_caixa(uuid, text, uuid, text) set row_security = off;
+alter function public.petty_cash_receipt_exists(text) set row_security = off;
+alter function public.petty_cash_salvar_caixa(uuid, text, uuid, text, numeric, integer) set row_security = off;
 alter function public.petty_cash_registrar_movimento(uuid, text, numeric, text, date, text) set row_security = off;
-alter function public.petty_cash_decidir(uuid, text) set row_security = off;
+alter function public.petty_cash_decidir(uuid, text, text) set row_security = off;
 
 notify pgrst, 'reload schema';
 
