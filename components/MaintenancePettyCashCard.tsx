@@ -239,22 +239,30 @@ export function MaintenancePettyCashCard({ isActive = true, panelHeight, minimal
             placeholderTextColor="#94A3B8"
             style={styles.input}
           />
-          <TextInput
-            value={valorBase}
-            onChangeText={setValorBase}
-            placeholder="Valor-base"
-            keyboardType="decimal-pad"
-            placeholderTextColor="#94A3B8"
-            style={styles.input}
-          />
-          <TextInput
-            value={diaFechamento}
-            onChangeText={(value) => setDiaFechamento(value.replace(/\D/g, '').slice(0, 2))}
-            placeholder="Dia de fechamento (1 a 31)"
-            keyboardType="number-pad"
-            placeholderTextColor="#94A3B8"
-            style={styles.input}
-          />
+          <View style={styles.field}>
+            <Text style={styles.fieldLabel}>Valor-base</Text>
+            <TextInput
+              value={valorBase}
+              onChangeText={setValorBase}
+              placeholder="1000,00"
+              keyboardType="decimal-pad"
+              placeholderTextColor="#94A3B8"
+              style={styles.input}
+              accessibilityLabel="Valor-base"
+            />
+          </View>
+          <View style={styles.field}>
+            <Text style={styles.fieldLabel}>Dia de fechamento</Text>
+            <TextInput
+              value={diaFechamento}
+              onChangeText={(value) => setDiaFechamento(value.replace(/\D/g, '').slice(0, 2))}
+              placeholder="1 a 31"
+              keyboardType="number-pad"
+              placeholderTextColor="#94A3B8"
+              style={styles.input}
+              accessibilityLabel="Dia de fechamento"
+            />
+          </View>
           <DropdownSelect
             searchable
             enxergar
@@ -448,6 +456,14 @@ const styles = StyleSheet.create({
   formTitle: {
     fontWeight: '800',
     color: MAINTENANCE_VIGILANCE_UI.accent,
+  },
+  field: {
+    gap: 4,
+  },
+  fieldLabel: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#0F172A',
   },
   input: {
     borderWidth: 1,
