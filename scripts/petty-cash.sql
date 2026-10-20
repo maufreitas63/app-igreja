@@ -532,7 +532,22 @@ begin
     'dias_para_prazo', v_dias,
     'prestacao_atrasada', v_atrasada,
     'prestacao_proxima', v_proxima,
-    'reenvio_pendente', v_reenvio
+    'reenvio_pendente', v_reenvio,
+    'exclusoes_solicitadas', coalesce((
+      select jsonb_agg(
+        jsonb_build_object(
+          'id', m.id,
+          'descricao', m.descricao,
+          'valor', m.valor,
+          'data_movimento', m.data_movimento
+        )
+        order by m.exclusao_solicitada_em
+      )
+        from public.pequenos_caixas_movimentacoes m
+       where m.caixa_id = p_caixa.id
+         and m.tipo = 'despesa'
+         and m.exclusao_solicitada_em is not null
+    ), '[]'::jsonb)
   );
 end;
 $$;
@@ -1310,10 +1325,6 @@ begin
   v_actor := public.petty_cash_require_actor();
   v_decisao := lower(btrim(coalesce(p_decisao, '')));
 
-  if not public.session_has_screen_access('maintenance.finance.petty_cash', 'update') then
-    raise exception 'Você não tem permissão para conferir a exclusão.';
-  end if;
-
   if v_decisao not in ('confirmada', 'mantida') then
     raise exception 'Decisão inválida.';
   end if;
@@ -1329,6 +1340,20 @@ begin
     raise exception 'Não há solicitação de exclusão para esta despesa.';
   end if;
 
+  select *
+    into v_caixa
+    from public.pequenos_caixas c
+   where c.id = v_mov.caixa_id
+     and c.tenant_id = v_tenant
+   for update;
+
+  if not (
+    public.session_has_screen_access('maintenance.finance.petty_cash', 'update')
+    or v_caixa.responsavel_id = v_actor
+  ) then
+    raise exception 'Somente o responsável do caixa pode editar e excluir este lançamento.';
+  end if;
+
   if v_decisao = 'mantida' then
     update public.pequenos_caixas_movimentacoes m
        set exclusao_solicitada_em = null,
@@ -1337,13 +1362,6 @@ begin
 
     return jsonb_build_object('id', v_mov.id, 'mantida', true);
   end if;
-
-  select *
-    into v_caixa
-    from public.pequenos_caixas c
-   where c.id = v_mov.caixa_id
-     and c.tenant_id = v_tenant
-   for update;
 
   if exists (
     select 1
@@ -1382,6 +1400,124 @@ begin
   return jsonb_build_object('id', v_mov.id, 'comprovante', v_path);
 end;
 $$;
+
+create or replace function public.petty_cash_editar_despesa(
+  p_movimento_id uuid,
+  p_valor numeric,
+  p_descricao text,
+  p_data date
+)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_tenant uuid;
+  v_actor uuid;
+  v_mov public.pequenos_caixas_movimentacoes;
+  v_caixa public.pequenos_caixas;
+  v_descricao text;
+  v_valor numeric(12, 2);
+  v_reservado numeric(12, 2);
+  v_saldo numeric(12, 2);
+  v_today date;
+begin
+  v_tenant := public.require_session_tenant_id();
+  v_actor := public.petty_cash_require_actor();
+  v_descricao := btrim(coalesce(p_descricao, ''));
+  v_today := (timezone('America/Sao_Paulo', now()))::date;
+
+  select *
+    into v_mov
+    from public.pequenos_caixas_movimentacoes m
+   where m.id = p_movimento_id
+     and m.tenant_id = v_tenant
+   for update;
+
+  if v_mov.id is null or v_mov.tipo <> 'despesa' or v_mov.exclusao_solicitada_em is null then
+    raise exception 'Não há solicitação de exclusão para esta despesa.';
+  end if;
+
+  select *
+    into v_caixa
+    from public.pequenos_caixas c
+   where c.id = v_mov.caixa_id
+     and c.tenant_id = v_tenant
+   for update;
+
+  if not (
+    public.session_has_screen_access('maintenance.finance.petty_cash', 'update')
+    or v_caixa.responsavel_id = v_actor
+  ) then
+    raise exception 'Somente o responsável do caixa pode editar este lançamento.';
+  end if;
+
+  if length(v_descricao) < 3 then
+    raise exception 'Descreva a despesa.';
+  end if;
+
+  if p_data is null or p_data > v_today then
+    raise exception 'Informe uma data válida, até hoje.';
+  end if;
+
+  v_valor := round(coalesce(p_valor, 0), 2);
+
+  if v_valor <= 0 then
+    raise exception 'Informe um valor maior que zero.';
+  end if;
+
+  if v_descricao !~* '^pc[[:space:]]*-' then
+    v_descricao := 'PC - ' || v_descricao;
+  end if;
+
+  if exists (
+    select 1
+      from public.pequenos_caixas_movimentacoes m
+     where m.caixa_id = v_caixa.id
+       and m.tipo = 'reposicao'
+       and m.status_aprovacao = 'pendente'
+  ) then
+    raise exception 'Há uma reposição aguardando conferência. Aguarde a decisão antes de editar a despesa.';
+  end if;
+
+  if v_mov.status_aprovacao = 'aprovado' then
+    v_saldo := round(v_caixa.saldo_atual - (v_valor - v_mov.valor), 2);
+
+    if v_saldo < 0 or v_saldo > v_caixa.valor_base then
+      raise exception 'O novo valor não cabe no saldo deste caixa.';
+    end if;
+
+    update public.pequenos_caixas c
+       set saldo_atual = v_saldo
+     where c.id = v_caixa.id;
+  elsif v_mov.status_aprovacao = 'pendente' then
+    select coalesce(sum(m.valor), 0)
+      into v_reservado
+      from public.pequenos_caixas_movimentacoes m
+     where m.caixa_id = v_caixa.id
+       and m.tipo = 'despesa'
+       and m.status_aprovacao = 'pendente'
+       and m.id <> v_mov.id;
+
+    if v_valor > round(v_caixa.saldo_atual - v_reservado, 2) then
+      raise exception 'O valor passa do saldo disponível deste caixa.';
+    end if;
+  end if;
+
+  update public.pequenos_caixas_movimentacoes m
+     set valor = v_valor,
+         descricao = v_descricao,
+         data_movimento = p_data
+   where m.id = v_mov.id;
+
+  return jsonb_build_object('id', v_mov.id, 'valor', v_valor, 'descricao', v_descricao);
+end;
+$$;
+
+revoke all on function public.petty_cash_editar_despesa(uuid, numeric, text, date) from public;
+grant execute on function public.petty_cash_editar_despesa(uuid, numeric, text, date) to anon, authenticated;
+alter function public.petty_cash_editar_despesa(uuid, numeric, text, date) set row_security = off;
 
 revoke all on function public.petty_cash_solicitar_exclusao(uuid) from public;
 grant execute on function public.petty_cash_solicitar_exclusao(uuid) to anon, authenticated;

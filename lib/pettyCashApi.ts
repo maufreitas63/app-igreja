@@ -35,6 +35,14 @@ export type PettyCashBox = {
   prestacao_atrasada: boolean;
   prestacao_proxima: boolean;
   reenvio_pendente: boolean;
+  exclusoesSolicitadas: PettyCashDeletionRequest[];
+};
+
+export type PettyCashDeletionRequest = {
+  id: string;
+  descricao: string;
+  valor: number;
+  dataMovimento: string;
 };
 
 export type PettyCashMovement = {
@@ -94,6 +102,17 @@ async function callRpc<T>(fn: string, args?: Record<string, unknown>): Promise<T
   return data as T;
 }
 
+const mapDeletionRequest = (value: unknown): PettyCashDeletionRequest => {
+  const row = (value ?? {}) as Record<string, unknown>;
+
+  return {
+    id: asText(row.id),
+    descricao: asText(row.descricao),
+    valor: asNumber(row.valor),
+    dataMovimento: asText(row.data_movimento).slice(0, 10),
+  };
+};
+
 const mapBox = (value: unknown): PettyCashBox => {
   const row = (value ?? {}) as Record<string, unknown>;
 
@@ -117,6 +136,9 @@ const mapBox = (value: unknown): PettyCashBox => {
     prestacao_atrasada: row.prestacao_atrasada === true,
     prestacao_proxima: row.prestacao_proxima === true,
     reenvio_pendente: row.reenvio_pendente === true,
+    exclusoesSolicitadas: Array.isArray(row.exclusoes_solicitadas)
+      ? row.exclusoes_solicitadas.map(mapDeletionRequest)
+      : [],
   };
 };
 
@@ -294,6 +316,20 @@ export async function registerPettyCashMovement(input: {
     p_descricao: input.descricao,
     p_data: input.dataIso,
     p_comprovante_path: input.comprovantePath,
+  });
+}
+
+export async function updatePettyCashExpenseRequest(input: {
+  movimentoId: string;
+  valor: number;
+  descricao: string;
+  dataIso: string;
+}) {
+  await callRpc('petty_cash_editar_despesa', {
+    p_movimento_id: input.movimentoId,
+    p_valor: input.valor,
+    p_descricao: input.descricao,
+    p_data: input.dataIso,
   });
 }
 

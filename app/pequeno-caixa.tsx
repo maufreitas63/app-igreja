@@ -1,3 +1,4 @@
+import { PettyCashDeletionEditor } from '@/components/PettyCashDeletionEditor';
 import { CloseFooterBar } from '@/components/minimal/CloseFooterBar';
 import { MinimalScreenLayout } from '@/components/minimal/MinimalScreenLayout';
 import { ScreenAccessGate } from '@/components/ScreenAccessGate';
@@ -475,8 +476,26 @@ export default function PequenoCaixaScreen() {
                 >
                   <Text style={styles.link}>Ver comprovante</Text>
                 </TouchableOpacity>
-                {movement.exclusaoSolicitada ? (
-                  <Text style={styles.line}>Exclusão solicitada. Aguarde a conferência.</Text>
+                {movement.exclusaoSolicitada && canOperateSelected ? (
+                  <PettyCashDeletionEditor
+                    request={{
+                      id: movement.id,
+                      descricao: movement.descricao,
+                      valor: movement.valor,
+                      dataMovimento: movement.data_movimento,
+                    }}
+                    onChanged={async () => {
+                      await load();
+                      if (selected) {
+                        await loadMovements(selected.id);
+                      }
+                    }}
+                  />
+                ) : null}
+                {movement.exclusaoSolicitada && !canOperateSelected ? (
+                  <Text style={styles.line}>
+                    Exclusão solicitada. O responsável edita o lançamento e, em seguida, exclui.
+                  </Text>
                 ) : null}
                 {canOperateSelected && movement.tipo === 'despesa' && !movement.exclusaoSolicitada ? (
                   <TouchableOpacity
