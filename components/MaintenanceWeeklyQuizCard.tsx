@@ -6,9 +6,11 @@ import {
   fetchWeeklyQuizSermonTranscript,
   formatSermonDateLabel,
   generateWeeklyQuizDraft,
+  previewWeeklySermon,
   publishWeeklyQuiz,
   regenerateWeeklyQuizQuestions,
   type WeeklyQuizAdminSnapshot,
+  type WeeklySermonPreview,
 } from '@/lib/weeklyQuizApi';
 import {
   computeMaintenanceContentHeight,
@@ -50,7 +52,7 @@ type PendingReset = {
 };
 
 const QUIZ_HELP_TEXT = [
-  'Buscar pregação mais recente transcreve a mensagem do início ao fim e gera 15 perguntas.',
+  'Buscar pregação mais recente mostra o tema, o pregador e a data da celebração. Confirme o vídeo para transcrever a mensagem em trechos curtos e gerar 15 perguntas.',
   'Marque exatamente 10 e toque em Publicar as 10 escolhidas. O membro só vê o quiz depois dessa publicação e responde essas 10.',
   'Refazer as 15 perguntas troca o conjunto usando a transcrição já gravada.',
   'Em Pregações arquivadas sem quiz, o mesmo botão gera uma prévia nova daquela data. Com uma prévia aberta, publique ou descarte antes de gerar outra.',
@@ -70,6 +72,7 @@ export function MaintenanceWeeklyQuizCard({ isActive = true, panelHeight }: Prop
   const [transcriptText, setTranscriptText] = useState('');
   const [transcriptLoading, setTranscriptLoading] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
+  const [sermonConfirm, setSermonConfirm] = useState<WeeklySermonPreview | null>(null);
   const contentHeight = computeMaintenanceContentHeight(panelHeight);
 
   const load = useCallback(async () => {
@@ -110,6 +113,37 @@ export function MaintenanceWeeklyQuizCard({ isActive = true, panelHeight }: Prop
   };
 
   const actionLabel = (key: string, idle: string) => (busy && busyKey === key ? busyLabel : idle);
+
+  const openSermonConfirm = async () => {
+    setBusy(true);
+    setBusyLabel('Lendo a celebração…');
+    setBusyKey('search');
+    setError(null);
+
+    try {
+      setSermonConfirm(await previewWeeklySermon());
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Não foi possível ler a celebração.');
+    } finally {
+      setBusy(false);
+      setBusyKey(null);
+    }
+  };
+
+  const confirmSermonTranscription = () => {
+    const videoId = sermonConfirm?.videoId;
+    setSermonConfirm(null);
+
+    if (!videoId) {
+      return;
+    }
+
+    void run(
+      () => generateWeeklyQuizDraft(videoId, setBusyLabel),
+      'Transcrevendo a pregação…',
+      'search',
+    );
+  };
 
   const draft = snapshot.draft;
   const sermonDate = formatSermonDateLabel(draft?.sermonPublishedAt);
@@ -190,9 +224,9 @@ export function MaintenanceWeeklyQuizCard({ isActive = true, panelHeight }: Prop
 
       <TouchableOpacity
         accessibilityRole="button"
-        disabled={busy || loading || !snapshot.youtubeUrl || Boolean(draft)}
-        onPress={() => void run(generateWeeklyQuizDraft, 'Transcrevendo a pregação…', 'search')}
-        style={[styles.primaryButton, (busy || !snapshot.youtubeUrl || Boolean(draft)) && styles.buttonDisabled]}
+        disabled={busy || loading || !snapshot.youtubeUrl || Boolean(draft) || sermonConfirm !== null}
+        onPress={() => void openSermonConfirm()}
+        style={[styles.primaryButton, (busy || !snapshot.youtubeUrl || Boolean(draft) || sermonConfirm !== null) && styles.buttonDisabled]}
       >
         <Text style={styles.primaryButtonText}>
           {actionLabel('search', 'Buscar pregação mais recente')}
@@ -421,6 +455,38 @@ export function MaintenanceWeeklyQuizCard({ isActive = true, panelHeight }: Prop
         ))
       )}
     </ScrollView>
+    <Modal
+      visible={sermonConfirm !== null}
+      transparent
+      animationType="fade"
+      onRequestClose={() => setSermonConfirm(null)}
+    >
+      <View style={styles.confirmBackdrop}>
+        <View style={styles.confirmCard}>
+          <Text style={styles.previewTitle}>Confirme a pregação</Text>
+          <Text style={styles.hint}>Tema da celebração</Text>
+          <Text style={styles.confirmValue}>{sermonConfirm?.theme}</Text>
+          <Text style={styles.hint}>Pregador</Text>
+          <Text style={styles.confirmValue}>{sermonConfirm?.preacher}</Text>
+          <Text style={styles.hint}>Data da celebração</Text>
+          <Text style={styles.confirmValue}>{sermonConfirm?.celebrationDate}</Text>
+          <TouchableOpacity
+            accessibilityRole="button"
+            onPress={confirmSermonTranscription}
+            style={styles.primaryButton}
+          >
+            <Text style={styles.primaryButtonText}>Baixar e transcrever</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            accessibilityRole="button"
+            onPress={() => setSermonConfirm(null)}
+            style={styles.secondaryButton}
+          >
+            <Text style={styles.secondaryButtonText}>Cancelar</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </Modal>
     <CenteredCloseDialog
       visible={helpOpen}
       onClose={() => setHelpOpen(false)}
@@ -546,6 +612,27 @@ const styles = StyleSheet.create({
   },
   buttonDisabled: {
     opacity: 0.45,
+  },
+  confirmBackdrop: {
+    alignItems: 'center',
+    backgroundColor: 'rgba(15, 23, 42, 0.45)',
+    flex: 1,
+    justifyContent: 'center',
+    padding: 24,
+  },
+  confirmCard: {
+    backgroundColor: MINIMAL_UI.background,
+    borderRadius: 16,
+    gap: 8,
+    maxWidth: 420,
+    padding: 20,
+    width: '100%',
+  },
+  confirmValue: {
+    color: MINIMAL_UI.text,
+    fontSize: 16,
+    fontWeight: '800',
+    marginBottom: 6,
   },
   preview: {
     gap: 10,

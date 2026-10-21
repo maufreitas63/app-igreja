@@ -407,8 +407,6 @@ const fetchCaptionTranscript = async (videoId) => {
 const geminiResponseText = (payload) =>
   payload?.candidates?.[0]?.content?.parts?.map((part) => part?.text || '').join('\n') ?? '';
 
-const geminiFinishReason = (payload) => String(payload?.candidates?.[0]?.finishReason ?? '');
-
 const cleanupTranscript = (value) =>
   String(value || '')
     .replace(/\r/g, '')
@@ -432,23 +430,115 @@ const transcriptForQuiz = (transcript) => {
   return `${head}\n\n[...]\n\n${middle}\n\n[...]\n\n${tail}`;
 };
 
-const transcribeNextPart = async (apiKey, videoId, title, previous) => {
+const TRANSCRIPT_WINDOW_SECONDS = 90;
+
+const clockLabel = (seconds) => {
+  const total = Math.max(0, Math.floor(Number(seconds) || 0));
+  const minutes = Math.floor(total / 60);
+  const remain = total % 60;
+  return `${String(minutes).padStart(2, '0')}:${String(remain).padStart(2, '0')}`;
+};
+
+const fetchVideoDurationSeconds = async (videoId) => {
+  const clients = [
+    { clientName: 'ANDROID', clientVersion: '19.17.34' },
+    { clientName: 'WEB', clientVersion: '2.20240101.00.00' },
+  ];
+
+  for (const client of clients) {
+    try {
+      const response = await fetch('https://www.youtube.com/youtubei/v1/player?prettyPrint=false', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'User-Agent': 'Mozilla/5.0' },
+        body: JSON.stringify({
+          context: { client: { ...client, hl: 'pt', gl: 'BR' } },
+          videoId,
+        }),
+      });
+
+      if (!response.ok) {
+        continue;
+      }
+
+      const payload = await response.json();
+      const seconds = Number(payload?.videoDetails?.lengthSeconds);
+
+      if (Number.isFinite(seconds) && seconds > 30) {
+        return Math.floor(seconds);
+      }
+    } catch {
+      continue;
+    }
+  }
+
+  return 0;
+};
+
+const celebrationDateLabel = (publishedAt) => {
+  const date = new Date(publishedAt);
+
+  if (Number.isNaN(date.getTime())) {
+    return '';
+  }
+
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/Sao_Paulo',
+    weekday: 'short',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(date);
+  const pick = (type) => parts.find((part) => part.type === type)?.value || '';
+  const weekdays = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
+  const weekday = weekdays[pick('weekday')] ?? 0;
+  const cursor = new Date(Date.UTC(Number(pick('year')), Number(pick('month')) - 1, Number(pick('day'))));
+  cursor.setUTCDate(cursor.getUTCDate() - weekday);
+  const day = String(cursor.getUTCDate()).padStart(2, '0');
+  const month = String(cursor.getUTCMonth() + 1).padStart(2, '0');
+  return `${day}/${month}/${cursor.getUTCFullYear()}`;
+};
+
+const sermonIdentity = (title, publishedAt) => {
+  const parts = String(title || '')
+    .split(/\s*\/\/\s*/)
+    .map((part) => part.trim())
+    .filter(Boolean);
+  let theme = parts[0] || String(title || '').trim() || 'Pregação';
+  let preacher = 'Não identificado no título';
+
+  if (parts.length >= 3) {
+    theme = parts.slice(1, -1).join(' // ');
+    preacher = parts[parts.length - 1];
+  } else if (parts.length === 2) {
+    const opening = parts[0].normalize('NFD').replace(/\p{M}/gu, '').toLowerCase();
+    if (opening.includes('celebr')) {
+      theme = parts[1];
+    } else {
+      theme = parts[0];
+      preacher = parts[1];
+    }
+  }
+
+  return {
+    theme,
+    preacher,
+    celebrationDate: celebrationDateLabel(publishedAt),
+  };
+};
+
+const transcribeNextPart = async (apiKey, videoId, title, startSeconds, endSeconds) => {
   const watchUrl = `https://www.youtube.com/watch?v=${encodeURIComponent(videoId)}`;
-  const prior = cleanupTranscript(previous).slice(-900);
   const instruction = [
-    'Transcreva em português do Brasil a pregação inteira, do início ao fim.',
-    'Siga a ordem falada: a abertura da mensagem, todo o desenvolvimento e a conclusão.',
-    'Não resuma, não pule trechos da pregação e não invente falas, histórias ou versículos.',
+    `Transcreva somente o intervalo de ${clockLabel(startSeconds)} até ${clockLabel(endSeconds)}.`,
+    'O vídeo já está recortado nesse intervalo. Não volte ao início e não antecipe o que vem depois.',
+    'Escreva em português do Brasil, na ordem falada, sem resumir e sem inventar falas, histórias ou versículos.',
     'Quando a pregação citar a Bíblia, registre livro, capítulo e versículo como foram ditos.',
-    'Pode omitir apenas o que não é a mensagem: oração da liturgia, saudação da plateia, avisos e testemunhos de outras pessoas.',
-    'A própria pregação, do primeiro ponto ao último, entra por completo.',
-    'Se a resposta acabar antes do fim, pare numa frase completa e termine com [[CONTINUA]].',
-    'Se a pregação tiver terminado, não escreva [[CONTINUA]].',
+    'Pode omitir louvor, oração da liturgia, saudação, avisos e testemunhos de outras pessoas.',
+    'Se neste intervalo não houver pregação, responda apenas [[CONTINUA]].',
+    'Se a pregação terminar dentro deste intervalo, transcreva até o fim dela e termine com [[FIM]].',
+    'Se a pregação continuar depois deste intervalo, pare numa frase completa e termine com [[CONTINUA]].',
     `Título: ${title}`,
-    prior
-      ? `Continue exatamente depois deste trecho, sem repetir o que já foi transcrito:\n${prior}`
-      : '',
-  ].filter(Boolean).join('\n');
+  ].join('\n');
   let lastError = 'Não foi possível transcrever o áudio desta pregação.';
 
   for (const model of GEMINI_MODELS) {
@@ -461,14 +551,20 @@ const transcribeNextPart = async (apiKey, videoId, title, previous) => {
             {
               role: 'user',
               parts: [
-                { file_data: { file_uri: watchUrl } },
+                {
+                  file_data: { file_uri: watchUrl },
+                  video_metadata: {
+                    start_offset: `${Math.max(0, Math.floor(startSeconds))}.0s`,
+                    end_offset: `${Math.max(1, Math.floor(endSeconds))}.0s`,
+                  },
+                },
                 { text: instruction },
               ],
             },
           ],
           generationConfig: {
             temperature: 0.1,
-            maxOutputTokens: 8192,
+            maxOutputTokens: 4096,
             thinkingConfig: { thinkingBudget: 0 },
           },
         }),
@@ -484,21 +580,25 @@ const transcribeNextPart = async (apiKey, videoId, title, previous) => {
       }
 
       const raw = geminiResponseText(payload).trim();
-      const asksContinue = raw.includes('[[CONTINUA]]');
-      const text = cleanupTranscript(raw.replace(/\[\[CONTINUA\]\]/g, ''));
+      const finished = raw.includes('[[FIM]]');
+      const text = cleanupTranscript(raw.replace(/\[\[CONTINUA\]\]|\[\[FIM\]\]/g, ''));
 
-      if (text.length < 80) {
-        lastError = 'A transcrição do áudio ficou curta demais para gerar o quiz.';
+      if (!finished && !raw.includes('[[CONTINUA]]') && text.length < 40) {
+        lastError = 'A transcrição deste trecho ficou vazia.';
         continue;
       }
 
       return {
-        text,
-        done: !asksContinue && geminiFinishReason(payload) !== 'MAX_TOKENS',
+        text: text.length >= 40 ? text : '',
+        finished,
       };
     } catch (error) {
       lastError = error?.message || lastError;
     }
+  }
+
+  if (lastError === 'A transcrição deste trecho ficou vazia.') {
+    return { text: '', finished: false };
   }
 
   throw new Error(lastError);
@@ -687,7 +787,7 @@ const storeQuizDraft = async (env, request, sermon, transcript, summary, questio
     request
   );
 
-const saveTranscript = (env, request, sermon, transcript, complete) =>
+const saveTranscript = (env, request, sermon, transcript, complete, offsetSeconds) =>
   supabaseRpc(
     env,
     'weekly_quiz_save_transcript',
@@ -697,6 +797,7 @@ const saveTranscript = (env, request, sermon, transcript, complete) =>
       p_sermon_published_at: sermon.publishedAt,
       p_transcript: transcript,
       p_complete: complete,
+      p_offset_seconds: Math.max(0, Math.floor(Number(offsetSeconds) || 0)),
     },
     request
   );
@@ -806,6 +907,37 @@ const handlePost = async (request, env) => {
     );
   }
 
+  if (action === 'preview') {
+    const youtubeUrl = String(prepared?.youtubeUrl ?? '').trim();
+    let videos;
+
+    try {
+      const channelId = await resolveChannelId(youtubeUrl);
+      videos = await listChannelVideos(channelId);
+    } catch (error) {
+      return jsonResponse({ error: error?.message || 'Não foi possível ler o canal do YouTube.' }, 502);
+    }
+
+    const video = videos.find((item) => !used.has(item.videoId));
+
+    if (!video) {
+      return jsonResponse(
+        { error: 'As pregações recentes deste canal já viraram quiz. Busque de novo quando sair um vídeo novo.' },
+        409
+      );
+    }
+
+    const identity = sermonIdentity(video.title, video.published);
+
+    return jsonResponse({
+      videoId: video.videoId,
+      title: video.title,
+      theme: identity.theme,
+      preacher: identity.preacher,
+      celebrationDate: identity.celebrationDate,
+    });
+  }
+
   const geminiApiKey = await resolveGeminiApiKey(env, request);
 
   if (!geminiApiKey) {
@@ -828,20 +960,52 @@ const handlePost = async (request, env) => {
 
     const publishedAt = new Date(archive?.sermonPublishedAt);
 
-    if (!archive?.sermonPublishedAt || Number.isNaN(publishedAt.getTime())) {
+    if (archive?.sermonPublishedAt && !Number.isNaN(publishedAt.getTime())) {
+      queue = [{
+        videoId: requestedVideoId,
+        title: String(archive?.title ?? '').trim() || 'Pregação',
+        publishedAt: publishedAt.toISOString(),
+        transcript: String(archive?.transcript ?? '').trim(),
+        transcriptComplete: archive?.transcriptComplete === true,
+        offsetSeconds: Number(archive?.offsetSeconds) || 0,
+      }];
+    } else if (action === 'transcribe') {
+      const youtubeUrl = String(prepared?.youtubeUrl ?? '').trim();
+      let videos;
+
+      try {
+        const channelId = await resolveChannelId(youtubeUrl);
+        videos = await listChannelVideos(channelId);
+      } catch (error) {
+        return jsonResponse({ error: error?.message || 'Não foi possível ler o canal do YouTube.' }, 502);
+      }
+
+      const video = videos.find((item) => item.videoId === requestedVideoId);
+
+      if (!video) {
+        return jsonResponse({ error: 'Este vídeo não está entre as pregações recentes do canal.' }, 404);
+      }
+
+      const videoPublishedAt = new Date(video.published);
+
+      if (Number.isNaN(videoPublishedAt.getTime())) {
+        return jsonResponse({ error: 'A data de publicação desta pregação não pôde ser lida.' }, 502);
+      }
+
+      queue = [{
+        videoId: video.videoId,
+        title: video.title,
+        publishedAt: videoPublishedAt.toISOString(),
+        transcript: '',
+        transcriptComplete: false,
+        offsetSeconds: 0,
+      }];
+    } else {
       return jsonResponse(
         { error: 'Esta data não tem pregação arquivada para refazer as perguntas.' },
         404
       );
     }
-
-    queue = [{
-      videoId: requestedVideoId,
-      title: String(archive?.title ?? '').trim() || 'Pregação',
-      publishedAt: publishedAt.toISOString(),
-      transcript: String(archive?.transcript ?? '').trim(),
-      transcriptComplete: archive?.transcriptComplete === true,
-    }];
   } else {
     const youtubeUrl = String(prepared?.youtubeUrl ?? '').trim();
     let videos;
@@ -875,12 +1039,14 @@ const handlePost = async (request, env) => {
         publishedAt: publishedAt.toISOString(),
         transcript: '',
         transcriptComplete: false,
+        offsetSeconds: 0,
       };
 
       try {
         const archive = await readSermonArchive(env, request, sermon.videoId);
         sermon.transcript = String(archive?.transcript ?? '').trim();
         sermon.transcriptComplete = archive?.transcriptComplete === true;
+        sermon.offsetSeconds = Number(archive?.offsetSeconds) || 0;
       } catch {
         sermon.transcript = '';
       }
@@ -922,23 +1088,68 @@ const handlePost = async (request, env) => {
       return jsonResponse({ videoId: item.videoId, done: true, chars: item.transcript.length });
     }
 
-    const previous = item.transcript.length >= 8000 ? item.transcript : '';
+    const prior = cleanupTranscript(item.transcript);
+    const storedOffset = Number(item.offsetSeconds) || 0;
+    const startSeconds = storedOffset > 0
+      ? storedOffset
+      : (prior.length >= 400 ? Math.floor(prior.length / 14) : 0);
 
     try {
-      if (!previous) {
-        const captions = await fetchCaptionTranscript(item.videoId);
+      const duration = await fetchVideoDurationSeconds(item.videoId);
 
-        if (captions.length >= 20000) {
-          await saveTranscript(env, request, item, captions, true);
-          return jsonResponse({ videoId: item.videoId, done: true, chars: captions.length });
+      if (startSeconds === 0) {
+        const captions = await fetchCaptionTranscript(item.videoId);
+        const captionsCoverVideo = duration > 0 && captions.length >= Math.min(duration * 6, 20000) && captions.length >= 8000;
+
+        if (captions.length >= 20000 || captionsCoverVideo) {
+          await saveTranscript(env, request, item, captions, true, duration || startSeconds);
+          return jsonResponse({
+            videoId: item.videoId,
+            done: true,
+            chars: captions.length,
+            coveredUntil: clockLabel(duration || startSeconds),
+          });
         }
       }
 
-      const part = await transcribeNextPart(geminiApiKey, item.videoId, item.title, previous);
-      const transcript = cleanupTranscript(previous ? `${previous}\n\n${part.text}` : part.text);
-      const done = part.done || transcript.length >= 140000;
-      await saveTranscript(env, request, item, transcript, done);
-      return jsonResponse({ videoId: item.videoId, done, chars: transcript.length });
+      if (duration > 0 && startSeconds >= duration - 2 && prior.length >= 400) {
+        await saveTranscript(env, request, item, prior, true, duration);
+        return jsonResponse({
+          videoId: item.videoId,
+          done: true,
+          chars: prior.length,
+          coveredUntil: clockLabel(duration),
+        });
+      }
+
+      const endSeconds = duration > 0
+        ? Math.min(startSeconds + TRANSCRIPT_WINDOW_SECONDS, duration)
+        : startSeconds + TRANSCRIPT_WINDOW_SECONDS;
+      const part = await transcribeNextPart(geminiApiKey, item.videoId, item.title, startSeconds, endSeconds);
+      const addition = cleanupTranscript(part.text);
+      const transcript = cleanupTranscript(
+        startSeconds > 0 && prior
+          ? (addition ? `${prior}\n\n${addition}` : prior)
+          : addition
+      );
+      const reachedVideoEnd = duration > 0 && endSeconds >= duration - 2;
+      const sermonEnded = part.finished && transcript.length >= 400 && (startSeconds >= 600 || reachedVideoEnd);
+      const done = sermonEnded || reachedVideoEnd || transcript.length >= 140000;
+
+      if (done && transcript.length < 400) {
+        return jsonResponse(
+          { error: 'A transcrição da pregação ficou curta demais para gerar o quiz.' },
+          422
+        );
+      }
+
+      await saveTranscript(env, request, item, transcript, done, endSeconds);
+      return jsonResponse({
+        videoId: item.videoId,
+        done,
+        chars: transcript.length,
+        coveredUntil: clockLabel(endSeconds),
+      });
     } catch (error) {
       if (!requestedVideoId && youtubeReadDenied(error)) {
         deniedCount += 1;

@@ -443,13 +443,30 @@ const resolveWeeklyQuizEndpoint = () => {
   return aiEndpoint.replace(/\/functions\/v1\/ai-chat$/, '/functions/v1/weekly-quiz');
 };
 
-const postWeeklyQuiz = async (body: { action: 'transcribe' | 'compose' | 'recompose'; videoId?: string }) => {
+type WeeklyQuizPostBody = {
+  action: 'preview' | 'transcribe' | 'compose' | 'recompose';
+  videoId?: string;
+};
+
+type WeeklyQuizPostPayload = {
+  snapshot?: unknown;
+  error?: string;
+  videoId?: string;
+  done?: boolean;
+  coveredUntil?: string;
+  title?: string;
+  theme?: string;
+  preacher?: string;
+  celebrationDate?: string;
+};
+
+const postWeeklyQuiz = async (body: WeeklyQuizPostBody, timeoutMs = 90_000) => {
   let response: Response;
 
   try {
     response = await supabaseSessionFetch(resolveWeeklyQuizEndpoint(), {
       method: 'POST',
-      timeoutMs: 110_000,
+      timeoutMs,
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${getSupabaseAnonKey()}`,
@@ -459,54 +476,103 @@ const postWeeklyQuiz = async (body: { action: 'transcribe' | 'compose' | 'recomp
     });
   } catch (error) {
     const aborted = error instanceof Error && error.name === 'AbortError';
-    throw new Error(
-      aborted
-        ? 'A transcrição passou do tempo limite. Toque de novo para continuar de onde parou.'
-        : 'Não foi possível buscar a pregação e gerar o quiz.'
-    );
+    const timedOut = body.action === 'compose' || body.action === 'recompose'
+      ? 'A geração das perguntas passou do tempo limite. Toque de novo para tentar outra vez.'
+      : 'A transcrição passou do tempo limite. Toque de novo para continuar de onde parou.';
+    throw new Error(aborted ? timedOut : 'Não foi possível buscar a pregação e gerar o quiz.');
   }
 
   const raw = await response.text();
   const payload = (() => {
     try {
-      return JSON.parse(raw) as { snapshot?: unknown; error?: string; videoId?: string; done?: boolean };
+      return JSON.parse(raw) as WeeklyQuizPostPayload;
     } catch {
       return null;
     }
   })();
 
   if (!response.ok) {
-    throw new Error(
-      payload?.error
-        || (response.status === 524
-          ? 'A transcrição passou do tempo limite. Toque de novo para continuar de onde parou.'
-          : 'Não foi possível buscar a pregação e gerar o quiz.')
-    );
+    const timedOut = body.action === 'compose' || body.action === 'recompose'
+      ? 'A geração das perguntas passou do tempo limite. Toque de novo para tentar outra vez.'
+      : 'A transcrição passou do tempo limite. Toque de novo para continuar de onde parou.';
+    throw new Error(payload?.error || (response.status === 524 ? timedOut : 'Não foi possível buscar a pregação e gerar o quiz.'));
   }
 
   return payload;
 };
 
-export const generateWeeklyQuizDraft = async (videoId?: string) => {
+export type WeeklySermonPreview = {
+  videoId: string;
+  title: string;
+  theme: string;
+  preacher: string;
+  celebrationDate: string;
+};
+
+export const previewWeeklySermon = async () => {
+  const payload = await postWeeklyQuiz({ action: 'preview' }, 30_000);
+  const videoId = asText(payload?.videoId);
+  const theme = asText(payload?.theme);
+  const preacher = asText(payload?.preacher);
+  const celebrationDate = asText(payload?.celebrationDate);
+
+  if (!videoId || !theme || !preacher || !celebrationDate) {
+    throw new Error('Não foi possível ler o tema, o pregador e a data desta celebração.');
+  }
+
+  return {
+    videoId,
+    title: asText(payload?.title) || theme,
+    theme,
+    preacher,
+    celebrationDate,
+  } satisfies WeeklySermonPreview;
+};
+
+export const generateWeeklyQuizDraft = async (
+  videoId?: string,
+  onProgress?: (message: string) => void,
+) => {
   let currentVideoId = videoId || '';
+  let retries = 0;
+  let coveredUntil = '';
 
-  for (let part = 0; part < 5; part += 1) {
-    const step = await postWeeklyQuiz({
-      action: 'transcribe',
-      videoId: currentVideoId || undefined,
-    });
-    currentVideoId = step?.videoId || currentVideoId;
+  for (let part = 0; part < 80; part += 1) {
+    onProgress?.(
+      coveredUntil
+        ? `Transcrevendo a pregação… até ${coveredUntil}`
+        : 'Transcrevendo a pregação…'
+    );
 
-    if (step?.done) {
-      break;
+    try {
+      const step = await postWeeklyQuiz({
+        action: 'transcribe',
+        videoId: currentVideoId || undefined,
+      });
+      retries = 0;
+      currentVideoId = step?.videoId || currentVideoId;
+      coveredUntil = step?.coveredUntil || coveredUntil;
+
+      if (step?.done) {
+        break;
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : '';
+      if (message.includes('tempo limite') && retries < 1) {
+        retries += 1;
+        part -= 1;
+        continue;
+      }
+      throw error;
     }
 
-    if (part === 4) {
+    if (part === 79) {
       throw new Error('A transcrição ainda não chegou ao fim da pregação. Toque de novo para continuar.');
     }
   }
 
-  const payload = await postWeeklyQuiz({ action: 'compose', videoId: currentVideoId });
+  onProgress?.('Gerando as 15 perguntas…');
+  const payload = await postWeeklyQuiz({ action: 'compose', videoId: currentVideoId }, 110_000);
   return parseWeeklyQuizAdminSnapshot(payload?.snapshot);
 };
 
