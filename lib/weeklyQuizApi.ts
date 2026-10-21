@@ -454,6 +454,8 @@ type WeeklyQuizPostPayload = {
   videoId?: string;
   done?: boolean;
   coveredUntil?: string;
+  coveredSeconds?: number;
+  durationSeconds?: number;
   title?: string;
   theme?: string;
   preacher?: string;
@@ -507,17 +509,26 @@ export type WeeklySermonPreview = {
   theme: string;
   preacher: string;
   celebrationDate: string;
+  durationSeconds: number;
+  coveredSeconds: number;
+};
+
+export type WeeklyQuizTranscriptionProgress = {
+  phase: 'transcribe' | 'compose';
+  coveredSeconds: number;
+  durationSeconds: number;
 };
 
 export const previewWeeklySermon = async () => {
-  const payload = await postWeeklyQuiz({ action: 'preview' }, 30_000);
+  const payload = await postWeeklyQuiz({ action: 'preview' }, 45_000);
   const videoId = asText(payload?.videoId);
   const theme = asText(payload?.theme);
   const preacher = asText(payload?.preacher);
   const celebrationDate = asText(payload?.celebrationDate);
+  const durationSeconds = asNumber(payload?.durationSeconds);
 
-  if (!videoId || !theme || !preacher || !celebrationDate) {
-    throw new Error('Não foi possível ler o tema, o pregador e a data desta celebração.');
+  if (!videoId || !theme || !preacher || !celebrationDate || durationSeconds <= 0) {
+    throw new Error('Não foi possível ler o tema, o pregador, a data e a duração desta celebração.');
   }
 
   return {
@@ -526,23 +537,32 @@ export const previewWeeklySermon = async () => {
     theme,
     preacher,
     celebrationDate,
+    durationSeconds,
+    coveredSeconds: Math.min(durationSeconds, Math.max(0, asNumber(payload?.coveredSeconds))),
   } satisfies WeeklySermonPreview;
 };
 
 export const generateWeeklyQuizDraft = async (
   videoId?: string,
-  onProgress?: (message: string) => void,
+  onProgress?: (progress: WeeklyQuizTranscriptionProgress) => void,
+  knownDurationSeconds = 0,
+  initialCoveredSeconds = 0,
 ) => {
   let currentVideoId = videoId || '';
   let retries = 0;
-  let coveredUntil = '';
+  let coveredSeconds = Math.max(0, initialCoveredSeconds);
+  let durationSeconds = knownDurationSeconds;
+
+  const report = (phase: WeeklyQuizTranscriptionProgress['phase'], covered = coveredSeconds) => {
+    onProgress?.({
+      phase,
+      coveredSeconds: covered,
+      durationSeconds,
+    });
+  };
 
   for (let part = 0; part < 80; part += 1) {
-    onProgress?.(
-      coveredUntil
-        ? `Transcrevendo a pregação… até ${coveredUntil}`
-        : 'Transcrevendo a pregação…'
-    );
+    report('transcribe');
 
     try {
       const step = await postWeeklyQuiz({
@@ -551,7 +571,18 @@ export const generateWeeklyQuizDraft = async (
       });
       retries = 0;
       currentVideoId = step?.videoId || currentVideoId;
-      coveredUntil = step?.coveredUntil || coveredUntil;
+      const stepDuration = asNumber(step?.durationSeconds);
+      if (stepDuration > 0) {
+        durationSeconds = stepDuration;
+      }
+      const stepCovered = asNumber(step?.coveredSeconds);
+      if (stepCovered > coveredSeconds) {
+        coveredSeconds = stepCovered;
+      }
+      if (step?.done) {
+        coveredSeconds = Math.max(coveredSeconds, durationSeconds);
+      }
+      report(step?.done ? 'compose' : 'transcribe');
 
       if (step?.done) {
         break;
@@ -571,7 +602,7 @@ export const generateWeeklyQuizDraft = async (
     }
   }
 
-  onProgress?.('Gerando as 15 perguntas…');
+  report('compose', durationSeconds || coveredSeconds);
   const payload = await postWeeklyQuiz({ action: 'compose', videoId: currentVideoId }, 110_000);
   return parseWeeklyQuizAdminSnapshot(payload?.snapshot);
 };

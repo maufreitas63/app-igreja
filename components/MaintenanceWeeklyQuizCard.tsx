@@ -10,6 +10,7 @@ import {
   publishWeeklyQuiz,
   regenerateWeeklyQuizQuestions,
   type WeeklyQuizAdminSnapshot,
+  type WeeklyQuizTranscriptionProgress,
   type WeeklySermonPreview,
 } from '@/lib/weeklyQuizApi';
 import {
@@ -51,8 +52,20 @@ type PendingReset = {
   mode: 'scores' | 'quiz';
 };
 
+type TranscriptBar = WeeklyQuizTranscriptionProgress;
+
+const formatVideoClock = (seconds: number) => {
+  const total = Math.max(0, Math.floor(seconds));
+  const hours = Math.floor(total / 3600);
+  const minutes = Math.floor((total % 3600) / 60);
+  const remain = total % 60;
+  const paddedMinutes = String(minutes).padStart(2, '0');
+  const paddedSeconds = String(remain).padStart(2, '0');
+  return hours > 0 ? `${hours}:${paddedMinutes}:${paddedSeconds}` : `${paddedMinutes}:${paddedSeconds}`;
+};
+
 const QUIZ_HELP_TEXT = [
-  'Buscar pregação mais recente mostra o tema, o pregador e a data da celebração. Confirme o vídeo para transcrever a mensagem em trechos curtos e gerar 15 perguntas.',
+  'Buscar pregação mais recente mostra o tema, o pregador, a data e a duração do vídeo. Ao confirmar, o botão vira a barra do progresso da transcrição.',
   'Marque exatamente 10 e toque em Publicar as 10 escolhidas. O membro só vê o quiz depois dessa publicação e responde essas 10.',
   'Refazer as 15 perguntas troca o conjunto usando a transcrição já gravada.',
   'Em Pregações arquivadas sem quiz, o mesmo botão gera uma prévia nova daquela data. Com uma prévia aberta, publique ou descarte antes de gerar outra.',
@@ -73,6 +86,7 @@ export function MaintenanceWeeklyQuizCard({ isActive = true, panelHeight }: Prop
   const [transcriptLoading, setTranscriptLoading] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
   const [sermonConfirm, setSermonConfirm] = useState<WeeklySermonPreview | null>(null);
+  const [transcriptBar, setTranscriptBar] = useState<TranscriptBar | null>(null);
   const contentHeight = computeMaintenanceContentHeight(panelHeight);
 
   const load = useCallback(async () => {
@@ -109,6 +123,7 @@ export function MaintenanceWeeklyQuizCard({ isActive = true, panelHeight }: Prop
     } finally {
       setBusy(false);
       setBusyKey(null);
+      setTranscriptBar(null);
     }
   };
 
@@ -131,15 +146,33 @@ export function MaintenanceWeeklyQuizCard({ isActive = true, panelHeight }: Prop
   };
 
   const confirmSermonTranscription = () => {
-    const videoId = sermonConfirm?.videoId;
+    const preview = sermonConfirm;
     setSermonConfirm(null);
 
-    if (!videoId) {
+    if (!preview?.videoId || preview.durationSeconds <= 0) {
       return;
     }
 
+    const report = (progress: WeeklyQuizTranscriptionProgress) => {
+      setTranscriptBar({
+        phase: progress.phase,
+        coveredSeconds: progress.coveredSeconds,
+        durationSeconds: progress.durationSeconds || preview.durationSeconds,
+      });
+    };
+
+    setTranscriptBar({
+      phase: 'transcribe',
+      coveredSeconds: preview.coveredSeconds,
+      durationSeconds: preview.durationSeconds,
+    });
     void run(
-      () => generateWeeklyQuizDraft(videoId, setBusyLabel),
+      () => generateWeeklyQuizDraft(
+        preview.videoId,
+        report,
+        preview.durationSeconds,
+        preview.coveredSeconds,
+      ),
       'Transcrevendo a pregação…',
       'search',
     );
@@ -222,16 +255,20 @@ export function MaintenanceWeeklyQuizCard({ isActive = true, panelHeight }: Prop
         <Text style={styles.hint}>Cadastre a URL do canal em Instâncias antes de buscar a pregação.</Text>
       ) : null}
 
-      <TouchableOpacity
-        accessibilityRole="button"
-        disabled={busy || loading || !snapshot.youtubeUrl || Boolean(draft) || sermonConfirm !== null}
-        onPress={() => void openSermonConfirm()}
-        style={[styles.primaryButton, (busy || !snapshot.youtubeUrl || Boolean(draft) || sermonConfirm !== null) && styles.buttonDisabled]}
-      >
-        <Text style={styles.primaryButtonText}>
-          {actionLabel('search', 'Buscar pregação mais recente')}
-        </Text>
-      </TouchableOpacity>
+      {transcriptBar ? (
+        <TranscriptProgressBar progress={transcriptBar} />
+      ) : (
+        <TouchableOpacity
+          accessibilityRole="button"
+          disabled={busy || loading || !snapshot.youtubeUrl || Boolean(draft) || sermonConfirm !== null}
+          onPress={() => void openSermonConfirm()}
+          style={[styles.primaryButton, (busy || !snapshot.youtubeUrl || Boolean(draft) || sermonConfirm !== null) && styles.buttonDisabled]}
+        >
+          <Text style={styles.primaryButtonText}>
+            {actionLabel('search', 'Buscar pregação mais recente')}
+          </Text>
+        </TouchableOpacity>
+      )}
 
       {draft ? (
         <View style={styles.preview}>
@@ -470,6 +507,10 @@ export function MaintenanceWeeklyQuizCard({ isActive = true, panelHeight }: Prop
           <Text style={styles.confirmValue}>{sermonConfirm?.preacher}</Text>
           <Text style={styles.hint}>Data da celebração</Text>
           <Text style={styles.confirmValue}>{sermonConfirm?.celebrationDate}</Text>
+          <Text style={styles.hint}>Duração do vídeo</Text>
+          <Text style={styles.confirmValue}>
+            {sermonConfirm ? formatVideoClock(sermonConfirm.durationSeconds) : ''}
+          </Text>
           <TouchableOpacity
             accessibilityRole="button"
             onPress={confirmSermonTranscription}
@@ -530,6 +571,31 @@ export function MaintenanceWeeklyQuizCard({ isActive = true, panelHeight }: Prop
       </View>
     </Modal>
     </>
+  );
+}
+
+function TranscriptProgressBar({ progress }: { progress: TranscriptBar }) {
+  const duration = progress.durationSeconds > 0 ? progress.durationSeconds : 0;
+  const covered = duration > 0 ? Math.min(duration, Math.max(0, progress.coveredSeconds)) : 0;
+  const percent = progress.phase === 'compose' || (duration > 0 && covered >= duration)
+    ? 100
+    : duration > 0
+      ? Math.round((covered / duration) * 100)
+      : 0;
+  const label = progress.phase === 'compose'
+    ? 'Gerando as 15 perguntas…'
+    : `Transcrevendo ${percent}% · ${formatVideoClock(covered)} de ${formatVideoClock(duration)}`;
+
+  return (
+    <View
+      accessibilityRole="progressbar"
+      accessibilityLabel={label}
+      accessibilityValue={{ min: 0, max: 100, now: percent }}
+      style={styles.progressTrack}
+    >
+      <View style={[styles.progressFill, { width: `${percent}%` }]} />
+      <Text style={styles.progressLabel}>{label}</Text>
+    </View>
   );
 }
 
@@ -612,6 +678,29 @@ const styles = StyleSheet.create({
   },
   buttonDisabled: {
     opacity: 0.45,
+  },
+  progressTrack: {
+    backgroundColor: '#DBEAFE',
+    borderRadius: 10,
+    height: 45,
+    justifyContent: 'center',
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  progressFill: {
+    backgroundColor: '#15803D',
+    bottom: 0,
+    left: 0,
+    position: 'absolute',
+    top: 0,
+  },
+  progressLabel: {
+    color: '#0F172A',
+    fontSize: 14,
+    fontWeight: '800',
+    paddingHorizontal: 12,
+    textAlign: 'center',
+    zIndex: 1,
   },
   confirmBackdrop: {
     alignItems: 'center',

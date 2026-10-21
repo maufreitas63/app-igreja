@@ -928,6 +928,23 @@ const handlePost = async (request, env) => {
     }
 
     const identity = sermonIdentity(video.title, video.published);
+    const durationSeconds = await fetchVideoDurationSeconds(video.videoId);
+
+    if (durationSeconds <= 0) {
+      return jsonResponse(
+        { error: 'Não foi possível ler a duração deste vídeo. Tente de novo antes de transcrever.' },
+        502
+      );
+    }
+
+    let coveredSeconds = 0;
+
+    try {
+      const archive = await readSermonArchive(env, request, video.videoId);
+      coveredSeconds = Math.min(durationSeconds, Math.max(0, Number(archive?.offsetSeconds) || 0));
+    } catch {
+      coveredSeconds = 0;
+    }
 
     return jsonResponse({
       videoId: video.videoId,
@@ -935,6 +952,8 @@ const handlePost = async (request, env) => {
       theme: identity.theme,
       preacher: identity.preacher,
       celebrationDate: identity.celebrationDate,
+      durationSeconds,
+      coveredSeconds,
     });
   }
 
@@ -1085,7 +1104,16 @@ const handlePost = async (request, env) => {
 
   for (const item of queue) {
     if (item.transcriptComplete && item.transcript.length >= 400) {
-      return jsonResponse({ videoId: item.videoId, done: true, chars: item.transcript.length });
+      const duration = await fetchVideoDurationSeconds(item.videoId);
+      const covered = duration || Number(item.offsetSeconds) || 0;
+      return jsonResponse({
+        videoId: item.videoId,
+        done: true,
+        chars: item.transcript.length,
+        coveredSeconds: covered,
+        durationSeconds: duration || covered,
+        coveredUntil: clockLabel(covered),
+      });
     }
 
     const prior = cleanupTranscript(item.transcript);
@@ -1107,6 +1135,8 @@ const handlePost = async (request, env) => {
             videoId: item.videoId,
             done: true,
             chars: captions.length,
+            coveredSeconds: duration || startSeconds,
+            durationSeconds: duration || startSeconds,
             coveredUntil: clockLabel(duration || startSeconds),
           });
         }
@@ -1118,6 +1148,8 @@ const handlePost = async (request, env) => {
           videoId: item.videoId,
           done: true,
           chars: prior.length,
+          coveredSeconds: duration,
+          durationSeconds: duration,
           coveredUntil: clockLabel(duration),
         });
       }
@@ -1148,6 +1180,8 @@ const handlePost = async (request, env) => {
         videoId: item.videoId,
         done,
         chars: transcript.length,
+        coveredSeconds: endSeconds,
+        durationSeconds: duration,
         coveredUntil: clockLabel(endSeconds),
       });
     } catch (error) {
