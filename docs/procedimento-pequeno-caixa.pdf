@@ -1,0 +1,2807 @@
+%PDF-1.3
+%ºß¬à
+3 0 obj
+<</Type /Page
+/Parent 1 0 R
+/Resources 2 0 R
+/MediaBox [0 0 595.2799999999999727 841.8899999999999864]
+/Contents 4 0 R
+>>
+endobj
+4 0 obj
+<<
+/Length 8762
+>>
+stream
+0.5670000000000001 w
+0 G
+0. 0. 0.55 rg
+0. 841.8899999999999864 595.2755905511811534 -79.3700787401574814 re
+f
+BT
+/F2 16 Tf
+18.3999999999999986 TL
+1. g
+45.354330708661422 805.0396062992125508 Td
+(Procedimento do Pequeno caixa) Tj
+ET
+BT
+/F1 10 Tf
+11.5 TL
+1. g
+45.354330708661422 782.3624409448818824 Td
+(Quem gerencia os caixas e quem controla um caixa) Tj
+ET
+BT
+/F1 10 Tf
+11.5 TL
+0.278 0.333 0.412 rg
+45.354330708661422 734.1734645669291695 Td
+(Conecta+  ·  22 de outubro de 2026) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 717.1655905511811397 Td
+(Este procedimento descreve o uso do Pequeno caixa no aplicativo. A primeira parte é de quem cria, mantém) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 704.1262204724408775 Td
+(e confere os caixas. A segunda é de quem é responsável por um caixa e registra as despesas e a) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 691.086850393700729 Td
+(reposição. As regras de saldo, comprovante e prazo valem para os dois lados.) Tj
+ET
+BT
+/F2 14 Tf
+16.0999999999999979 TL
+0. 0. 0.545 rg
+45.354330708661422 656.5041732283464171 Td
+(1. Para que serve) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 635.5277952755905062 Td
+(O pequeno caixa é um valor confiado a uma pessoa para gastos imediatos de uma ação da igreja, como) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 622.4884251968503577 Td
+(cestas, lanches ou material. Cada caixa tem nome, um responsável, um valor-base e um dia de fechamento.) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 609.4490551181102092 Td
+(O valor-base é o teto de reposição: é o máximo que aquele caixa volta a ter depois de prestadas as contas.) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 591.8742519685039269 Td
+(O saldo que aparece na tela só muda quando a conferência aprova. Uma despesa enviada fica pendente e) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 578.8348818897637784 Td
+(reserva o valor, mas ainda não baixa o saldo. Uma reposição enviada também fica pendente até a) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 565.7955118110236299 Td
+(aprovação. Rejeitar não apaga o histórico: o lançamento permanece, com o motivo, para ser corrigido e) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 552.7561417322834814 Td
+(enviado de novo.) Tj
+ET
+BT
+/F2 14 Tf
+16.0999999999999979 TL
+0. 0. 0.545 rg
+45.354330708661422 518.1734645669291695 Td
+(2. Os dois papéis) Tj
+ET
+BT
+/F2 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 497.1970866141732586 Td
+(Quem gerencia os caixas) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 480.1892125984252289 Td
+(Entra pela engrenagem, no grupo Finanças e Inteligência, no card Pequenos Caixas. Cria o caixa, escolhe o) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 467.1498425196850803 Td
+(responsável, define o valor-base e o dia de fechamento, acompanha avisos, abre o histórico, aprova ou) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 454.1104724409449318 Td
+(rejeita e trata a solicitação de exclusão. Também pode inativar ou excluir o controle do caixa.) Tj
+ET
+BT
+/F2 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 436.5356692913387064 Td
+(Quem controla um caixa) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 419.5277952755906767 Td
+(É o responsável nomeado naquele caixa. Entra em Perfil, no botão Pequeno caixa, entre Trilha de) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 406.4884251968505282 Td
+(Discipulado e Reembolsos, ou pelo atalho Pequeno caixa na tela Financeiro. Registra despesa, anexa o) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 393.4490551181103797 Td
+(comprovante, pede a reposição até o valor-base e solicita a exclusão de uma despesa quando for o caso.) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 380.4096850393702312 Td
+(Não aprova o próprio lançamento: a aprovação é da conferência, na engrenagem.) Tj
+ET
+0.94 0.96 1. rg
+0.75 0.86 1. RG
+49.6062992125984294 371.9057480314962163 m
+545.6692913385827524 371.9057480314962163 l
+548.0175887000680177 371.9057480314962163 549.9212598425197029 370.0020768890444174 549.9212598425197029 367.6537795275592089 c
+549.9212598425197029 321.7325196850394491 l
+549.9212598425197029 319.3842223235541837 547.5729624810344376 317.4805511811024417 545.6692913385827524 317.4805511811024417 c
+49.6062992125984294 317.4805511811024417 l
+47.2580018511131641 317.4805511811024417 45.354330708661422 319.828848542587707 45.354330708661422 321.7325196850394491 c
+45.354330708661422 367.6537795275590952 l
+45.354330708661422 370.0020768890443605 47.7026280701466874 371.9057480314961026 49.6062992125984294 371.9057480314961026 c
+h
+B
+BT
+/F1 10 Tf
+11.5 TL
+0. 0. 0.545 rg
+56.6929133858267775 359.4333070866143771 Td
+(O tesoureiro, com a permissão de controle, vê todos os caixas da igreja, ativos e inativos. Lançar despesa) Tj
+ET
+BT
+/F1 10 Tf
+11.5 TL
+0. 0. 0.545 rg
+56.6929133858267775 346.9608661417324811 Td
+(ou pedir reposição continua exclusivo do responsável daquele caixa, e somente enquanto o caixa está ativo.) Tj
+ET
+BT
+/F1 10 Tf
+11.5 TL
+0. 0. 0.545 rg
+56.6929133858267775 334.4884251968505851 Td
+(Nos outros caixas a tela fica em consulta.) Tj
+ET
+BT
+/F2 14 Tf
+16.0999999999999979 TL
+0. 0. 0.545 rg
+45.354330708661422 294.2364566929135208 Td
+(3. Permissões) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 273.2600787401576099 Td
+(As duas permissões ficam no Controle de Acesso e são independentes. Conceder uma não concede a) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 260.2207086614175751 Td
+(outra.) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 242.6459055118112929 Td
+(•) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+59.5275590551181182 242.6459055118112929 Td
+(Pequenos caixas \(manutenção\). Quem pode ver entra no card da engrenagem. Quem pode alterar cria,) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+59.5275590551181182 229.6065354330711443 Td
+(edita, inativa, exclui o caixa e confere despesas e reposições. Super administrador e tesoureiro já) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+59.5275590551181182 216.5671653543309958 Td
+(recebem ver e alterar.) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 201.2600787401577236 Td
+(•) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+59.5275590551181182 201.2600787401577236 Td
+(Controle do pequeno caixa. Abre a tela Pequeno caixa. Super administrador e tesoureiro já recebem) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+59.5275590551181182 188.2207086614175751 Td
+(essa permissão. Para as demais pessoas, o Controle de Acesso marca quem pode controlar.) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 172.9136220472443028 Td
+(•) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+59.5275590551181182 172.9136220472443028 Td
+(Ser o responsável do caixa é uma condição à parte. Sem a permissão de controle, o botão não abre.) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+59.5275590551181182 159.8742519685041543 Td
+(Com a permissão, mas sem ser o responsável daquele caixa ativo, a pessoa consulta e não lança.) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 144.5671653543309958 Td
+(A busca de responsável lista somente membros ativos: sem data de desligamento, sem perfil só de visitante) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 131.5277952755908473 Td
+(e sem congregado isolado. O gestor de controle de acesso não vê o super administrador nessa lista.) Tj
+ET
+BT
+/F2 14 Tf
+16.0999999999999979 TL
+0. 0. 0.545 rg
+45.354330708661422 96.9451181102364217 Td
+(4. Regras comuns) Tj
+ET
+BT
+/F1 8 Tf
+9.1999999999999993 TL
+0.278 0.333 0.412 rg
+45.354330708661422 28.3466929133857093 Td
+(Conecta+  ·  Procedimento do Pequeno caixa) Tj
+ET
+BT
+/F1 8 Tf
+9.1999999999999993 TL
+0.278 0.333 0.412 rg
+545.5212598425197257 28.3466929133857093 Td
+(1) Tj
+ET
+0.75 0.86 1. RG
+0.8503937007874016 w
+45.354330708661422 39.6852755905510719 m
+549.9212598425197029 39.6852755905510719 l
+S
+endstream
+endobj
+5 0 obj
+<</Type /Page
+/Parent 1 0 R
+/Resources 2 0 R
+/MediaBox [0 0 595.2799999999999727 841.8899999999999864]
+/Contents 6 0 R
+>>
+endobj
+6 0 obj
+<<
+/Length 9869
+>>
+stream
+0.8503937007874016 w
+0.75 0.86 1. RG
+0. 0. 0.55 RG
+2.2677165354330713 w
+45.354330708661422 807.8742519685039269 m
+549.9212598425197029 807.8742519685039269 l
+S
+BT
+/F1 8 Tf
+9.1999999999999993 TL
+0.278 0.333 0.412 rg
+45.354330708661422 790.8663779527558972 Td
+(•) Tj
+ET
+BT
+/F1 8 Tf
+9.1999999999999993 TL
+0.278 0.333 0.412 rg
+59.5275590551181182 790.8663779527558972 Td
+(O saldo muda somente na aprovação. Despesa aprovada reduz o saldo. Reposição aprovada devolve o) Tj
+ET
+BT
+/F1 8 Tf
+9.1999999999999993 TL
+0.278 0.333 0.412 rg
+59.5275590551181182 777.8270078740157487 Td
+(saldo ao valor-base.) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 762.5199212598424765 Td
+(•) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+59.5275590551181182 762.5199212598424765 Td
+(Despesa pendente reserva o saldo disponível. A soma das despesas ainda não conferidas, mais a nova,) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+59.5275590551181182 749.480551181102328 Td
+(não pode passar do saldo.) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 734.1734645669291695 Td
+(•) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+59.5275590551181182 734.1734645669291695 Td
+(Enquanto existe uma reposição pendente, nenhum lançamento novo entra, e uma despesa pendente) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+59.5275590551181182 721.1340944881889072 Td
+(não é aprovada.) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 705.8270078740157487 Td
+(•) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+59.5275590551181182 705.8270078740157487 Td
+(A reposição só pode ser pedida depois que as despesas pendentes forem conferidas. O valor é) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+59.5275590551181182 692.7876377952754865 Td
+(exatamente o valor-base menos o saldo atual. Não se digita outro valor.) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 677.480551181102328 Td
+(•) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+59.5275590551181182 677.480551181102328 Td
+(Toda despesa e toda reposição exigem imagem do comprovante: JPEG, PNG ou WebP, até 5 MB. A) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+59.5275590551181182 664.4411811023621794 Td
+(reposição só é aceita e só é aprovada se essa imagem estiver gravada.) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 649.1340944881889072 Td
+(•) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+59.5275590551181182 649.1340944881889072 Td
+(A descrição da despesa precisa ter pelo menos 3 caracteres. O aplicativo grava o texto com o prefixo PC) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+59.5275590551181182 636.0947244094487587 Td
+(- . Quem lança não precisa digitar esse prefixo.) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 620.7876377952756002 Td
+(•) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+59.5275590551181182 620.7876377952756002 Td
+(A data do lançamento é até o dia de hoje, no formato DD/MM/AAAA.) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 605.480551181102328 Td
+(•) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+59.5275590551181182 605.480551181102328 Td
+(O dia de fechamento vai de 1 a 31. O padrão do formulário é 25. Se o dia não existir naquele mês, vale o) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+59.5275590551181182 592.4411811023621794 Td
+(último dia. Se a data cair em sábado, domingo ou feriado, a prestação passa para o próximo dia útil.) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 577.1340944881890209 Td
+(•) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+59.5275590551181182 577.1340944881890209 Td
+(Feriados considerados: 1º de janeiro, 21 de abril, 1º de maio, 7 de setembro, 12 de outubro, 2 de) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+59.5275590551181182 564.0947244094488724 Td
+(novembro, 15 de novembro, 25 de dezembro, segunda e terça de carnaval, sexta-feira santa e Corpus) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+59.5275590551181182 551.0553543307087239 Td
+(Christi.) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 535.7482677165355653 Td
+(•) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+59.5275590551181182 535.7482677165355653 Td
+(O nome do caixa é único na igreja e tem pelo menos 2 caracteres. O valor-base é maior que zero e no) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+59.5275590551181182 522.7088976377954168 Td
+(máximo 1.000.000. Na criação, o saldo inicial é igual ao valor-base.) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 507.4018110236222014 Td
+(•) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+59.5275590551181182 507.4018110236222014 Td
+(Ao alterar um caixa, o valor-base não pode ficar abaixo do saldo atual.) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 492.0947244094489861 Td
+(•) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+59.5275590551181182 492.0947244094489861 Td
+(Antes de anexar o comprovante, a igreja da sessão precisa estar selecionada.) Tj
+ET
+BT
+/F2 14 Tf
+16.0999999999999979 TL
+0. 0. 0.545 rg
+45.354330708661422 459.779763779527741 Td
+(5. Quem gerencia os caixas) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 438.803385826771887 Td
+(Caminho: engrenagem, Finanças e Inteligência, Pequenos Caixas. O ícone de informação no título resume o) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 425.7640157480317384 Td
+(uso da tela. Os avisos de prazo e de reenvio aparecem no topo, antes da lista.) Tj
+ET
+BT
+/F2 12 Tf
+13.7999999999999989 TL
+0. 0. 0.545 rg
+45.354330708661422 398.2679527559057533 Td
+(5.1 Criar um caixa) Tj
+ET
+BT
+/F2 10.5 Tf
+12.0749999999999993 TL
+0. 0. 0.545 rg
+45.354330708661422 379.5592913385829661 Td
+(1. Abra Novo caixa) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 365.3860629921262557 Td
+(O formulário só aparece para quem tem permissão de alterar.) Tj
+ET
+BT
+/F2 10.5 Tf
+12.0749999999999993 TL
+0. 0. 0.545 rg
+45.354330708661422 347.8112598425199735 Td
+(2. Informe o nome) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 333.63803149606332 Td
+(Use um nome que identifique a ação, por exemplo Cestas básicas. Dois caixas da mesma igreja não podem) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 320.5986614173231146 Td
+(ter o mesmo nome.) Tj
+ET
+BT
+/F2 10.5 Tf
+12.0749999999999993 TL
+0. 0. 0.545 rg
+45.354330708661422 303.0238582677168324 Td
+(3. Informe o valor-base) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 288.8506299212601789 Td
+(É o teto da reposição. O campo sugere 1000. O saldo nasce igual a esse valor.) Tj
+ET
+BT
+/F2 10.5 Tf
+12.0749999999999993 TL
+0. 0. 0.545 rg
+45.354330708661422 271.2758267716538967 Td
+(4. Informe o dia de fechamento) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 257.1025984251972432 Td
+(Um número de 1 a 31. O campo sugere 25. Esse é o dia em que a prestação daquele mês deve estar feita,) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 244.0632283464570946 Td
+(já considerado o ajuste para dia útil.) Tj
+ET
+BT
+/F2 10.5 Tf
+12.0749999999999993 TL
+0. 0. 0.545 rg
+45.354330708661422 226.4884251968508124 Td
+(5. Escolha o responsável) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 212.3151968503941589 Td
+(Toque em Responsável e use Buscar responsável. A lista abre no topo da tela. Só entram membros ativos.) Tj
+ET
+BT
+/F2 10.5 Tf
+12.0749999999999993 TL
+0. 0. 0.545 rg
+45.354330708661422 194.7403937007878767 Td
+(6. Deixe Ativo) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 180.5671653543311095 Td
+(Caixa inativo não recebe lançamento. Use Inativo só quando a ação estiver parada.) Tj
+ET
+BT
+/F2 10.5 Tf
+12.0749999999999993 TL
+0. 0. 0.545 rg
+45.354330708661422 162.992362204724941 Td
+(7. Toque em Salvar caixa) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 148.8191338582681738 Td
+(O aviso Pequeno caixa salvo confirma. O cartão entra na lista, ordenado pela situação e pelo nome.) Tj
+ET
+BT
+/F2 12 Tf
+13.7999999999999989 TL
+0. 0. 0.545 rg
+45.354330708661422 121.3230708661421886 Td
+(5.2 Alterar, inativar ou excluir) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 102.6144094488194014 Td
+(Em cada cartão, Editar preenche o formulário com o nome, o responsável, a situação, o valor-base e o dia) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 89.5750393700792529 Td
+(de fechamento. Ajuste o que mudou e salve. Cancelar edição descarta o formulário sem gravar. Para parar) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 76.5356692913389907 Td
+(os lançamentos sem apagar o histórico, marque Inativo e salve. O responsável deixa de ver esse caixa na) Tj
+ET
+BT
+/F1 8 Tf
+9.1999999999999993 TL
+0.278 0.333 0.412 rg
+45.354330708661422 28.3466929133857093 Td
+(Conecta+  ·  Procedimento do Pequeno caixa) Tj
+ET
+BT
+/F1 8 Tf
+9.1999999999999993 TL
+0.278 0.333 0.412 rg
+545.5212598425197257 28.3466929133857093 Td
+(2) Tj
+ET
+0.75 0.86 1. RG
+0.8503937007874016 w
+45.354330708661422 39.6852755905510719 m
+549.9212598425197029 39.6852755905510719 l
+S
+endstream
+endobj
+7 0 obj
+<</Type /Page
+/Parent 1 0 R
+/Resources 2 0 R
+/MediaBox [0 0 595.2799999999999727 841.8899999999999864]
+/Contents 8 0 R
+>>
+endobj
+8 0 obj
+<<
+/Length 9930
+>>
+stream
+0.8503937007874016 w
+0.75 0.86 1. RG
+0. 0. 0.55 RG
+2.2677165354330713 w
+45.354330708661422 807.8742519685039269 m
+549.9212598425197029 807.8742519685039269 l
+S
+BT
+/F1 8 Tf
+9.1999999999999993 TL
+0.278 0.333 0.412 rg
+45.354330708661422 790.8663779527558972 Td
+(própria tela; o tesoureiro continua vendo, em consulta.) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 773.291574803149615 Td
+(Excluir caixa pede confirmação. A exclusão tira o controle, os lançamentos e os comprovantes. Não há) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 760.2522047244094665 Td
+(como desfazer. Use quando o caixa deixou de existir. Para só interromper o uso, prefira inativar.) Tj
+ET
+BT
+/F2 12 Tf
+13.7999999999999989 TL
+0. 0. 0.545 rg
+45.354330708661422 732.7561417322833677 Td
+(5.3 Ler o cartão) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 714.0474803149605805 Td
+(Sem abrir o histórico, o cartão mostra o responsável, o valor-base, o dia de fechamento, o saldo, se está) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 701.0081102362204319 Td
+(ativo ou inativo, se a prestação está em atraso, quantas despesas estão pendentes e quantas exclusões) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 687.9687401574802834 Td
+(foram solicitadas.) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 670.3939370078740012 Td
+(Toque no cartão para abrir o demonstrativo. Toque de novo para fechar. O demonstrativo traz:) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 652.8191338582676053 Td
+(•) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+59.5275590551181182 652.8191338582676053 Td
+(Saldo inicial: o valor-base do caixa.) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 637.5120472440944468 Td
+(•) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+59.5275590551181182 637.5120472440944468 Td
+(Despesas comprovadas: a soma das despesas aprovadas depois da última reposição aprovada. É o) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+59.5275590551181182 624.4726771653542983 Td
+(ciclo atual.) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 609.1655905511811397 Td
+(•) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+59.5275590551181182 609.1655905511811397 Td
+(Saldo remanescente: o saldo atual.) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 593.8585039370079812 Td
+(•) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+59.5275590551181182 593.8585039370079812 Td
+(Recomposição: valor-base menos saldo atual. É o valor que a próxima reposição vai pedir.) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 578.551417322834709 Td
+(•) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+59.5275590551181182 578.551417322834709 Td
+(Prestação até: a data do fechamento já ajustada para dia útil.) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 563.2443307086614368 Td
+(No histórico de cada lançamento aparecem o tipo \(Despesa ou Reposição\), o valor, a situação \(Pendente,) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 550.2049606299212883 Td
+(Aprovado ou Rejeitado\), a data, a descrição e o link Ver comprovante. Se houve rejeição, o motivo fica junto) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 537.1655905511811397 Td
+(do lançamento.) Tj
+ET
+BT
+/F2 12 Tf
+13.7999999999999989 TL
+0. 0. 0.545 rg
+45.354330708661422 509.6695275590552683 Td
+(5.4 Avisos) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 490.9608661417324242 Td
+(•) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+59.5275590551181182 490.9608661417324242 Td
+(Fundo âmbar: a prestação vence hoje ou em até 5 dias, e o caixa ativo está abaixo do valor-base, tem) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+59.5275590551181182 477.9214960629922189 Td
+(pendência ou tem lançamento rejeitado sem correção.) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 462.6144094488189467 Td
+(•) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+59.5275590551181182 462.6144094488189467 Td
+(Fundo vermelho: prestação em atraso. O caixa está ativo, o saldo está abaixo do valor-base e a despesa) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+59.5275590551181182 449.575039370078855 Td
+(aprovada mais antiga do ciclo já passou da data de fechamento.) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 434.2679527559055828 Td
+(•) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+59.5275590551181182 434.2679527559055828 Td
+(Fundo índigo: há lançamento rejeitado e ainda não existe, depois dele, outro do mesmo tipo pendente ou) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+59.5275590551181182 421.2285826771654342 Td
+(aprovado. O texto pede para corrigir e enviar de novo.) Tj
+ET
+BT
+/F2 12 Tf
+13.7999999999999989 TL
+0. 0. 0.545 rg
+45.354330708661422 396.0002362204725159 Td
+(5.5 Conferir despesa e reposição) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 377.2915748031496719 Td
+(Abra o cartão. Em cada lançamento pendente há o campo Motivo, se for rejeitar, e os comandos Aprovar e) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 364.2522047244095234 Td
+(Rejeitar. A conferência exige permissão de alterar.) Tj
+ET
+BT
+/F2 10.5 Tf
+12.0749999999999993 TL
+0. 0. 0.545 rg
+45.354330708661422 346.677401574803298 Td
+(1. Abra o comprovante) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 332.5041732283465876 Td
+(Toque em Ver comprovante e confira se a imagem, o valor, a data e a descrição combinam com o gasto ou) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 319.4648031496064959 Td
+(com a reposição.) Tj
+ET
+BT
+/F2 10.5 Tf
+12.0749999999999993 TL
+0. 0. 0.545 rg
+45.354330708661422 301.8900000000002137 Td
+(2. Aprovar) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 287.7167716535434465 Td
+(Confirme em Aprovar movimentação. Despesa aprovada reduz o saldo. Reposição aprovada só conclui se a) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 274.677401574803298 Td
+(imagem estiver salva e devolve o saldo exatamente ao valor-base. Se o saldo mudou desde o pedido, a tela) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 261.6380314960631495 Td
+(recusa: rejeite essa reposição e peça que o responsável registre outra.) Tj
+ET
+BT
+/F2 10.5 Tf
+12.0749999999999993 TL
+0. 0. 0.545 rg
+45.354330708661422 244.0632283464568673 Td
+(3. Rejeitar) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 229.8900000000002137 Td
+(Escreva o motivo com pelo menos 3 caracteres e confirme. O lançamento permanece no histórico com o) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 216.8506299212600652 Td
+(motivo. O responsável vê o motivo na tela dele, corrige e envia de novo. Sem o motivo, a rejeição não) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 203.8112598425199167 Td
+(segue.) Tj
+ET
+0.94 0.96 1. rg
+0.75 0.86 1. RG
+49.6062992125984294 195.3073228346459018 m
+545.6692913385827524 195.3073228346459018 l
+548.0175887000680177 195.3073228346459018 549.9212598425197029 193.4036516921941598 549.9212598425197029 191.0553543307088944 c
+549.9212598425197029 145.134094488189163 l
+549.9212598425197029 142.7857971267039261 547.5729624810344376 140.8821259842521556 545.6692913385827524 140.8821259842521556 c
+49.6062992125984294 140.8821259842521556 l
+47.2580018511131641 140.8821259842521556 45.354330708661422 143.230423345737421 45.354330708661422 145.134094488189163 c
+45.354330708661422 191.0553543307088376 l
+45.354330708661422 193.4036516921940745 47.7026280701466874 195.307322834645845 49.6062992125984294 195.307322834645845 c
+h
+B
+BT
+/F1 10 Tf
+11.5 TL
+0. 0. 0.545 rg
+56.6929133858267775 182.8348818897641195 Td
+(Não aprove uma despesa nova enquanto houver reposição pendente: decida a reposição antes. Não aprove) Tj
+ET
+BT
+/F1 10 Tf
+11.5 TL
+0. 0. 0.545 rg
+56.6929133858267775 170.3624409448822234 Td
+(a reposição enquanto houver despesa pendente. A ordem é conferir as despesas e só então a reposição do) Tj
+ET
+BT
+/F1 10 Tf
+11.5 TL
+0. 0. 0.545 rg
+56.6929133858267775 157.8900000000003274 Td
+(ciclo.) Tj
+ET
+BT
+/F2 12 Tf
+13.7999999999999989 TL
+0. 0. 0.545 rg
+45.354330708661422 124.7246456692915899 Td
+(5.6 Solicitação de exclusão) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 106.0159842519688027 Td
+(Quando o responsável pede a exclusão de uma despesa, o cartão mostra na hora um painel amarelo,) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 92.9766141732286542 Td
+(Solicitação de exclusão, sem precisar abrir o histórico. O painel traz a descrição, o valor e a data, e os) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 79.937244094488392 Td
+(campos Valor, Descrição e Data.) Tj
+ET
+BT
+/F1 8 Tf
+9.1999999999999993 TL
+0.278 0.333 0.412 rg
+45.354330708661422 28.3466929133857093 Td
+(Conecta+  ·  Procedimento do Pequeno caixa) Tj
+ET
+BT
+/F1 8 Tf
+9.1999999999999993 TL
+0.278 0.333 0.412 rg
+545.5212598425197257 28.3466929133857093 Td
+(3) Tj
+ET
+0.75 0.86 1. RG
+0.8503937007874016 w
+45.354330708661422 39.6852755905510719 m
+549.9212598425197029 39.6852755905510719 l
+S
+endstream
+endobj
+9 0 obj
+<</Type /Page
+/Parent 1 0 R
+/Resources 2 0 R
+/MediaBox [0 0 595.2799999999999727 841.8899999999999864]
+/Contents 10 0 R
+>>
+endobj
+10 0 obj
+<<
+/Length 8791
+>>
+stream
+0.8503937007874016 w
+0.75 0.86 1. RG
+0. 0. 0.55 RG
+2.2677165354330713 w
+45.354330708661422 807.8742519685039269 m
+549.9212598425197029 807.8742519685039269 l
+S
+BT
+/F1 8 Tf
+9.1999999999999993 TL
+0.278 0.333 0.412 rg
+45.354330708661422 790.8663779527558972 Td
+(Quem pode concluir é quem tem permissão de alterar os pequenos caixas, ou o próprio responsável do) Tj
+ET
+BT
+/F1 8 Tf
+9.1999999999999993 TL
+0.278 0.333 0.412 rg
+45.354330708661422 777.8270078740157487 Td
+(caixa. O caminho é: conferir os dados, ajustar se precisar, tocar em Salvar edição e, em seguida, em Excluir) Tj
+ET
+BT
+/F1 8 Tf
+9.1999999999999993 TL
+0.278 0.333 0.412 rg
+45.354330708661422 764.7876377952756002 Td
+(lançamento. A confirmação avisa que a despesa sai do histórico e o comprovante é apagado.) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 747.2128346456692043 Td
+(•) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+59.5275590551181182 747.2128346456692043 Td
+(Se a despesa ainda estava pendente, ela sai e a reserva do saldo acaba.) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 731.9057480314960458 Td
+(•) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+59.5275590551181182 731.9057480314960458 Td
+(Se já estava aprovada, o valor volta ao saldo, sem ultrapassar o valor-base.) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 716.5986614173227736 Td
+(•) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+59.5275590551181182 716.5986614173227736 Td
+(Se já entrou numa reposição conferida, a despesa permanece no histórico. A exclusão é recusada.) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 701.291574803149615 Td
+(•) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+59.5275590551181182 701.291574803149615 Td
+(Se há uma reposição aguardando conferência, decida essa reposição antes de excluir ou de editar a) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+59.5275590551181182 688.2522047244094665 Td
+(despesa.) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 672.9451181102361943 Td
+(Salvar edição, sem excluir, corrige valor, descrição e data da despesa solicitada. O novo valor precisa caber) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 659.9057480314960458 Td
+(no saldo. Na despesa já aprovada, a diferença ajusta o saldo na hora.) Tj
+ET
+BT
+/F2 12 Tf
+13.7999999999999989 TL
+0. 0. 0.545 rg
+45.354330708661422 632.4096850393700606 Td
+(5.7 Comprovante no lançamento financeiro) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 613.7010236220471597 Td
+(Na manutenção financeira, ao montar um lançamento, o botão Pequeno caixa lista comprovantes já) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 600.6616535433070112 Td
+(gravados nos caixas. Busque pelo nome e anexe o arquivo ao lançamento. O comprovante do pequeno) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 587.6222834645668627 Td
+(caixa continua no caixa; o lançamento financeiro passa a usar a mesma imagem.) Tj
+ET
+BT
+/F2 14 Tf
+16.0999999999999979 TL
+0. 0. 0.545 rg
+45.354330708661422 553.0396062992126645 Td
+(6. Quem controla o caixa) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 532.0632283464567536 Td
+(Esta parte é do responsável. A tela se chama Pequeno caixa. Se não houver caixa ativo atribuído à pessoa,) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 519.023858267716605 Td
+(a mensagem é: Nenhum pequeno caixa ativo está atribuído a você. A manutenção escolhe o responsável na) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 505.9844881889763997 Td
+(engrenagem.) Tj
+ET
+BT
+/F2 12 Tf
+13.7999999999999989 TL
+0. 0. 0.545 rg
+45.354330708661422 478.4884251968504714 Td
+(6.1 Entrar) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 459.7797637795276273 Td
+(•) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+59.5275590551181182 459.7797637795276273 Td
+(Perfil, botão Pequeno caixa. Ele fica entre Trilha de Discipulado e Reembolsos, e só aparece para quem) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+59.5275590551181182 446.7403937007874788 Td
+(tem a permissão de controle.) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 431.4333070866142634 Td
+(•) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+59.5275590551181182 431.4333070866142634 Td
+(Financeiro, atalho Pequeno caixa, no alto da tela, para quem tem a mesma permissão.) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 416.1262204724409912 Td
+(Ao sair, o aplicativo volta para a tela de onde a pessoa veio. Tesoureiro que abre a tela vê todos os caixas.) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 403.0868503937008427 Td
+(Responsável comum vê só os caixas ativos em que o nome dele está como responsável.) Tj
+ET
+BT
+/F2 12 Tf
+13.7999999999999989 TL
+0. 0. 0.545 rg
+45.354330708661422 375.5907874015749144 Td
+(6.2 Escolher o caixa e ler a posição) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 356.8821259842520703 Td
+(Se houver mais de um caixa, os nomes aparecem em botões no topo. Toque no caixa que vai lançar. O) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 343.8427559055119218 Td
+(cartão mostra o responsável, os avisos coloridos, o valor-base, o dia de fechamento, o saldo inicial, as) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 330.8033858267717733 Td
+(despesas comprovadas, o saldo remanescente, a recomposição e a data da prestação. Prestação em atraso) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 317.7640157480316248 Td
+(fica marcada ao lado da data.) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 300.1892125984253425 Td
+(Quem está só consultando, como o tesoureiro em um caixa de outra pessoa, vê o texto: Consulta de todos) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 287.149842519685194 Td
+(os caixas. O lançamento de despesa e reposição continua com o responsável de cada caixa. O formulário) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 274.1104724409450455 Td
+(de lançamento não aparece.) Tj
+ET
+BT
+/F2 12 Tf
+13.7999999999999989 TL
+0. 0. 0.545 rg
+45.354330708661422 246.614409448819174 Td
+(6.3 Registrar uma despesa) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 227.9057480314962731 Td
+(O formulário Nova despesa só aparece para o responsável do caixa ativo.) Tj
+ET
+BT
+/F2 10.5 Tf
+12.0749999999999993 TL
+0. 0. 0.545 rg
+45.354330708661422 210.3309448818901046 Td
+(1. Informe o valor) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 196.1577165354333374 Td
+(O campo começa em R$ 0,00 e aceita reais e centavos. O valor precisa ser maior que zero e caber no saldo) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 183.1183464566931889 Td
+(ainda não reservado por outras despesas pendentes.) Tj
+ET
+BT
+/F2 10.5 Tf
+12.0749999999999993 TL
+0. 0. 0.545 rg
+45.354330708661422 165.5435433070869067 Td
+(2. Descreva o gasto) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 151.3703149606302532 Td
+(Pelo menos 3 caracteres, de forma que a conferência entenda o que foi comprado. O aplicativo acrescenta) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 138.3309448818901046 Td
+(PC - na frente ao gravar.) Tj
+ET
+BT
+/F2 10.5 Tf
+12.0749999999999993 TL
+0. 0. 0.545 rg
+45.354330708661422 120.7561417322838224 Td
+(3. Confira a data) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 106.5829133858270552 Td
+(O campo vem com a data de hoje, no formato DD/MM/AAAA. Pode ser uma data anterior. Data futura é) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 93.543543307086793 Td
+(recusada.) Tj
+ET
+BT
+/F1 8 Tf
+9.1999999999999993 TL
+0.278 0.333 0.412 rg
+45.354330708661422 28.3466929133857093 Td
+(Conecta+  ·  Procedimento do Pequeno caixa) Tj
+ET
+BT
+/F1 8 Tf
+9.1999999999999993 TL
+0.278 0.333 0.412 rg
+545.5212598425197257 28.3466929133857093 Td
+(4) Tj
+ET
+0.75 0.86 1. RG
+0.8503937007874016 w
+45.354330708661422 39.6852755905510719 m
+549.9212598425197029 39.6852755905510719 l
+S
+endstream
+endobj
+11 0 obj
+<</Type /Page
+/Parent 1 0 R
+/Resources 2 0 R
+/MediaBox [0 0 595.2799999999999727 841.8899999999999864]
+/Contents 12 0 R
+>>
+endobj
+12 0 obj
+<<
+/Length 8592
+>>
+stream
+0.8503937007874016 w
+0.75 0.86 1. RG
+0. 0. 0.55 RG
+2.2677165354330713 w
+45.354330708661422 807.8742519685039269 m
+549.9212598425197029 807.8742519685039269 l
+S
+BT
+/F2 10.5 Tf
+12.0749999999999993 TL
+0. 0. 0.545 rg
+45.354330708661422 790.8663779527558972 Td
+(4. Anexe o comprovante) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 776.69314960629913 Td
+(Toque em Anexar comprovante para escolher a imagem, ou no ícone da câmera para fotografar. Sem) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 763.6537795275589815 Td
+(imagem o registro não conclui. O botão passa a dizer Comprovante anexado.) Tj
+ET
+BT
+/F2 10.5 Tf
+12.0749999999999993 TL
+0. 0. 0.545 rg
+45.354330708661422 746.0789763779526993 Td
+(5. Toque em Registrar despesa) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 731.9057480314960458 Td
+(O aviso Despesa enviada para conferência confirma. O saldo ainda não baixa. A despesa entra no histórico) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 718.8663779527558972 Td
+(como Pendente e reserva o valor até a conferência.) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 701.291574803149615 Td
+(Excluir despesa, ao lado de Registrar despesa, apaga só o rascunho que ainda não foi enviado: valor,) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 688.2522047244093528 Td
+(descrição, data e imagem escolhida. O botão fica apagado enquanto o formulário está vazio e a data é a de) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 675.2128346456692043 Td
+(hoje. Ele não apaga uma despesa que já está no histórico.) Tj
+ET
+BT
+/F2 12 Tf
+13.7999999999999989 TL
+0. 0. 0.545 rg
+45.354330708661422 647.7167716535432191 Td
+(6.4 Pedir a reposição) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 629.0081102362203183 Td
+(A seção Reposição até o valor-base mostra o valor calculado da recomposição. Esse valor não é digitado: é) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 615.9687401574801697 Td
+(o valor-base menos o saldo atual. Anexe o comprovante da reposição e toque em Pedir reposição. O aviso) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 602.9293700787400212 Td
+(Reposição enviada para conferência confirma.) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 585.3545669291338527 Td
+(O botão Pedir reposição fica desligado nestes casos:) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 567.7797637795275705 Td
+(•) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+59.5275590551181182 567.7797637795275705 Td
+(O caixa já está no valor-base e a recomposição é zero.) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 552.4726771653542983 Td
+(•) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+59.5275590551181182 552.4726771653542983 Td
+(Ainda há despesa pendente. A tela pede para aguardar a conferência dessas despesas.) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 537.1655905511811397 Td
+(•) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+59.5275590551181182 537.1655905511811397 Td
+(Já existe uma reposição aguardando conferência. Enquanto ela não for decidida, nada de novo é) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+59.5275590551181182 524.1262204724409912 Td
+(lançado.) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 508.8191338582677758 Td
+(A imagem da reposição é obrigatória. A conferência só aprova se essa imagem estiver salva. Na aprovação,) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 495.7797637795276273 Td
+(o saldo volta ao valor-base. Se a conferência rejeitar, o motivo aparece no histórico.) Tj
+ET
+BT
+/F2 12 Tf
+13.7999999999999989 TL
+0. 0. 0.545 rg
+45.354330708661422 468.2837007874016422 Td
+(6.5 Acompanhar o histórico) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 449.575039370078855 Td
+(Cada linha traz Despesa ou Reposição, o valor, a situação, a data e a descrição. Toque em Ver comprovante) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 436.5356692913387064 Td
+(para abrir a imagem. Lançamento rejeitado mostra Motivo, ou a orientação para corrigir os dados e enviar) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 423.4962992125985579 Td
+(novamente.) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 405.9214960629922757 Td
+(Corrigir uma rejeição é enviar um lançamento novo, certo, com comprovante. O rejeitado permanece no) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 392.8821259842521272 Td
+(histórico. O aviso índigo some quando existir, depois dele, outro lançamento do mesmo tipo pendente ou) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 379.8427559055119787 Td
+(aprovado.) Tj
+ET
+BT
+/F2 12 Tf
+13.7999999999999989 TL
+0. 0. 0.545 rg
+45.354330708661422 352.3466929133860503 Td
+(6.6 Solicitar a exclusão de uma despesa) Tj
+ET
+BT
+/F2 10.5 Tf
+12.0749999999999993 TL
+0. 0. 0.545 rg
+45.354330708661422 333.6380314960632063 Td
+(1. No histórico, toque em Solicitar exclusão) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 319.4648031496064959 Td
+(O pedido vale para despesa, não para reposição. A confirmação avisa que a despesa e o comprovante) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 306.4254330708663474 Td
+(permanecem até a exclusão ser concluída. O aviso Exclusão solicitada confirma. O botão não aparece de) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 293.3860629921261989 Td
+(novo naquela despesa.) Tj
+ET
+BT
+/F2 10.5 Tf
+12.0749999999999993 TL
+0. 0. 0.545 rg
+45.354330708661422 275.8112598425199167 Td
+(2. Use o painel amarelo) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 261.6380314960632631 Td
+(Ele abre na própria tela do responsável, com Valor, Descrição e Data. Confira. Se algo estiver errado, corrija) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 248.5986614173231146 Td
+(e toque em Salvar edição. O aviso Lançamento atualizado confirma.) Tj
+ET
+BT
+/F2 10.5 Tf
+12.0749999999999993 TL
+0. 0. 0.545 rg
+45.354330708661422 231.0238582677168324 Td
+(3. Toque em Excluir lançamento) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 216.8506299212601789 Td
+(A confirmação avisa que a despesa sai do histórico e o comprovante é apagado. O aviso Lançamento) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 203.8112598425200304 Td
+(excluído confirma. Quem só consulta o caixa vê a frase de que a exclusão foi solicitada e que o responsável) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 190.7718897637798818 Td
+(edita e então exclui.) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 173.1970866141735996 Td
+(O mesmo painel aparece para quem gerencia, no cartão da engrenagem. Qualquer um dos dois lados, com) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 160.1577165354334511 Td
+(a permissão correspondente, pode editar e concluir a exclusão. Não conclua se houver reposição pendente,) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 147.1183464566933026 Td
+(e não espere excluir uma despesa que já entrou numa reposição já conferida.) Tj
+ET
+BT
+/F2 14 Tf
+16.0999999999999979 TL
+0. 0. 0.545 rg
+45.354330708661422 112.5356692913389907 Td
+(7. Fechamento do mês) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 91.5592913385830798 Td
+(A prestação de um ciclo segue esta ordem.) Tj
+ET
+BT
+/F1 8 Tf
+9.1999999999999993 TL
+0.278 0.333 0.412 rg
+45.354330708661422 28.3466929133857093 Td
+(Conecta+  ·  Procedimento do Pequeno caixa) Tj
+ET
+BT
+/F1 8 Tf
+9.1999999999999993 TL
+0.278 0.333 0.412 rg
+545.5212598425197257 28.3466929133857093 Td
+(5) Tj
+ET
+0.75 0.86 1. RG
+0.8503937007874016 w
+45.354330708661422 39.6852755905510719 m
+549.9212598425197029 39.6852755905510719 l
+S
+endstream
+endobj
+13 0 obj
+<</Type /Page
+/Parent 1 0 R
+/Resources 2 0 R
+/MediaBox [0 0 595.2799999999999727 841.8899999999999864]
+/Contents 14 0 R
+>>
+endobj
+14 0 obj
+<<
+/Length 10605
+>>
+stream
+0.8503937007874016 w
+0.75 0.86 1. RG
+0. 0. 0.55 RG
+2.2677165354330713 w
+45.354330708661422 807.8742519685039269 m
+549.9212598425197029 807.8742519685039269 l
+S
+BT
+/F2 10.5 Tf
+12.0749999999999993 TL
+0. 0. 0.545 rg
+45.354330708661422 790.8663779527558972 Td
+(1. O responsável registra cada gasto) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 776.69314960629913 Td
+(Uma despesa por compra, com data, descrição e comprovante, ao longo do mês, sem esperar o dia do) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 763.6537795275589815 Td
+(fechamento.) Tj
+ET
+BT
+/F2 10.5 Tf
+12.0749999999999993 TL
+0. 0. 0.545 rg
+45.354330708661422 746.0789763779526993 Td
+(2. Quem gerencia confere as despesas) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 731.9057480314960458 Td
+(Aprova o que está certo e rejeita, com motivo, o que precisa de correção. O responsável reenvia o que foi) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 718.8663779527558972 Td
+(rejeitado.) Tj
+ET
+BT
+/F2 10.5 Tf
+12.0749999999999993 TL
+0. 0. 0.545 rg
+45.354330708661422 701.291574803149615 Td
+(3. O responsável pede a reposição) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 687.1183464566928478 Td
+(Só depois que não houver despesa pendente. Anexa o comprovante do valor exato da recomposição.) Tj
+ET
+BT
+/F2 10.5 Tf
+12.0749999999999993 TL
+0. 0. 0.545 rg
+45.354330708661422 669.5435433070865656 Td
+(4. Quem gerencia aprova a reposição) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 655.3703149606299121 Td
+(O saldo volta ao valor-base. As despesas comprovadas do ciclo ficam as que forem aprovadas depois dessa) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 642.3309448818897636 Td
+(reposição.) Tj
+ET
+BT
+/F2 10.5 Tf
+12.0749999999999993 TL
+0. 0. 0.545 rg
+45.354330708661422 624.7561417322834814 Td
+(5. Acompanhe a data) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 610.5829133858267141 Td
+(A prestação até indica o dia. Âmbar é aviso de até 5 dias. Vermelho é atraso: o caixa ativo gastou, a) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 597.5435433070865656 Td
+(despesa mais antiga do ciclo já passou do fechamento e a reposição ainda não repôs o valor-base.) Tj
+ET
+BT
+/F2 14 Tf
+16.0999999999999979 TL
+0. 0. 0.545 rg
+45.354330708661422 562.9608661417323674 Td
+(8. Quando a tela recusar) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 541.9844881889764565 Td
+(Leia o aviso e ajuste o lançamento. As recusas mais comuns são estas.) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 524.4096850393700606 Td
+(•) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+59.5275590551181182 524.4096850393700606 Td
+(Informe o nome do caixa. O nome está vazio ou tem menos de 2 caracteres.) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 509.1025984251969021 Td
+(•) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+59.5275590551181182 509.1025984251969021 Td
+(Já existe um pequeno caixa com esse nome. Escolha outro nome nesta igreja.) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 493.7955118110236867 Td
+(•) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+59.5275590551181182 493.7955118110236867 Td
+(Escolha o responsável pelo caixa. A lista só tem membros ativos.) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 478.4884251968504714 Td
+(•) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+59.5275590551181182 478.4884251968504714 Td
+(O valor-base não pode ficar abaixo do saldo atual. Aumente a base ou espere o saldo baixar com) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+59.5275590551181182 465.4490551181103228 Td
+(despesas aprovadas.) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 450.1419685039370506 Td
+(•) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+59.5275590551181182 450.1419685039370506 Td
+(Você não tem permissão para criar ou alterar pequenos caixas, ou para conferir. Peça a permissão de) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+59.5275590551181182 437.1025984251969021 Td
+(manutenção no Controle de Acesso.) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 421.7955118110236867 Td
+(•) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+59.5275590551181182 421.7955118110236867 Td
+(Você não tem permissão para controlar um pequeno caixa. Peça a permissão de controle.) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 406.4884251968504145 Td
+(•) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+59.5275590551181182 406.4884251968504145 Td
+(Somente o responsável deste caixa pode registrar movimentações. A pessoa logada não é o) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+59.5275590551181182 393.449055118110266 Td
+(responsável, ou está em modo de consulta.) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 378.1419685039370506 Td
+(•) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+59.5275590551181182 378.1419685039370506 Td
+(Este caixa está inativo. Quem gerencia precisa reativar antes de novos lançamentos.) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 362.8348818897637784 Td
+(•) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+59.5275590551181182 362.8348818897637784 Td
+(Anexe a imagem do comprovante para concluir o registro. Despesa e reposição exigem a imagem.) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 347.5277952755905631 Td
+(•) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+59.5275590551181182 347.5277952755905631 Td
+(O valor passa do saldo disponível deste caixa. Há saldo reservado por despesas pendentes, ou o gasto) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+59.5275590551181182 334.4884251968504145 Td
+(é maior que o saldo.) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 319.1813385826771992 Td
+(•) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+59.5275590551181182 319.1813385826771992 Td
+(Há uma reposição aguardando conferência. Espere a decisão antes de lançar, editar ou excluir.) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 303.8742519685039269 Td
+(•) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+59.5275590551181182 303.8742519685039269 Td
+(Confira as despesas pendentes antes de pedir a reposição. Aprove ou rejeite essas despesas primeiro.) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 288.5671653543306547 Td
+(•) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+59.5275590551181182 288.5671653543306547 Td
+(O caixa já está no valor-base. Não há valor a repor.) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 273.2600787401573825 Td
+(•) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+59.5275590551181182 273.2600787401573825 Td
+(A reposição só pode ser aprovada com a imagem do comprovante salva. Abra Ver comprovante. Se a) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+59.5275590551181182 260.220708661417234 Td
+(imagem não abrir, rejeite e peça um novo envio.) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 244.9136220472440755 Td
+(•) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+59.5275590551181182 244.9136220472440755 Td
+(O saldo mudou desde o pedido. Rejeite esta reposição e registre outra, já com o valor novo.) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 229.6065354330708033 Td
+(•) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+59.5275590551181182 229.6065354330708033 Td
+(Informe o motivo da rejeição para o responsável corrigir e reenviar. O motivo precisa ter pelo menos 3) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+59.5275590551181182 216.5671653543306547 Td
+(caracteres.) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 201.2600787401573825 Td
+(•) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+59.5275590551181182 201.2600787401573825 Td
+(Esta despesa já entrou numa reposição conferida e permanece no histórico. A exclusão não se aplica a) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+59.5275590551181182 188.220708661417234 Td
+(esse ciclo fechado.) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 172.9136220472439618 Td
+(•) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+59.5275590551181182 172.9136220472439618 Td
+(Selecione a igreja novamente para anexar o comprovante. A sessão perdeu a igreja ativa.) Tj
+ET
+BT
+/F2 14 Tf
+16.0999999999999979 TL
+0. 0. 0.545 rg
+45.354330708661422 140.5986614173227736 Td
+(9. O que cada lado não faz) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 119.6222834645668627 Td
+(•) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+59.5275590551181182 119.6222834645668627 Td
+(Quem controla não aprova e não rejeita o próprio lançamento. Isso é da conferência, na engrenagem.) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 104.3151968503935905 Td
+(•) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+59.5275590551181182 104.3151968503935905 Td
+(Quem controla não apaga na hora uma despesa do histórico. Ele solicita a exclusão. A conclusão é no) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+59.5275590551181182 91.2758267716534419 Td
+(painel amarelo, pelo responsável ou por quem gerencia.) Tj
+ET
+BT
+/F1 8 Tf
+9.1999999999999993 TL
+0.278 0.333 0.412 rg
+45.354330708661422 28.3466929133857093 Td
+(Conecta+  ·  Procedimento do Pequeno caixa) Tj
+ET
+BT
+/F1 8 Tf
+9.1999999999999993 TL
+0.278 0.333 0.412 rg
+545.5212598425197257 28.3466929133857093 Td
+(6) Tj
+ET
+0.75 0.86 1. RG
+0.8503937007874016 w
+45.354330708661422 39.6852755905510719 m
+549.9212598425197029 39.6852755905510719 l
+S
+endstream
+endobj
+15 0 obj
+<</Type /Page
+/Parent 1 0 R
+/Resources 2 0 R
+/MediaBox [0 0 595.2799999999999727 841.8899999999999864]
+/Contents 16 0 R
+>>
+endobj
+16 0 obj
+<<
+/Length 1994
+>>
+stream
+0.8503937007874016 w
+0.75 0.86 1. RG
+0. 0. 0.55 RG
+2.2677165354330713 w
+45.354330708661422 807.8742519685039269 m
+549.9212598425197029 807.8742519685039269 l
+S
+BT
+/F1 8 Tf
+9.1999999999999993 TL
+0.278 0.333 0.412 rg
+45.354330708661422 790.8663779527558972 Td
+(•) Tj
+ET
+BT
+/F1 8 Tf
+9.1999999999999993 TL
+0.278 0.333 0.412 rg
+59.5275590551181182 790.8663779527558972 Td
+(Quem gerencia não lança a despesa no lugar do responsável, a menos que também seja o responsável) Tj
+ET
+BT
+/F1 8 Tf
+9.1999999999999993 TL
+0.278 0.333 0.412 rg
+59.5275590551181182 777.8270078740157487 Td
+(daquele caixa ativo e tenha a permissão de controle.) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 762.5199212598424765 Td
+(•) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+59.5275590551181182 762.5199212598424765 Td
+(Excluir despesa no formulário não mexe no histórico. Solicitar exclusão não apaga o comprovante até) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+59.5275590551181182 749.480551181102328 Td
+(Excluir lançamento.) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+45.354330708661422 734.1734645669291695 Td
+(•) Tj
+ET
+BT
+/F1 10.5 Tf
+12.0749999999999993 TL
+0.059 0.09 0.165 rg
+59.5275590551181182 734.1734645669291695 Td
+(Inativar não apaga lançamentos. Excluir caixa apaga o controle, os lançamentos e os comprovantes.) Tj
+ET
+BT
+/F1 9 Tf
+10.3499999999999996 TL
+0.278 0.333 0.412 rg
+45.354330708661422 718.8663779527558972 Td
+(Documento gerado a partir das telas Pequenos Caixas, Pequeno caixa e do lançamento financeiro do Conecta+.) Tj
+ET
+BT
+/F1 8 Tf
+9.1999999999999993 TL
+0.278 0.333 0.412 rg
+45.354330708661422 28.3466929133857093 Td
+(Conecta+  ·  Procedimento do Pequeno caixa) Tj
+ET
+BT
+/F1 8 Tf
+9.1999999999999993 TL
+0.278 0.333 0.412 rg
+545.5212598425197257 28.3466929133857093 Td
+(7) Tj
+ET
+0.75 0.86 1. RG
+0.8503937007874016 w
+45.354330708661422 39.6852755905510719 m
+549.9212598425197029 39.6852755905510719 l
+S
+endstream
+endobj
+1 0 obj
+<</Type /Pages
+/Kids [3 0 R 5 0 R 7 0 R 9 0 R 11 0 R 13 0 R 15 0 R ]
+/Count 7
+>>
+endobj
+17 0 obj
+<<
+/Type /Font
+/BaseFont /Helvetica
+/Subtype /Type1
+/Encoding /WinAnsiEncoding
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+18 0 obj
+<<
+/Type /Font
+/BaseFont /Helvetica-Bold
+/Subtype /Type1
+/Encoding /WinAnsiEncoding
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+19 0 obj
+<<
+/Type /Font
+/BaseFont /Helvetica-Oblique
+/Subtype /Type1
+/Encoding /WinAnsiEncoding
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+20 0 obj
+<<
+/Type /Font
+/BaseFont /Helvetica-BoldOblique
+/Subtype /Type1
+/Encoding /WinAnsiEncoding
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+21 0 obj
+<<
+/Type /Font
+/BaseFont /Courier
+/Subtype /Type1
+/Encoding /WinAnsiEncoding
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+22 0 obj
+<<
+/Type /Font
+/BaseFont /Courier-Bold
+/Subtype /Type1
+/Encoding /WinAnsiEncoding
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+23 0 obj
+<<
+/Type /Font
+/BaseFont /Courier-Oblique
+/Subtype /Type1
+/Encoding /WinAnsiEncoding
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+24 0 obj
+<<
+/Type /Font
+/BaseFont /Courier-BoldOblique
+/Subtype /Type1
+/Encoding /WinAnsiEncoding
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+25 0 obj
+<<
+/Type /Font
+/BaseFont /Times-Roman
+/Subtype /Type1
+/Encoding /WinAnsiEncoding
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+26 0 obj
+<<
+/Type /Font
+/BaseFont /Times-Bold
+/Subtype /Type1
+/Encoding /WinAnsiEncoding
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+27 0 obj
+<<
+/Type /Font
+/BaseFont /Times-Italic
+/Subtype /Type1
+/Encoding /WinAnsiEncoding
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+28 0 obj
+<<
+/Type /Font
+/BaseFont /Times-BoldItalic
+/Subtype /Type1
+/Encoding /WinAnsiEncoding
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+29 0 obj
+<<
+/Type /Font
+/BaseFont /ZapfDingbats
+/Subtype /Type1
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+30 0 obj
+<<
+/Type /Font
+/BaseFont /Symbol
+/Subtype /Type1
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+2 0 obj
+<<
+/ProcSet [/PDF /Text /ImageB /ImageC /ImageI]
+/Font <<
+/F1 17 0 R
+/F2 18 0 R
+/F3 19 0 R
+/F4 20 0 R
+/F5 21 0 R
+/F6 22 0 R
+/F7 23 0 R
+/F8 24 0 R
+/F9 25 0 R
+/F10 26 0 R
+/F11 27 0 R
+/F12 28 0 R
+/F13 29 0 R
+/F14 30 0 R
+>>
+/XObject <<
+>>
+>>
+endobj
+31 0 obj
+<<
+/Producer (jsPDF 4.2.1)
+/CreationDate (D:20261022100448-03'00')
+>>
+endobj
+32 0 obj
+<<
+/Type /Catalog
+/Pages 1 0 R
+/OpenAction [3 0 R /FitH null]
+/PageLayout /OneColumn
+>>
+endobj
+xref
+0 33
+0000000000 65535 f 
+0000059893 00000 n 
+0000061754 00000 n 
+0000000015 00000 n 
+0000000152 00000 n 
+0000008966 00000 n 
+0000009103 00000 n 
+0000019024 00000 n 
+0000019161 00000 n 
+0000029143 00000 n 
+0000029281 00000 n 
+0000038125 00000 n 
+0000038264 00000 n 
+0000046909 00000 n 
+0000047048 00000 n 
+0000057707 00000 n 
+0000057846 00000 n 
+0000059989 00000 n 
+0000060115 00000 n 
+0000060246 00000 n 
+0000060380 00000 n 
+0000060518 00000 n 
+0000060642 00000 n 
+0000060771 00000 n 
+0000060903 00000 n 
+0000061039 00000 n 
+0000061167 00000 n 
+0000061294 00000 n 
+0000061423 00000 n 
+0000061556 00000 n 
+0000061658 00000 n 
+0000062007 00000 n 
+0000062093 00000 n 
+trailer
+<<
+/Size 33
+/Root 32 0 R
+/Info 31 0 R
+/ID [ <CCFD629AADFB8087724BD2371BDECCD6> <CCFD629AADFB8087724BD2371BDECCD6> ]
+>>
+startxref
+62197
+%%EOF
