@@ -18,6 +18,7 @@ import {
   MAINTENANCE_SCROLL_PROPS,
   maintenancePanelStyles,
 } from '@/lib/maintenanceCardStyles';
+import { downloadWeeklyQuizTranscriptPdf } from '@/lib/weeklyQuizTranscriptPdf';
 import { CenteredCloseDialog } from '@/components/minimal/CenteredCloseDialog';
 import { MINIMAL_SECTION_TITLE, MINIMAL_UI } from '@/lib/minimalUiTheme';
 import { FontAwesome } from '@expo/vector-icons';
@@ -67,6 +68,7 @@ const formatVideoClock = (seconds: number) => {
 const QUIZ_HELP_TEXT = [
   'Buscar pregação mais recente mostra o tema, o pregador, a data e a duração do vídeo. Ao confirmar, o botão vira a barra do progresso da transcrição.',
   'Marque exatamente 10 e toque em Publicar as 10 escolhidas. O membro só vê o quiz depois dessa publicação e responde essas 10.',
+  'Baixar transcrição em PDF grava o texto da pregação já transcrita.',
   'Refazer as 15 perguntas troca o conjunto usando a transcrição já gravada.',
   'Em Pregações arquivadas sem quiz, o mesmo botão gera uma prévia nova daquela data. Com uma prévia aberta, publique ou descarte antes de gerar outra.',
   'Para refazer um quiz já publicado, exclua o quiz dessa data. A transcrição permanece e a pregação volta para a lista de arquivadas.',
@@ -182,6 +184,31 @@ export function MaintenanceWeeklyQuizCard({ isActive = true, panelHeight }: Prop
   const sermonDate = formatSermonDateLabel(draft?.sermonPublishedAt);
   const draftQuestionKey = draft?.questions.map((question) => question.id).join('|') ?? '';
   const selectedCount = selectedQuestionIds.length;
+
+  const downloadDraftTranscript = async () => {
+    if (!draft?.videoId || busy) {
+      return;
+    }
+
+    setBusy(true);
+    setBusyLabel('Gerando o PDF…');
+    setBusyKey('transcript-pdf');
+    setError(null);
+
+    try {
+      const transcript = await fetchWeeklyQuizSermonTranscript(draft.videoId);
+      await downloadWeeklyQuizTranscriptPdf({
+        title: draft.title,
+        sermonDate,
+        transcript,
+      });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Não foi possível baixar a transcrição.');
+    } finally {
+      setBusy(false);
+      setBusyKey(null);
+    }
+  };
 
   useEffect(() => {
     setSelectedQuestionIds([]);
@@ -348,6 +375,16 @@ export function MaintenanceWeeklyQuizCard({ isActive = true, panelHeight }: Prop
             >
               <Text style={styles.secondaryButtonText}>
                 {actionLabel('discard', 'Descartar prévia')}
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              accessibilityRole="button"
+              disabled={busy || !draft.videoId}
+              onPress={() => void downloadDraftTranscript()}
+              style={[styles.secondaryButton, (busy || !draft.videoId) && styles.buttonDisabled]}
+            >
+              <Text style={styles.secondaryButtonText}>
+                {actionLabel('transcript-pdf', 'Baixar transcrição em PDF')}
               </Text>
             </TouchableOpacity>
           </View>
