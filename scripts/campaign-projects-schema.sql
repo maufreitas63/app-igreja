@@ -138,12 +138,20 @@ stable
 security definer
 set search_path = public
 as $$
+  -- Eu quero → Campanhas usa a mesma permissão de Dízimos e Ofertas.
+  -- O card dashboard.card.campaign permanece congelado e não é o grant do membro.
   select coalesce(
     public.is_super_admin_profile(public.current_session_profile_id())
     or public.profile_has_access(
       public.current_session_profile_id(),
       'screen',
       'dashboard.card.campaign',
+      'view'
+    )
+    or public.profile_has_access(
+      public.current_session_profile_id(),
+      'screen',
+      'dashboard.card.offerings',
       'view'
     )
     or public.session_can_manage_campaigns(),
