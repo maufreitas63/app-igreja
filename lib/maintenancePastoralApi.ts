@@ -166,10 +166,12 @@ const isProfileRequestsRpcMissing = (message: string) =>
   message.includes('listar_pedidos_pastoral_perfil')
   && (message.includes('could not find') || message.includes('does not exist') || message.includes('PGRST202'));
 
-export async function fetchPastoralSubmitterOptions() {
+export async function fetchPastoralSubmitterOptions(queue?: 'checkin' | 'intercessao') {
   await refreshIbsManualDisplayMask();
 
-  const { data, error } = await supabase.rpc('listar_solicitantes_pedido_pastoral');
+  const { data, error } = await supabase.rpc('listar_solicitantes_pedido_pastoral', {
+    p_kind: queue ?? null,
+  });
 
   if (error) {
     const message = (error.message ?? '').toLowerCase();

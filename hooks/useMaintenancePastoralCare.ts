@@ -12,7 +12,9 @@ import {
   canUpdatePastoralRequestForSession,
   canViewPastoralRequestForSession,
   loadPastoralCareAccessContext,
+  pastoralRequestMatchesQueue,
   type PastoralCareAccessContext,
+  type PastoralCareQueue,
 } from '@/lib/pastoralAccess';
 import {
   canAdvanceToPastoralFollowUpStage,
@@ -31,7 +33,10 @@ export const MAINTENANCE_PASTORAL_CARE_SQL_HINT =
 
 const EMPTY_PROFILE_VALUE = '';
 
-export function useMaintenancePastoralCare(enabled: boolean) {
+export function useMaintenancePastoralCare(
+  enabled: boolean,
+  queue: PastoralCareQueue = 'checkin'
+) {
   const [submitterOptions, setSubmitterOptions] = useState<PastoralSubmitterOption[]>([]);
   const [loadingOptions, setLoadingOptions] = useState(false);
   const [selectedProfileId, setSelectedProfileId] = useState<string | null>(null);
@@ -71,7 +76,7 @@ export function useMaintenancePastoralCare(enabled: boolean) {
     beginMaintenanceRequest();
 
     try {
-      const options = await fetchPastoralSubmitterOptions();
+      const options = await fetchPastoralSubmitterOptions(queue);
       setSubmitterOptions(options);
     } catch (err) {
       console.error('Erro ao listar solicitantes pastorais:', err);
@@ -92,7 +97,7 @@ export function useMaintenancePastoralCare(enabled: boolean) {
     } finally {
       setLoadingOptions(false);
     }
-  }, [enabled]);
+  }, [enabled, queue]);
 
   const loadRequestsForProfile = useCallback(async (profileId: string) => {
     setLoadingRequests(true);
@@ -117,12 +122,14 @@ export function useMaintenancePastoralCare(enabled: boolean) {
         return;
       }
 
-      const rows = await fetchMaintenancePastoralRequestsForProfile(
-        profileId,
-        profile.fullName,
-        profile.phone,
-        accessContext
-      );
+      const rows = (
+        await fetchMaintenancePastoralRequestsForProfile(
+          profileId,
+          profile.fullName,
+          profile.phone,
+          accessContext
+        )
+      ).filter((row) => pastoralRequestMatchesQueue(row.destination_label, queue));
 
       setRequests(rows);
       setSelectedRequestId((current) => {
@@ -141,7 +148,7 @@ export function useMaintenancePastoralCare(enabled: boolean) {
     } finally {
       setLoadingRequests(false);
     }
-  }, [accessContext]);
+  }, [accessContext, queue]);
 
   const reloadAccessContext = useCallback(async () => {
     if (!enabled) {
@@ -333,6 +340,18 @@ export function useMaintenancePastoralCare(enabled: boolean) {
 
     void loadRequestsForProfile(selectedProfileId);
   }, [accessContext, accessContextReady, enabled, loadRequestsForProfile, selectedProfileId]);
+
+  useEffect(() => {
+    if (!selectedProfileId || loadingOptions) {
+      return;
+    }
+
+    if (!submitterOptions.some((row) => row.profileId === selectedProfileId)) {
+      setSelectedProfileId(null);
+      setRequests([]);
+      setSelectedRequestId(null);
+    }
+  }, [loadingOptions, selectedProfileId, submitterOptions]);
 
   useEffect(() => {
     if (!enabled) {

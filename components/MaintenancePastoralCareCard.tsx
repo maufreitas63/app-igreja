@@ -17,6 +17,7 @@ import {
   pastoralDestinationIsIntercession,
   PASTORAL_DESTINATION_INTERCESSION,
   PASTORAL_AGENDA_RESOURCE,
+  type PastoralCareQueue,
 } from '@/lib/pastoralAccess';
 import { sessionHasAccess } from '@/lib/accessControl';
 import { formatShortName } from '@/lib/formatShortName';
@@ -66,6 +67,7 @@ export function MaintenancePastoralCareCard({
   panelHeight,
   minimal = false,
 }: Props) {
+  const [careQueue, setCareQueue] = useState<PastoralCareQueue>('checkin');
   const {
     submitterOptions,
     loadingOptions,
@@ -90,7 +92,7 @@ export function MaintenancePastoralCareCard({
     formatRequestDateTimeLabel,
     accessContext,
     canUpdatePastoralRequestForSession: canUpdateRequest,
-  } = useMaintenancePastoralCare(isActive);
+  } = useMaintenancePastoralCare(isActive, careQueue);
 
   const canUpdateSelectedRequest = selectedRequest
     ? canUpdateRequest(selectedRequest, accessContext)
@@ -260,6 +262,19 @@ export function MaintenancePastoralCareCard({
         />
       ) : null}
 
+      {panelTab === 'pedidos' || !canManageAgenda ? (
+        <SegmentChipRow
+          variant={minimal ? 'vigilance' : 'default'}
+          compact
+          options={[
+            { value: 'checkin', label: 'Acompanhamento de check-in' },
+            { value: 'intercessao', label: 'Pedidos de intercessão' },
+          ]}
+          selectedValue={careQueue}
+          onSelect={setCareQueue}
+        />
+      ) : null}
+
       {panelTab === 'agenda' && canManageAgenda ? (
         <ScrollView
           style={styles.agendaScroll}
@@ -281,7 +296,9 @@ export function MaintenancePastoralCareCard({
         showsVerticalScrollIndicator
       >
 
-      <VisitorFollowupPastoralAlerts isActive={isActive} minimal={minimal} />
+      {careQueue === 'checkin' ? (
+        <VisitorFollowupPastoralAlerts isActive={isActive} minimal={minimal} />
+      ) : null}
 
       {rpcMissing ? (
         <Text style={[styles.warningText, minimal && styles.warningTextMinimal]}>
@@ -316,7 +333,9 @@ export function MaintenancePastoralCareCard({
           </View>
 
           <Text style={[styles.hintText, minimal && styles.hintTextMinimal]}>
-            Selecione quem enviou o pedido pastoral.
+            {careQueue === 'intercessao'
+              ? 'Selecione quem enviou um pedido de intercessão.'
+              : 'Selecione quem está no acompanhamento de check-in.'}
             {totalRequestCount > 0
               ? ` ${totalRequestCount} pedido${totalRequestCount === 1 ? '' : 's'} no total.`
               : ''}
@@ -387,7 +406,9 @@ export function MaintenancePastoralCareCard({
         </View>
       ) : (
         <Text style={[styles.hintText, minimal && styles.hintTextMinimal]}>
-          Nenhum pedido pastoral cadastrado ainda.
+          {careQueue === 'intercessao'
+            ? 'Nenhum pedido de intercessão nesta lista.'
+            : 'Nenhum acompanhamento de check-in nesta lista.'}
         </Text>
       )}
 

@@ -12,6 +12,16 @@ export const PASTORAL_AGENDA_RESOURCE = 'maintenance.pastoral.agenda';
 export const PASTORAL_DESTINATION_INTERCESSION = 'Ministério de Intercessão';
 export const PASTORAL_DESTINATION_SIGILO = 'Sigilo Pastoral';
 
+export type PastoralCareQueue = 'checkin' | 'intercessao';
+
+export const pastoralRequestMatchesQueue = (
+  destinationLabel: string | null | undefined,
+  queue: PastoralCareQueue
+) => {
+  const intercession = pastoralDestinationIsIntercession(destinationLabel);
+  return queue === 'intercessao' ? intercession : !intercession;
+};
+
 export type PastoralCareAccessContext = {
   profileId: string | null;
   operatorFullName: string | null;
