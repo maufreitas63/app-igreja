@@ -38,6 +38,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import Toast from 'react-native-toast-message';
 import {
   ActivityIndicator,
+  Platform,
   ScrollView,
   StyleSheet,
   Text,
@@ -269,7 +270,16 @@ export function MaintenancePastoralCareCard({
           <MaintenancePastoralAgendaPanel isActive={isActive} minimal={minimal} />
         </ScrollView>
       ) : (
-      <>
+      <ScrollView
+        style={[
+          styles.pedidosScroll,
+          Platform.OS === 'web' ? webPedidosScrollStyle : null,
+        ]}
+        contentContainerStyle={styles.pedidosScrollContent}
+        nestedScrollEnabled
+        {...MAINTENANCE_SCROLL_PROPS}
+        showsVerticalScrollIndicator
+      >
 
       <VisitorFollowupPastoralAlerts isActive={isActive} minimal={minimal} />
 
@@ -384,10 +394,7 @@ export function MaintenancePastoralCareCard({
       {loadingRequests ? (
         <CardLoadingState lines={4} minimal={minimal} />
       ) : selectedRequest ? (
-        <ScrollView
-          style={[styles.detailScroll, minimal && styles.detailScrollMinimal]}
-          nestedScrollEnabled
-        >
+        <View style={[styles.detailBlock, minimal && styles.detailScrollMinimal]}>
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
@@ -783,13 +790,13 @@ export function MaintenancePastoralCareCard({
               </View>
             ) : null}
           </View>
-        </ScrollView>
+        </View>
       ) : selectedSubmitter ? (
         <Text style={[styles.hintText, minimal && styles.hintTextMinimal]}>
           Nenhum pedido encontrado para este perfil.
         </Text>
       ) : null}
-      </>
+      </ScrollView>
       )}
     </View>
   );
@@ -799,10 +806,26 @@ const styles = StyleSheet.create({
   panel: {
     ...CONTAIN_WIDTH,
     flex: 1,
+    flexDirection: 'column',
     borderRadius: 16,
     backgroundColor: '#FFFFFF',
     padding: 12,
     minHeight: 0,
+  },
+  pedidosScroll: {
+    flexGrow: 1,
+    flexShrink: 1,
+    flexBasis: 0,
+    minHeight: 0,
+    maxWidth: '100%',
+    minWidth: 0,
+  },
+  pedidosScrollContent: {
+    paddingBottom: 28,
+  },
+  detailBlock: {
+    maxWidth: '100%',
+    minWidth: 0,
   },
   panelMinimal: {
     ...CONTAIN_WIDTH,
@@ -1361,3 +1384,9 @@ const styles = StyleSheet.create({
     color: '#78350F',
   },
 });
+
+const webPedidosScrollStyle = {
+  minHeight: 0,
+  overflowX: 'hidden',
+  overflowY: 'auto',
+} as const;
