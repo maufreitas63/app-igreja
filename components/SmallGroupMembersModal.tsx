@@ -1,4 +1,4 @@
-import { CloseFooterBar, CLOSE_FOOTER_DOCK_HEIGHT } from '@/components/minimal/CloseFooterBar';
+import { CloseButton } from '@/components/minimal/CloseFooterBar';
 import { formatFullName } from '@/lib/fullName';
 import React from 'react';
 import {
@@ -54,7 +54,7 @@ export function SmallGroupMembersModal({
             )}
           </ScrollView>
 
-          <CloseFooterBar onPress={onClose} accessibilityLabel="Fechar lista de participantes" />
+          <CloseButton onPress={onClose} accessibilityLabel="Fechar lista de participantes" />
         </View>
       </View>
     </Modal>
@@ -68,7 +68,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     padding: 16,
-    paddingBottom: CLOSE_FOOTER_DOCK_HEIGHT,
   },
   backdrop: {
     ...StyleSheet.absoluteFillObject,
@@ -80,7 +79,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderRadius: 12,
     padding: 16,
-    paddingBottom: 0,
     overflow: 'hidden',
     gap: 8,
   },
@@ -91,6 +89,8 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   body: {
+    flexGrow: 0,
+    flexShrink: 1,
     minHeight: 80,
   },
   bodyContent: {
@@ -110,16 +110,5 @@ const styles = StyleSheet.create({
     color: '#64748B',
     fontSize: 13,
     textAlign: 'center',
-  },
-  closeButton: {
-    backgroundColor: '#1E3A5F',
-    borderRadius: 8,
-    paddingVertical: 10,
-    alignItems: 'center',
-  },
-  closeButtonText: {
-    color: '#FFFFFF',
-    fontWeight: '800',
-    fontSize: 13,
   },
 });
