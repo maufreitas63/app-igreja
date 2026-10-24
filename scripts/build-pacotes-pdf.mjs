@@ -8,6 +8,9 @@ const root = path.resolve(__dirname, '..');
 const outDir = path.join(root, 'pdfs');
 
 const files = [
+  'APRESENTACAO_CLIENTE.md',
+  'COMPLEMENTO_2026-10-24.md',
+  'ATUALIZACOES_DOCUMENTACAO_2026-10.md',
   'INDICE_DOCUMENTACAO.md',
   'PACOTE_1_VISAO_GERAL.md',
   'PACOTE_2_OPERACAO.md',
@@ -61,6 +64,12 @@ const pdfCss = `
   table + img, img + table { margin-top: 8px; }
 `;
 
+const complementPath = path.join(root, 'COMPLEMENTO_2026-10-24.md');
+const complement = fs.existsSync(complementPath)
+  ? fs.readFileSync(complementPath, 'utf8').trim()
+  : '';
+const skipPreface = new Set(['APRESENTACAO_CLIENTE.md', 'COMPLEMENTO_2026-10-24.md']);
+
 fs.mkdirSync(outDir, { recursive: true });
 
 for (const file of files) {
@@ -74,10 +83,16 @@ for (const file of files) {
   const outputPath = path.join(outDir, file.replace(/\.md$/i, '.pdf'));
   process.stdout.write(`Gerando ${file} ... `);
 
+  const body = fs.readFileSync(inputPath, 'utf8');
+  const content = complement && !skipPreface.has(file)
+    ? `${complement}\n\n---\n\n${body}`
+    : body;
+
   try {
     const pdf = await mdToPdf(
-      { path: inputPath },
+      { content },
       {
+        basedir: root,
         dest: outputPath,
         pdf_options: {
           format: 'A4',
@@ -117,6 +132,13 @@ for (const file of files) {
   }
 
   fs.copyFileSync(sourcePath, path.join(docsPdfDir, pdfName));
+}
+
+const procedureName = 'procedimento-pequeno-caixa.pdf';
+const procedureSource = path.join(root, 'docs', procedureName);
+if (fs.existsSync(procedureSource)) {
+  fs.copyFileSync(procedureSource, path.join(outDir, procedureName));
+  fs.copyFileSync(procedureSource, path.join(docsPdfDir, procedureName));
 }
 
 console.log(`Copia em: ${docsPdfDir}`);

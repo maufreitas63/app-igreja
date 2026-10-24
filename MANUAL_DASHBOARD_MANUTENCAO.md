@@ -2179,4 +2179,36 @@ Confira validade, cota, restrições e se a chave foi salva na instância corret
 
 ---
 
-*Conecta+ · Manual detalhado da engrenagem · revisão de 05/10/2026*
+## 32. Quiz semanal
+
+**Engrenagem → Culto e Eventos → Quiz semanal**
+
+1. Toque em **Buscar pregação mais recente**.
+2. Confira tema, pregador, data da celebração e duração do vídeo.
+3. Toque em **Baixar e transcrever**. O botão vira a barra de progresso, preenchida na proporção do tempo já transcrito.
+4. Ao terminar, a prévia traz 15 perguntas. Marque exatamente 10.
+5. Toque em **Publicar as 10 escolhidas**. O membro só vê o quiz depois disso.
+6. **Baixar transcrição em PDF** grava o texto da pregação.
+7. **Refazer as 15 perguntas** usa a transcrição já gravada. **Descartar prévia** abandona o rascunho.
+
+Uma pregação que já virou quiz não se repete. Para refazer um quiz publicado, exclua o quiz daquela data. A transcrição permanece.
+
+## 33. Pequenos Caixas
+
+**Engrenagem → Finanças e Inteligência → Pequenos Caixas**
+
+1. Em **Novo caixa**, informe nome, valor-base, dia de fechamento e o responsável. A busca só lista membros ativos.
+2. Salve como **Ativo**. O saldo inicial é o valor-base.
+3. Abra o cartão para ver saldo, despesas pendentes, prazo e histórico.
+4. Em lançamento pendente, abra o comprovante e toque em **Aprovar** ou **Rejeitar**. A rejeição exige motivo.
+5. Despesa aprovada reduz o saldo. Reposição aprovada devolve o saldo ao valor-base.
+6. Pedido de exclusão aparece em painel amarelo. Edite se precisar e toque em **Excluir lançamento**.
+7. **Excluir caixa** apaga o controle, os lançamentos e os comprovantes.
+
+Avisos: âmbar quando a prestação vence em até 5 dias, vermelho quando está em atraso, índigo quando há lançamento rejeitado sem correção.
+
+O procedimento completo, dos dois lados, está em `docs/procedimento-pequeno-caixa.pdf`.
+
+---
+
+*Conecta+ · Manual detalhado da engrenagem · revisão de 24/10/2026*

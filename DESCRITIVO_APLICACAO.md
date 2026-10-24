@@ -2,7 +2,7 @@
 
 **Sistema:** app-igreja / Conecta+
 **Versão:** 1.0.0
-**Data de referência:** 05/10/2026
+**Data de referência:** 24/10/2026
 
 ---
 
@@ -78,7 +78,8 @@ Não há servidor Express intermediário para a lógica de acesso. Autorização
 | Perfil/família | `/perfil`, `/manage-profile`, `/manage-members`, `/lista-familias`, `/membros`, `/aniversariantes` |
 | Comunidade | `/pequeno-grupo`, `/escalas`, `/mural-oportunidades`, `/mural-generosidade`, `/apoio-mutuo` |
 | Eu quero… | `/ofertas`, `/primicias`, `/pastoral`, `/pastoral-history` |
-| Financeiro/documentos | `/financial`, `/expense-report`, `/documentos-oficiais`, `/administrativo` |
+| Financeiro/documentos | `/financial`, `/pequeno-caixa`, `/expense-report`, `/documentos-oficiais`, `/administrativo` |
+| Quiz | `/quiz-semanal` |
 | Eventos | `/visitantes-cadastro-rapido`, `/cracha-visitante`, `/totem-checkin`, `/configuracao-salas`, `/agenda-cancelar` |
 | Conteúdo | `/trilha-discipulado`, `/livros-doados`, `/suggestions-improvements`, `/como-faco`, `/conhecimento` |
 | Administração | `/maintenance-dashboard`, `/atribuicoes`, `/billing`, `/igrejas`, `/alianca-conecta-reino`, `/alianca-indicados`, `/admin/orquestrador` |
@@ -111,7 +112,7 @@ Pedidos com sigilo/intercessão, histórico, estágios, responsável, agenda/slo
 Células, escalas, oportunidades, generosidade, Apoio Mútuo, sugestões, livros, Trilha e documentos oficiais.
 
 ### Finanças
-Dízimos/ofertas, campanhas, Primícias, leitura do membro, importação/planejamento, comentários, RD e conciliação.
+Dízimos/ofertas, campanhas, Primícias, leitura do membro, importação/planejamento, comentários, RD, conciliação e pequeno caixa (valor-base, responsável, conferência e comprovante). O quiz semanal transcreve a pregação do canal da igreja em trechos, gera 15 perguntas e publica 10.
 
 ### Governança
 ACL, papéis, Atribuições, mudança/transferência, relatórios, logs de acesso, Ghost, tenants, Gemini e parâmetros.

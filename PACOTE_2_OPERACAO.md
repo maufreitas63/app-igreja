@@ -2,7 +2,7 @@
 
 Documentação **autocontida** para secretaria, eventos, salas Kids/Teens e líderes de escala.
 
-**Atualizado em:** 05/10/2026
+**Atualizado em:** 24/10/2026
 
 Conteúdo integrado: Manutenção como ecossistema · Escalas · Agenda · FAQ operacional
 
@@ -521,7 +521,7 @@ Com auditoria ativa, família, telefone e permissões seguem o **perfil-alvo**; 
 
 FAQ do ambiente publicado para membros, famílias e equipes de gestão.
 
-**Atualizado em:** 05/10/2026
+**Atualizado em:** 24/10/2026
 
 Documentação relacionada: [Manual do membro](MANUAL_DASHBOARD_MEMBRO.md) · [Manual da engrenagem](MANUAL_DASHBOARD_MANUTENCAO.md)
 
@@ -920,6 +920,14 @@ Abra **Menu → Perfil → Reembolsos**, crie um RD, informe chave PIX, itens e 
 ### O PIX no Conecta+ debita minha conta?
 
 Não. O app apresenta os dados; a confirmação financeira ocorre no aplicativo do banco ou no fluxo do provedor exibido.
+
+### Onde registro o pequeno caixa?
+
+O responsável entra em **Perfil → Pequeno caixa** ou no atalho do Financeiro. Cada gasto pede valor, descrição, data e foto do comprovante. A reposição usa o valor que falta para o valor-base. A conferência aprova na engrenagem, em **Pequenos Caixas**.
+
+### Como sai o quiz da pregação?
+
+Em **Engrenagem → Quiz semanal**, confirme o vídeo e deixe a transcrição ir até o fim. Escolha 10 das 15 perguntas e publique. O membro responde essas 10. A transcrição pode ser baixada em PDF na prévia.
 
 ---
 

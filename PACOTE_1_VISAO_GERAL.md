@@ -2,7 +2,7 @@
 
 Documentação **autocontida** para diretoria, membros, famílias e voluntários.
 
-**Atualizado em:** 05/10/2026
+**Atualizado em:** 24/10/2026
 
 Conteúdo integrado: Funcionalidades · Manual de Treinamento · FAQ
 
@@ -20,11 +20,11 @@ Referência funcional completa do **Conecta+ / app-igreja**, organizada pela exp
 
 Itens marcados como **gestão** dependem de papel e grant no Controle de Acesso. O conteúdo exibido também respeita a igreja ativa, a identidade efetiva da sessão e as políticas do banco.
 
-> **Estado do produto em 05/10/2026.** A experiência principal não é o antigo carrossel do Painel. O caminho publicado é **Início + menu lateral + Eu quero… + engrenagem de manutenção**. Os cards listados em `FROZEN_DASHBOARD_CARD_CONTENTS` permanecem congelados, fora da publicação e não devem ser usados como mapa funcional.
+> **Estado do produto em 24/10/2026.** A experiência principal não é o antigo carrossel do Painel. O caminho publicado é **Início + menu lateral + Eu quero… + engrenagem de manutenção**. Os cards listados em `FROZEN_DASHBOARD_CARD_CONTENTS` permanecem congelados, fora da publicação e não devem ser usados como mapa funcional.
 
 **Documentação relacionada:** [`INDICE_DOCUMENTACAO.md`](INDICE_DOCUMENTACAO.md) · [`MANUAL_ENTREGA.md`](MANUAL_ENTREGA.md) · [`PACOTE_1_VISAO_GERAL.md`](PACOTE_1_VISAO_GERAL.md) · [`MANUAL_TREINAMENTO.md`](MANUAL_TREINAMENTO.md) · [`MANUAL_CONTROLE_ACESSO.md`](MANUAL_CONTROLE_ACESSO.md) · [`CONTROLE_ACESSO.md`](CONTROLE_ACESSO.md) · [`BLUEPRINT.md`](BLUEPRINT.md) · [`DEPLOY_CLOUDFLARE.md`](DEPLOY_CLOUDFLARE.md)
 
-**Atualizado em:** 05/10/2026
+**Atualizado em:** 24/10/2026
 
 ---
 
@@ -177,6 +177,7 @@ O Conecta+ é uma plataforma PWA multi-tenant para membros, famílias, visitante
 - Pendência de Recepção Familiar tem prioridade e abre esse painel.
 - Novo visitante fora da recepção abre **Mudança de Papéis** já filtrada em Visitante.
 - Sem pendências, informa que não há novos registros aguardando admissão.
+- Quem já entrou na régua de acolhimento, ou cuja recepção familiar já foi processada, deixa de contar como pendência. O aviso amarelo não permanece aceso depois do acolhimento.
 
 ### 5.5 Eu quero…
 
@@ -194,6 +195,12 @@ O Conecta+ é uma plataforma PWA multi-tenant para membros, famílias, visitante
 - A chave Gemini pertence à igreja, fica no Supabase e não é embutida no aplicativo.
 - Apenas o Super Administrador configura/substitui a chave.
 - Interações podem ser auditadas com data, usuário, papel, pergunta e resposta, conforme grant.
+
+### 5.7 Quiz semanal para o membro
+
+- O membro responde o quiz publicado mais recente da igreja da sessão, em `/quiz-semanal`.
+- São 10 perguntas, 10 pontos cada. O conjunto publicado sai de 15 perguntas geradas; a secretaria escolhe exatamente 10.
+- O ranking no perfil só aparece para quem concluiu a tentativa e informa se a pessoa está ou não entre os 5 melhores.
 
 ---
 
@@ -313,6 +320,17 @@ Os itens são filtrados por ACL, vínculo ativo quando exigido e identidade efet
 - Substituição, acréscimo e esvaziamento mensal escopado.
 - Comentários, resumos, orçamento e relatórios de despesas.
 - Modelo Preditivo apresenta inteligência conforme dados e grant disponíveis.
+
+### 8.5 Pequeno caixa
+
+- Cada caixa tem nome, responsável, valor-base e dia de fechamento. O saldo inicial nasce igual ao valor-base.
+- Quem gerencia cria e confere na engrenagem, em Finanças e Inteligência → Pequenos Caixas.
+- Quem controla é o responsável do caixa ativo, com a permissão de controle. Entra por Perfil → Pequeno caixa ou pelo atalho do Financeiro.
+- Despesa e reposição exigem imagem do comprovante. O saldo só muda na aprovação. Despesa pendente reserva o saldo. Reposição pendente trava lançamentos novos.
+- A reposição é exatamente o valor-base menos o saldo, depois que as despesas pendentes foram conferidas.
+- O dia de fechamento, de 1 a 31, passa para o último dia do mês quando o dia não existe e para o próximo dia útil em fim de semana ou feriado.
+- Excluir uma despesa já lançada é um pedido. O painel amarelo permite editar e então excluir o lançamento e o comprovante. Excluir o controle do caixa apaga lançamentos e comprovantes.
+- O procedimento completo está em `docs/procedimento-pequeno-caixa.pdf`.
 
 ---
 
@@ -449,6 +467,7 @@ A fonte de verdade é `APP_DRAWER_SETTINGS_ITEMS` em `lib/appDrawerMenu.ts`. A t
 | **Programação de Eventos** | CRUD, publicação, capacidade, salas, totem, quórum e geofence |
 | **Cronograma de Eventos** | Visão temporal/Gantt e abertura para edição |
 | **Manutenção de Avisos** | Comunicados publicados na Home |
+| **Quiz semanal** | Busca a pregação do canal, transcreve em trechos, gera 15 perguntas e publica 10 |
 | **Sala(s) - Check In** | Entrada/saída do Espaço Infantil |
 | **Tipos de Escala** | Tipos, vagas e ciclo |
 | **Servos em Disponibilidade** | Voluntários por escala |
@@ -463,6 +482,7 @@ A fonte de verdade é `APP_DRAWER_SETTINGS_ITEMS` em `lib/appDrawerMenu.ts`. A t
 | **Gestão de Campanhas** | Campanhas, projetos, metas, período e publicação |
 | **Prímicias** | Itens em espécie e compromissos |
 | **Modelo Preditivo** | Análises e projeções autorizadas |
+| **Pequenos Caixas** | Cadastro do caixa, responsável, conferência de despesa e reposição |
 
 ### 13.5 Governança e TI
 
@@ -593,6 +613,8 @@ A fonte de verdade é `APP_DRAWER_SETTINGS_ITEMS` em `lib/appDrawerMenu.ts`. A t
 | `/apoio-mutuo` | Apoio Mútuo |
 | `/escalas` | Escalas do membro |
 | `/financial` | Financeiro |
+| `/pequeno-caixa` | Controle do pequeno caixa pelo responsável |
+| `/quiz-semanal` | Quiz publicado da pregação da semana |
 | `/expense-report` | Reembolsos/RD |
 | `/documentos-oficiais` | Documentos oficiais |
 | `/administrativo` | Administrativo |
@@ -899,7 +921,7 @@ Gestor de Controle de Acesso nunca pode ver Super Administrador, seus logs ou cr
 
 FAQ do ambiente publicado para membros, famílias e equipes de gestão.
 
-**Atualizado em:** 05/10/2026
+**Atualizado em:** 24/10/2026
 
 Documentação relacionada: [Manual do membro](MANUAL_DASHBOARD_MEMBRO.md) · [Manual da engrenagem](MANUAL_DASHBOARD_MANUTENCAO.md)
 
@@ -1298,6 +1320,14 @@ Abra **Menu → Perfil → Reembolsos**, crie um RD, informe chave PIX, itens e 
 ### O PIX no Conecta+ debita minha conta?
 
 Não. O app apresenta os dados; a confirmação financeira ocorre no aplicativo do banco ou no fluxo do provedor exibido.
+
+### Onde registro o pequeno caixa?
+
+O responsável entra em **Perfil → Pequeno caixa** ou no atalho do Financeiro. Cada gasto pede valor, descrição, data e foto do comprovante. A reposição usa o valor que falta para o valor-base. A conferência aprova na engrenagem, em **Pequenos Caixas**.
+
+### Como sai o quiz da pregação?
+
+Em **Engrenagem → Quiz semanal**, confirme o vídeo e deixe a transcrição ir até o fim. Escolha 10 das 15 perguntas e publique. O membro responde essas 10. A transcrição pode ser baixada em PDF na prévia.
 
 ---
 

@@ -2,7 +2,7 @@
 
 Mapa das fontes técnicas, funcionais, operacionais e dos artefatos de entrega do **app-igreja / Conecta+**.
 
-**Atualizado em:** 05/10/2026  
+**Atualizado em:** 24/10/2026  
 **Estado de navegação:** a experiência publicada é **Início + menu lateral + Eu quero… + Perfil + engrenagem**. O antigo carrossel de `/(tabs)/dashboard` e `/(tabs)/explore` está congelado; não deve orientar treinamento, venda ou validação.  
 **Changelog desta revisão:** [`ATUALIZACOES_DOCUMENTACAO_2026-10.md`](ATUALIZACOES_DOCUMENTACAO_2026-10.md)
 
@@ -12,7 +12,9 @@ Mapa das fontes técnicas, funcionais, operacionais e dos artefatos de entrega d
 
 | Documento | Finalidade | Público |
 |---|---|---|
+| [`APRESENTACAO_CLIENTE.md`](APRESENTACAO_CLIENTE.md) | Panorama para apresentar o Conecta+ a uma igreja nova | Diretoria e comercial |
 | [`FUNCIONALIDADES.md`](FUNCIONALIDADES.md) | Fonte funcional completa e atual | Todos |
+| [`docs/procedimento-pequeno-caixa.pdf`](docs/procedimento-pequeno-caixa.pdf) | Procedimento de quem gerencia e de quem controla o pequeno caixa | Tesouraria e responsáveis |
 | [`MANUAL_ENTREGA.md`](MANUAL_ENTREGA.md) | Jornada do cliente, arquitetura, implantação e status | Cliente, operação e TI |
 | [`MANUAL_DASHBOARD_MEMBRO.md`](MANUAL_DASHBOARD_MEMBRO.md) | Uso do Início, menu, Eu quero… e Perfil | Membros e famílias |
 | [`MANUAL_DASHBOARD_MANUTENCAO.md`](MANUAL_DASHBOARD_MANUTENCAO.md) | Uso da engrenagem por grupo operacional | Secretaria, liderança e administração |

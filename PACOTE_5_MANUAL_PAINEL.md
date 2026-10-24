@@ -2,7 +2,7 @@
 
 Documentação **autocontida** para primeiro acesso e uso diário.
 
-**Atualizado em:** 05/10/2026
+**Atualizado em:** 24/10/2026
 
 Conteúdo integrado: login por e-mail, cadastro, LGPD por instância, Início, Agenda, Espaço Infantil, Eu quero…, Abigail, menu, Perfil, Documentos oficiais e Apoio Mútuo — com ilustrações quando disponíveis.
 
@@ -206,6 +206,18 @@ Consultar o que acontece na igreja e abrir rapidamente as ações mais usadas.
 ### Caminho
 
 **Menu → Início**
+
+### Ilustração — Início
+
+![Início — captura anotada](docs/manual-painel/screens/02-indice-painel.png)
+
+| Ref. | Elemento indicado na imagem |
+|:----:|------------------------------|
+| ① | Atalhos do **Índice** abrem o card correspondente |
+| ② | Área do **card ativo** no carrossel do Painel |
+| ③ | Contador **3 / 8** — posição no carrossel |
+| ④ | Rodapé **‹ Menu ›** para navegar e voltar ao Índice |
+
 
 ### O que pode aparecer
 
@@ -470,6 +482,7 @@ Avisar perfis autorizados de que há registros aguardando processamento.
 
 - O sticker não é uma notificação para todos os membros.
 - A fila da Recepção Familiar tem prioridade sobre Mudança Papéis.
+- Quem já foi acolhido na régua, ou cuja recepção familiar já foi processada, deixa de acender o aviso de pendência.
 
 ### Se der erro
 
@@ -1436,5 +1449,27 @@ A tela volta para **Boas-vindas** e as áreas autenticadas deixam de ficar acess
 
 ---
 
-*Conecta+ · Manual detalhado do membro · revisão de 05/10/2026*
+## 30. Quiz semanal e Pequeno caixa
+
+### Quiz semanal
+
+O membro responde, em **Quiz semanal**, somente o quiz já publicado da igreja. São 10 perguntas. Cada uma vale 10 pontos. Quem concluiu a tentativa vê no perfil se está ou não entre os 5 melhores.
+
+### Pequeno caixa
+
+Quem é responsável por um caixa ativo e tem a permissão de controle encontra **Pequeno caixa** em Perfil, entre Trilha de Discipulado e Reembolsos, e também no atalho do Financeiro.
+
+1. Informe o valor em reais e centavos, a descrição e a data.
+2. Anexe ou fotografe o comprovante.
+3. Toque em **Registrar despesa**. O saldo só muda quando a conferência aprovar.
+4. Depois que não houver despesa pendente, anexe o comprovante e toque em **Pedir reposição**. O valor é o que falta para voltar ao valor-base.
+5. Para tirar uma despesa do histórico, toque em **Solicitar exclusão** e conclua no painel amarelo.
+
+**Excluir despesa**, no formulário, apaga só o rascunho que ainda não foi enviado.
+
+O passo a passo completo está no procedimento do Pequeno caixa.
+
+---
+
+*Conecta+ · Manual detalhado do membro · revisão de 24/10/2026*
 

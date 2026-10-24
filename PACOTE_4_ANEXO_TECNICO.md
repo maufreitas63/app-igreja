@@ -2,7 +2,7 @@
 
 Documentação **autocontida** de arquitetura e referências técnicas.
 
-**Atualizado em:** 05/10/2026
+**Atualizado em:** 24/10/2026
 
 Conteúdo integrado: Arquitetura Blueprint PWA · Estado dos cards do Dashboard (congelados)
 

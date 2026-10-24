@@ -93,3 +93,16 @@ Pasta `Screeshot/` (cópias de rotas do app) e restauração de `docs/manual-pai
 ---
 
 *Revisão documental v2026-10-05.*
+
+---
+
+## Complemento — 24/10/2026
+
+Esta revisão entra em todos os PDFs do pacote e nas fontes funcionais.
+
+- **Quiz semanal:** a engrenagem confirma tema, pregador, data e duração; a transcrição avança em trechos com barra de progresso; a secretaria escolhe 10 de 15 perguntas e publica; o membro responde 10; a transcrição baixa em PDF; o ranking do perfil só aparece para quem concluiu.
+- **Pequeno caixa:** cadastro e conferência na engrenagem; lançamento pelo responsável em Perfil ou Financeiro; comprovante obrigatório; saldo só na aprovação; pedido de exclusão no painel amarelo; procedimento em `docs/procedimento-pequeno-caixa.pdf`.
+- **Sticker de admissão:** quem já está na régua de acolhimento, ou cuja recepção familiar foi processada, deixa de contar como pendência.
+- **Apresentação para cliente novo:** `APRESENTACAO_CLIENTE.md` e o PDF correspondente.
+
+*Revisão documental v2026-10-24.*

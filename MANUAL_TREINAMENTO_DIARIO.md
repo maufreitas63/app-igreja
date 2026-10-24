@@ -9,7 +9,7 @@ Treinamento **particionado por dia**, baseado integralmente no [Pacote 5 — Man
 
 **Pacote:** [`PACOTE_7_TREINAMENTO_DIARIO.md`](PACOTE_7_TREINAMENTO_DIARIO.md) · **Índice geral:** [`INDICE_DOCUMENTACAO.md`](INDICE_DOCUMENTACAO.md)
 
-**Atualizado em:** 05/10/2026
+**Atualizado em:** 24/10/2026
 
 ---
 
@@ -232,6 +232,18 @@ Consultar o que acontece na igreja e abrir rapidamente as ações mais usadas.
 
 **Menu → Início**
 
+### Ilustração — Início
+
+![Início — captura anotada](docs/manual-painel/screens/02-indice-painel.png)
+
+| Ref. | Elemento indicado na imagem |
+|:----:|------------------------------|
+| ① | Atalhos do **Índice** abrem o card correspondente |
+| ② | Área do **card ativo** no carrossel do Painel |
+| ③ | Contador **3 / 8** — posição no carrossel |
+| ④ | Rodapé **‹ Menu ›** para navegar e voltar ao Índice |
+
+
 ### O que pode aparecer
 
 1. **Próximos Eventos**.
@@ -324,18 +336,6 @@ Os participantes ficam identificados como inscritos e o contador de vagas é atu
 - Crianças sem celular podem aparecer pelo vínculo familiar.
 - Em eventos com limite de vagas, a disponibilidade pode mudar rapidamente.
 
-### Se der erro
-
-| Situação | O que verificar |
-|---|---|
-| Um familiar não aparece | Confira o vínculo em **Perfil → Gerenciar Família**. |
-| Não consigo desmarcar | A presença pode estar confirmada ou o evento pode usar quórum. |
-| “Sem vagas” | Aguarde orientação da igreja ou escolha outro evento. |
-| Evento errado | Use **Trocar evento** ou volte ao Início. |
-
----
-
-
 ---
 
 ## Perguntas e respostas — Dia 2
@@ -349,6 +349,18 @@ Os participantes ficam identificados como inscritos e o contador de vagas é atu
 | Não vejo eventos? | Pode não haver cultos publicados ou seu perfil não tem permissão — fale com a secretaria. |
 
 # Dia 3 — Espaço Infantil (QR) e check-in do culto
+
+
+### Se der erro
+
+| Situação | O que verificar |
+|---|---|
+| Um familiar não aparece | Confira o vínculo em **Perfil → Gerenciar Família**. |
+| Não consigo desmarcar | A presença pode estar confirmada ou o evento pode usar quórum. |
+| “Sem vagas” | Aguarde orientação da igreja ou escolha outro evento. |
+| Evento errado | Use **Trocar evento** ou volte ao Início. |
+
+---
 
 ## 6. Espaço Infantil e QR familiar
 
@@ -431,18 +443,6 @@ O evento reconhece a presença do participante elegível.
 
 - Ative localização precisa somente durante o uso necessário.
 - Não tente registrar presença fora do local quando houver geofence.
-- Cada evento pode usar regras diferentes.
-
-### Se der erro
-
-| Mensagem | Ação |
-|---|---|
-| Pré-check-in não encontrado | Marque a audiência no evento correto. |
-| Fora da área | Confirme o endereço, ative GPS e aproxime-se do local. |
-| QR inválido | Abra novamente a Carteirinha/Agenda e tente com brilho maior. |
-
----
-
 
 ---
 
@@ -456,6 +456,18 @@ O evento reconhece a presença do participante elegível.
 | Onde apresento o QR no hall? | No **Totem de check-in** ou na Carteirinha Digital / Agenda, conforme o culto do dia. |
 
 # Dia 4 — Aniversários, sticker de novos membros e Eu quero… Contribuir
+
+- Cada evento pode usar regras diferentes.
+
+### Se der erro
+
+| Mensagem | Ação |
+|---|---|
+| Pré-check-in não encontrado | Marque a audiência no evento correto. |
+| Fora da área | Confirme o endereço, ative GPS e aproxime-se do local. |
+| QR inválido | Abra novamente a Carteirinha/Agenda e tente com brilho maior. |
+
+---
 
 ## 8. Bolo de aniversariantes
 
@@ -524,6 +536,7 @@ Avisar perfis autorizados de que há registros aguardando processamento.
 
 - O sticker não é uma notificação para todos os membros.
 - A fila da Recepção Familiar tem prioridade sobre Mudança Papéis.
+- Quem já foi acolhido na régua, ou cuja recepção familiar já foi processada, deixa de acender o aviso de pendência.
 
 ### Se der erro
 
@@ -596,19 +609,6 @@ A contribuição é concluída no aplicativo bancário ou provedor apresentado.
 
 - O Conecta+ não debita automaticamente sua conta.
 - Nunca confirme PIX com recebedor divergente.
-- Em dúvida, pare e consulte a tesouraria.
-
-### Se der erro
-
-| Situação | O que fazer |
-|---|---|
-| Chave não copia | Selecione manualmente ou use o QR. |
-| Campanha não aparece | Ela pode estar encerrada ou não publicada. |
-| Banco recusou | Trate com o banco; não repita sem conferir o extrato. |
-| Recebedor diverge | Não pague e avise a igreja. |
-
----
-
 
 ---
 
@@ -622,6 +622,19 @@ A contribuição é concluída no aplicativo bancário ou provedor apresentado.
 | Como contribuo? | **Eu quero… → Contribuir** → Dízimos/Ofertas, Campanhas ou Prímicias → copiar Pix. |
 
 # Dia 5 — Cuidado Pastoral, cancelamento e Abigail
+
+- Em dúvida, pare e consulte a tesouraria.
+
+### Se der erro
+
+| Situação | O que fazer |
+|---|---|
+| Chave não copia | Selecione manualmente ou use o QR. |
+| Campanha não aparece | Ela pode estar encerrada ou não publicada. |
+| Banco recusou | Trate com o banco; não repita sem conferir o extrato. |
+| Recebedor diverge | Não pague e avise a igreja. |
+
+---
 
 ## 12. Eu quero… → Cuidado Pastoral
 
@@ -763,19 +776,6 @@ A Abigail responde conforme a base disponível e as permissões da igreja ativa.
 ### Dicas
 
 - Prefira “Como inscrevo minha filha no evento?” a perguntas vagas.
-- Não informe senha, PIN, dados bancários ou segredos.
-- Confirme datas, valores e decisões administrativas com a equipe humana.
-
-### Se der erro
-
-| Situação | O que fazer |
-|---|---|
-| Abigail não aparece | Seu perfil ou a igreja pode não ter o recurso habilitado. |
-| Resposta incompleta | Reformule com contexto e uma pergunta objetiva. |
-| Serviço indisponível | Tente depois e use **Como faço…?**. |
-
----
-
 
 ---
 
@@ -789,6 +789,19 @@ A Abigail responde conforme a base disponível e as permissões da igreja ativa.
 | O que é a Abigail? | Assistente em conversa na Home (mesma linha de Eu quero…), com base na igreja da sessão. |
 
 # Dia 6 — Menu lateral e Perfil (dados, família, carteirinha, trilha)
+
+- Não informe senha, PIN, dados bancários ou segredos.
+- Confirme datas, valores e decisões administrativas com a equipe humana.
+
+### Se der erro
+
+| Situação | O que fazer |
+|---|---|
+| Abigail não aparece | Seu perfil ou a igreja pode não ter o recurso habilitado. |
+| Resposta incompleta | Reformule com contexto e uma pergunta objetiva. |
+| Serviço indisponível | Tente depois e use **Como faço…?**. |
+
+---
 
 ## 15. Menu lateral — item por item
 
@@ -1194,19 +1207,6 @@ O cartão fica disponível conforme as regras da igreja e o estado de publicaç�
 ### Dicas
 
 - Não publique documentos, dados bancários ou endereço residencial completo.
-- Seja claro sobre o que oferece; preço e prazo são combinados diretamente.
-- Desative a publicação quando o serviço não estiver disponível.
-
-### Se der erro
-
-| Situação | O que fazer |
-|---|---|
-| Card não aparece | Confirme **Publicar no Apoio Mútuo** e salve novamente. |
-| Contato incorreto | Atualize Dados Cadastrais e o cartão. |
-| Imagem não carrega | Tente formato e tamanho aceitos ou salve sem imagem. |
-
----
-
 
 ---
 
@@ -1221,6 +1221,19 @@ O cartão fica disponível conforme as regras da igreja e o estado de publicaç�
 | O que é a Trilha de Discipulado? | Cinco passos com selos; na lição 5.1 está o Perfil Ministerial. |
 
 # Dia 7 — Documentos, Apoio Mútuo, privacidade e encerrar sessão
+
+- Seja claro sobre o que oferece; preço e prazo são combinados diretamente.
+- Desative a publicação quando o serviço não estiver disponível.
+
+### Se der erro
+
+| Situação | O que fazer |
+|---|---|
+| Card não aparece | Confirme **Publicar no Apoio Mútuo** e salve novamente. |
+| Contato incorreto | Atualize Dados Cadastrais e o cartão. |
+| Imagem não carrega | Tente formato e tamanho aceitos ou salve sem imagem. |
+
+---
 
 ## 22. Perfil → Reembolsos
 
@@ -1533,7 +1546,29 @@ A tela volta para **Boas-vindas** e as áreas autenticadas deixam de ficar acess
 
 ---
 
-*Conecta+ · Manual detalhado do membro · revisão de 05/10/2026*
+## 30. Quiz semanal e Pequeno caixa
+
+### Quiz semanal
+
+O membro responde, em **Quiz semanal**, somente o quiz já publicado da igreja. São 10 perguntas. Cada uma vale 10 pontos. Quem concluiu a tentativa vê no perfil se está ou não entre os 5 melhores.
+
+### Pequeno caixa
+
+Quem é responsável por um caixa ativo e tem a permissão de controle encontra **Pequeno caixa** em Perfil, entre Trilha de Discipulado e Reembolsos, e também no atalho do Financeiro.
+
+1. Informe o valor em reais e centavos, a descrição e a data.
+2. Anexe ou fotografe o comprovante.
+3. Toque em **Registrar despesa**. O saldo só muda quando a conferência aprovar.
+4. Depois que não houver despesa pendente, anexe o comprovante e toque em **Pedir reposição**. O valor é o que falta para voltar ao valor-base.
+5. Para tirar uma despesa do histórico, toque em **Solicitar exclusão** e conclua no painel amarelo.
+
+**Excluir despesa**, no formulário, apaga só o rascunho que ainda não foi enviado.
+
+O passo a passo completo está no procedimento do Pequeno caixa.
+
+---
+
+*Conecta+ · Manual detalhado do membro · revisão de 24/10/2026*
 
 
 ---

@@ -2,7 +2,7 @@
 
 **Sistema:** plataforma multi-tenant de gestão e relacionamento para igrejas
 **Versão do app:** 1.0.0
-**Data de referência:** 05/10/2026
+**Data de referência:** 24/10/2026
 **Públicos:** cliente, liderança, operação, produto e equipe técnica
 
 ---

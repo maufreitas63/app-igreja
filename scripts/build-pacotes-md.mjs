@@ -147,7 +147,7 @@ function buildTrainingDailyManual() {
     '',
     '**Pacote:** [`PACOTE_7_TREINAMENTO_DIARIO.md`](PACOTE_7_TREINAMENTO_DIARIO.md) · **Índice geral:** [`INDICE_DOCUMENTACAO.md`](INDICE_DOCUMENTACAO.md)',
     '',
-    '**Atualizado em:** 05/10/2026',
+    '**Atualizado em:** 24/10/2026',
     '',
     '---',
     '',
@@ -190,7 +190,7 @@ writePackage('PACOTE_1_VISAO_GERAL.md', [
   '',
   'Documentação **autocontida** para diretoria, membros, famílias e voluntários.',
   '',
-  '**Atualizado em:** 05/10/2026',
+  '**Atualizado em:** 24/10/2026',
   '',
   'Conteúdo integrado: Funcionalidades · Manual de Treinamento · FAQ',
   '',
@@ -206,7 +206,7 @@ writePackage('PACOTE_2_OPERACAO.md', [
   '',
   'Documentação **autocontida** para secretaria, eventos, salas Kids/Teens e líderes de escala.',
   '',
-  '**Atualizado em:** 05/10/2026',
+  '**Atualizado em:** 24/10/2026',
   '',
   'Conteúdo integrado: Manutenção como ecossistema · Escalas · Agenda · FAQ operacional',
 ], [
@@ -221,7 +221,7 @@ writePackage('PACOTE_3_GOVERNANCA_TI.md', [
   '',
   'Documentação **autocontida** para super administrador, TI e desenvolvedor.',
   '',
-  '**Atualizado em:** 05/10/2026',
+  '**Atualizado em:** 24/10/2026',
   '',
   'Conteúdo integrado: Manual operacional ACL · Modelo de controle de acesso · Camadas de segurança · Blueprint completo',
 ], [
@@ -236,7 +236,7 @@ writePackage('PACOTE_4_ANEXO_TECNICO.md', [
   '',
   'Documentação **autocontida** de arquitetura e referências técnicas.',
   '',
-  '**Atualizado em:** 05/10/2026',
+  '**Atualizado em:** 24/10/2026',
   '',
   'Conteúdo integrado: Arquitetura Blueprint PWA · Estado dos cards do Dashboard (congelados)',
 ], [
@@ -249,7 +249,7 @@ writePackage('PACOTE_5_MANUAL_PAINEL.md', [
   '',
   'Documentação **autocontida** para primeiro acesso e uso diário.',
   '',
-  '**Atualizado em:** 05/10/2026',
+  '**Atualizado em:** 24/10/2026',
   '',
   'Conteúdo integrado: login por e-mail, cadastro, LGPD por instância, Início, Agenda, Espaço Infantil, Eu quero…, Abigail, menu, Perfil, Documentos oficiais e Apoio Mútuo — com ilustrações quando disponíveis.',
 ], [
@@ -261,7 +261,7 @@ writePackage('PACOTE_6_MANUAL_MANUTENCAO.md', [
   '',
   'Documentação **autocontida** para quem gerencia o aplicativo: secretaria, líderes, pastoral, financeiro e TI.',
   '',
-  '**Atualizado em:** 05/10/2026',
+  '**Atualizado em:** 24/10/2026',
   '',
   'Conteúdo integrado: grupos da engrenagem, Recepção/Régua/sticker, Cuidados Pastorais (Excluir), Atribuições, Ghost, Assinaturas/Gestão Liberada, Controle de Acesso e operação de culto.',
 ], [
@@ -273,7 +273,7 @@ writePackage('PACOTE_7_TREINAMENTO_DIARIO.md', [
   '',
   'Documentação **autocontida** para capacitação **dia a dia**, derivada do Pacote 5.',
   '',
-  '**Atualizado em:** 05/10/2026',
+  '**Atualizado em:** 24/10/2026',
   '',
   'Conteúdo integrado: **7 treinamentos diários** alinhados à navegação Início + menu + Eu quero… + Perfil, com Q&A ao final de cada dia.',
 ], [
