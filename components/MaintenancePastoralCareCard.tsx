@@ -334,12 +334,7 @@ export function MaintenancePastoralCareCard({
               : ''}
           </Text>
 
-          <ScrollView
-            style={styles.submitterList}
-            contentContainerStyle={styles.submitterListContent}
-            nestedScrollEnabled
-            showsVerticalScrollIndicator
-          >
+          <View style={styles.submitterListContent}>
             {filteredSubmitters.map((submitter) => {
               const isSelected = selectedProfileId === submitter.profileId;
 
@@ -395,7 +390,7 @@ export function MaintenancePastoralCareCard({
                 </TouchableOpacity>
               );
             })}
-          </ScrollView>
+          </View>
         </View>
       ) : (
         <Text style={[styles.hintText, minimal && styles.hintTextMinimal]}>
@@ -938,13 +933,6 @@ const styles = StyleSheet.create({
   },
   hintTextMinimal: {
     color: MINIMAL_UI.textMuted,
-  },
-  submitterList: {
-    flexGrow: 0,
-    flexShrink: 0,
-    maxHeight: 110,
-    maxWidth: '100%',
-    minWidth: 0,
   },
   submitterListContent: {
     gap: 6,
