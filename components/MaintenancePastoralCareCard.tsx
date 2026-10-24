@@ -17,7 +17,6 @@ import {
   pastoralDestinationIsIntercession,
   PASTORAL_DESTINATION_INTERCESSION,
   PASTORAL_AGENDA_RESOURCE,
-  type PastoralCareQueue,
 } from '@/lib/pastoralAccess';
 import { sessionHasAccess } from '@/lib/accessControl';
 import { formatShortName } from '@/lib/formatShortName';
@@ -67,7 +66,6 @@ export function MaintenancePastoralCareCard({
   panelHeight,
   minimal = false,
 }: Props) {
-  const [careQueue, setCareQueue] = useState<PastoralCareQueue>('checkin');
   const {
     submitterOptions,
     loadingOptions,
@@ -92,7 +90,7 @@ export function MaintenancePastoralCareCard({
     formatRequestDateTimeLabel,
     accessContext,
     canUpdatePastoralRequestForSession: canUpdateRequest,
-  } = useMaintenancePastoralCare(isActive, careQueue);
+  } = useMaintenancePastoralCare(isActive);
 
   const canUpdateSelectedRequest = selectedRequest
     ? canUpdateRequest(selectedRequest, accessContext)
@@ -150,7 +148,7 @@ export function MaintenancePastoralCareCard({
 
   const [filterProfileId, setFilterProfileId] = useState(allSubmittersFilterValue);
   const [isDetailExpanded, setIsDetailExpanded] = useState(false);
-  const [panelTab, setPanelTab] = useState<'pedidos' | 'agenda'>('pedidos');
+  const [panelView, setPanelView] = useState<'pedidos' | 'checkin' | 'agenda' | null>(null);
   const [canManageAgenda, setCanManageAgenda] = useState(false);
 
   const contentHeight = computeMaintenanceContentHeight(panelHeight);
@@ -205,7 +203,7 @@ export function MaintenancePastoralCareCard({
         setCanManageAgenda(allowed);
 
         if (!allowed) {
-          setPanelTab('pedidos');
+          setPanelView((current) => (current === 'agenda' ? null : current));
         }
       }
     });
@@ -249,33 +247,21 @@ export function MaintenancePastoralCareCard({
       />
       {!minimal ? <View style={maintenancePanelStyles.panelSubtitleSpacer} /> : null}
 
-      {canManageAgenda ? (
-        <SegmentChipRow
-          variant={minimal ? 'vigilance' : 'default'}
-          compact
-          options={[
-            { value: 'pedidos', label: 'Pedidos' },
-            { value: 'agenda', label: 'Minha Agenda' },
-          ]}
-          selectedValue={panelTab}
-          onSelect={(value) => setPanelTab(value as 'pedidos' | 'agenda')}
-        />
-      ) : null}
+      <SegmentChipRow
+        variant={minimal ? 'vigilance' : 'default'}
+        compact
+        options={[
+          { value: 'pedidos', label: 'Pedidos' },
+          { value: 'checkin', label: 'Acompanhamento de check-in' },
+          ...(canManageAgenda
+            ? [{ value: 'agenda' as const, label: 'Minha Agenda' }]
+            : []),
+        ]}
+        selectedValue={panelView}
+        onSelect={setPanelView}
+      />
 
-      {panelTab === 'pedidos' || !canManageAgenda ? (
-        <SegmentChipRow
-          variant={minimal ? 'vigilance' : 'default'}
-          compact
-          options={[
-            { value: 'checkin', label: 'Acompanhamento de check-in' },
-            { value: 'intercessao', label: 'Pedidos de intercessão' },
-          ]}
-          selectedValue={careQueue}
-          onSelect={setCareQueue}
-        />
-      ) : null}
-
-      {panelTab === 'agenda' && canManageAgenda ? (
+      {panelView === 'agenda' && canManageAgenda ? (
         <ScrollView
           style={styles.agendaScroll}
           contentContainerStyle={styles.agendaScrollContent}
@@ -284,7 +270,20 @@ export function MaintenancePastoralCareCard({
         >
           <MaintenancePastoralAgendaPanel isActive={isActive} minimal={minimal} />
         </ScrollView>
-      ) : (
+      ) : panelView === 'checkin' ? (
+        <ScrollView
+          style={[
+            styles.pedidosScroll,
+            Platform.OS === 'web' ? webPedidosScrollStyle : null,
+          ]}
+          contentContainerStyle={styles.pedidosScrollContent}
+          nestedScrollEnabled
+          {...MAINTENANCE_SCROLL_PROPS}
+          showsVerticalScrollIndicator
+        >
+          <VisitorFollowupPastoralAlerts isActive={isActive} minimal={minimal} />
+        </ScrollView>
+      ) : panelView === 'pedidos' ? (
       <ScrollView
         style={[
           styles.pedidosScroll,
@@ -295,10 +294,6 @@ export function MaintenancePastoralCareCard({
         {...MAINTENANCE_SCROLL_PROPS}
         showsVerticalScrollIndicator
       >
-
-      {careQueue === 'checkin' ? (
-        <VisitorFollowupPastoralAlerts isActive={isActive} minimal={minimal} />
-      ) : null}
 
       {rpcMissing ? (
         <Text style={[styles.warningText, minimal && styles.warningTextMinimal]}>
@@ -333,9 +328,7 @@ export function MaintenancePastoralCareCard({
           </View>
 
           <Text style={[styles.hintText, minimal && styles.hintTextMinimal]}>
-            {careQueue === 'intercessao'
-              ? 'Selecione quem enviou um pedido de intercessão.'
-              : 'Selecione quem está no acompanhamento de check-in.'}
+            Selecione quem enviou o pedido pastoral.
             {totalRequestCount > 0
               ? ` ${totalRequestCount} pedido${totalRequestCount === 1 ? '' : 's'} no total.`
               : ''}
@@ -406,9 +399,7 @@ export function MaintenancePastoralCareCard({
         </View>
       ) : (
         <Text style={[styles.hintText, minimal && styles.hintTextMinimal]}>
-          {careQueue === 'intercessao'
-            ? 'Nenhum pedido de intercessão nesta lista.'
-            : 'Nenhum acompanhamento de check-in nesta lista.'}
+          Nenhum pedido pastoral cadastrado ainda.
         </Text>
       )}
 
@@ -818,7 +809,7 @@ export function MaintenancePastoralCareCard({
         </Text>
       ) : null}
       </ScrollView>
-      )}
+      ) : null}
     </View>
   );
 }

@@ -35,7 +35,7 @@ const EMPTY_PROFILE_VALUE = '';
 
 export function useMaintenancePastoralCare(
   enabled: boolean,
-  queue: PastoralCareQueue = 'checkin'
+  queue?: PastoralCareQueue | null
 ) {
   const [submitterOptions, setSubmitterOptions] = useState<PastoralSubmitterOption[]>([]);
   const [loadingOptions, setLoadingOptions] = useState(false);
@@ -76,7 +76,7 @@ export function useMaintenancePastoralCare(
     beginMaintenanceRequest();
 
     try {
-      const options = await fetchPastoralSubmitterOptions(queue);
+      const options = await fetchPastoralSubmitterOptions(queue ?? undefined);
       setSubmitterOptions(options);
     } catch (err) {
       console.error('Erro ao listar solicitantes pastorais:', err);
@@ -122,14 +122,15 @@ export function useMaintenancePastoralCare(
         return;
       }
 
-      const rows = (
-        await fetchMaintenancePastoralRequestsForProfile(
-          profileId,
-          profile.fullName,
-          profile.phone,
-          accessContext
-        )
-      ).filter((row) => pastoralRequestMatchesQueue(row.destination_label, queue));
+      const loaded = await fetchMaintenancePastoralRequestsForProfile(
+        profileId,
+        profile.fullName,
+        profile.phone,
+        accessContext
+      );
+      const rows = queue
+        ? loaded.filter((row) => pastoralRequestMatchesQueue(row.destination_label, queue))
+        : loaded;
 
       setRequests(rows);
       setSelectedRequestId((current) => {
