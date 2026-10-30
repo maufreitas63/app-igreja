@@ -1,14 +1,15 @@
+import { AgnusMascot, type AgnusReaction } from '@/components/verbum/AgnusMascot';
+import { WordToken } from '@/components/verbum/WordToken';
 import { CloseFooterBar } from '@/components/minimal/CloseFooterBar';
 import { MinimalScreenLayout } from '@/components/minimal/MinimalScreenLayout';
 import { useReturnToCallerOnLeave } from '@/hooks/useReturnToCallerOnLeave';
 import { resolveReturnDashboardCardParam, resolveReturnRouteParam, withReturnRoute } from '@/lib/dashboardReturnNavigation';
 import { finishVerbumLesson, loadVerbumLesson, speakVerse, submitVerbumExercise } from '@/lib/verbum/api';
+import { playCorrectChime, playWrongTone } from '@/lib/verbum/sound';
 import type { FillBlankPayload, OrderWordsPayload, VerbumExercise, VerbumLearner, VerbumLessonRef } from '@/lib/verbum/types';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Animated, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-
-const NAVY = '#1E3A8A';
 
 function isFillBlank(exercise: VerbumExercise): exercise is VerbumExercise & { payload: FillBlankPayload } {
   return exercise.exerciseType === 'FILL_BLANK';
@@ -38,6 +39,9 @@ export default function VerbumLessonScreen() {
   const [nextLesson, setNextLesson] = useState<VerbumLessonRef | null>(null);
   const [checking, setChecking] = useState(false);
   const shake = useMemo(() => new Animated.Value(0), []);
+  const slide = useMemo(() => new Animated.Value(0), []);
+  const shieldScale = useMemo(() => new Animated.Value(1), []);
+  const previousShields = useRef<number | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -47,6 +51,7 @@ export default function VerbumLessonScreen() {
     setChoice(null);
     setBuilt([]);
     setDone(0);
+    setLoading(true);
     void (async () => {
       try {
         const session = await loadVerbumLesson(lessonId);
@@ -59,6 +64,7 @@ export default function VerbumLessonScreen() {
         setQueue(session.exercises);
         setTotal(session.exercises.length);
         setPaused(!session.learner.infiniteShields && session.learner.shields <= 0);
+        previousShields.current = session.learner.shields;
       } catch (cause) {
         if (active) {
           setError(cause instanceof Error ? cause.message : 'Não foi possível abrir a lição.');
@@ -75,33 +81,61 @@ export default function VerbumLessonScreen() {
   }, [lessonId]);
 
   const current = queue[0] ?? null;
+
+  useEffect(() => {
+    slide.setValue(48);
+    Animated.timing(slide, { toValue: 0, duration: 280, useNativeDriver: true }).start();
+  }, [current?.id, slide]);
+
   const progress = total === 0 ? 0 : Math.round((done / total) * 100);
-  const pool = current && !isFillBlank(current)
-    ? (current.payload as OrderWordsPayload).shuffled.filter((word) => {
+  const orderPayload = current && !isFillBlank(current) ? (current.payload as OrderWordsPayload) : null;
+  const pool = orderPayload
+    ? orderPayload.shuffled.filter((word) => {
         const used = built.filter((item) => item === word).length;
-        const available = (current.payload as OrderWordsPayload).shuffled.filter((item) => item === word).length;
+        const available = orderPayload.shuffled.filter((item) => item === word).length;
         return used < available;
       })
     : [];
+  const canVerify = current
+    ? isFillBlank(current)
+      ? Boolean(choice)
+      : built.length === (orderPayload?.answer.length ?? 0)
+    : false;
+
+  const reaction: AgnusReaction = finished
+    ? 'STREAK_FIRE'
+    : feedback?.correct
+      ? 'CELEBRATING'
+      : feedback
+        ? 'CONSOLING'
+        : 'THINKING';
+
+  const pulseShield = () => {
+    shieldScale.setValue(1);
+    Animated.sequence([
+      Animated.timing(shieldScale, { toValue: 1.4, duration: 120, useNativeDriver: true }),
+      Animated.timing(shieldScale, { toValue: 1, duration: 160, useNativeDriver: true }),
+    ]).start();
+  };
 
   const runShake = () => {
     shake.setValue(0);
     Animated.sequence([
-      Animated.timing(shake, { toValue: 8, duration: 40, useNativeDriver: true }),
-      Animated.timing(shake, { toValue: -8, duration: 40, useNativeDriver: true }),
-      Animated.timing(shake, { toValue: 0, duration: 40, useNativeDriver: true }),
+      Animated.timing(shake, { toValue: -10, duration: 50, useNativeDriver: true }),
+      Animated.timing(shake, { toValue: 10, duration: 50, useNativeDriver: true }),
+      Animated.timing(shake, { toValue: -10, duration: 50, useNativeDriver: true }),
+      Animated.timing(shake, { toValue: 10, duration: 50, useNativeDriver: true }),
+      Animated.timing(shake, { toValue: 0, duration: 50, useNativeDriver: true }),
     ]).start();
   };
 
   const verify = async () => {
-    if (!current || checking || feedback) {
+    if (!current || checking || feedback || !canVerify) {
       return;
     }
     setChecking(true);
     try {
-      const answer = isFillBlank(current)
-        ? { choice: choice ?? '' }
-        : { order: built };
+      const answer = isFillBlank(current) ? { choice: choice ?? '' } : { order: built };
       const result = await submitVerbumExercise(current.id, answer);
       setLearner((previous) =>
         previous
@@ -114,9 +148,20 @@ export default function VerbumLessonScreen() {
             }
           : previous
       );
+      if (
+        previousShields.current != null
+        && result.shields < previousShields.current
+        && !result.infiniteShields
+      ) {
+        pulseShield();
+      }
+      previousShields.current = result.shields;
       setFeedback({ correct: result.correct, message: result.message, expected: result.expectedLabel });
       setPaused(result.paused);
-      if (!result.correct) {
+      if (result.correct) {
+        playCorrectChime();
+      } else {
+        playWrongTone();
         runShake();
       }
     } catch (cause) {
@@ -181,7 +226,20 @@ export default function VerbumLessonScreen() {
     }
   };
 
-  const shieldLabel = learner?.infiniteShields ? '∞' : String(learner?.shields ?? 0);
+  const buttonTone = feedback?.correct || finished
+    ? styles.buttonOk
+    : feedback
+      ? styles.buttonBad
+      : canVerify
+        ? styles.buttonOk
+        : styles.buttonOff;
+  const buttonLabel = finished
+    ? 'CONTINUAR'
+    : feedback
+      ? feedback.correct
+        ? 'CONTINUAR'
+        : 'ENTENDIDO'
+      : 'VERIFICAR';
 
   return (
     <MinimalScreenLayout
@@ -190,23 +248,25 @@ export default function VerbumLessonScreen() {
     >
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.header}>
-          <Text style={styles.shields}>Escudos {shieldLabel}</Text>
+          <Animated.View style={{ transform: [{ scale: shieldScale }] }}>
+            <Text style={[styles.shields, learner?.infiniteShields ? styles.shieldsGold : null]}>
+              {learner?.infiniteShields ? 'Escudo infinito' : `Escudos ${learner?.shields ?? 0}`}
+            </Text>
+          </Animated.View>
           <View style={styles.track}>
-            <View style={[styles.fill, { width: `${progress}%` }]} />
+            <View style={[styles.fill, { width: `${progress}%` }]}>
+              <View style={styles.shine} />
+            </View>
           </View>
         </View>
-        {loading ? <ActivityIndicator color={NAVY} /> : null}
+        {loading ? <ActivityIndicator color="#1E3A8A" /> : null}
         {error ? <Text style={styles.error}>{error}</Text> : null}
+        <AgnusMascot reaction={reaction} />
         {finished ? (
           <View style={styles.card}>
             <Text style={styles.prompt}>Lição concluída</Text>
             <Text style={styles.verse}>{summary}</Text>
-            <Pressable style={styles.verify} onPress={continueCourse} accessibilityRole="button">
-              <Text style={styles.verifyLabel}>Continuar</Text>
-              <Text style={styles.startHint}>
-                {nextLesson ? nextLesson.title : 'Voltar à trilha do curso'}
-              </Text>
-            </Pressable>
+            <Text style={styles.nextHint}>{nextLesson ? nextLesson.title : 'Voltar à trilha do curso'}</Text>
           </View>
         ) : null}
         {paused && !finished ? (
@@ -215,72 +275,121 @@ export default function VerbumLessonScreen() {
           </Text>
         ) : null}
         {current && !finished && !paused ? (
-          <Animated.View style={[styles.card, { transform: [{ translateX: shake }] }]}>
+          <Animated.View style={[styles.card, { transform: [{ translateX: shake }, { translateX: slide }] }]}>
             <Text style={styles.prompt}>{current.prompt}</Text>
             {current.passageRef ? <Text style={styles.ref}>{current.passageRef}</Text> : null}
             <Text style={styles.verse}>{current.versePt}</Text>
-            <Pressable
-              onPress={() => speakVerse(current.verseEn, current.audioUrl)}
-              accessibilityRole="button"
-            >
+            <Pressable onPress={() => speakVerse(current.verseEn, current.audioUrl)} accessibilityRole="button">
               <Text style={styles.listen}>Ouvir versículo</Text>
             </Pressable>
             {isFillBlank(current) ? (
-              <>
-                <Text style={styles.sentence}>{current.payload.sentence}</Text>
-                {current.payload.options.map((option) => (
-                  <Pressable
-                    key={option}
-                    style={[styles.option, choice === option && styles.optionOn]}
-                    onPress={() => setChoice(option)}
-                    accessibilityRole="button"
-                  >
-                    <Text style={styles.optionLabel}>{option}</Text>
-                  </Pressable>
-                ))}
-              </>
+              <FillBlankExercise
+                sentence={current.payload.sentence}
+                options={current.payload.options}
+                choice={choice}
+                onChoose={setChoice}
+              />
             ) : (
-              <>
-                <Text style={styles.sentence}>{built.join(' ') || 'Toque as palavras na ordem.'}</Text>
-                <View style={styles.words}>
-                  {pool.map((word, index) => (
-                    <Pressable
-                      key={`${word}-${index}`}
-                      style={styles.word}
-                      onPress={() => setBuilt((value) => [...value, word])}
-                      accessibilityRole="button"
-                    >
-                      <Text style={styles.optionLabel}>{word}</Text>
-                    </Pressable>
-                  ))}
-                </View>
-              </>
+              <OrderWordsExercise
+                built={built}
+                pool={pool}
+                onAdd={(word) => setBuilt((value) => [...value, word])}
+                onRemove={(index) => setBuilt((value) => value.filter((_, item) => item !== index))}
+              />
             )}
           </Animated.View>
         ) : null}
-        {feedback ? (
-          <View style={[styles.feedback, feedback.correct ? styles.ok : styles.bad]}>
-            <Text style={styles.feedbackText}>{feedback.message}</Text>
-            {!feedback.correct && feedback.expected ? (
-              <Text style={styles.feedbackText}>{feedback.expected}</Text>
-            ) : null}
+        {feedback && !finished ? (
+          <View style={[styles.impact, feedback.correct ? styles.impactOk : styles.impactBad]}>
+            <Text style={styles.impactTitle}>{feedback.correct ? 'Excelente!' : 'Solução correta:'}</Text>
+            <Text style={styles.impactBody}>{feedback.correct ? feedback.message : feedback.expected}</Text>
           </View>
         ) : null}
-        {current && !finished && !paused ? (
+        {(current && !paused) || finished ? (
           <Pressable
-            style={styles.verify}
-            onPress={() => void (feedback ? continueLesson() : verify())}
+            style={[styles.action, buttonTone]}
+            disabled={!finished && !feedback && !canVerify}
+            onPress={() => {
+              if (finished) {
+                continueCourse();
+                return;
+              }
+              if (feedback) {
+                continueLesson();
+                return;
+              }
+              void verify();
+            }}
             accessibilityRole="button"
           >
-            <Text style={styles.verifyLabel}>{feedback ? 'Continuar' : 'Verificar'}</Text>
+            <Text style={[styles.actionLabel, !finished && !feedback && !canVerify ? styles.actionLabelOff : null]}>
+              {buttonLabel}
+            </Text>
           </Pressable>
-        ) : null}
-        {!loading && !current && !finished && !error ? (
-          <Text style={styles.verse}>{title}</Text>
         ) : null}
         {title && !finished ? <Text style={styles.lessonTitle}>{title}</Text> : null}
       </ScrollView>
     </MinimalScreenLayout>
+  );
+}
+
+function FillBlankExercise({
+  sentence,
+  options,
+  choice,
+  onChoose,
+}: {
+  sentence: string;
+  options: string[];
+  choice: string | null;
+  onChoose: (value: string | null) => void;
+}) {
+  const [before, after] = sentence.split('_____');
+  return (
+    <View style={styles.block}>
+      <View style={styles.answerLine}>
+        <Text style={styles.sentence}>{before}</Text>
+        {choice ? (
+          <WordToken label={choice} placed onPress={() => onChoose(null)} />
+        ) : (
+          <View style={styles.slot} />
+        )}
+        <Text style={styles.sentence}>{after}</Text>
+      </View>
+      <View style={styles.bank}>
+        {options.filter((option) => option !== choice).map((option) => (
+          <WordToken key={option} label={option} onPress={() => onChoose(option)} />
+        ))}
+      </View>
+    </View>
+  );
+}
+
+function OrderWordsExercise({
+  built,
+  pool,
+  onAdd,
+  onRemove,
+}: {
+  built: string[];
+  pool: string[];
+  onAdd: (word: string) => void;
+  onRemove: (index: number) => void;
+}) {
+  return (
+    <View style={styles.block}>
+      <View style={styles.answerLine}>
+        {built.length === 0 ? <View style={styles.slot} /> : null}
+        {built.map((word, index) => (
+          <WordToken key={`${word}-${index}`} label={word} placed onPress={() => onRemove(index)} />
+        ))}
+      </View>
+      <View style={styles.bank}>
+        {pool.map((word, index) => (
+          <WordToken key={`${word}-bank-${index}`} label={word} onPress={() => onAdd(word)} />
+        ))}
+      </View>
+    </View>
   );
 }
 
@@ -293,19 +402,32 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   shields: {
-    color: NAVY,
+    color: '#BE123C',
     fontWeight: '800',
     textAlign: 'right',
+    fontSize: 16,
+  },
+  shieldsGold: {
+    color: '#B45309',
   },
   track: {
-    height: 10,
-    borderRadius: 8,
-    backgroundColor: '#E4DECF',
+    height: 16,
+    borderRadius: 999,
+    backgroundColor: '#F1F5F9',
     overflow: 'hidden',
   },
   fill: {
-    height: 10,
-    backgroundColor: '#0F766E',
+    height: 16,
+    backgroundColor: '#10B981',
+    borderRadius: 999,
+    overflow: 'hidden',
+  },
+  shine: {
+    height: 4,
+    marginTop: 2,
+    marginHorizontal: 6,
+    borderRadius: 999,
+    backgroundColor: 'rgba(255,255,255,0.35)',
   },
   error: {
     color: '#B91C1C',
@@ -313,13 +435,15 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   card: {
-    backgroundColor: '#F7F6EF',
-    borderRadius: 16,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 18,
     padding: 16,
-    gap: 8,
+    gap: 10,
+    borderWidth: 2,
+    borderColor: '#E2E8F0',
   },
   prompt: {
-    color: NAVY,
+    color: '#1E3A8A',
     fontSize: 18,
     fontWeight: '800',
   },
@@ -340,72 +464,87 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '700',
   },
-  option: {
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: '#E4DECF',
-    backgroundColor: '#FFFFFF',
-    paddingVertical: 10,
-    paddingHorizontal: 12,
+  block: {
+    gap: 12,
   },
-  optionOn: {
-    borderColor: '#2F6FED',
-    backgroundColor: '#D6E6F8',
+  answerLine: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    gap: 8,
+    minHeight: 52,
   },
-  optionLabel: {
-    color: '#24315C',
-    fontWeight: '700',
-    textAlign: 'center',
+  slot: {
+    minWidth: 72,
+    height: 42,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderStyle: 'dashed',
+    borderColor: '#CBD5E1',
+    backgroundColor: '#F8FAFC',
   },
-  words: {
+  bank: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
   },
-  word: {
-    borderRadius: 10,
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#D3E2F4',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-  },
-  feedback: {
-    borderRadius: 12,
-    padding: 12,
+  impact: {
+    borderRadius: 16,
+    borderWidth: 2,
+    padding: 14,
     gap: 4,
   },
-  ok: {
+  impactOk: {
     backgroundColor: '#D1FAE5',
+    borderColor: '#6EE7B7',
   },
-  bad: {
-    backgroundColor: '#FEE2E2',
+  impactBad: {
+    backgroundColor: '#FFE4E6',
+    borderColor: '#FDA4AF',
   },
-  feedbackText: {
-    color: '#24315C',
-    fontWeight: '700',
-    textAlign: 'center',
+  impactTitle: {
+    color: '#1E293B',
+    fontWeight: '800',
+    fontSize: 16,
   },
-  verify: {
-    backgroundColor: '#2F6FED',
-    borderRadius: 12,
-    minHeight: 52,
+  impactBody: {
+    color: '#334155',
+    lineHeight: 20,
+  },
+  action: {
+    minHeight: 54,
+    borderRadius: 16,
+    borderBottomWidth: 4,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  verifyLabel: {
-    color: '#FFFFFF',
-    fontSize: 18,
-    fontWeight: '800',
+  buttonOk: {
+    backgroundColor: '#10B981',
+    borderBottomColor: '#047857',
   },
-  startHint: {
-    color: '#E8F1FB',
-    fontSize: 13,
-    textAlign: 'center',
-    marginTop: 4,
+  buttonBad: {
+    backgroundColor: '#F43F5E',
+    borderBottomColor: '#BE123C',
+  },
+  buttonOff: {
+    backgroundColor: '#E2E8F0',
+    borderBottomColor: '#CBD5E1',
+  },
+  actionLabel: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '800',
+    letterSpacing: 1,
+  },
+  actionLabelOff: {
+    color: '#94A3B8',
+  },
+  nextHint: {
+    color: '#1E3A8A',
+    fontWeight: '700',
   },
   lessonTitle: {
-    color: '#4B5568',
+    color: '#64748B',
     textAlign: 'center',
   },
 });
