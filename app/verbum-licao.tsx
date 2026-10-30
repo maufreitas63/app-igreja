@@ -6,13 +6,21 @@ import { useReturnToCallerOnLeave } from '@/hooks/useReturnToCallerOnLeave';
 import { resolveReturnDashboardCardParam, resolveReturnRouteParam, withReturnRoute } from '@/lib/dashboardReturnNavigation';
 import { finishVerbumLesson, loadVerbumLesson, speakVerse, submitVerbumExercise } from '@/lib/verbum/api';
 import { playCorrectChime, playWrongTone } from '@/lib/verbum/sound';
-import type { FillBlankPayload, OrderWordsPayload, VerbumExercise, VerbumLearner, VerbumLessonRef } from '@/lib/verbum/types';
+import type { FillBlankPayload, MatchPair, MatchPairsPayload, OrderWordsPayload, VerbumExercise, VerbumLearner, VerbumLessonRef } from '@/lib/verbum/types';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Animated, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 function isFillBlank(exercise: VerbumExercise): exercise is VerbumExercise & { payload: FillBlankPayload } {
   return exercise.exerciseType === 'FILL_BLANK';
+}
+
+function isMatch(exercise: VerbumExercise): exercise is VerbumExercise & { payload: MatchPairsPayload } {
+  return exercise.exerciseType === 'MATCH_PAIRS';
+}
+
+function isOrder(exercise: VerbumExercise): exercise is VerbumExercise & { payload: OrderWordsPayload } {
+  return exercise.exerciseType === 'ORDER_WORDS' || exercise.exerciseType === 'LISTENING_DICTATION';
 }
 
 export default function VerbumLessonScreen() {
@@ -33,6 +41,10 @@ export default function VerbumLessonScreen() {
   const [done, setDone] = useState(0);
   const [choice, setChoice] = useState<string | null>(null);
   const [built, setBuilt] = useState<string[]>([]);
+  const [matches, setMatches] = useState<MatchPair[]>([]);
+  const [pickEn, setPickEn] = useState<string | null>(null);
+  const [unitCrown, setUnitCrown] = useState(false);
+  const [crownTalents, setCrownTalents] = useState(0);
   const [feedback, setFeedback] = useState<{ correct: boolean; message: string; expected: string } | null>(null);
   const [paused, setPaused] = useState(false);
   const [finished, setFinished] = useState(false);
@@ -50,6 +62,10 @@ export default function VerbumLessonScreen() {
     setFeedback(null);
     setChoice(null);
     setBuilt([]);
+    setMatches([]);
+    setPickEn(null);
+    setUnitCrown(false);
+    setCrownTalents(0);
     setDone(0);
     setLoading(true);
     void (async () => {
@@ -88,7 +104,7 @@ export default function VerbumLessonScreen() {
   }, [current?.id, slide]);
 
   const progress = total === 0 ? 0 : Math.round((done / total) * 100);
-  const orderPayload = current && !isFillBlank(current) ? (current.payload as OrderWordsPayload) : null;
+  const orderPayload = current && isOrder(current) ? current.payload : null;
   const pool = orderPayload
     ? orderPayload.shuffled.filter((word) => {
         const used = built.filter((item) => item === word).length;
@@ -99,11 +115,15 @@ export default function VerbumLessonScreen() {
   const canVerify = current
     ? isFillBlank(current)
       ? Boolean(choice)
-      : built.length === (orderPayload?.answer.length ?? 0)
+      : isMatch(current)
+        ? matches.length === current.payload.pairs.length && current.payload.pairs.length > 0
+        : built.length === (orderPayload?.answer.length ?? 0) && (orderPayload?.answer.length ?? 0) > 0
     : false;
 
   const reaction: AgnusReaction = finished
-    ? 'STREAK_FIRE'
+    ? unitCrown
+      ? 'CELEBRATING'
+      : 'STREAK_FIRE'
     : feedback?.correct
       ? 'CELEBRATING'
       : feedback
@@ -135,7 +155,11 @@ export default function VerbumLessonScreen() {
     }
     setChecking(true);
     try {
-      const answer = isFillBlank(current) ? { choice: choice ?? '' } : { order: built };
+      const answer = isFillBlank(current)
+        ? { choice: choice ?? '' }
+        : isMatch(current)
+          ? { matches }
+          : { order: built };
       const result = await submitVerbumExercise(current.id, answer);
       setLearner((previous) =>
         previous
@@ -177,9 +201,11 @@ export default function VerbumLessonScreen() {
     }
     let active = true;
     void finishVerbumLesson(lessonId)
-      .then((next) => {
+      .then((result) => {
         if (active) {
-          setNextLesson(next);
+          setNextLesson(result.lesson);
+          setUnitCrown(result.unitCrown);
+          setCrownTalents(result.talentsAwarded);
         }
       })
       .catch((cause: unknown) => {
@@ -220,6 +246,8 @@ export default function VerbumLessonScreen() {
     setDone((value) => value + (feedback.correct ? 1 : 0));
     setChoice(null);
     setBuilt([]);
+    setMatches([]);
+    setPickEn(null);
     setFeedback(null);
     if (feedback.correct && rest.length === 0) {
       setFinished(true);
@@ -261,11 +289,19 @@ export default function VerbumLessonScreen() {
         </View>
         {loading ? <ActivityIndicator color="#1E3A8A" /> : null}
         {error ? <Text style={styles.error}>{error}</Text> : null}
-        <AgnusMascot reaction={reaction} />
+        <AgnusMascot
+          reaction={reaction}
+          lineEn={finished && unitCrown ? 'The crown is yours.' : undefined}
+          linePt={finished && unitCrown ? 'A coroa da unidade é sua.' : undefined}
+        />
         {finished ? (
           <View style={styles.card}>
-            <Text style={styles.prompt}>Lição concluída</Text>
-            <Text style={styles.verse}>{summary}</Text>
+            <Text style={styles.prompt}>{unitCrown ? 'Coroa da unidade' : 'Lição concluída'}</Text>
+            <Text style={styles.verse}>
+              {unitCrown
+                ? `A unidade está completa. ${crownTalents} Talentos e a coroa de ouro foram concedidos.`
+                : summary}
+            </Text>
             <Text style={styles.nextHint}>{nextLesson ? nextLesson.title : 'Voltar à trilha do curso'}</Text>
           </View>
         ) : null}
@@ -288,6 +324,18 @@ export default function VerbumLessonScreen() {
                 options={current.payload.options}
                 choice={choice}
                 onChoose={setChoice}
+              />
+            ) : isMatch(current) ? (
+              <MatchPairsExercise
+                pairs={current.payload.pairs}
+                matches={matches}
+                pickEn={pickEn}
+                onPickEn={setPickEn}
+                onMatch={(pair) => {
+                  setMatches((value) => [...value, pair]);
+                  setPickEn(null);
+                }}
+                onUndo={(en) => setMatches((value) => value.filter((pair) => pair.en !== en))}
               />
             ) : (
               <OrderWordsExercise
@@ -330,6 +378,58 @@ export default function VerbumLessonScreen() {
         {title && !finished ? <Text style={styles.lessonTitle}>{title}</Text> : null}
       </ScrollView>
     </MinimalScreenLayout>
+  );
+}
+
+function MatchPairsExercise({
+  pairs,
+  matches,
+  pickEn,
+  onPickEn,
+  onMatch,
+  onUndo,
+}: {
+  pairs: MatchPair[];
+  matches: MatchPair[];
+  pickEn: string | null;
+  onPickEn: (value: string | null) => void;
+  onMatch: (pair: MatchPair) => void;
+  onUndo: (en: string) => void;
+}) {
+  const usedEn = new Set(matches.map((pair) => pair.en));
+  const usedPt = new Set(matches.map((pair) => pair.pt));
+  return (
+    <View style={styles.block}>
+      <View style={styles.bank}>
+        {matches.map((pair) => (
+          <WordToken key={pair.en} label={`${pair.en} = ${pair.pt}`} placed onPress={() => onUndo(pair.en)} />
+        ))}
+      </View>
+      <View style={styles.bank}>
+        {pairs.filter((pair) => !usedEn.has(pair.en)).map((pair) => (
+          <WordToken
+            key={pair.en}
+            label={pair.en}
+            placed={pickEn === pair.en}
+            onPress={() => onPickEn(pickEn === pair.en ? null : pair.en)}
+          />
+        ))}
+      </View>
+      <View style={styles.bank}>
+        {pairs.filter((pair) => !usedPt.has(pair.pt)).map((pair) => (
+          <WordToken
+            key={pair.pt}
+            label={pair.pt}
+            onPress={() => {
+              if (!pickEn) {
+                return;
+              }
+              onMatch({ en: pickEn, pt: pair.pt });
+            }}
+          />
+        ))}
+      </View>
+    </View>
   );
 }
 

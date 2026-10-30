@@ -13,11 +13,16 @@ const LINES: Record<AgnusReaction, { en: string; pt: string }> = {
 
 type Props = {
   reaction: AgnusReaction;
+  lineEn?: string;
+  linePt?: string;
 };
 
-export function AgnusMascot({ reaction }: Props) {
+export function AgnusMascot({ reaction, lineEn, linePt }: Props) {
   const lift = useRef(new Animated.Value(0)).current;
-  const line = LINES[reaction];
+  const line = {
+    en: lineEn ?? LINES[reaction].en,
+    pt: linePt ?? LINES[reaction].pt,
+  };
   const celebrating = reaction === 'CELEBRATING' || reaction === 'STREAK_FIRE';
   const eyesClosed = reaction === 'CELEBRATING';
 

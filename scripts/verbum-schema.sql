@@ -31,6 +31,28 @@ create table if not exists public.verbum_curriculum_units (
   unique (bible_book_id, order_index)
 );
 
+create table if not exists public.verbum_course_sections (
+  id serial primary key,
+  cefr_level text not null,
+  order_index int not null unique,
+  title text not null,
+  description text,
+  color_hex text not null default '#10b981'
+);
+
+alter table public.verbum_curriculum_units
+  add column if not exists section_id int references public.verbum_course_sections (id) on delete set null;
+
+create table if not exists public.verbum_path_nodes (
+  id serial primary key,
+  unit_id int not null references public.verbum_curriculum_units (id) on delete cascade,
+  order_index int not null,
+  node_type text not null default 'LESSON' check (node_type in ('LESSON', 'STORY', 'CHEST', 'UNIT_BOSS')),
+  title text not null,
+  total_levels int not null default 3 check (total_levels > 0),
+  unique (unit_id, order_index)
+);
+
 create table if not exists public.verbum_lessons (
   id serial primary key,
   unit_id int not null references public.verbum_curriculum_units (id) on delete cascade,
@@ -41,6 +63,12 @@ create table if not exists public.verbum_lessons (
   theological_summary text not null,
   unique (unit_id, order_index)
 );
+
+alter table public.verbum_lessons
+  add column if not exists node_id int references public.verbum_path_nodes (id) on delete cascade;
+
+alter table public.verbum_lessons
+  add column if not exists level_index int;
 
 create table if not exists public.verbum_exercises (
   id serial primary key,
@@ -92,6 +120,14 @@ create table if not exists public.verbum_lesson_progress (
   score_percentage int not null default 0,
   completed_at timestamptz,
   unique (profile_id, lesson_id)
+);
+
+create table if not exists public.verbum_unit_crowns (
+  profile_id uuid not null references public.profiles (id) on delete cascade,
+  unit_id int not null references public.verbum_curriculum_units (id) on delete cascade,
+  crown text not null default 'OURO',
+  awarded_at timestamptz not null default now(),
+  primary key (profile_id, unit_id)
 );
 
 create table if not exists public.verbum_subscriptions (
@@ -319,18 +355,25 @@ where l.title = 'Let There Be Light: Verbos Imperativos e Luz'
   );
 
 alter table public.verbum_bible_books enable row level security;
+alter table public.verbum_course_sections enable row level security;
+alter table public.verbum_path_nodes enable row level security;
 alter table public.verbum_curriculum_units enable row level security;
 alter table public.verbum_lessons enable row level security;
 alter table public.verbum_exercises enable row level security;
 alter table public.verbum_learners enable row level security;
 alter table public.verbum_word_mastery enable row level security;
 alter table public.verbum_lesson_progress enable row level security;
+alter table public.verbum_unit_crowns enable row level security;
 alter table public.verbum_subscriptions enable row level security;
 alter table public.verbum_family_groups enable row level security;
 alter table public.verbum_family_members enable row level security;
 
 drop policy if exists verbum_books_read on public.verbum_bible_books;
 create policy verbum_books_read on public.verbum_bible_books for select using (true);
+drop policy if exists verbum_sections_read on public.verbum_course_sections;
+create policy verbum_sections_read on public.verbum_course_sections for select using (true);
+drop policy if exists verbum_nodes_read on public.verbum_path_nodes;
+create policy verbum_nodes_read on public.verbum_path_nodes for select using (true);
 drop policy if exists verbum_units_read on public.verbum_curriculum_units;
 create policy verbum_units_read on public.verbum_curriculum_units for select using (true);
 drop policy if exists verbum_lessons_read on public.verbum_lessons;
@@ -353,7 +396,12 @@ create policy verbum_progress_own on public.verbum_lesson_progress
   for all using (profile_id = public.current_session_profile_id())
   with check (profile_id = public.current_session_profile_id());
 
-grant select on public.verbum_bible_books, public.verbum_curriculum_units, public.verbum_lessons, public.verbum_exercises
+drop policy if exists verbum_crowns_own on public.verbum_unit_crowns;
+create policy verbum_crowns_own on public.verbum_unit_crowns
+  for select using (profile_id = public.current_session_profile_id());
+
+grant select on public.verbum_bible_books, public.verbum_course_sections, public.verbum_path_nodes,
+  public.verbum_curriculum_units, public.verbum_lessons, public.verbum_exercises
   to anon, authenticated;
 
 create or replace function public.verbum_touch_learner()
@@ -414,6 +462,7 @@ as $$
   from public.verbum_lessons l
   join public.verbum_curriculum_units u on u.id = l.unit_id
   join public.verbum_bible_books b on b.id = u.bible_book_id
+  left join public.verbum_path_nodes n on n.id = l.node_id
   where not exists (
     select 1
     from public.verbum_lesson_progress p
@@ -421,7 +470,7 @@ as $$
       and p.lesson_id = l.id
       and p.completed
   )
-  order by b.order_index, u.order_index, l.order_index
+  order by b.order_index, u.order_index, coalesce(n.order_index, 0), coalesce(l.level_index, l.order_index), l.order_index
   limit 1;
 $$;
 
@@ -435,12 +484,21 @@ declare
   v_row public.verbum_learners;
   v_lesson public.verbum_lessons;
   v_already boolean;
+  v_had boolean;
+  v_crown boolean := false;
+  v_awarded int := 0;
+  v_unit_title text;
 begin
   v_row := public.verbum_touch_learner();
   select * into v_lesson from public.verbum_lessons where id = p_lesson_id;
   if v_lesson.id is null then
     raise exception 'Lição do Verbum não encontrada.';
   end if;
+
+  select exists (
+    select 1 from public.verbum_unit_crowns c
+    where c.profile_id = v_row.profile_id and c.unit_id = v_lesson.unit_id
+  ) into v_had;
 
   select completed into v_already
   from public.verbum_lesson_progress
@@ -454,14 +512,43 @@ begin
           score_percentage = 100,
           completed_at = now();
 
+    v_awarded := v_lesson.talents_reward;
     update public.verbum_learners
     set talents_balance = talents_balance + v_lesson.talents_reward,
         total_xp = total_xp + v_lesson.xp_reward
     where profile_id = v_row.profile_id;
   end if;
 
+  if not v_had
+     and exists (
+       select 1 from public.verbum_lessons boss
+       where boss.unit_id = v_lesson.unit_id and boss.talents_reward >= 50
+     )
+     and not exists (
+       select 1 from public.verbum_lessons pending
+       where pending.unit_id = v_lesson.unit_id
+         and not exists (
+           select 1 from public.verbum_lesson_progress p
+           where p.profile_id = v_row.profile_id
+             and p.lesson_id = pending.id
+             and p.completed
+         )
+     ) then
+    insert into public.verbum_unit_crowns (profile_id, unit_id, crown)
+    values (v_row.profile_id, v_lesson.unit_id, 'OURO')
+    on conflict (profile_id, unit_id) do nothing;
+    v_crown := true;
+  end if;
+
+  select title into v_unit_title
+  from public.verbum_curriculum_units
+  where id = v_lesson.unit_id;
+
   return jsonb_build_object(
-    'lesson', public.verbum_next_open_lesson(v_row.profile_id)
+    'lesson', public.verbum_next_open_lesson(v_row.profile_id),
+    'unit_crown', v_crown,
+    'talents_awarded', v_awarded,
+    'unit_title', coalesce(v_unit_title, '')
   );
 end;
 $$;
@@ -475,6 +562,7 @@ as $$
 declare
   v_row public.verbum_learners;
   v_due int;
+  v_current_id int;
 begin
   v_row := public.verbum_touch_learner();
   select count(*) into v_due
@@ -482,7 +570,92 @@ begin
   where m.profile_id = v_row.profile_id
     and m.next_review_due <= now();
 
-  return jsonb_build_object(
+  select l.id into v_current_id
+  from public.verbum_lessons l
+  join public.verbum_curriculum_units u on u.id = l.unit_id
+  join public.verbum_bible_books b on b.id = u.bible_book_id
+  left join public.verbum_path_nodes n on n.id = l.node_id
+  where not exists (
+    select 1
+    from public.verbum_lesson_progress p
+    where p.profile_id = v_row.profile_id
+      and p.lesson_id = l.id
+      and p.completed
+  )
+  order by b.order_index, u.order_index, coalesce(n.order_index, 0), coalesce(l.level_index, l.order_index), l.order_index
+  limit 1;
+
+  return (
+    with base as (
+      select
+        n.id,
+        n.title,
+        n.node_type,
+        u.title as unit_title,
+        u.order_index as unit_order,
+        coalesce(s.title, u.title) as section_title,
+        coalesce(s.cefr_level, u.cefr_level) as cefr_level,
+        coalesce(s.order_index, 0) as section_order,
+        b.name_pt,
+        b.order_index as book_order,
+        n.order_index as node_order,
+        (select count(*)::int from public.verbum_lessons l where l.node_id = n.id) as lesson_count,
+        (select count(*)::int from public.verbum_lessons l
+          join public.verbum_lesson_progress p
+            on p.lesson_id = l.id and p.profile_id = v_row.profile_id and p.completed
+          where l.node_id = n.id) as done_count,
+        (select l.id from public.verbum_lessons l
+          where l.node_id = n.id
+            and not exists (
+              select 1 from public.verbum_lesson_progress p
+              where p.lesson_id = l.id and p.profile_id = v_row.profile_id and p.completed
+            )
+          order by coalesce(l.level_index, l.order_index), l.order_index
+          limit 1) as next_lesson_id,
+        (select l.id from public.verbum_lessons l
+          where l.node_id = n.id
+          order by coalesce(l.level_index, l.order_index), l.order_index
+          limit 1) as first_lesson_id,
+        (select l.xp_reward from public.verbum_lessons l
+          where l.node_id = n.id
+            and not exists (
+              select 1 from public.verbum_lesson_progress p
+              where p.lesson_id = l.id and p.profile_id = v_row.profile_id and p.completed
+            )
+          order by coalesce(l.level_index, l.order_index), l.order_index
+          limit 1) as next_xp
+      from public.verbum_path_nodes n
+      join public.verbum_curriculum_units u on u.id = n.unit_id
+      left join public.verbum_course_sections s on s.id = u.section_id
+      join public.verbum_bible_books b on b.id = u.bible_book_id
+    ),
+    numbered as (
+      select base.*,
+        row_number() over (order by base.section_order, base.book_order, base.unit_order, base.node_order) as seq,
+        (base.done_count >= base.lesson_count and base.lesson_count > 0) as node_done
+      from base
+    ),
+    gated as (
+      select numbered.*,
+        coalesce(
+          bool_and(numbered.node_done) over (
+            order by numbered.seq
+            rows between unbounded preceding and 1 preceding
+          ),
+          true
+        ) as unlocked
+      from numbered
+    ),
+    marked as (
+      select gated.*,
+        case
+          when gated.node_done then 'done'
+          when gated.unlocked then 'current'
+          else 'locked'
+        end as status
+      from gated
+    )
+    select jsonb_build_object(
     'learner', jsonb_build_object(
       'talents', v_row.talents_balance,
       'shields', v_row.shields_count,
@@ -492,6 +665,36 @@ begin
     ),
     'memorials_due', v_due,
     'lesson', public.verbum_next_open_lesson(v_row.profile_id),
+    'section', (
+      select jsonb_build_object('title', marked.section_title, 'cefr', marked.cefr_level, 'book', marked.name_pt)
+      from marked
+      where marked.status = 'current'
+      order by marked.seq
+      limit 1
+    ),
+    'path', coalesce((
+      select jsonb_agg(jsonb_build_object(
+        'id', marked.id,
+        'title', marked.title,
+        'seq', marked.seq,
+        'status', marked.status,
+        'unit_title', marked.unit_title,
+        'section_title', marked.section_title,
+        'cefr', marked.cefr_level,
+        'book_name', marked.name_pt,
+        'boss', marked.node_type = 'UNIT_BOSS',
+        'node_type', marked.node_type,
+        'total_levels', marked.lesson_count,
+        'completed_levels', marked.done_count,
+        'next_lesson_id', case
+          when marked.node_done then marked.first_lesson_id
+          else marked.next_lesson_id
+        end,
+        'xp_reward', coalesce(marked.next_xp, 15),
+        'unit_order', marked.unit_order
+      ) order by marked.seq)
+      from marked
+    ), '[]'::jsonb),
     'books', coalesce((
       select jsonb_agg(jsonb_build_object(
         'order_index', b.order_index,
@@ -499,10 +702,39 @@ begin
         'name_pt', b.name_pt,
         'abbreviation_en', b.abbreviation_en,
         'cefr', b.cefr_recommended_level,
-        'division', b.division
+        'division', b.division,
+        'lessons', coalesce((
+          select jsonb_agg(jsonb_build_object(
+            'id', l.id,
+            'title', l.title,
+            'order_index', l.order_index,
+            'completed', exists (
+              select 1
+              from public.verbum_lesson_progress p
+              where p.profile_id = v_row.profile_id
+                and p.lesson_id = l.id
+                and p.completed
+            ),
+            'status', case
+              when exists (
+                select 1
+                from public.verbum_lesson_progress p
+                where p.profile_id = v_row.profile_id
+                  and p.lesson_id = l.id
+                  and p.completed
+              ) then 'done'
+              when l.id = v_current_id then 'current'
+              else 'locked'
+            end
+          ) order by u.order_index, l.order_index)
+          from public.verbum_lessons l
+          join public.verbum_curriculum_units u on u.id = l.unit_id
+          where u.bible_book_id = b.id
+        ), '[]'::jsonb)
       ) order by b.order_index)
       from public.verbum_bible_books b
     ), '[]'::jsonb)
+    )
   );
 end;
 $$;
@@ -549,7 +781,7 @@ begin
       ) order by e.id)
       from public.verbum_exercises e
       where e.lesson_id = p_lesson_id
-        and e.exercise_type in ('FILL_BLANK', 'ORDER_WORDS')
+        and e.exercise_type in ('FILL_BLANK', 'ORDER_WORDS', 'MATCH_PAIRS', 'LISTENING_DICTATION')
     ), '[]'::jsonb)
   );
 end;
@@ -595,10 +827,21 @@ begin
   if v_exercise.exercise_type = 'FILL_BLANK' then
     v_correct := lower(trim(coalesce(p_answer->>'choice', ''))) = lower(trim(v_exercise.payload->>'answer'));
     v_expected := v_exercise.payload->>'answer';
-  elsif v_exercise.exercise_type = 'ORDER_WORDS' then
+  elsif v_exercise.exercise_type in ('ORDER_WORDS', 'LISTENING_DICTATION') then
     v_correct := coalesce(p_answer->'order', '[]'::jsonb) = coalesce(v_exercise.payload->'answer', '[]'::jsonb);
     select string_agg(value, ' ') into v_expected
     from jsonb_array_elements_text(v_exercise.payload->'answer');
+  elsif v_exercise.exercise_type = 'MATCH_PAIRS' then
+    v_correct := (
+      select coalesce(jsonb_agg(jsonb_build_object('en', en, 'pt', pt) order by en, pt), '[]'::jsonb)
+      from jsonb_to_recordset(coalesce(p_answer->'matches', '[]'::jsonb)) as x(en text, pt text)
+    ) = (
+      select coalesce(jsonb_agg(jsonb_build_object('en', pair->>'en', 'pt', pair->>'pt') order by pair->>'en', pair->>'pt'), '[]'::jsonb)
+      from jsonb_array_elements(coalesce(v_exercise.payload->'pairs', '[]'::jsonb)) pair
+    );
+    select string_agg(pair->>'en' || ' = ' || pair->>'pt', ', ')
+      into v_expected
+    from jsonb_array_elements(coalesce(v_exercise.payload->'pairs', '[]'::jsonb)) pair;
   else
     raise exception 'Tipo de exercício ainda não disponível.';
   end if;
