@@ -19,25 +19,24 @@ export default function EscolhaPlataformaScreen() {
     returnRoute: resolveReturnRouteParam(params),
     returnDashboardCard: resolveReturnDashboardCardParam(params),
   });
-  const [selected, setSelected] = useState<PlatformChoice>('igreja');
+  const [selected, setSelected] = useState<PlatformChoice | null>(null);
   const [courseNotice, setCourseNotice] = useState<string | null>(null);
 
-  const openChurchApp = () => {
+  const choose = (choice: PlatformChoice) => {
+    setSelected(choice);
     setCourseNotice(null);
-    router.push({ pathname: '/', params: { portal: '1' } });
-  };
-
-  const openCourse = () => {
-    setCourseNotice('Abrir Curso');
   };
 
   const continueWithSelection = () => {
     if (selected === 'igreja') {
-      openChurchApp();
+      setCourseNotice(null);
+      router.push({ pathname: '/', params: { portal: '1' } });
       return;
     }
 
-    openCourse();
+    if (selected === 'ingles') {
+      setCourseNotice('Abrir Curso');
+    }
   };
 
   return (
@@ -52,10 +51,7 @@ export default function EscolhaPlataformaScreen() {
 
         <Pressable
           style={[styles.card, selected === 'igreja' ? styles.cardSelected : styles.cardIdle]}
-          onPress={() => {
-            setSelected('igreja');
-            openChurchApp();
-          }}
+          onPress={() => choose('igreja')}
           accessibilityRole="button"
           accessibilityLabel="Aplicativo da Igreja. Acesse sua comunidade local"
         >
@@ -71,10 +67,7 @@ export default function EscolhaPlataformaScreen() {
 
         <Pressable
           style={[styles.card, selected === 'ingles' ? styles.cardSelected : styles.cardIdle]}
-          onPress={() => {
-            setSelected('ingles');
-            openCourse();
-          }}
+          onPress={() => choose('ingles')}
           accessibilityRole="button"
           accessibilityLabel="Curso de Ingles atraves das Escrituras. Aprenda Inglês de Gênesis ao Apocalipse"
         >
