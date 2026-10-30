@@ -1,7 +1,7 @@
 import { CloseFooterBar } from '@/components/minimal/CloseFooterBar';
 import { MinimalScreenLayout } from '@/components/minimal/MinimalScreenLayout';
 import { useReturnToCallerOnLeave } from '@/hooks/useReturnToCallerOnLeave';
-import { resolveReturnDashboardCardParam, resolveReturnRouteParam } from '@/lib/dashboardReturnNavigation';
+import { resolveReturnDashboardCardParam, resolveReturnRouteParam, withReturnRoute } from '@/lib/dashboardReturnNavigation';
 import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useState } from 'react';
@@ -20,22 +20,22 @@ export default function EscolhaPlataformaScreen() {
     returnDashboardCard: resolveReturnDashboardCardParam(params),
   });
   const [selected, setSelected] = useState<PlatformChoice | null>(null);
-  const [courseNotice, setCourseNotice] = useState<string | null>(null);
 
   const choose = (choice: PlatformChoice) => {
     setSelected(choice);
-    setCourseNotice(null);
   };
 
   const continueWithSelection = () => {
     if (selected === 'igreja') {
-      setCourseNotice(null);
       router.push({ pathname: '/', params: { portal: '1' } });
       return;
     }
 
     if (selected === 'ingles') {
-      setCourseNotice('Abrir Curso');
+      router.push({
+        pathname: '/verbum',
+        params: withReturnRoute('/escolha-plataforma'),
+      });
     }
   };
 
@@ -89,8 +89,6 @@ export default function EscolhaPlataformaScreen() {
         >
           <Text style={styles.continueLabel}>Selecionar & Continuar</Text>
         </Pressable>
-
-        {courseNotice ? <Text style={styles.notice}>{courseNotice}</Text> : null}
 
         <Text style={styles.footnote}>Suas credenciais serão gerenciadas centralmente</Text>
       </ScrollView>
@@ -172,12 +170,6 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 18,
     fontWeight: '800',
-  },
-  notice: {
-    color: NAVY,
-    fontSize: 18,
-    fontWeight: '800',
-    textAlign: 'center',
   },
   footnote: {
     color: '#8B93A7',
