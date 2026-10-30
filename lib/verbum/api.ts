@@ -154,6 +154,14 @@ export async function submitVerbumExercise(
   };
 }
 
+export async function finishVerbumLesson(lessonId: number): Promise<VerbumLessonRef | null> {
+  const { data, error } = await supabase.rpc('verbum_finish_lesson', { p_lesson_id: lessonId });
+  if (error) {
+    throw new Error(error.message);
+  }
+  return readLesson(asRecord(data)?.lesson);
+}
+
 export async function restoreVerbumShield(): Promise<VerbumLearner> {
   const { data, error } = await supabase.rpc('verbum_restore_shield');
   if (error) {

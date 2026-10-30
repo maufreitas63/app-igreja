@@ -243,6 +243,61 @@ where l.title = 'Let There Be Light: Verbos Imperativos e Luz'
     where e.lesson_id = l.id and e.exercise_type = 'FILL_BLANK'
   );
 
+insert into public.verbum_lessons (unit_id, order_index, title, xp_reward, talents_reward, theological_summary)
+select u.id, 2,
+  'God saw the light: o que é bom',
+  15,
+  5,
+  'Deus olha para a luz e a declara boa. O verbo saw mostra o olhar de Deus sobre o que ele fez.'
+from public.verbum_curriculum_units u
+join public.verbum_bible_books b on b.id = u.bible_book_id
+where b.order_index = 1
+  and u.order_index = 1
+  and not exists (
+    select 1 from public.verbum_lessons l where l.unit_id = u.id and l.order_index = 2
+  );
+
+insert into public.verbum_exercises (
+  lesson_id, exercise_type, prompt, bible_passage_ref, verse_target_en, verse_target_pt, payload
+)
+select l.id, 'FILL_BLANK',
+  'Complete o versículo.',
+  'Genesis 1:4',
+  'And God saw the light, that it was good.',
+  'E viu Deus que a luz era boa.',
+  jsonb_build_object(
+    'sentence', 'And God saw the light, that it was _____.',
+    'options', jsonb_build_array('good', 'dark', 'void'),
+    'answer', 'good',
+    'lemma', 'good'
+  )
+from public.verbum_lessons l
+where l.order_index = 2
+  and not exists (
+    select 1 from public.verbum_exercises e
+    where e.lesson_id = l.id and e.exercise_type = 'FILL_BLANK'
+  );
+
+insert into public.verbum_exercises (
+  lesson_id, exercise_type, prompt, bible_passage_ref, verse_target_en, verse_target_pt, payload
+)
+select l.id, 'ORDER_WORDS',
+  'Monte a frase na ordem do versículo.',
+  'Genesis 1:4',
+  'And God saw the light, that it was good.',
+  'E viu Deus que a luz era boa.',
+  jsonb_build_object(
+    'shuffled', jsonb_build_array('the', 'saw', 'light', 'God'),
+    'answer', jsonb_build_array('God', 'saw', 'the', 'light'),
+    'lemma', 'saw'
+  )
+from public.verbum_lessons l
+where l.order_index = 2
+  and not exists (
+    select 1 from public.verbum_exercises e
+    where e.lesson_id = l.id and e.exercise_type = 'ORDER_WORDS'
+  );
+
 insert into public.verbum_exercises (
   lesson_id, exercise_type, prompt, bible_passage_ref, verse_target_en, verse_target_pt, payload
 )
@@ -343,6 +398,74 @@ begin
 end;
 $$;
 
+create or replace function public.verbum_next_open_lesson(p_profile uuid)
+returns jsonb
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select jsonb_build_object(
+    'id', l.id,
+    'title', l.title,
+    'unit_title', u.title,
+    'theological_summary', l.theological_summary
+  )
+  from public.verbum_lessons l
+  join public.verbum_curriculum_units u on u.id = l.unit_id
+  join public.verbum_bible_books b on b.id = u.bible_book_id
+  where not exists (
+    select 1
+    from public.verbum_lesson_progress p
+    where p.profile_id = p_profile
+      and p.lesson_id = l.id
+      and p.completed
+  )
+  order by b.order_index, u.order_index, l.order_index
+  limit 1;
+$$;
+
+create or replace function public.verbum_finish_lesson(p_lesson_id int)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_row public.verbum_learners;
+  v_lesson public.verbum_lessons;
+  v_already boolean;
+begin
+  v_row := public.verbum_touch_learner();
+  select * into v_lesson from public.verbum_lessons where id = p_lesson_id;
+  if v_lesson.id is null then
+    raise exception 'Lição do Verbum não encontrada.';
+  end if;
+
+  select completed into v_already
+  from public.verbum_lesson_progress
+  where profile_id = v_row.profile_id and lesson_id = p_lesson_id;
+
+  if coalesce(v_already, false) = false then
+    insert into public.verbum_lesson_progress (profile_id, lesson_id, completed, score_percentage, completed_at)
+    values (v_row.profile_id, p_lesson_id, true, 100, now())
+    on conflict (profile_id, lesson_id) do update
+      set completed = true,
+          score_percentage = 100,
+          completed_at = now();
+
+    update public.verbum_learners
+    set talents_balance = talents_balance + v_lesson.talents_reward,
+        total_xp = total_xp + v_lesson.xp_reward
+    where profile_id = v_row.profile_id;
+  end if;
+
+  return jsonb_build_object(
+    'lesson', public.verbum_next_open_lesson(v_row.profile_id)
+  );
+end;
+$$;
+
 create or replace function public.verbum_course_home()
 returns jsonb
 language plpgsql
@@ -368,18 +491,7 @@ begin
       'tier', v_row.tier
     ),
     'memorials_due', v_due,
-    'lesson', (
-      select jsonb_build_object(
-        'id', l.id,
-        'title', l.title,
-        'unit_title', u.title,
-        'theological_summary', l.theological_summary
-      )
-      from public.verbum_lessons l
-      join public.verbum_curriculum_units u on u.id = l.unit_id
-      order by l.id
-      limit 1
-    ),
+    'lesson', public.verbum_next_open_lesson(v_row.profile_id),
     'books', coalesce((
       select jsonb_agg(jsonb_build_object(
         'order_index', b.order_index,
@@ -668,6 +780,8 @@ grant execute on function public.verbum_course_home() to anon, authenticated;
 grant execute on function public.verbum_lesson_session(int) to anon, authenticated;
 grant execute on function public.verbum_submit_exercise(int, jsonb) to anon, authenticated;
 grant execute on function public.verbum_restore_shield() to anon, authenticated;
+grant execute on function public.verbum_next_open_lesson(uuid) to anon, authenticated;
+grant execute on function public.verbum_finish_lesson(int) to anon, authenticated;
 
 do $$
 begin

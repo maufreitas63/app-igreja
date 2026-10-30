@@ -76,7 +76,7 @@ export default function VerbumScreen() {
             </View>
             {course.lesson ? (
               <Pressable style={styles.start} onPress={openLesson} accessibilityRole="button">
-                <Text style={styles.startLabel}>Começar lição</Text>
+                <Text style={styles.startLabel}>Continuar</Text>
                 <Text style={styles.startHint}>{course.lesson.title}</Text>
               </Pressable>
             ) : null}

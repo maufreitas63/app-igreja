@@ -1,10 +1,10 @@
 import { CloseFooterBar } from '@/components/minimal/CloseFooterBar';
 import { MinimalScreenLayout } from '@/components/minimal/MinimalScreenLayout';
 import { useReturnToCallerOnLeave } from '@/hooks/useReturnToCallerOnLeave';
-import { resolveReturnDashboardCardParam, resolveReturnRouteParam } from '@/lib/dashboardReturnNavigation';
-import { loadVerbumLesson, speakVerse, submitVerbumExercise } from '@/lib/verbum/api';
-import type { FillBlankPayload, OrderWordsPayload, VerbumExercise, VerbumLearner } from '@/lib/verbum/types';
-import { useLocalSearchParams } from 'expo-router';
+import { resolveReturnDashboardCardParam, resolveReturnRouteParam, withReturnRoute } from '@/lib/dashboardReturnNavigation';
+import { finishVerbumLesson, loadVerbumLesson, speakVerse, submitVerbumExercise } from '@/lib/verbum/api';
+import type { FillBlankPayload, OrderWordsPayload, VerbumExercise, VerbumLearner, VerbumLessonRef } from '@/lib/verbum/types';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Animated, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
@@ -16,6 +16,7 @@ function isFillBlank(exercise: VerbumExercise): exercise is VerbumExercise & { p
 
 export default function VerbumLessonScreen() {
   const params = useLocalSearchParams();
+  const router = useRouter();
   const lessonId = Number(Array.isArray(params.lessonId) ? params.lessonId[0] : params.lessonId);
   const returnToCaller = useReturnToCallerOnLeave({
     returnRoute: resolveReturnRouteParam(params),
@@ -34,11 +35,18 @@ export default function VerbumLessonScreen() {
   const [feedback, setFeedback] = useState<{ correct: boolean; message: string; expected: string } | null>(null);
   const [paused, setPaused] = useState(false);
   const [finished, setFinished] = useState(false);
+  const [nextLesson, setNextLesson] = useState<VerbumLessonRef | null>(null);
   const [checking, setChecking] = useState(false);
   const shake = useMemo(() => new Animated.Value(0), []);
 
   useEffect(() => {
     let active = true;
+    setFinished(false);
+    setNextLesson(null);
+    setFeedback(null);
+    setChoice(null);
+    setBuilt([]);
+    setDone(0);
     void (async () => {
       try {
         const session = await loadVerbumLesson(lessonId);
@@ -118,6 +126,45 @@ export default function VerbumLessonScreen() {
     }
   };
 
+  useEffect(() => {
+    if (!finished) {
+      return undefined;
+    }
+    let active = true;
+    void finishVerbumLesson(lessonId)
+      .then((next) => {
+        if (active) {
+          setNextLesson(next);
+        }
+      })
+      .catch((cause: unknown) => {
+        if (active) {
+          setError(cause instanceof Error ? cause.message : 'Não foi possível abrir a próxima lição.');
+        }
+      });
+    return () => {
+      active = false;
+    };
+  }, [finished, lessonId]);
+
+  const openCourse = () => {
+    router.replace({
+      pathname: '/verbum',
+      params: withReturnRoute('/escolha-plataforma'),
+    });
+  };
+
+  const continueCourse = () => {
+    if (!nextLesson) {
+      openCourse();
+      return;
+    }
+    router.replace({
+      pathname: '/verbum-licao',
+      params: withReturnRoute('/verbum', { lessonId: String(nextLesson.id) }),
+    });
+  };
+
   const continueLesson = () => {
     if (!current || !feedback) {
       return;
@@ -137,7 +184,10 @@ export default function VerbumLessonScreen() {
   const shieldLabel = learner?.infiniteShields ? '∞' : String(learner?.shields ?? 0);
 
   return (
-    <MinimalScreenLayout scroll={false} footer={<CloseFooterBar onPress={returnToCaller} />}>
+    <MinimalScreenLayout
+      scroll={false}
+      footer={<CloseFooterBar onPress={finished ? openCourse : returnToCaller} />}
+    >
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.header}>
           <Text style={styles.shields}>Escudos {shieldLabel}</Text>
@@ -151,6 +201,12 @@ export default function VerbumLessonScreen() {
           <View style={styles.card}>
             <Text style={styles.prompt}>Lição concluída</Text>
             <Text style={styles.verse}>{summary}</Text>
+            <Pressable style={styles.verify} onPress={continueCourse} accessibilityRole="button">
+              <Text style={styles.verifyLabel}>Continuar</Text>
+              <Text style={styles.startHint}>
+                {nextLesson ? nextLesson.title : 'Voltar à trilha do curso'}
+              </Text>
+            </Pressable>
           </View>
         ) : null}
         {paused && !finished ? (
@@ -341,6 +397,12 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 18,
     fontWeight: '800',
+  },
+  startHint: {
+    color: '#E8F1FB',
+    fontSize: 13,
+    textAlign: 'center',
+    marginTop: 4,
   },
   lessonTitle: {
     color: '#4B5568',
