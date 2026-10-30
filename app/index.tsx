@@ -97,6 +97,7 @@ export default function IndexScreen() {
     email: emailParam,
     igreja: igrejaParam,
     codigo: codigoParam,
+    portal: portalParam,
   } = useLocalSearchParams<{
       [SIGN_OUT_QUERY_PARAM]?: string | string[];
       phone?: string | string[];
@@ -104,9 +105,14 @@ export default function IndexScreen() {
       email?: string | string[];
       igreja?: string | string[];
       codigo?: string | string[];
+      portal?: string | string[];
     }>();
+  const openedFromPortal =
+    portalParam === '1' || (Array.isArray(portalParam) && portalParam.includes('1'));
   const skipSessionRestore =
-    signedOutParam === '1' || (Array.isArray(signedOutParam) && signedOutParam.includes('1'));
+    signedOutParam === '1'
+    || (Array.isArray(signedOutParam) && signedOutParam.includes('1'))
+    || openedFromPortal;
   const recoveryPhoneParam =
     typeof phoneParam === 'string'
       ? phoneParam

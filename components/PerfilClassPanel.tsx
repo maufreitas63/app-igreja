@@ -219,8 +219,22 @@ export function PerfilClassPanel() {
     setDiscipleshipTrailVisible(true);
   }, [canOpenDiscipleshipTrail]);
 
+  const openPlatformChoice = useCallback(() => {
+    router.push({
+      pathname: '/escolha-plataforma',
+      params: withReturnRoute('/perfil'),
+    });
+  }, [router]);
+
   const actions = useMemo(() => {
-    const items: PerfilClassAction[] = [];
+    const items: PerfilClassAction[] = [
+      {
+        key: 'platform-choice',
+        label: 'Escolha sua plataforma',
+        icon: 'apps',
+        onPress: openPlatformChoice,
+      },
+    ];
 
     if (manageProfile) {
       items.push({
@@ -316,6 +330,7 @@ export function PerfilClassPanel() {
     openManageMembers,
     openManageProfile,
     openMyBooks,
+    openPlatformChoice,
     openServiceOffer,
   ]);
 
