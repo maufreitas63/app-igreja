@@ -294,16 +294,26 @@ export async function restoreVerbumShield(): Promise<VerbumLearner> {
   return readLearner(data);
 }
 
-export function speakVerse(text: string, audioUrl: string | null): void {
-  if (audioUrl && typeof Audio !== 'undefined') {
+let verseAudio: HTMLAudioElement | null = null;
+
+export function speakVerse(text: string, audioUrl: string | null, rate = 1): void {
+  if (verseAudio) {
+    verseAudio.pause();
+    verseAudio = null;
+  }
+  if (typeof window !== 'undefined' && window.speechSynthesis) {
+    window.speechSynthesis.cancel();
+  }
+  if (audioUrl && rate === 1 && typeof Audio !== 'undefined') {
     const player = new Audio(audioUrl);
+    verseAudio = player;
     void player.play();
     return;
   }
   if (typeof window !== 'undefined' && window.speechSynthesis) {
-    window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = 'en-US';
+    utterance.rate = rate;
     window.speechSynthesis.speak(utterance);
   }
 }

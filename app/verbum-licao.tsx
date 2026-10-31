@@ -315,9 +315,17 @@ export default function VerbumLessonScreen() {
             <Text style={styles.prompt}>{current.prompt}</Text>
             {current.passageRef ? <Text style={styles.ref}>{current.passageRef}</Text> : null}
             <Text style={styles.verse}>{current.versePt}</Text>
-            <Pressable onPress={() => speakVerse(current.verseEn, current.audioUrl)} accessibilityRole="button">
-              <Text style={styles.listen}>Ouvir versículo</Text>
-            </Pressable>
+            <View style={styles.listenRow}>
+              <Pressable onPress={() => speakVerse(current.verseEn, current.audioUrl)} accessibilityRole="button">
+                <Text style={styles.listen}>Ouvir versículo</Text>
+              </Pressable>
+              <Pressable
+                onPress={() => speakVerse(current.verseEn, current.audioUrl, 0.65)}
+                accessibilityRole="button"
+              >
+                <Text style={styles.listen}>Ouvir devagar</Text>
+              </Pressable>
+            </View>
             {isFillBlank(current) ? (
               <FillBlankExercise
                 sentence={current.payload.sentence}
@@ -603,6 +611,11 @@ const styles = StyleSheet.create({
   verse: {
     color: '#24315C',
     lineHeight: 22,
+  },
+  listenRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 16,
   },
   listen: {
     color: '#2F6FED',
