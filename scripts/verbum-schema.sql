@@ -774,12 +774,13 @@ begin
         'exercise_type', e.exercise_type,
         'prompt', e.prompt,
         'bible_passage_ref', e.bible_passage_ref,
-        'verse_target_en', e.verse_target_en,
-        'verse_target_pt', e.verse_target_pt,
+        'verse_target_en', coalesce(v.text_en, e.verse_target_en),
+        'verse_target_pt', coalesce(v.text_pt, e.verse_target_pt),
         'audio_url', e.audio_url,
         'payload', e.payload
       ) order by e.id)
       from public.verbum_exercises e
+      left join public.bible_verses v on v.verse_reference = e.bible_passage_ref
       where e.lesson_id = p_lesson_id
         and e.exercise_type in ('FILL_BLANK', 'ORDER_WORDS', 'MATCH_PAIRS', 'LISTENING_DICTATION')
     ), '[]'::jsonb)

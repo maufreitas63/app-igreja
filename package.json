@@ -24,6 +24,7 @@
     "test:carousel-nav": "node scripts/test-carousel-navigation.mjs",
     "test:maintenance-carousel": "node scripts/test-maintenance-carousel-navigation.mjs",
     "apply:bible-verses": "node scripts/apply-bible-verses-supabase.mjs",
+    "seed:ranked-verses": "npx tsx scripts/seed-ranked-verses.ts",
     "apply:bible-verses:dry": "node scripts/apply-bible-verses-supabase.mjs --dry-run",
     "sql:run": "npx supabase db query --linked -f",
     "dev:family-form": "vite --config standalone/cadastro-familia/vite.config.ts",

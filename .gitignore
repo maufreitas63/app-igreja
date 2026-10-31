@@ -49,6 +49,7 @@ app-example
 
 # local tools / reports
 scripts/.pdf-to-jpg-certs/
+scripts/.cache/
 scripts/*.log
 scripts/*-report.json
 scripts/*-report.txt
