@@ -1,13 +1,14 @@
 import { AgnusMascot, type AgnusReaction } from '@/components/verbum/AgnusMascot';
 import { ExerciseSpeakingVerse } from '@/components/verbum/ExerciseSpeakingVerse';
+import { LessonVerbSummary } from '@/components/verbum/LessonVerbSummary';
 import { WordToken } from '@/components/verbum/WordToken';
 import { CloseFooterBar } from '@/components/minimal/CloseFooterBar';
 import { MinimalScreenLayout } from '@/components/minimal/MinimalScreenLayout';
 import { useReturnToCallerOnLeave } from '@/hooks/useReturnToCallerOnLeave';
 import { resolveReturnDashboardCardParam, resolveReturnRouteParam, withReturnRoute } from '@/lib/dashboardReturnNavigation';
-import { finishVerbumLesson, loadVerbumLesson, speakVerse, submitVerbumExercise } from '@/lib/verbum/api';
+import { finishVerbumLesson, loadLessonVerbs, loadVerbumLesson, speakVerse, submitVerbumExercise } from '@/lib/verbum/api';
 import { playCorrectChime, playWrongTone } from '@/lib/verbum/sound';
-import type { FillBlankPayload, MatchPair, MatchPairsPayload, OrderWordsPayload, SpeakingVersePayload, VerbumExercise, VerbumLearner, VerbumLessonRef } from '@/lib/verbum/types';
+import type { FillBlankPayload, LessonVerb, MatchPair, MatchPairsPayload, OrderWordsPayload, SpeakingVersePayload, VerbumExercise, VerbumLearner, VerbumLessonRef } from '@/lib/verbum/types';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Animated, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -95,6 +96,8 @@ export default function VerbumLessonScreen() {
   const [feedback, setFeedback] = useState<{ correct: boolean; message: string; expected: string } | null>(null);
   const [paused, setPaused] = useState(false);
   const [finished, setFinished] = useState(false);
+  const [verbs, setVerbs] = useState<LessonVerb[]>([]);
+  const [verbSummary, setVerbSummary] = useState(false);
   const [nextLesson, setNextLesson] = useState<VerbumLessonRef | null>(null);
   const [checking, setChecking] = useState(false);
   const shake = useMemo(() => new Animated.Value(0), []);
@@ -105,6 +108,8 @@ export default function VerbumLessonScreen() {
   useEffect(() => {
     let active = true;
     setFinished(false);
+    setVerbSummary(false);
+    setVerbs([]);
     setNextLesson(null);
     setFeedback(null);
     setChoice(null);
@@ -121,6 +126,7 @@ export default function VerbumLessonScreen() {
     void (async () => {
       try {
         const session = await loadVerbumLesson(lessonId);
+        const lessonVerbs = await loadLessonVerbs(lessonId).catch(() => [] as LessonVerb[]);
         if (!active) {
           return;
         }
@@ -128,6 +134,7 @@ export default function VerbumLessonScreen() {
         setTitle(session.lesson.title);
         setSummary(session.lesson.theologicalSummary);
         setLearner(session.learner);
+        setVerbs(lessonVerbs);
         setQueue(exercises);
         setTotal(exercises.length);
         setPaused(!session.learner.infiniteShields && session.learner.shields <= 0);
@@ -247,6 +254,14 @@ export default function VerbumLessonScreen() {
     }
   };
 
+  const openRewards = () => {
+    if (verbs.length > 0) {
+      setVerbSummary(true);
+      return;
+    }
+    setFinished(true);
+  };
+
   const advanceAfterSpeaking = async () => {
     if (!current || checking || !isSpeaking(current) || speakingGate !== 'pass') {
       return;
@@ -283,7 +298,7 @@ export default function VerbumLessonScreen() {
       setPickEn(null);
       setPaused(result.paused);
       if (rest.length === 0) {
-        setFinished(true);
+        openRewards();
       }
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Não foi possível registrar a pronúncia.');
@@ -349,7 +364,7 @@ export default function VerbumLessonScreen() {
     setSpeakingTranscript('');
     setFeedback(null);
     if (feedback.correct && rest.length === 0) {
-      setFinished(true);
+      openRewards();
     }
   };
 
@@ -368,7 +383,7 @@ export default function VerbumLessonScreen() {
     setSpeakingTranscript('');
     setFeedback(null);
     if (rest.length === 0) {
-      setFinished(true);
+      openRewards();
     }
   };
 
@@ -449,20 +464,33 @@ export default function VerbumLessonScreen() {
         <AgnusMascot
           reaction={reaction}
           lineEn={
-            speakingGate === 'retry'
-              ? 'Almost! Speak a little more slowly.'
-              : finished && unitCrown
-                ? 'The crown is yours.'
-                : undefined
+            verbSummary
+              ? "See how God's verbs are built."
+              : speakingGate === 'retry'
+                ? 'Almost! Speak a little more slowly.'
+                : finished && unitCrown
+                  ? 'The crown is yours.'
+                  : undefined
           }
           linePt={
-            speakingGate === 'retry'
-              ? 'Quase lá! Tente falar um pouco mais devagar.'
-              : finished && unitCrown
-                ? 'A coroa da unidade é sua.'
-                : undefined
+            verbSummary
+              ? 'Veja como os verbos de Deus se estruturam!'
+              : speakingGate === 'retry'
+                ? 'Quase lá! Tente falar um pouco mais devagar.'
+                : finished && unitCrown
+                  ? 'A coroa da unidade é sua.'
+                  : undefined
           }
         />
+        {verbSummary && !finished ? (
+          <LessonVerbSummary
+            verbs={verbs}
+            onConclude={() => {
+              setVerbSummary(false);
+              setFinished(true);
+            }}
+          />
+        ) : null}
         {finished ? (
           <View style={styles.card}>
             <Text style={styles.prompt}>{unitCrown ? 'Coroa da unidade' : 'Lição concluída'}</Text>
@@ -479,7 +507,7 @@ export default function VerbumLessonScreen() {
             Os Escudos de Fé acabaram. Volte ao Verbum e pratique no Altar de Memoriais, ou aguarde a regeneração.
           </Text>
         ) : null}
-        {current && !finished && !paused ? (
+        {current && !finished && !paused && !verbSummary ? (
           <Animated.View style={[styles.card, { transform: [{ translateX: shake }, { translateX: slide }] }]}>
             <Text style={styles.prompt}>{current.prompt}</Text>
             {current.passageRef ? <Text style={styles.ref}>{current.passageRef}</Text> : null}
@@ -543,7 +571,7 @@ export default function VerbumLessonScreen() {
             <Text style={styles.impactBody}>{feedback.correct ? feedback.message : feedback.expected}</Text>
           </View>
         ) : null}
-        {(current && !paused) || finished ? (
+        {(current && !paused && !verbSummary) || finished ? (
           showSkip ? (
             <View style={styles.actionRow}>
               {actionButton}

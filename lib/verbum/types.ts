@@ -117,3 +117,23 @@ export type VerbumAnswerResult = {
   expectedLabel: string;
   message: string;
 };
+
+export type VerbConjugation = {
+  person: string;
+  pronounEn: string;
+  formEn: string;
+  pronounPt: string;
+  formPt: string;
+};
+
+export type LessonVerb = {
+  id: number;
+  infinitiveEn: string;
+  infinitivePt: string;
+  tenseEn: string;
+  tensePt: string;
+  verbType: string;
+  verseEn: string;
+  versePt: string;
+  conjugations: VerbConjugation[];
+};

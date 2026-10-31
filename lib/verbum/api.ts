@@ -16,6 +16,8 @@ import type {
   MatchPairsPayload,
   MatchPair,
   SpeakingVersePayload,
+  LessonVerb,
+  VerbConjugation,
 } from '@/lib/verbum/types';
 
 function asRecord(value: unknown): Record<string, unknown> | null {
@@ -299,6 +301,69 @@ export async function restoreVerbumShield(): Promise<VerbumLearner> {
     throw new Error(error.message);
   }
   return readLearner(data);
+}
+
+function readConjugations(value: unknown): VerbConjugation[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+  return value.flatMap((item) => {
+    const row = asRecord(item);
+    if (!row) {
+      return [];
+    }
+    return [{
+      person: String(row.person ?? ''),
+      pronounEn: String(row.pronoun_en ?? ''),
+      formEn: String(row.form_en ?? ''),
+      pronounPt: String(row.pronoun_pt ?? ''),
+      formPt: String(row.form_pt ?? ''),
+    }];
+  });
+}
+
+export async function loadLessonVerbs(lessonId: number): Promise<LessonVerb[]> {
+  const { data, error } = await supabase
+    .from('lesson_verbs')
+    .select(`
+      order_index,
+      verse_example_en,
+      verse_example_pt,
+      grammar_verbs (
+        id,
+        root_infinitive_en,
+        root_infinitive_pt,
+        tense_name_en,
+        tense_name_pt,
+        verb_type,
+        conjugations
+      )
+    `)
+    .eq('lesson_id', lessonId)
+    .order('order_index');
+  if (error) {
+    throw new Error(error.message);
+  }
+  const rows = Array.isArray(data) ? data : [];
+  return rows.flatMap((item) => {
+    const row = asRecord(item);
+    const embedded = row?.grammar_verbs;
+    const verb = asRecord(Array.isArray(embedded) ? embedded[0] : embedded);
+    if (!row || !verb || typeof verb.id !== 'number') {
+      return [];
+    }
+    return [{
+      id: verb.id,
+      infinitiveEn: String(verb.root_infinitive_en ?? ''),
+      infinitivePt: String(verb.root_infinitive_pt ?? ''),
+      tenseEn: String(verb.tense_name_en ?? ''),
+      tensePt: String(verb.tense_name_pt ?? ''),
+      verbType: String(verb.verb_type ?? 'REGULAR'),
+      verseEn: String(row.verse_example_en ?? ''),
+      versePt: String(row.verse_example_pt ?? ''),
+      conjugations: readConjugations(verb.conjugations),
+    }];
+  });
 }
 
 let verseAudio: HTMLAudioElement | null = null;
