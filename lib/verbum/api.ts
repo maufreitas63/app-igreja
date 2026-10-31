@@ -15,6 +15,7 @@ import type {
   VerbumSection,
   MatchPairsPayload,
   MatchPair,
+  SpeakingVersePayload,
 } from '@/lib/verbum/types';
 
 function asRecord(value: unknown): Record<string, unknown> | null {
@@ -182,7 +183,7 @@ function readOrderPayload(row: Record<string, unknown>): OrderWordsPayload {
 function readPayload(
   type: VerbumExerciseType,
   value: unknown
-): FillBlankPayload | OrderWordsPayload | MatchPairsPayload {
+): FillBlankPayload | OrderWordsPayload | MatchPairsPayload | SpeakingVersePayload {
   const row = asRecord(value) ?? {};
   if (type === 'MATCH_PAIRS') {
     return {
@@ -192,6 +193,12 @@ function readPayload(
   }
   if (type === 'ORDER_WORDS' || type === 'LISTENING_DICTATION') {
     return readOrderPayload(row);
+  }
+  if (type === 'SPEAKING_VERSE') {
+    return {
+      targetPhrase: String(row.target_phrase ?? ''),
+      lemma: typeof row.lemma === 'string' ? row.lemma : undefined,
+    };
   }
   const options = Array.isArray(row.options) ? row.options.map(String) : [];
   return {
@@ -222,7 +229,7 @@ export async function loadVerbumLesson(lessonId: number): Promise<{
     const type = exercise?.exercise_type;
     if (
       !exercise
-      || (type !== 'FILL_BLANK' && type !== 'ORDER_WORDS' && type !== 'MATCH_PAIRS' && type !== 'LISTENING_DICTATION')
+      || (type !== 'FILL_BLANK' && type !== 'ORDER_WORDS' && type !== 'MATCH_PAIRS' && type !== 'LISTENING_DICTATION' && type !== 'SPEAKING_VERSE')
       || typeof exercise.id !== 'number'
     ) {
       return [];
@@ -245,7 +252,7 @@ export async function loadVerbumLesson(lessonId: number): Promise<{
 
 export async function submitVerbumExercise(
   exerciseId: number,
-  answer: { choice?: string; order?: string[]; matches?: MatchPair[] }
+  answer: { choice?: string; order?: string[]; matches?: MatchPair[]; transcript?: string }
 ): Promise<VerbumAnswerResult> {
   const { data, error } = await supabase.rpc('verbum_submit_exercise', {
     p_exercise_id: exerciseId,

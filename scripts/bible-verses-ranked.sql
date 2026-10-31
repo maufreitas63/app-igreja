@@ -88,7 +88,7 @@ begin
       from public.verbum_exercises e
       left join public.bible_verses v on v.verse_reference = e.bible_passage_ref
       where e.lesson_id = p_lesson_id
-        and e.exercise_type in ('FILL_BLANK', 'ORDER_WORDS', 'MATCH_PAIRS', 'LISTENING_DICTATION')
+        and e.exercise_type in ('FILL_BLANK', 'ORDER_WORDS', 'MATCH_PAIRS', 'LISTENING_DICTATION', 'SPEAKING_VERSE')
     ), '[]'::jsonb)
   );
 end;

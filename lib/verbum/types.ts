@@ -1,4 +1,4 @@
-export type VerbumExerciseType = 'FILL_BLANK' | 'ORDER_WORDS' | 'MATCH_PAIRS' | 'LISTENING_DICTATION';
+export type VerbumExerciseType = 'FILL_BLANK' | 'ORDER_WORDS' | 'MATCH_PAIRS' | 'LISTENING_DICTATION' | 'SPEAKING_VERSE';
 
 export type VerbumLessonStatus = 'done' | 'current' | 'locked';
 
@@ -91,6 +91,11 @@ export type MatchPairsPayload = {
   lemma?: string;
 };
 
+export type SpeakingVersePayload = {
+  targetPhrase: string;
+  lemma?: string;
+};
+
 export type VerbumExercise = {
   id: number;
   exerciseType: VerbumExerciseType;
@@ -99,7 +104,7 @@ export type VerbumExercise = {
   verseEn: string;
   versePt: string;
   audioUrl: string | null;
-  payload: FillBlankPayload | OrderWordsPayload | MatchPairsPayload;
+  payload: FillBlankPayload | OrderWordsPayload | MatchPairsPayload | SpeakingVersePayload;
 };
 
 export type VerbumAnswerResult = {

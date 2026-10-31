@@ -1,4 +1,5 @@
 import { AgnusMascot, type AgnusReaction } from '@/components/verbum/AgnusMascot';
+import { ExerciseSpeakingVerse } from '@/components/verbum/ExerciseSpeakingVerse';
 import { WordToken } from '@/components/verbum/WordToken';
 import { CloseFooterBar } from '@/components/minimal/CloseFooterBar';
 import { MinimalScreenLayout } from '@/components/minimal/MinimalScreenLayout';
@@ -6,7 +7,7 @@ import { useReturnToCallerOnLeave } from '@/hooks/useReturnToCallerOnLeave';
 import { resolveReturnDashboardCardParam, resolveReturnRouteParam, withReturnRoute } from '@/lib/dashboardReturnNavigation';
 import { finishVerbumLesson, loadVerbumLesson, speakVerse, submitVerbumExercise } from '@/lib/verbum/api';
 import { playCorrectChime, playWrongTone } from '@/lib/verbum/sound';
-import type { FillBlankPayload, MatchPair, MatchPairsPayload, OrderWordsPayload, VerbumExercise, VerbumLearner, VerbumLessonRef } from '@/lib/verbum/types';
+import type { FillBlankPayload, MatchPair, MatchPairsPayload, OrderWordsPayload, SpeakingVersePayload, VerbumExercise, VerbumLearner, VerbumLessonRef } from '@/lib/verbum/types';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Animated, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -17,6 +18,10 @@ function isFillBlank(exercise: VerbumExercise): exercise is VerbumExercise & { p
 
 function isMatch(exercise: VerbumExercise): exercise is VerbumExercise & { payload: MatchPairsPayload } {
   return exercise.exerciseType === 'MATCH_PAIRS';
+}
+
+function isSpeaking(exercise: VerbumExercise): exercise is VerbumExercise & { payload: SpeakingVersePayload } {
+  return exercise.exerciseType === 'SPEAKING_VERSE';
 }
 
 function isOrder(exercise: VerbumExercise): exercise is VerbumExercise & { payload: OrderWordsPayload } {
@@ -65,6 +70,9 @@ export default function VerbumLessonScreen() {
   const [choice, setChoice] = useState<string | null>(null);
   const [built, setBuilt] = useState<string[]>([]);
   const [matches, setMatches] = useState<MatchPair[]>([]);
+  const [speakingGate, setSpeakingGate] = useState<'pass' | 'retry' | null>(null);
+  const [speakingTranscript, setSpeakingTranscript] = useState('');
+  const [speakingTry, setSpeakingTry] = useState(0);
   const [pickEn, setPickEn] = useState<string | null>(null);
   const [unitCrown, setUnitCrown] = useState(false);
   const [crownTalents, setCrownTalents] = useState(0);
@@ -87,6 +95,9 @@ export default function VerbumLessonScreen() {
     setBuilt([]);
     setMatches([]);
     setPickEn(null);
+    setSpeakingGate(null);
+    setSpeakingTranscript('');
+    setSpeakingTry(0);
     setUnitCrown(false);
     setCrownTalents(0);
     setDone(0);
@@ -120,6 +131,9 @@ export default function VerbumLessonScreen() {
   }, [lessonId]);
 
   const current = queue[0] ?? null;
+  const speakingPhrase = current && isSpeaking(current)
+    ? current.payload.targetPhrase || current.verseEn
+    : current?.verseEn ?? '';
 
   useEffect(() => {
     slide.setValue(48);
@@ -137,15 +151,19 @@ export default function VerbumLessonScreen() {
         : built.length === (orderPayload?.answer.length ?? 0) && (orderPayload?.answer.length ?? 0) > 0
     : false;
 
-  const reaction: AgnusReaction = finished
-    ? unitCrown
-      ? 'CELEBRATING'
-      : 'STREAK_FIRE'
-    : feedback?.correct
-      ? 'CELEBRATING'
-      : feedback
-        ? 'CONSOLING'
-        : 'THINKING';
+  const reaction: AgnusReaction = speakingGate === 'pass'
+    ? 'CELEBRATING'
+    : speakingGate === 'retry'
+      ? 'CONSOLING'
+      : finished
+        ? unitCrown
+          ? 'CELEBRATING'
+          : 'STREAK_FIRE'
+        : feedback?.correct
+          ? 'CELEBRATING'
+          : feedback
+            ? 'CONSOLING'
+            : 'THINKING';
 
   const pulseShield = () => {
     shieldScale.setValue(1);
@@ -212,6 +230,51 @@ export default function VerbumLessonScreen() {
     }
   };
 
+  const advanceAfterSpeaking = async () => {
+    if (!current || checking || !isSpeaking(current) || speakingGate !== 'pass') {
+      return;
+    }
+    setChecking(true);
+    try {
+      const result = await submitVerbumExercise(current.id, { transcript: speakingTranscript });
+      setLearner((previous) =>
+        previous
+          ? {
+              ...previous,
+              shields: result.shields,
+              infiniteShields: result.infiniteShields,
+              talents: result.talents,
+              streak: result.streak,
+            }
+          : previous
+      );
+      previousShields.current = result.shields;
+      if (!result.correct) {
+        setSpeakingGate('retry');
+        playWrongTone();
+        runShake();
+        return;
+      }
+      const rest = queue.slice(1);
+      setQueue(rest);
+      setDone((value) => value + 1);
+      setSpeakingGate(null);
+      setSpeakingTranscript('');
+      setChoice(null);
+      setBuilt([]);
+      setMatches([]);
+      setPickEn(null);
+      setPaused(result.paused);
+      if (rest.length === 0) {
+        setFinished(true);
+      }
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Não foi possível registrar a pronúncia.');
+    } finally {
+      setChecking(false);
+    }
+  };
+
   useEffect(() => {
     if (!finished) {
       return undefined;
@@ -265,15 +328,18 @@ export default function VerbumLessonScreen() {
     setBuilt([]);
     setMatches([]);
     setPickEn(null);
+    setSpeakingGate(null);
+    setSpeakingTranscript('');
     setFeedback(null);
     if (feedback.correct && rest.length === 0) {
       setFinished(true);
     }
   };
 
-  const buttonTone = feedback?.correct || finished
+  const speakingNow = Boolean(current && isSpeaking(current) && !finished && !feedback);
+  const buttonTone = feedback?.correct || finished || speakingGate === 'pass'
     ? styles.buttonOk
-    : feedback
+    : feedback || speakingGate === 'retry'
       ? styles.buttonBad
       : canVerify
         ? styles.buttonOk
@@ -284,7 +350,11 @@ export default function VerbumLessonScreen() {
       ? feedback.correct
         ? 'CONTINUAR'
         : 'ENTENDIDO'
-      : 'VERIFICAR';
+      : speakingNow
+        ? speakingGate === 'retry'
+          ? 'TENTAR NOVAMENTE'
+          : 'CONTINUAR'
+        : 'VERIFICAR';
 
   return (
     <MinimalScreenLayout
@@ -308,8 +378,20 @@ export default function VerbumLessonScreen() {
         {error ? <Text style={styles.error}>{error}</Text> : null}
         <AgnusMascot
           reaction={reaction}
-          lineEn={finished && unitCrown ? 'The crown is yours.' : undefined}
-          linePt={finished && unitCrown ? 'A coroa da unidade é sua.' : undefined}
+          lineEn={
+            speakingGate === 'retry'
+              ? 'Almost! Speak a little more slowly.'
+              : finished && unitCrown
+                ? 'The crown is yours.'
+                : undefined
+          }
+          linePt={
+            speakingGate === 'retry'
+              ? 'Quase lá! Tente falar um pouco mais devagar.'
+              : finished && unitCrown
+                ? 'A coroa da unidade é sua.'
+                : undefined
+          }
         />
         {finished ? (
           <View style={styles.card}>
@@ -333,11 +415,11 @@ export default function VerbumLessonScreen() {
             {current.passageRef ? <Text style={styles.ref}>{current.passageRef}</Text> : null}
             <Text style={styles.verse}>{current.versePt}</Text>
             <View style={styles.listenRow}>
-              <Pressable onPress={() => speakVerse(current.verseEn, current.audioUrl)} accessibilityRole="button">
+              <Pressable onPress={() => speakVerse(speakingPhrase, current.audioUrl)} accessibilityRole="button">
                 <Text style={styles.listen}>Ouvir versículo</Text>
               </Pressable>
               <Pressable
-                onPress={() => speakVerse(current.verseEn, current.audioUrl, 0.65)}
+                onPress={() => speakVerse(speakingPhrase, isSpeaking(current) ? null : current.audioUrl, 0.65)}
                 accessibilityRole="button"
               >
                 <Text style={styles.listen}>Ouvir devagar</Text>
@@ -362,6 +444,19 @@ export default function VerbumLessonScreen() {
                 }}
                 onUndo={(en) => setMatches((value) => value.filter((pair) => pair.en !== en))}
               />
+            ) : isSpeaking(current) ? (
+              <ExerciseSpeakingVerse
+                key={`${current.id}-${speakingTry}`}
+                phrase={speakingPhrase}
+                onPass={(transcript) => {
+                  setSpeakingTranscript(transcript);
+                  setSpeakingGate('pass');
+                }}
+                onMiss={() => {
+                  setSpeakingGate('retry');
+                  runShake();
+                }}
+              />
             ) : (
               <OrderWordsExercise
                 built={built}
@@ -381,7 +476,7 @@ export default function VerbumLessonScreen() {
         {(current && !paused) || finished ? (
           <Pressable
             style={[styles.action, buttonTone]}
-            disabled={!finished && !feedback && !canVerify}
+            disabled={checking || (!finished && !feedback && !canVerify && !(speakingNow && speakingGate))}
             onPress={() => {
               if (finished) {
                 continueCourse();
@@ -391,11 +486,21 @@ export default function VerbumLessonScreen() {
                 continueLesson();
                 return;
               }
+              if (speakingNow && speakingGate === 'retry') {
+                setSpeakingTry((value) => value + 1);
+                setSpeakingGate(null);
+                setSpeakingTranscript('');
+                return;
+              }
+              if (speakingNow && speakingGate === 'pass') {
+                void advanceAfterSpeaking();
+                return;
+              }
               void verify();
             }}
             accessibilityRole="button"
           >
-            <Text style={[styles.actionLabel, !finished && !feedback && !canVerify ? styles.actionLabelOff : null]}>
+            <Text style={[styles.actionLabel, !finished && !feedback && !canVerify && !(speakingNow && speakingGate) ? styles.actionLabelOff : null]}>
               {buttonLabel}
             </Text>
           </Pressable>

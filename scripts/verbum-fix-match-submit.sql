@@ -15,6 +15,12 @@ declare
   v_success int;
   v_expected text;
   v_hours numeric;
+  v_target text[];
+  v_heard text[];
+  v_hits int := 0;
+  v_cursor int := 1;
+  v_word text;
+  v_at int;
 begin
   v_row := public.verbum_touch_learner();
   select * into v_exercise from public.verbum_exercises where id = p_exercise_id;
@@ -53,6 +59,31 @@ begin
     select string_agg(pair.en || ' = ' || pair.pt, ', ' order by pair.en)
       into v_expected
     from jsonb_to_recordset(coalesce(v_exercise.payload->'pairs', '[]'::jsonb)) as pair(en text, pt text);
+  elsif v_exercise.exercise_type = 'SPEAKING_VERSE' then
+    v_expected := coalesce(nullif(btrim(v_exercise.payload->>'target_phrase'), ''), v_exercise.verse_target_en);
+    v_hits := 0;
+    v_cursor := 1;
+    v_target := coalesce(
+      array_remove(regexp_split_to_array(lower(regexp_replace(coalesce(v_expected, ''), '[^[:alnum:]'']+', ' ', 'g')), '\s+'), ''),
+      array[]::text[]
+    );
+    v_heard := coalesce(
+      array_remove(regexp_split_to_array(lower(regexp_replace(coalesce(p_answer->>'transcript', ''), '[^[:alnum:]'']+', ' ', 'g')), '\s+'), ''),
+      array[]::text[]
+    );
+    foreach v_word in array v_target loop
+      v_at := v_cursor;
+      while v_at <= coalesce(array_length(v_heard, 1), 0) loop
+        if v_heard[v_at] = v_word then
+          v_hits := v_hits + 1;
+          v_cursor := v_at + 1;
+          exit;
+        end if;
+        v_at := v_at + 1;
+      end loop;
+    end loop;
+    v_correct := coalesce(array_length(v_target, 1), 0) > 0
+      and (v_hits::numeric / array_length(v_target, 1)) >= 0.8;
   else
     raise exception 'Tipo de exercício ainda não disponível.';
   end if;
