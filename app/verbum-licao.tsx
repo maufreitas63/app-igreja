@@ -381,6 +381,42 @@ export default function VerbumLessonScreen() {
   );
 }
 
+function shuffleCopy<T>(items: readonly T[]): T[] {
+  const next = [...items];
+  for (let index = next.length - 1; index > 0; index -= 1) {
+    const swap = Math.floor(Math.random() * (index + 1));
+    const item = next[index];
+    next[index] = next[swap];
+    next[swap] = item;
+  }
+  return next;
+}
+
+function lineOrder(items: readonly MatchPair[], field: 'en' | 'pt'): string {
+  return items.map((item) => item[field]).join('\u0000');
+}
+
+function shuffledLine(pairs: readonly MatchPair[], field: 'en' | 'pt'): MatchPair[] {
+  if (pairs.length < 2) {
+    return [...pairs];
+  }
+  const original = lineOrder(pairs, field);
+  let next = shuffleCopy(pairs);
+  for (let attempt = 0; attempt < 8 && lineOrder(next, field) === original; attempt += 1) {
+    next = shuffleCopy(pairs);
+  }
+  if (lineOrder(next, field) === original) {
+    const [first, second, ...rest] = next;
+    return [second, first, ...rest];
+  }
+  return next;
+}
+
+function samePairing(english: readonly MatchPair[], portuguese: readonly MatchPair[]): boolean {
+  return english.length === portuguese.length
+    && english.every((pair, index) => pair.en === portuguese[index]?.en);
+}
+
 function MatchPairsExercise({
   pairs,
   matches,
@@ -396,6 +432,19 @@ function MatchPairsExercise({
   onMatch: (pair: MatchPair) => void;
   onUndo: (en: string) => void;
 }) {
+  const pairKey = pairs.map((pair) => `${pair.en}\u0000${pair.pt}`).join('\n');
+  const orders = useMemo(() => {
+    const english = shuffledLine(pairs, 'en');
+    let portuguese = shuffledLine(pairs, 'pt');
+    for (let attempt = 0; attempt < 8 && samePairing(english, portuguese); attempt += 1) {
+      portuguese = shuffledLine(pairs, 'pt');
+    }
+    if (samePairing(english, portuguese) && portuguese.length > 1) {
+      const [first, second, ...rest] = portuguese;
+      portuguese = [second, first, ...rest];
+    }
+    return { english, portuguese };
+  }, [pairKey]);
   const usedEn = new Set(matches.map((pair) => pair.en));
   const usedPt = new Set(matches.map((pair) => pair.pt));
   return (
@@ -406,7 +455,7 @@ function MatchPairsExercise({
         ))}
       </View>
       <View style={styles.bank}>
-        {pairs.filter((pair) => !usedEn.has(pair.en)).map((pair) => (
+        {orders.english.filter((pair) => !usedEn.has(pair.en)).map((pair) => (
           <WordToken
             key={pair.en}
             label={pair.en}
@@ -416,7 +465,7 @@ function MatchPairsExercise({
         ))}
       </View>
       <View style={styles.bank}>
-        {pairs.filter((pair) => !usedPt.has(pair.pt)).map((pair) => (
+        {orders.portuguese.filter((pair) => !usedPt.has(pair.pt)).map((pair) => (
           <WordToken
             key={pair.pt}
             label={pair.pt}

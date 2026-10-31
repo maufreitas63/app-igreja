@@ -836,12 +836,12 @@ begin
       select coalesce(jsonb_agg(jsonb_build_object('en', en, 'pt', pt) order by en, pt), '[]'::jsonb)
       from jsonb_to_recordset(coalesce(p_answer->'matches', '[]'::jsonb)) as x(en text, pt text)
     ) = (
-      select coalesce(jsonb_agg(jsonb_build_object('en', pair->>'en', 'pt', pair->>'pt') order by pair->>'en', pair->>'pt'), '[]'::jsonb)
-      from jsonb_array_elements(coalesce(v_exercise.payload->'pairs', '[]'::jsonb)) pair
+      select coalesce(jsonb_agg(jsonb_build_object('en', en, 'pt', pt) order by en, pt), '[]'::jsonb)
+      from jsonb_to_recordset(coalesce(v_exercise.payload->'pairs', '[]'::jsonb)) as pair(en text, pt text)
     );
-    select string_agg(pair->>'en' || ' = ' || pair->>'pt', ', ')
+    select string_agg(pair.en || ' = ' || pair.pt, ', ' order by pair.en)
       into v_expected
-    from jsonb_array_elements(coalesce(v_exercise.payload->'pairs', '[]'::jsonb)) pair;
+    from jsonb_to_recordset(coalesce(v_exercise.payload->'pairs', '[]'::jsonb)) as pair(en text, pt text);
   else
     raise exception 'Tipo de exercício ainda não disponível.';
   end if;

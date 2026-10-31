@@ -2,6 +2,23 @@ import React, { useEffect, useRef } from 'react';
 import { Animated, StyleSheet, Text, View } from 'react-native';
 import Svg, { Circle, Ellipse, Path } from 'react-native-svg';
 
+const OUTLINE = '#B08968';
+const WOOL_LINE = '#C4A882';
+
+function WoolBall({
+  cx,
+  cy,
+  r,
+  fill = '#FFF8F1',
+}: {
+  cx: number;
+  cy: number;
+  r: number;
+  fill?: string;
+}) {
+  return <Circle cx={cx} cy={cy} r={r} fill={fill} stroke={WOOL_LINE} strokeWidth={1.35} />;
+}
+
 export type AgnusReaction = 'THINKING' | 'CELEBRATING' | 'CONSOLING' | 'STREAK_FIRE';
 
 const LINES: Record<AgnusReaction, { en: string; pt: string }> = {
@@ -50,40 +67,77 @@ export function AgnusMascot({ reaction, lineEn, linePt }: Props) {
     <View style={styles.row}>
       <Animated.View style={{ transform: [{ translateY: lift }] }}>
         <Svg width={128} height={112} viewBox="0 0 128 112">
-          <Ellipse cx="64" cy="104" rx="28" ry="5" fill="#E2E8F0" />
-          <Circle cx="40" cy="72" r="18" fill="#FFFFFF" stroke="#94A3B8" strokeWidth="2" />
-          <Circle cx="64" cy="68" r="22" fill="#FFFFFF" stroke="#94A3B8" strokeWidth="2" />
-          <Circle cx="86" cy="74" r="16" fill="#FFFFFF" stroke="#94A3B8" strokeWidth="2" />
-          <Circle cx="78" cy="40" r="20" fill="#FFFFFF" stroke="#94A3B8" strokeWidth="2" />
-          <Ellipse cx="62" cy="32" rx="7" ry="10" fill="#FBCFE8" stroke="#94A3B8" strokeWidth="1.5" />
-          <Ellipse cx="94" cy="32" rx="7" ry="10" fill="#FBCFE8" stroke="#94A3B8" strokeWidth="1.5" />
+          <Ellipse cx="64" cy="107" rx="30" ry="3.5" fill="#E7D9CC" />
+          {reaction === 'THINKING' ? (
+            <>
+              <Path d="M6 80 h13 v15 h-13 z" fill="#FDE68A" stroke="#B45309" strokeWidth="1.3" />
+              <Path d="M12.5 80 v15" stroke="#B45309" strokeWidth="1" />
+            </>
+          ) : null}
+          {reaction === 'CONSOLING' ? (
+            <Path
+              d="M116 92 V48 q0 -12 8 -10"
+              stroke="#8B5E34"
+              strokeWidth="2.4"
+              fill="none"
+              strokeLinecap="round"
+            />
+          ) : null}
+          <Path d="M40 46 C28 34 8 36 6 48 C4 60 24 62 40 54 Z" fill="#F6D5C0" stroke={OUTLINE} strokeWidth="1.6" />
+          <Path d="M36 47 C26 40 14 42 13 49 C12 55 26 57 36 52 Z" fill="#F7B6C4" />
+          <Path d="M88 46 C100 34 120 36 122 48 C124 60 104 62 88 54 Z" fill="#F6D5C0" stroke={OUTLINE} strokeWidth="1.6" />
+          <Path d="M92 47 C102 40 114 42 115 49 C116 55 102 57 92 52 Z" fill="#F7B6C4" />
+          <WoolBall cx={38} cy={98} r={9} fill="#F3E0D0" />
+          <WoolBall cx={90} cy={98} r={9} fill="#F3E0D0" />
+          <WoolBall cx={50} cy={94} r={12} />
+          <WoolBall cx={78} cy={94} r={12} />
+          <WoolBall cx={64} cy={98} r={14} fill="#FFF9F4" />
+          <WoolBall cx={56} cy={106} r={8} fill="#F6E7D8" />
+          <WoolBall cx={74} cy={106} r={8} fill="#F6E7D8" />
+          <Ellipse cx="64" cy="58" rx="26" ry="23" fill="#FFF6EC" stroke={OUTLINE} strokeWidth="1.8" />
+          <WoolBall cx={64} cy={14} r={6} />
+          <WoolBall cx={56} cy={20} r={8} />
+          <WoolBall cx={72} cy={20} r={8} />
+          <WoolBall cx={64} cy={26} r={11} fill="#FFF9F4" />
+          <WoolBall cx={48} cy={30} r={9} />
+          <WoolBall cx={80} cy={30} r={9} />
+          <WoolBall cx={40} cy={38} r={7} fill="#F6E7D8" />
+          <WoolBall cx={88} cy={38} r={7} fill="#F6E7D8" />
+          <Ellipse cx="44" cy="66" rx="5" ry="3" fill="#F8C5D0" fillOpacity={0.85} />
+          <Ellipse cx="84" cy="66" rx="5" ry="3" fill="#F8C5D0" fillOpacity={0.85} />
           {eyesClosed ? (
             <>
-              <Path d="M70 40 Q74 36 78 40" stroke="#334155" strokeWidth="2" fill="none" />
-              <Path d="M82 40 Q86 36 90 40" stroke="#334155" strokeWidth="2" fill="none" />
+              <Path d="M47 55 Q53 49 59 55" stroke="#4A3328" strokeWidth="2.1" fill="none" strokeLinecap="round" />
+              <Path d="M69 55 Q75 49 81 55" stroke="#4A3328" strokeWidth="2.1" fill="none" strokeLinecap="round" />
             </>
           ) : (
             <>
-              <Circle cx="74" cy="40" r="2.2" fill="#334155" />
-              <Circle cx="86" cy="40" r="2.2" fill="#334155" />
+              <Ellipse cx="53" cy="55" rx="4.6" ry="5.3" fill="#4A3328" />
+              <Ellipse cx="75" cy="55" rx="4.6" ry="5.3" fill="#4A3328" />
+              <Circle cx="51.5" cy="53.2" r="1.7" fill="#FFFFFF" />
+              <Circle cx="73.5" cy="53.2" r="1.7" fill="#FFFFFF" />
             </>
           )}
-          <Path d="M74 48 Q80 52 86 48" stroke="#334155" strokeWidth="1.8" fill="none" />
-          {reaction === 'THINKING' ? (
-            <Path d="M18 58 h16 v18 h-16 z" fill="#FDE68A" stroke="#B45309" strokeWidth="1.5" />
-          ) : null}
-          {reaction === 'CONSOLING' ? (
-            <Path d="M104 46 v40" stroke="#92400E" strokeWidth="3" strokeLinecap="round" />
-          ) : null}
+          <Path
+            d="M64 62.5 c-1.3 0 -2.5 1.2 -2.5 2.5 c0 1.7 1.1 2.7 2.5 3.5 c1.4 -0.8 2.5 -1.8 2.5 -3.5 c0 -1.3 -1.2 -2.5 -2.5 -2.5 z"
+            fill="#F29AAB"
+          />
+          <Path
+            d={eyesClosed ? 'M54 68 Q64 76 74 68' : 'M57 69 Q64 73.5 71 69'}
+            stroke="#E08E99"
+            strokeWidth="1.6"
+            fill="none"
+            strokeLinecap="round"
+          />
           {reaction === 'CELEBRATING' ? (
             <>
-              <Path d="M20 70 q8 -16 16 0" stroke="#D97706" strokeWidth="2" fill="none" />
-              <Circle cx="22" cy="28" r="3" fill="#FBBF24" />
-              <Circle cx="108" cy="24" r="3" fill="#FBBF24" />
+              <Circle cx="18" cy="20" r="2.4" fill="#FBBF24" />
+              <Circle cx="112" cy="16" r="2.4" fill="#FBBF24" />
+              <Path d="M14 70 q6 -12 12 0" stroke="#D97706" strokeWidth="1.8" fill="none" />
             </>
           ) : null}
           {reaction === 'STREAK_FIRE' ? (
-            <Path d="M108 70 q8 -18 0 -28 q6 8 0 16 q-6 -6 0 12 z" fill="#F97316" />
+            <Path d="M112 34 q6 -14 0 -22 q5 6 0 12 q-5 -5 0 10 z" fill="#F97316" />
           ) : null}
         </Svg>
       </Animated.View>
