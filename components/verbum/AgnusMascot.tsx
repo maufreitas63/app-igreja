@@ -68,12 +68,6 @@ export function AgnusMascot({ reaction, lineEn, linePt }: Props) {
       <Animated.View style={{ transform: [{ translateY: lift }] }}>
         <Svg width={128} height={112} viewBox="0 0 128 112">
           <Ellipse cx="64" cy="107" rx="30" ry="3.5" fill="#E7D9CC" />
-          {reaction === 'THINKING' ? (
-            <>
-              <Path d="M6 80 h13 v15 h-13 z" fill="#FDE68A" stroke="#B45309" strokeWidth="1.3" />
-              <Path d="M12.5 80 v15" stroke="#B45309" strokeWidth="1" />
-            </>
-          ) : null}
           {reaction === 'CONSOLING' ? (
             <Path
               d="M116 92 V48 q0 -12 8 -10"
