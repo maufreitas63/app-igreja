@@ -28,6 +28,22 @@ function isOrder(exercise: VerbumExercise): exercise is VerbumExercise & { paylo
   return exercise.exerciseType === 'ORDER_WORDS' || exercise.exerciseType === 'LISTENING_DICTATION';
 }
 
+function dynamicKey(exercise: VerbumExercise): string {
+  return isOrder(exercise) ? 'ORDER_WORDS' : exercise.exerciseType;
+}
+
+function firstOfEachDynamic(exercises: VerbumExercise[]): VerbumExercise[] {
+  const seen = new Set<string>();
+  return exercises.filter((exercise) => {
+    const key = dynamicKey(exercise);
+    if (seen.has(key)) {
+      return false;
+    }
+    seen.add(key);
+    return true;
+  });
+}
+
 function remainingOrderWords(shuffled: readonly string[], built: readonly string[]): string[] {
   const left = new Map<string, number>();
   for (const word of shuffled) {
@@ -108,11 +124,12 @@ export default function VerbumLessonScreen() {
         if (!active) {
           return;
         }
+        const exercises = firstOfEachDynamic(session.exercises);
         setTitle(session.lesson.title);
         setSummary(session.lesson.theologicalSummary);
         setLearner(session.learner);
-        setQueue(session.exercises);
-        setTotal(session.exercises.length);
+        setQueue(exercises);
+        setTotal(exercises.length);
         setPaused(!session.learner.infiniteShields && session.learner.shields <= 0);
         previousShields.current = session.learner.shields;
       } catch (cause) {
@@ -336,6 +353,25 @@ export default function VerbumLessonScreen() {
     }
   };
 
+  const skipExercise = () => {
+    if (!current || checking || finished) {
+      return;
+    }
+    const rest = queue.slice(1);
+    setQueue(rest);
+    setDone((value) => value + 1);
+    setChoice(null);
+    setBuilt([]);
+    setMatches([]);
+    setPickEn(null);
+    setSpeakingGate(null);
+    setSpeakingTranscript('');
+    setFeedback(null);
+    if (rest.length === 0) {
+      setFinished(true);
+    }
+  };
+
   const speakingNow = Boolean(current && isSpeaking(current) && !finished && !feedback);
   const buttonTone = feedback?.correct || finished || speakingGate === 'pass'
     ? styles.buttonOk
@@ -355,6 +391,40 @@ export default function VerbumLessonScreen() {
           ? 'TENTAR NOVAMENTE'
           : 'CONTINUAR'
         : 'VERIFICAR';
+  const showSkip = speakingNow && speakingGate === 'retry' && !finished;
+
+  const actionButton = (
+    <Pressable
+      style={[styles.action, showSkip ? styles.actionGrow : null, buttonTone]}
+      disabled={checking || (!finished && !feedback && !canVerify && !(speakingNow && speakingGate))}
+      onPress={() => {
+        if (finished) {
+          continueCourse();
+          return;
+        }
+        if (feedback) {
+          continueLesson();
+          return;
+        }
+        if (speakingNow && speakingGate === 'retry') {
+          setSpeakingTry((value) => value + 1);
+          setSpeakingGate(null);
+          setSpeakingTranscript('');
+          return;
+        }
+        if (speakingNow && speakingGate === 'pass') {
+          void advanceAfterSpeaking();
+          return;
+        }
+        void verify();
+      }}
+      accessibilityRole="button"
+    >
+      <Text style={[styles.actionLabel, !finished && !feedback && !canVerify && !(speakingNow && speakingGate) ? styles.actionLabelOff : null]}>
+        {buttonLabel}
+      </Text>
+    </Pressable>
+  );
 
   return (
     <MinimalScreenLayout
@@ -474,36 +544,19 @@ export default function VerbumLessonScreen() {
           </View>
         ) : null}
         {(current && !paused) || finished ? (
-          <Pressable
-            style={[styles.action, buttonTone]}
-            disabled={checking || (!finished && !feedback && !canVerify && !(speakingNow && speakingGate))}
-            onPress={() => {
-              if (finished) {
-                continueCourse();
-                return;
-              }
-              if (feedback) {
-                continueLesson();
-                return;
-              }
-              if (speakingNow && speakingGate === 'retry') {
-                setSpeakingTry((value) => value + 1);
-                setSpeakingGate(null);
-                setSpeakingTranscript('');
-                return;
-              }
-              if (speakingNow && speakingGate === 'pass') {
-                void advanceAfterSpeaking();
-                return;
-              }
-              void verify();
-            }}
-            accessibilityRole="button"
-          >
-            <Text style={[styles.actionLabel, !finished && !feedback && !canVerify && !(speakingNow && speakingGate) ? styles.actionLabelOff : null]}>
-              {buttonLabel}
-            </Text>
-          </Pressable>
+          showSkip ? (
+            <View style={styles.actionRow}>
+              {actionButton}
+              <Pressable
+                style={[styles.action, styles.skip]}
+                onPress={skipExercise}
+                accessibilityRole="button"
+                accessibilityLabel="Pular exercício"
+              >
+                <Text style={styles.skipLabel}>PULAR</Text>
+              </Pressable>
+            </View>
+          ) : actionButton
         ) : null}
         {title && !finished ? <Text style={styles.lessonTitle}>{title}</Text> : null}
       </ScrollView>
@@ -801,6 +854,27 @@ const styles = StyleSheet.create({
     borderBottomWidth: 4,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  actionRow: {
+    flexDirection: 'row',
+    alignItems: 'stretch',
+    gap: 10,
+  },
+  actionGrow: {
+    flex: 1,
+  },
+  skip: {
+    minWidth: 112,
+    backgroundColor: '#FFFFFF',
+    borderBottomColor: '#94A3B8',
+    borderWidth: 1,
+    borderColor: '#CBD5E1',
+  },
+  skipLabel: {
+    color: '#334155',
+    fontSize: 16,
+    fontWeight: '800',
+    letterSpacing: 1,
   },
   buttonOk: {
     backgroundColor: '#10B981',
