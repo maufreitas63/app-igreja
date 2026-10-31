@@ -23,6 +23,29 @@ function isOrder(exercise: VerbumExercise): exercise is VerbumExercise & { paylo
   return exercise.exerciseType === 'ORDER_WORDS' || exercise.exerciseType === 'LISTENING_DICTATION';
 }
 
+function remainingOrderWords(shuffled: readonly string[], built: readonly string[]): string[] {
+  const left = new Map<string, number>();
+  for (const word of shuffled) {
+    left.set(word, (left.get(word) ?? 0) + 1);
+  }
+  for (const word of built) {
+    const count = left.get(word) ?? 0;
+    if (count > 0) {
+      left.set(word, count - 1);
+    }
+  }
+  const shown = new Map<string, number>();
+  return shuffled.filter((word) => {
+    const allowed = left.get(word) ?? 0;
+    const kept = shown.get(word) ?? 0;
+    if (kept >= allowed) {
+      return false;
+    }
+    shown.set(word, kept + 1);
+    return true;
+  });
+}
+
 export default function VerbumLessonScreen() {
   const params = useLocalSearchParams();
   const router = useRouter();
@@ -105,13 +128,7 @@ export default function VerbumLessonScreen() {
 
   const progress = total === 0 ? 0 : Math.round((done / total) * 100);
   const orderPayload = current && isOrder(current) ? current.payload : null;
-  const pool = orderPayload
-    ? orderPayload.shuffled.filter((word) => {
-        const used = built.filter((item) => item === word).length;
-        const available = orderPayload.shuffled.filter((item) => item === word).length;
-        return used < available;
-      })
-    : [];
+  const pool = orderPayload ? remainingOrderWords(orderPayload.shuffled, built) : [];
   const canVerify = current
     ? isFillBlank(current)
       ? Boolean(choice)
