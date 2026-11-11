@@ -1,4 +1,7 @@
-import { financialsThroughDateQuery } from '@/lib/financialsThroughDateQuery';
+import {
+  fetchAllPagedFinancialRows,
+  financialsThroughDateQuery,
+} from '@/lib/financialsThroughDateQuery';
 import { computeYearToDateRealizedMovement } from '@/lib/financialYearToDate';
 import {
   computeFinancialBalance,
@@ -101,6 +104,9 @@ const isMissingFinancialReceiptColumn = (error: { code?: string; message?: strin
 const financialRowsQuery = (select: string, endDate: string) =>
   financialsThroughDateQuery(select, endDate);
 
+const fetchFinancialTablePages = (select: string, endDate: string) =>
+  fetchAllPagedFinancialRows((from, to) => financialRowsQuery(select, endDate).range(from, to));
+
 const fetchFinancialRowsThroughDate = async (endDate: string) => {
   const viaRpc = await fetchFinancialRowsThroughDateViaRpc(endDate);
 
@@ -108,14 +114,14 @@ const fetchFinancialRowsThroughDate = async (endDate: string) => {
     return viaRpc;
   }
 
-  const withLowercase = await financialRowsQuery(FINANCIAL_SELECT_WITH_COMMENTS, endDate);
+  const withLowercase = await fetchFinancialTablePages(FINANCIAL_SELECT_WITH_COMMENTS, endDate);
 
   if (!withLowercase.error) {
     return withLowercase;
   }
 
   if (isMissingFinancialReceiptUrlsColumn(withLowercase.error)) {
-    const withoutReceiptUrls = await financialRowsQuery(
+    const withoutReceiptUrls = await fetchFinancialTablePages(
       FINANCIAL_SELECT_WITH_RECEIPT_URL_ONLY,
       endDate
     );
@@ -130,7 +136,7 @@ const fetchFinancialRowsThroughDate = async (endDate: string) => {
   }
 
   if (isMissingFinancialReceiptColumn(withLowercase.error)) {
-    const withoutReceipt = await financialRowsQuery(FINANCIAL_SELECT_WITH_COMMENTS_ONLY, endDate);
+    const withoutReceipt = await fetchFinancialTablePages(FINANCIAL_SELECT_WITH_COMMENTS_ONLY, endDate);
 
     if (!withoutReceipt.error) {
       return withoutReceipt;
@@ -143,14 +149,14 @@ const fetchFinancialRowsThroughDate = async (endDate: string) => {
     return withLowercase;
   }
 
-  const withPascal = await financialRowsQuery(FINANCIAL_SELECT_WITH_COMMENTS_PASCAL, endDate);
+  const withPascal = await fetchFinancialTablePages(FINANCIAL_SELECT_WITH_COMMENTS_PASCAL, endDate);
 
   if (!withPascal.error) {
     return withPascal;
   }
 
   if (isMissingFinancialReceiptUrlsColumn(withPascal.error)) {
-    const withoutReceiptUrls = await financialRowsQuery(
+    const withoutReceiptUrls = await fetchFinancialTablePages(
       FINANCIAL_SELECT_WITH_RECEIPT_URL_ONLY_PASCAL,
       endDate
     );
@@ -165,7 +171,7 @@ const fetchFinancialRowsThroughDate = async (endDate: string) => {
   }
 
   if (isMissingFinancialReceiptColumn(withPascal.error)) {
-    const withoutReceipt = await financialRowsQuery(
+    const withoutReceipt = await fetchFinancialTablePages(
       FINANCIAL_SELECT_WITH_COMMENTS_PASCAL_ONLY,
       endDate
     );
@@ -181,7 +187,7 @@ const fetchFinancialRowsThroughDate = async (endDate: string) => {
     return withPascal;
   }
 
-  return financialRowsQuery(FINANCIAL_SELECT_BASE, endDate);
+  return fetchFinancialTablePages(FINANCIAL_SELECT_BASE, endDate);
 };
 
 const fetchCommentsByEntryIds = async (ids: string[]) => {
@@ -387,19 +393,19 @@ const fetchFinancialMonthsFromSession = async (): Promise<{
 };
 
 const fetchFinancialRowsThroughDateViaRpc = async (endDate: string) => {
-  const { data, error } = await supabase.rpc('listar_lancamentos_financeiros_ate', {
-    p_end: endDate,
-  });
+  const paged = await fetchAllPagedFinancialRows((from, to) =>
+    supabase.rpc('listar_lancamentos_financeiros_ate', { p_end: endDate }).range(from, to)
+  );
 
-  if (error) {
-    if (isSupabaseRpcMissingError(error, 'listar_lancamentos_financeiros_ate')) {
+  if (paged.error) {
+    if (isSupabaseRpcMissingError(paged.error, 'listar_lancamentos_financeiros_ate')) {
       return null;
     }
 
-    throw error;
+    throw paged.error;
   }
 
-  return { data, error: null };
+  return { data: paged.data, error: null };
 };
 
 type UseFinancialsByMonthResult = {

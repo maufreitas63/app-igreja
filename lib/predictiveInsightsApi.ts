@@ -17,7 +17,10 @@ import {
 } from '@/lib/financialMonth';
 import { countPositiveRevenueMonths } from '@/lib/financialPredictiveModel';
 import { sumOrdinaryTithesOfferingsRevenue } from '@/lib/ordinaryTithesOfferingsRevenue';
-import { financialsThroughDateQuery } from '@/lib/financialsThroughDateQuery';
+import {
+  FINANCIALS_FETCH_PAGE_SIZE,
+  financialsThroughDateQuery,
+} from '@/lib/financialsThroughDateQuery';
 import { supabase } from '@/lib/supabase';
 import { isSupabaseRpcMissingError } from '@/lib/supabaseRpc';
 
@@ -27,8 +30,6 @@ export const PREDICTIVE_INSIGHTS_SQL_HINT =
 const FINANCIAL_SELECT =
   'id, transaction_date, account, amount, ministry, transaction_kind, movement, budget_version';
 
-const FINANCIAL_PAGE_SIZE = 1000;
-
 const fetchFinancialRowsThroughDate = async (endDate: string) => {
   const rows: FinancialEntry[] = [];
   let from = 0;
@@ -36,7 +37,7 @@ const fetchFinancialRowsThroughDate = async (endDate: string) => {
   while (true) {
     const { data, error } = await financialsThroughDateQuery(FINANCIAL_SELECT, endDate).range(
       from,
-      from + FINANCIAL_PAGE_SIZE - 1
+      from + FINANCIALS_FETCH_PAGE_SIZE - 1
     );
 
     if (error) {
@@ -53,11 +54,11 @@ const fetchFinancialRowsThroughDate = async (endDate: string) => {
       .filter((row): row is FinancialEntry => row !== null);
     rows.push(...page);
 
-    if (page.length < FINANCIAL_PAGE_SIZE) {
+    if (page.length < FINANCIALS_FETCH_PAGE_SIZE) {
       break;
     }
 
-    from += FINANCIAL_PAGE_SIZE;
+    from += FINANCIALS_FETCH_PAGE_SIZE;
   }
 
   return rows;

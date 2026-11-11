@@ -164,7 +164,7 @@ begin
       upper(trim(coalesce(f.budget_version, ''))) like '%REALIZ%'
       or upper(trim(coalesce(f.budget_version, ''))) like '%PLANEJ%'
     )
-  order by f.transaction_date asc;
+  order by f.transaction_date asc, f.id asc;
 end;
 $$;
 
