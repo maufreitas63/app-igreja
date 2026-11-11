@@ -5,8 +5,17 @@ import {
 } from '@/lib/treasuryReceiptBatchPath';
 import type {
   TreasuryReceiptFolderAccess,
+  TreasuryReceiptFolderDiagnostics,
   TreasuryReceiptFolderFile,
 } from '@/lib/treasuryReceiptFolderAccess';
+
+type DirectoryPickerHandle = {
+  values: () => AsyncIterable<{
+    kind: string;
+    name: string;
+    getFile?: () => Promise<File>;
+  }>;
+};
 
 const readFileAsDataUrl = (file: File) =>
   new Promise<string>((resolve, reject) => {
@@ -29,77 +38,47 @@ const readFileAsDataUrl = (file: File) =>
   });
 
 const noopMarkProcessed = async () => {
-  // Seleção via <input webkitdirectory> não permite renomear no disco.
+  // Seleção via pasta do navegador não permite renomear no disco.
 };
 
-const isCollectableTreasuryImage = (fileName: string) => {
-  if (typeof fileName !== 'string' || !fileName.trim()) {
-    return false;
-  }
-
-  return hasTreasuryReceiptImageExtension(fileName.trim());
+const basenameOf = (fileName: string) => {
+  const parts = fileName.replace(/\\/g, '/').split('/').filter(Boolean);
+  return (parts[parts.length - 1] ?? fileName).trim();
 };
 
-const getRelativePathParts = (file: File) => {
+const getRelativePath = (file: File) => {
   const relative =
     typeof (file as File & { webkitRelativePath?: string }).webkitRelativePath === 'string' &&
     (file as File & { webkitRelativePath: string }).webkitRelativePath.trim()
       ? (file as File & { webkitRelativePath: string }).webkitRelativePath
       : file.name;
 
-  return relative
-    .replace(/\\/g, '/')
-    .split('/')
-    .map((part) => part.trim())
-    .filter(Boolean);
-};
-
-const resolveSelectedFolderRootName = (browserFiles: File[]) => {
-  const paths = browserFiles.map(getRelativePathParts).filter((parts) => parts.length > 0);
-
-  if (!paths.length) {
-    return null;
-  }
-
-  const rootCandidate = paths[0]![0]!;
-  const allShareRoot = paths.every((parts) => parts[0] === rootCandidate);
-  const hasNestedOrFileUnderRoot = paths.some((parts) => parts.length >= 2);
-
-  if (allShareRoot && hasNestedOrFileUnderRoot) {
-    return rootCandidate;
-  }
-
-  return null;
-};
-
-/** Só arquivos diretamente na pasta escolhida (desconsidera subpastas). */
-const isTopLevelFolderFile = (file: File, selectedRootName: string | null) => {
-  const parts = getRelativePathParts(file);
-
-  if (!parts.length) {
-    return false;
-  }
-
-  if (selectedRootName) {
-    return parts.length === 2 && parts[0] === selectedRootName;
-  }
-
-  return parts.length === 1;
+  return relative.replace(/\\/g, '/').replace(/^\/+/, '');
 };
 
 const collectFromBrowserFiles = (browserFiles: File[]) => {
   const files: TreasuryReceiptFolderFile[] = [];
-  const selectedRootName = resolveSelectedFolderRootName(browserFiles);
+  let skippedNotImage = 0;
+  let skippedUpdated = 0;
+  let fromSubfolders = 0;
 
   for (const file of browserFiles) {
-    if (!isTopLevelFolderFile(file, selectedRootName) || !isCollectableTreasuryImage(file.name)) {
+    const relativePath = getRelativePath(file);
+    const pathParts = relativePath.split('/').filter(Boolean);
+    const fileName = basenameOf(relativePath || file.name);
+
+    if (!hasTreasuryReceiptImageExtension(fileName)) {
+      skippedNotImage += 1;
       continue;
     }
 
-    const fileName = file.name;
-
-    if (fileName.trim().toLowerCase().startsWith('updated_')) {
+    if (fileName.toLowerCase().startsWith('updated_')) {
+      skippedUpdated += 1;
       continue;
+    }
+
+    if (pathParts.length > 2) {
+      fromSubfolders += 1;
     }
 
     const parsed = parseTreasuryReceiptFileName(fileName);
@@ -127,7 +106,52 @@ const collectFromBrowserFiles = (browserFiles: File[]) => {
     return left.position - right.position;
   });
 
-  return { files };
+  const diagnostics: TreasuryReceiptFolderDiagnostics = {
+    pickerFileCount: browserFiles.length,
+    collectedCount: files.length,
+    skippedNotImage,
+    skippedUpdated,
+    fromSubfolders,
+  };
+
+  return { files, diagnostics };
+};
+
+const walkDirectoryHandle = async (
+  handle: DirectoryPickerHandle,
+  prefix = ''
+): Promise<File[]> => {
+  const files: File[] = [];
+
+  for await (const entry of handle.values()) {
+    if (entry.kind === 'file' && typeof entry.getFile === 'function') {
+      const file = await entry.getFile();
+      const relative = `${prefix}${entry.name}`;
+
+      try {
+        Object.defineProperty(file, 'webkitRelativePath', {
+          value: relative,
+          configurable: true,
+        });
+      } catch {
+        // Alguns File nativos não aceitam redefinir webkitRelativePath.
+      }
+
+      files.push(file);
+      continue;
+    }
+
+    if (entry.kind === 'directory') {
+      files.push(
+        ...(await walkDirectoryHandle(
+          entry as unknown as DirectoryPickerHandle,
+          `${prefix}${entry.name}/`
+        ))
+      );
+    }
+  }
+
+  return files;
 };
 
 const pickFolderFilesViaInput = (): Promise<File[] | null> =>
@@ -140,13 +164,16 @@ const pickFolderFilesViaInput = (): Promise<File[] | null> =>
     const input = document.createElement('input');
     input.type = 'file';
     input.multiple = true;
-    input.accept = 'image/jpeg,.jpg,.jpeg,image/*';
+    // Sem `accept`: no Windows o Chrome/Edge zera a lista da pasta quando o filtro de imagem está ligado.
     input.setAttribute('webkitdirectory', '');
     input.setAttribute('directory', '');
     input.webkitdirectory = true;
     input.style.position = 'fixed';
-    input.style.left = '-9999px';
+    input.style.left = '0';
     input.style.top = '0';
+    input.style.width = '1px';
+    input.style.height = '1px';
+    input.style.opacity = '0';
     input.tabIndex = -1;
 
     let settled = false;
@@ -187,16 +214,40 @@ export async function pickTreasuryReceiptFolderFiles(): Promise<TreasuryReceiptF
     );
   }
 
-  const browserFiles = await pickFolderFilesViaInput();
+  let browserFiles: File[] | null = null;
+  const showDirectoryPicker = (
+    window as Window & { showDirectoryPicker?: () => Promise<DirectoryPickerHandle> }
+  ).showDirectoryPicker;
+
+  if (typeof showDirectoryPicker === 'function') {
+    try {
+      const handle = await showDirectoryPicker();
+      browserFiles = await walkDirectoryHandle(handle);
+    } catch (error) {
+      if (
+        error &&
+        typeof error === 'object' &&
+        'name' in error &&
+        (error as { name: string }).name === 'AbortError'
+      ) {
+        return null;
+      }
+
+      browserFiles = await pickFolderFilesViaInput();
+    }
+  } else {
+    browserFiles = await pickFolderFilesViaInput();
+  }
 
   if (browserFiles === null) {
     return null;
   }
 
-  const { files } = collectFromBrowserFiles(browserFiles);
+  const { files, diagnostics } = collectFromBrowserFiles(browserFiles);
 
   return {
     files,
     canRenameAfterUpload: false,
+    diagnostics,
   };
 }

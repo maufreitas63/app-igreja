@@ -13,9 +13,18 @@ export type TreasuryReceiptFolderFile = {
   markProcessed: () => Promise<void>;
 };
 
+export type TreasuryReceiptFolderDiagnostics = {
+  pickerFileCount: number;
+  collectedCount: number;
+  skippedNotImage: number;
+  skippedUpdated: number;
+  fromSubfolders: number;
+};
+
 export type TreasuryReceiptFolderAccess = {
   files: TreasuryReceiptFolderFile[];
   canRenameAfterUpload: boolean;
+  diagnostics?: TreasuryReceiptFolderDiagnostics;
 };
 
 export const isTreasuryReceiptFolderAccessSupported = () =>

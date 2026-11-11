@@ -31,20 +31,30 @@ export const saveTreasuryReceiptsDir = (value: string) => {
 export const TREASURY_RECEIPT_CANONICAL_EXTENSION = '.jpg';
 
 export const hasTreasuryReceiptImageExtension = (fileName: string) => {
-  const lower = fileName.toLowerCase();
+  const lower = fileName.toLowerCase().trim();
 
-  return lower.endsWith('.jpeg') || lower.endsWith('.jpg');
+  return (
+    lower.endsWith('.jpeg') ||
+    lower.endsWith('.jpg') ||
+    lower.endsWith('.jpe') ||
+    lower.endsWith('.jfif')
+  );
 };
 
 const stripTreasuryReceiptImageExtension = (fileName: string): string | null => {
-  const lower = fileName.toLowerCase();
+  const trimmed = fileName.trim();
+  const lower = trimmed.toLowerCase();
 
-  if (lower.endsWith('.jpeg')) {
-    return fileName.slice(0, -5);
+  if (lower.endsWith('.jpeg') || lower.endsWith('.jfif')) {
+    return trimmed.slice(0, -5);
+  }
+
+  if (lower.endsWith('.jpe')) {
+    return trimmed.slice(0, -4);
   }
 
   if (lower.endsWith('.jpg')) {
-    return fileName.slice(0, -4);
+    return trimmed.slice(0, -4);
   }
 
   return null;

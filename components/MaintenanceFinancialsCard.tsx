@@ -1160,18 +1160,24 @@ export function MaintenanceFinancialsCard({
     const receiptCount = folderAccess.files.length;
 
     if (receiptCount === 0) {
+      const seen = folderAccess.diagnostics?.pickerFileCount ?? 0;
+      const skippedImages = folderAccess.diagnostics?.skippedNotImage ?? 0;
+      const skippedUpdated = folderAccess.diagnostics?.skippedUpdated ?? 0;
       Toast.show({
         type: 'error',
         text1: 'Comprovantes',
-        text2: 'Nenhum JPG de comprovante encontrado na pasta selecionada.',
-        visibilityTime: 7000,
+        text2:
+          seen === 0
+            ? 'A pasta veio vazia no seletor. Escolha a pasta onde estão os JPG/JPEG (Chrome ou Edge no computador).'
+            : `A pasta teve ${seen} arquivo(s), mas nenhum JPG/JPEG aproveitável (${skippedImages} sem extensão de imagem, ${skippedUpdated} já com updated_).`,
+        visibilityTime: 8000,
       });
       return;
     }
 
     const confirmed = await confirmDialog(
       receiptBatchDryRun ? 'Simular comprovantes' : 'Processar comprovantes',
-      `Pasta selecionada (somente arquivos na raiz, sem subpastas):\n• ${receiptCount} comprovante(s)\n\n${
+      `Pasta selecionada (JPG/JPEG na pasta e nas subpastas):\n• ${receiptCount} comprovante(s)\n\n${
         receiptBatchDryRun ? 'Simulação' : 'Vinculação'
       } de JPG/JPEG aos lançamentos REALIZADO pelo campo referencia.${
         receiptBatchForce
