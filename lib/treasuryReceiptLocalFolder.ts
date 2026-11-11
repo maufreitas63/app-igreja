@@ -1,4 +1,4 @@
-import { PDF_TO_JPG_HELPER_ORIGIN, isPdfToJpgHelperOnline } from '@/lib/pdfFolderToJpg';
+import { fetchPdfToJpgHelper, isPdfToJpgHelperOnline } from '@/lib/pdfFolderToJpg';
 import {
   buildUpdatedTreasuryReceiptFileName,
   parseTreasuryReceiptFileName,
@@ -12,7 +12,7 @@ type ListedReceipt = {
 };
 
 const helperPost = async (pathname: string, body: Record<string, string>) => {
-  const response = await fetch(`${PDF_TO_JPG_HELPER_ORIGIN}${pathname}`, {
+  const response = await fetchPdfToJpgHelper(pathname, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),

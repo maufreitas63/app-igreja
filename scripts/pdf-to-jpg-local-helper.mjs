@@ -90,16 +90,28 @@ const PAGE = `<!doctype html>
 </body>
 </html>`;
 
+let requestOrigin = '*';
+
+function corsHeaders(extra = {}) {
+  return {
+    'Access-Control-Allow-Origin': requestOrigin,
+    'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Private-Network': 'true',
+    Vary: 'Origin',
+    ...extra,
+  };
+}
+
 function send(res, status, body, headers = {}) {
   res.writeHead(status, headers);
   res.end(body);
 }
 
 function sendJson(res, status, body) {
-  send(res, status, JSON.stringify(body), {
+  send(res, status, JSON.stringify(body), corsHeaders({
     'Content-Type': 'application/json; charset=utf-8',
-    'Access-Control-Allow-Origin': '*',
-  });
+  }));
 }
 
 function readJson(req) {
@@ -211,13 +223,12 @@ function parseSummary(stdout) {
 
 const server = http.createServer(async (req, res) => {
   const url = new URL(req.url || '/', `http://127.0.0.1:${PORT}`);
+  requestOrigin = typeof req.headers.origin === 'string' && req.headers.origin.trim()
+    ? req.headers.origin.trim()
+    : '*';
 
   if (req.method === 'OPTIONS') {
-    res.writeHead(204, {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type',
-    });
+    res.writeHead(204, corsHeaders());
     res.end();
     return;
   }

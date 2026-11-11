@@ -48,25 +48,42 @@ export function buildPdfToJpgHelperUrl(folderPath: string, returnTo?: string | n
   return `${PDF_TO_JPG_HELPER_ORIGIN}/?${params.toString()}`;
 }
 
+type LoopbackRequestInit = RequestInit & { targetAddressSpace?: 'loopback' | 'local' | 'public' };
+
+/** Fetch ao helper em 127.0.0.1 (Chrome exige loopback quando a página é HTTPS). */
+export async function fetchPdfToJpgHelper(
+  pathname: string,
+  init: LoopbackRequestInit = {},
+  timeoutMs = 8000
+): Promise<Response> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  const requestInit: LoopbackRequestInit = {
+    cache: 'no-store',
+    mode: 'cors',
+    targetAddressSpace: 'loopback',
+    ...init,
+    signal: controller.signal,
+  };
+
+  try {
+    return await fetch(`${PDF_TO_JPG_HELPER_ORIGIN}${pathname}`, requestInit);
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 /** Verifica se `npm run pdf-to-jpg:helper` está escutando neste computador. */
-export async function isPdfToJpgHelperOnline(timeoutMs = 900): Promise<boolean> {
+export async function isPdfToJpgHelperOnline(timeoutMs = 2500): Promise<boolean> {
   if (typeof fetch === 'undefined') {
     return false;
   }
 
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeoutMs);
-
   try {
-    const response = await fetch(`${PDF_TO_JPG_HELPER_ORIGIN}/health`, {
-      method: 'GET',
-      signal: controller.signal,
-    });
+    const response = await fetchPdfToJpgHelper('/health', { method: 'GET' }, timeoutMs);
     return response.ok;
   } catch {
     return false;
-  } finally {
-    clearTimeout(timer);
   }
 }
 
