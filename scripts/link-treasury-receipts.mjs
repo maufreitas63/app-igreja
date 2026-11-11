@@ -187,7 +187,7 @@ const resolveStoragePath = (receiptUrl) => {
   return normalized.replace(new RegExp(`^${FINANCIAL_DOCS_BUCKET}/`, 'i'), '');
 };
 
-const FINANCIAL_MAX_RECEIPTS_PER_ENTRY = 3;
+const FINANCIAL_MAX_RECEIPTS_PER_ENTRY = 9;
 const UPLOAD_CONCURRENCY = 3;
 
 const renameLocalToCanonical = (receiptsDir, localPath, canonicalFileName) => {

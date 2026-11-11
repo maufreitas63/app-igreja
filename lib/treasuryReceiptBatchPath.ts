@@ -153,14 +153,14 @@ export type ParsedTreasuryReceiptFileName = {
   referencia: string;
   /** Nome canônico do arquivo após normalização. */
   canonicalFileName: string;
-  /** Posição 1–3 quando o nome termina com espaço + dígito; null no padrão único. */
+  /** Posição 1–9 quando o nome termina com espaço + dígito; null no padrão único. */
   position: number | null;
 };
 
 /**
  * Interpreta nomes de comprovantes (.jpg ou .jpeg).
  * - Único: aaaammdd nnnn,nn.jpg
- * - Múltiplo: aaaammdd nnnn,nn n.jpg (espaço obrigatório antes do dígito de posição)
+ * - Múltiplo: aaaammdd nnnn,nn n.jpg (espaço obrigatório antes da posição 1–9)
  * - Saída: o sinal pode vir com espaço (`20261013 -97,00.jpeg`) ou colado (`20261013-97,00.jpeg`).
  * Arquivos .jpeg são normalizados para o padrão .jpg da referencia (valor absoluto).
  */
@@ -193,7 +193,7 @@ export const parseTreasuryReceiptFileName = (fileName: string): ParsedTreasuryRe
   if (positionMatch) {
     const digit = Number(positionMatch[1]);
 
-    if (Number.isInteger(digit) && digit >= 1 && digit <= 3) {
+    if (Number.isInteger(digit) && digit >= 1 && digit <= 9) {
       position = digit;
       stem = stem.slice(0, -positionMatch[0].length).trim();
     }

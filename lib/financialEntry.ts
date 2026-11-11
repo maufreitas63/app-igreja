@@ -18,7 +18,7 @@ export type FinancialEntry = {
   budget_version: string;
   comments?: string | null;
   receipt_url?: string | null;
-  /** Até 3 comprovantes por lançamento. */
+  /** Até 9 comprovantes por lançamento. */
   receipt_urls?: string[] | null;
   /** Nome do JPG de comprovante: aaaammdd nnnn,nn.jpg */
   referencia?: string | null;

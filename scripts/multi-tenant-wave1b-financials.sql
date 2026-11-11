@@ -156,7 +156,7 @@ begin
   v_len := jsonb_array_length(v_urls);
   v_pos := coalesce(nullif(p_position, 0), v_len + 1);
 
-  if v_pos < 1 or v_pos > 3 then
+  if v_pos < 1 or v_pos > 9 then
     return jsonb_build_object('success', false, 'message', 'Posição de comprovante inválida.');
   end if;
 
@@ -178,12 +178,12 @@ begin
   v_idx := v_pos;
 
   if v_idx = coalesce(array_length(v_arr, 1), 0) + 1 then
-    if v_len >= 3 and not coalesce(p_force, false) then
+    if v_len >= 9 and not coalesce(p_force, false) then
       return jsonb_build_object(
         'success',
         false,
         'message',
-        'Cada lançamento aceita no máximo 3 comprovantes.',
+        'Cada lançamento aceita no máximo 9 comprovantes.',
         'code',
         'max_receipts'
       );
@@ -291,8 +291,8 @@ begin
 
   v_receipt_urls := public.normalize_financial_receipt_urls(coalesce(p_receipt_urls, '[]'::jsonb));
 
-  if jsonb_array_length(v_receipt_urls) > 3 then
-    return jsonb_build_object('success', false, 'message', 'Cada lançamento aceita no máximo 3 comprovantes.');
+  if jsonb_array_length(v_receipt_urls) > 9 then
+    return jsonb_build_object('success', false, 'message', 'Cada lançamento aceita no máximo 9 comprovantes.');
   end if;
 
   update public.financials f

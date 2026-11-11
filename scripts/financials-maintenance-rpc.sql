@@ -21,7 +21,7 @@ alter table public.financials
   add column if not exists receipt_urls jsonb not null default '[]'::jsonb;
 
 comment on column public.financials.receipt_urls is
-  'Lista de caminhos de comprovantes (máx. 3) no bucket financial-docs.';
+  'Lista de caminhos de comprovantes (máx. 9) no bucket financial-docs.';
 
 update public.financials f
 set receipt_urls = jsonb_build_array(trim(f.receipt_url))
@@ -58,7 +58,7 @@ begin
     v_seen := array_append(v_seen, v_url);
     v_result := v_result || jsonb_build_array(to_jsonb(v_url));
 
-    if jsonb_array_length(v_result) >= 3 then
+    if jsonb_array_length(v_result) >= 9 then
       exit;
     end if;
   end loop;
@@ -664,8 +664,8 @@ begin
 
   v_receipt_urls := public.normalize_financial_receipt_urls(coalesce(p_receipt_urls, '[]'::jsonb));
 
-  if jsonb_array_length(v_receipt_urls) > 3 then
-    return jsonb_build_object('success', false, 'message', 'Cada lançamento aceita no máximo 3 comprovantes.');
+  if jsonb_array_length(v_receipt_urls) > 9 then
+    return jsonb_build_object('success', false, 'message', 'Cada lançamento aceita no máximo 9 comprovantes.');
   end if;
 
   update public.financials f
@@ -775,7 +775,7 @@ begin
   v_len := jsonb_array_length(v_urls);
   v_pos := coalesce(nullif(p_position, 0), v_len + 1);
 
-  if v_pos < 1 or v_pos > 3 then
+  if v_pos < 1 or v_pos > 9 then
     return jsonb_build_object('success', false, 'message', 'Posição de comprovante inválida.');
   end if;
 
@@ -797,12 +797,12 @@ begin
   v_idx := v_pos;
 
   if v_idx = coalesce(array_length(v_arr, 1), 0) + 1 then
-    if v_len >= 3 and not coalesce(p_force, false) then
+    if v_len >= 9 and not coalesce(p_force, false) then
       return jsonb_build_object(
         'success',
         false,
         'message',
-        'Cada lançamento aceita no máximo 3 comprovantes.',
+        'Cada lançamento aceita no máximo 9 comprovantes.',
         'code',
         'max_receipts'
       );

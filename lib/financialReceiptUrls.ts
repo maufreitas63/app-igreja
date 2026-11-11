@@ -1,6 +1,6 @@
 import type { FinancialEntry } from '@/lib/financialEntry';
 
-export const FINANCIAL_MAX_RECEIPTS_PER_ENTRY = 3;
+export const FINANCIAL_MAX_RECEIPTS_PER_ENTRY = 9;
 
 const normalizeReceiptUrl = (value: unknown): string | null => {
   if (typeof value !== 'string') {
@@ -12,7 +12,7 @@ const normalizeReceiptUrl = (value: unknown): string | null => {
   return trimmed.length > 0 ? trimmed : null;
 };
 
-/** Lista de URLs de comprovantes (máx. 3), deduplicada e estável. */
+/** Lista de URLs de comprovantes (máx. 9), deduplicada e estável. */
 export const normalizeFinancialReceiptUrls = (urls: unknown): string[] => {
   if (!Array.isArray(urls)) {
     return [];
@@ -45,7 +45,7 @@ export type PlaceFinancialReceiptAtPositionResult = {
   error?: string;
 };
 
-/** Insere ou substitui comprovante na posição 1–3 (ordem densa no array). */
+/** Insere ou substitui comprovante na posição 1–9 (ordem densa no array). */
 export const placeFinancialReceiptAtPosition = (
   currentUrls: string[],
   position: number,
