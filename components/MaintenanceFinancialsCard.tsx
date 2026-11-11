@@ -60,6 +60,10 @@ import {
 } from '@/lib/treasuryReceiptBatchPath';
 import { isTreasuryReceiptFolderAccessSupported, pickTreasuryReceiptFolderFiles } from '@/lib/treasuryReceiptFolderAccess';
 import {
+  isWindowsDiskFolderPath,
+  loadTreasuryReceiptsFromDiskPath,
+} from '@/lib/treasuryReceiptLocalFolder';
+import {
   DEFAULT_PDF_TO_JPG_DIR,
   buildPdfToJpgHelperUrl,
   buildPdfToJpgProtocolUrl,
@@ -1128,11 +1132,25 @@ export function MaintenanceFinancialsCard({
         ? 'Processar substituindo posições ocupadas'
         : 'Processar';
 
-    // Abre o seletor no mesmo clique do botão (gesto do usuário).
+    const diskPath = resolvePdfToJpgFolderPath((receiptsDir ?? '').trim() || DEFAULT_PDF_TO_JPG_DIR);
     let folderAccess: Awaited<ReturnType<typeof pickTreasuryReceiptFolderFiles>>;
+    let usedDiskPath = false;
 
     try {
-      folderAccess = await pickTreasuryReceiptFolderFiles();
+      if (isWindowsDiskFolderPath(diskPath) && (await isPdfToJpgHelperOnline())) {
+        folderAccess = await loadTreasuryReceiptsFromDiskPath(diskPath);
+        usedDiskPath = true;
+      } else if (isWindowsDiskFolderPath(diskPath)) {
+        Toast.show({
+          type: 'error',
+          text1: 'Comprovantes',
+          text2: `Não leu "${diskPath}". Ligue o helper neste PC: npm run pdf-to-jpg:helper`,
+          visibilityTime: 8000,
+        });
+        return;
+      } else {
+        folderAccess = await pickTreasuryReceiptFolderFiles();
+      }
     } catch (error) {
       Toast.show({
         type: 'error',
@@ -1140,8 +1158,8 @@ export function MaintenanceFinancialsCard({
         text2:
           error instanceof Error
             ? error.message
-            : 'Não foi possível abrir o seletor de pasta.',
-        visibilityTime: 7000,
+            : 'Não foi possível ler a pasta de comprovantes.',
+        visibilityTime: 8000,
       });
       return;
     }
@@ -1151,7 +1169,7 @@ export function MaintenanceFinancialsCard({
         type: 'info',
         text1: 'Comprovantes',
         text2:
-          'Pasta não selecionada. No diálogo do sistema, escolha a pasta dos JPGs e confirme (não cancele).',
+          'Pasta não selecionada. Informe o caminho Windows com o helper ligado, ou escolha a pasta no diálogo.',
         visibilityTime: 5000,
       });
       return;
@@ -1168,7 +1186,9 @@ export function MaintenanceFinancialsCard({
         text1: 'Comprovantes',
         text2:
           seen === 0
-            ? 'A pasta veio vazia no seletor. Escolha a pasta onde estão os JPG/JPEG (Chrome ou Edge no computador).'
+            ? usedDiskPath
+              ? `Nenhum JPG/JPEG em "${diskPath}".`
+              : 'A pasta veio vazia no seletor. Escolha a pasta onde estão os JPG/JPEG (Chrome ou Edge no computador).'
             : `A pasta teve ${seen} arquivo(s), mas nenhum JPG/JPEG aproveitável (${skippedImages} sem extensão de imagem, ${skippedUpdated} já com updated_).`,
         visibilityTime: 8000,
       });
@@ -1177,7 +1197,7 @@ export function MaintenanceFinancialsCard({
 
     const confirmed = await confirmDialog(
       receiptBatchDryRun ? 'Simular comprovantes' : 'Processar comprovantes',
-      `Pasta selecionada (JPG/JPEG na pasta e nas subpastas):\n• ${receiptCount} comprovante(s)\n\n${
+      `${usedDiskPath ? `Pasta no disco:\n${diskPath}\n` : 'Pasta selecionada no navegador:\n'}• ${receiptCount} comprovante(s)\n\n${
         receiptBatchDryRun ? 'Simulação' : 'Vinculação'
       } de JPG/JPEG aos lançamentos REALIZADO pelo campo referencia.${
         receiptBatchForce
@@ -1196,7 +1216,7 @@ export function MaintenanceFinancialsCard({
       return;
     }
 
-    const result = await processReceiptBatch(receiptsDir.trim() || DEFAULT_TREASURY_RECEIPTS_DIR, {
+    const result = await processReceiptBatch(usedDiskPath ? diskPath : receiptsDir.trim() || diskPath, {
       dryRun: receiptBatchDryRun,
       force: receiptBatchForce,
       folderAccess,
@@ -1684,9 +1704,9 @@ export function MaintenanceFinancialsCard({
         >
           <View style={[styles.formCard, minimal && styles.formCardMinimal]}>
             <Text style={[styles.formatHint, minimal && styles.formatHintMinimal]}>
-              Selecione a pasta local no navegador (Chrome/Edge). O caminho abaixo é apenas referência
-              visual. Padrões: 20260526 3825,00.jpg/.jpeg e 20260608 1500,00 2.jpg (múltiplos anexos).
-              Referências ambíguas (mesma data+valor em mais de um lançamento) são bloqueadas no pré-voo.
+              O Processar lê o caminho Windows abaixo pelo helper local (npm run pdf-to-jpg:helper), o
+              mesmo da conversão PDF. Sem o helper, o navegador não acessa C:\. Padrões: 20260526
+              3825,00.jpg/.jpeg e 20261013-97,00.jpeg.
             </Text>
 
             <TouchableOpacity

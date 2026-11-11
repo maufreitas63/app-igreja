@@ -141,6 +141,59 @@ function runConverter(folderPath) {
   });
 }
 
+function isWindowsFolderPath(folderPath) {
+  return /^[A-Za-z]:[\\/]/.test(folderPath) || folderPath.startsWith('\\\\');
+}
+
+function isJpegFileName(fileName) {
+  const lower = String(fileName || '').toLowerCase();
+  return (
+    lower.endsWith('.jpg') ||
+    lower.endsWith('.jpeg') ||
+    lower.endsWith('.jpe') ||
+    lower.endsWith('.jfif')
+  );
+}
+
+function resolveUnderFolder(folderPath, relativePath) {
+  const root = path.resolve(folderPath);
+  const full = path.resolve(root, relativePath.replace(/\//g, path.sep));
+  const rootWithSep = root.endsWith(path.sep) ? root : `${root}${path.sep}`;
+  if (full !== root && !full.toLowerCase().startsWith(rootWithSep.toLowerCase())) {
+    throw new Error('Caminho de arquivo fora da pasta informada.');
+  }
+  return full;
+}
+
+function listJpegFiles(folderPath, prefix = '', depth = 0) {
+  if (depth > 4) {
+    return [];
+  }
+
+  const entries = fs.readdirSync(folderPath, { withFileTypes: true });
+  const files = [];
+
+  for (const entry of entries) {
+    if (entry.isDirectory()) {
+      files.push(
+        ...listJpegFiles(path.join(folderPath, entry.name), `${prefix}${entry.name}/`, depth + 1)
+      );
+      continue;
+    }
+
+    if (!entry.isFile() || !isJpegFileName(entry.name) || entry.name.toLowerCase().startsWith('updated_')) {
+      continue;
+    }
+
+    files.push({
+      fileName: entry.name,
+      relativePath: `${prefix}${entry.name}`,
+    });
+  }
+
+  return files;
+}
+
 function parseSummary(stdout) {
   const match = stdout.match(
     /Concluído — ok: (\d+) · pulados: (\d+) · falhas: (\d+) · páginas: (\d+)/
@@ -186,7 +239,7 @@ const server = http.createServer(async (req, res) => {
           ? body.folderPath.trim()
           : DEFAULT_DIR;
 
-      if (!/^[A-Za-z]:[\\/]/.test(folderPath) && !folderPath.startsWith('\\\\')) {
+      if (!isWindowsFolderPath(folderPath)) {
         sendJson(res, 400, { ok: false, message: 'Informe um caminho absoluto de pasta no Windows.' });
         return;
       }
@@ -209,6 +262,108 @@ const server = http.createServer(async (req, res) => {
         stderr: result.stderr,
         message: `Concluído — ok: ${summary.ok} · pulados: ${summary.skipped} · falhas: ${summary.failed} · páginas: ${summary.pages}`,
       });
+    } catch (error) {
+      sendJson(res, 500, {
+        ok: false,
+        message: error instanceof Error ? error.message : String(error),
+      });
+    }
+    return;
+  }
+
+  if (req.method === 'POST' && url.pathname === '/list-receipts') {
+    try {
+      const body = await readJson(req);
+      const folderPath =
+        typeof body.folderPath === 'string' && body.folderPath.trim()
+          ? body.folderPath.trim()
+          : DEFAULT_DIR;
+
+      if (!isWindowsFolderPath(folderPath)) {
+        sendJson(res, 400, { ok: false, message: 'Informe um caminho absoluto de pasta no Windows.' });
+        return;
+      }
+
+      if (!fs.existsSync(folderPath) || !fs.statSync(folderPath).isDirectory()) {
+        sendJson(res, 400, { ok: false, message: `Pasta não encontrada: ${folderPath}` });
+        return;
+      }
+
+      const files = listJpegFiles(folderPath);
+      sendJson(res, 200, {
+        ok: true,
+        folderPath,
+        fileCount: files.length,
+        files,
+      });
+    } catch (error) {
+      sendJson(res, 500, {
+        ok: false,
+        message: error instanceof Error ? error.message : String(error),
+      });
+    }
+    return;
+  }
+
+  if (req.method === 'POST' && url.pathname === '/receipt-file') {
+    try {
+      const body = await readJson(req);
+      const folderPath = typeof body.folderPath === 'string' ? body.folderPath.trim() : '';
+      const relativePath = typeof body.relativePath === 'string' ? body.relativePath.trim() : '';
+
+      if (!isWindowsFolderPath(folderPath) || !relativePath) {
+        sendJson(res, 400, { ok: false, message: 'Informe a pasta e o arquivo.' });
+        return;
+      }
+
+      const full = resolveUnderFolder(folderPath, relativePath);
+      if (!fs.existsSync(full) || !fs.statSync(full).isFile()) {
+        sendJson(res, 404, { ok: false, message: `Arquivo não encontrado: ${relativePath}` });
+        return;
+      }
+
+      const fileName = path.basename(full);
+      const buffer = fs.readFileSync(full);
+      sendJson(res, 200, {
+        ok: true,
+        fileName,
+        dataUrl: `data:image/jpeg;base64,${buffer.toString('base64')}`,
+      });
+    } catch (error) {
+      sendJson(res, 500, {
+        ok: false,
+        message: error instanceof Error ? error.message : String(error),
+      });
+    }
+    return;
+  }
+
+  if (req.method === 'POST' && url.pathname === '/rename-receipt') {
+    try {
+      const body = await readJson(req);
+      const folderPath = typeof body.folderPath === 'string' ? body.folderPath.trim() : '';
+      const relativePath = typeof body.relativePath === 'string' ? body.relativePath.trim() : '';
+      const nextName = typeof body.nextName === 'string' ? body.nextName.trim() : '';
+
+      if (!isWindowsFolderPath(folderPath) || !relativePath || !nextName) {
+        sendJson(res, 400, { ok: false, message: 'Informe pasta, arquivo e novo nome.' });
+        return;
+      }
+
+      if (nextName.includes('/') || nextName.includes('\\') || nextName.includes('..')) {
+        sendJson(res, 400, { ok: false, message: 'Nome de arquivo inválido.' });
+        return;
+      }
+
+      const full = resolveUnderFolder(folderPath, relativePath);
+      const dest = path.join(path.dirname(full), nextName);
+      if (!fs.existsSync(full)) {
+        sendJson(res, 404, { ok: false, message: `Arquivo não encontrado: ${relativePath}` });
+        return;
+      }
+
+      fs.renameSync(full, dest);
+      sendJson(res, 200, { ok: true, fileName: nextName });
     } catch (error) {
       sendJson(res, 500, {
         ok: false,
