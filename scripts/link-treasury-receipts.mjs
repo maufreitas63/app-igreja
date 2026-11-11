@@ -7,7 +7,7 @@
  * Padrões de arquivo (.jpg ou .jpeg; após normalização viram .jpg):
  * - Único: aaaammdd + espaço + valor (nnnn,nn) + extensão — ex.: 20260526 3825,00.jpg
  * - Múltiplo: aaaammdd + espaço + valor + espaço + posição (1 dígito) + extensão — ex.: 20260608 1500,00 2.jpeg
- * Aceita também aaaa.mm.dd e valores com sinal +/- antes do montante.
+ * Aceita também aaaa.mm.dd e valores com sinal +/- (espaço ou colado: 20261013-97,00.jpeg).
  *
  * Uso (PowerShell, na raiz app-igreja):
  *   node scripts/link-treasury-receipts.mjs --dry-run
@@ -232,21 +232,16 @@ const buildReceiptFilenameIndex = (receiptsDir) => {
     }
 
     const parsed = parseTreasuryReceiptFileName(fileName);
-
-    if (!parsed) {
-      continue;
-    }
-
-    const { referencia, canonicalFileName, position } = parsed;
-    const linkPosition = resolveTreasuryReceiptLinkPosition(position);
+    const canonicalFileName = parsed?.canonicalFileName ?? fileName;
+    const linkPosition = resolveTreasuryReceiptLinkPosition(parsed?.position);
 
     files.push({
-      referencia,
+      referencia: parsed?.referencia ?? '',
       position: linkPosition,
       fileName,
       canonicalFileName,
       localPath: fullPath,
-      needsCanonicalRename: canonicalFileName !== fileName,
+      needsCanonicalRename: Boolean(parsed) && canonicalFileName !== fileName,
     });
   }
 

@@ -75,8 +75,15 @@ export const buildFinancialReferencia = (transactionDate: string, amount: number
   return `${year}${month}${day} ${formatTreasuryReceiptAmount(amount)}.jpg`;
 };
 
+/** Traço unicode (Excel, bancos) vira hífen ASCII antes de ler data e valor. */
+const normalizeTreasuryReceiptMinus = (value: string) =>
+  value.replace(/[\u2212\u2012\u2013\u2014\u2015]/g, '-');
+
 const parseTreasuryReceiptAmountToken = (token: string) => {
-  let normalized = token.trim().replace(/\s/g, '').replace(/^[+-]/, '');
+  let normalized = normalizeTreasuryReceiptMinus(token)
+    .trim()
+    .replace(/\s/g, '')
+    .replace(/^[+-]/, '');
 
   if (!normalized) {
     return null;
@@ -99,7 +106,10 @@ const parseTreasuryReceiptAmountToken = (token: string) => {
 
 /** Converte o trecho sem extensão (e sem sufixo de posição) para aaaammdd nnnn,nn */
 const parseTreasuryReceiptStemToReferenciaBase = (stem: string): string | null => {
-  const dottedDateMatch = stem.match(/^(\d{4})[.\-/](\d{2})[.\-/](\d{2})\s+([+-]?\s*[\d.,]+)$/);
+  const normalizedStem = normalizeTreasuryReceiptMinus(stem);
+  const dottedDateMatch = normalizedStem.match(
+    /^(\d{4})[.\-/](\d{2})[.\-/](\d{2})\s*([+-]?\s*[\d.,]+)$/
+  );
 
   if (dottedDateMatch) {
     const [, year, month, day, amountToken] = dottedDateMatch;
@@ -112,7 +122,7 @@ const parseTreasuryReceiptStemToReferenciaBase = (stem: string): string | null =
     return `${year}${month}${day} ${amount}`;
   }
 
-  const compactDateMatch = stem.match(/^(\d{4})(\d{2})(\d{2})\s+([+-]?\s*[\d.,]+)$/);
+  const compactDateMatch = normalizedStem.match(/^(\d{4})(\d{2})(\d{2})\s*([+-]?\s*[\d.,]+)$/);
 
   if (compactDateMatch) {
     const [, year, month, day, amountToken] = compactDateMatch;
@@ -141,7 +151,8 @@ export type ParsedTreasuryReceiptFileName = {
  * Interpreta nomes de comprovantes (.jpg ou .jpeg).
  * - Único: aaaammdd nnnn,nn.jpg
  * - Múltiplo: aaaammdd nnnn,nn n.jpg (espaço obrigatório antes do dígito de posição)
- * Arquivos .jpeg são normalizados para o padrão .jpg da referencia.
+ * - Saída: o sinal pode vir com espaço (`20261013 -97,00.jpeg`) ou colado (`20261013-97,00.jpeg`).
+ * Arquivos .jpeg são normalizados para o padrão .jpg da referencia (valor absoluto).
  */
 export const parseTreasuryReceiptFileName = (fileName: string): ParsedTreasuryReceiptFileName | null => {
   if (typeof fileName !== 'string' || !fileName.trim()) {

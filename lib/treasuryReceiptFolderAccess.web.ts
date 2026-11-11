@@ -103,18 +103,13 @@ const collectFromBrowserFiles = (browserFiles: File[]) => {
     }
 
     const parsed = parseTreasuryReceiptFileName(fileName);
-
-    if (!parsed) {
-      continue;
-    }
-
-    const { referencia, canonicalFileName, position } = parsed;
-    const linkPosition = resolveTreasuryReceiptLinkPosition(position);
+    const linkPosition = resolveTreasuryReceiptLinkPosition(parsed?.position);
+    const canonicalFileName = parsed?.canonicalFileName ?? fileName;
 
     files.push({
       fileName,
       canonicalFileName,
-      referencia,
+      referencia: parsed?.referencia ?? '',
       position: linkPosition,
       originalFileName: fileName !== canonicalFileName ? fileName : undefined,
       readDataUrl: async () => readFileAsDataUrl(file),
